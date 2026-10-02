@@ -10,6 +10,8 @@ import { posterEtag } from "../apps/api/src/og/poster.ts";
 import { tag } from "./setup.ts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import * as cheerio from "cheerio";
+import { marked } from "marked";
 import { after, before, test } from "node:test";
 import { closeDb, sql } from "@aihot/backend/db";
 import { setVisibility } from "@aihot/backend/admin/content";
@@ -70,6 +72,59 @@ async function get(url: string, headers: Record<string, string> = {}) {
   const res = await app.inject({ method: "GET", url, headers });
   return { status: res.statusCode, body: res.body, etag: res.headers.etag as string | undefined };
 }
+
+// Export failures to guard before changing conversion: flattened table relationships, invented
+// headings/merged cells, lost numeric units, and full text leaking after a licence reduction.
+test("Markdown preserves a table's headings, caption, links, alignment and multiline cells in both languages", async () => {
+  const id = await article();
+  const table = '<table><caption>Benchmark results</caption><thead><tr><th>Model</th><th align="right">Score</th></tr></thead><tbody><tr><td><a href="https://example.com/model">A|B</a></td><td>90<br>±1</td></tr></tbody></table>';
+  await sql`UPDATE articles SET language = 'en', body_html = ${table} WHERE id = ${id}`;
+  await sql`INSERT INTO translations (article_id, revision, body_html, body_text, origin) VALUES (${id}, 1, ${table.replace('Benchmark results', '基准结果').replace('Model', '模型').replace('Score', '分数')}, '基准结果', 'source')`;
+  await publishArticle(id, released());
+  const response = await get(`/items/${id}/markdown`);
+  assert.equal(response.status, 200);
+  const $ = cheerio.load(marked.parse(response.body, { async: false, gfm: true }));
+  assert.equal($('table').length, 2, 'both original and translated tables survive export');
+  assert.deepEqual($('table th').toArray().map((node) => $(node).text()), ['模型', '分数', 'Model', 'Score']);
+  assert.equal($('table th').last().attr('align'), 'right');
+  assert.equal($('table td a').last().text(), 'A|B');
+  assert.equal($('table td a').last().attr('href'), 'https://example.com/model');
+  assert.equal($('table td').last().find('br').length, 1);
+  assert.ok($.text().includes('基准结果') && $.text().includes('Benchmark results'));
+});
+
+test("Markdown retains tables that cannot be represented without changing their meaning", async () => {
+  const id = await article();
+  const html = '<table><tr><td>Region</td><td>Value</td></tr><tr><td>CN</td><td>1</td></tr></table><table><tr><th colspan="2">Merged</th></tr><tr><td rowspan="2">A</td><td>2</td></tr><tr><td>3</td></tr></table><table><tr><th>Example</th></tr><tr><td><pre><code class="language-python">print(1)\nprint(2)</code></pre></td></tr></table>';
+  await sql`UPDATE articles SET language = 'zh', body_html = ${html} WHERE id = ${id}`;
+  await publishArticle(id, released());
+  const $ = cheerio.load(marked.parse((await get(`/items/${id}/markdown`)).body, { async: false, gfm: true }));
+  assert.equal($('table').length, 3);
+  assert.equal($('table').first().find('th').length, 0, 'a data row must not become an invented heading');
+  assert.equal($('th[colspan="2"]').text(), 'Merged');
+  assert.equal($('td[rowspan="2"]').text(), 'A');
+  assert.equal($('table pre code').text(), 'print(1)\nprint(2)');
+});
+
+test("Markdown retains numeric superscripts, subscripts and fenced code while respecting full-text permission", async () => {
+  const id = await article();
+  const html = '<p>Compute 10<sup>24</sup> FLOP; H<sub>2</sub>O.</p><pre><code class="language-python">print(2 ** 3)\n</code></pre>';
+  await sql`UPDATE articles SET language = 'zh', body_html = ${html} WHERE id = ${id}`;
+  await publishArticle(id, released());
+  const response = await get(`/items/${id}/markdown`);
+  const $ = cheerio.load(marked.parse(response.body, { async: false, gfm: true }));
+  assert.equal($('sup').text(), '24');
+  assert.equal($('sub').text(), '2');
+  assert.equal($('pre code').attr('class'), 'language-python');
+  assert.equal($('pre code').text(), 'print(2 ** 3)\n');
+  await sql`UPDATE sources SET site_fulltext = false WHERE id = ${SOURCE}`;
+  await publishArticle(id, released());
+  const limited = await get(`/items/${id}/markdown`);
+  assert.equal(limited.status, 200);
+  assert.ok(limited.body.includes('SUMMARY-'));
+  assert.ok(!limited.body.includes('FLOP') && !limited.body.includes('print(2'));
+  await sql`UPDATE sources SET site_fulltext = true WHERE id = ${SOURCE}`;
+});
 
 test("site reading sends one language while exports retain both, including after withdrawal", async () => {
   const id = await article();
