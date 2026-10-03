@@ -11,15 +11,51 @@ $PgRoot = Join-Path $RuntimeDir 'pgsql'
 $PgData = Join-Path $RuntimeDir 'postgres-data'
 $StateFile = Join-Path $RuntimeDir 'processes.json'
 $EnvFile = Join-Path $ProjectRoot '.env'
-$Node = (Get-Command node.exe -ErrorAction Stop).Source
+$Node = $null
 $SupervisorEntry = Join-Path $ProjectRoot 'scripts\corescope-runtime.ts'
 $DownloadUrl = 'https://get.enterprisedb.com/postgresql/postgresql-17.11-3-windows-x64-binaries.zip'
 $Archive = Join-Path $RuntimeDir 'postgresql-17.11-3-windows-x64-binaries.zip'
 $PgPort = 5448
 $WebPort = 8780
 $ApiPort = 8781
+$StartupLog = Join-Path $LogDir 'startup.log'
+$StartupErrorLog = Join-Path $LogDir 'startup.error.log'
+$script:StartupPhase = 'initialize'
+$script:Config = $null
+$script:DbPassword = $null
 
-New-Item -ItemType Directory -Force $RuntimeDir, $LogDir | Out-Null
+function Protect-LogText([string]$Text) {
+    if ($script:Config) {
+        foreach ($property in $script:Config.PSObject.Properties) {
+            if ($property.Name -match '(?i)(API_KEY|PASSWORD|SECRET|TOKEN|^DATABASE_URL$)') {
+                $value = [string]$property.Value
+                if ($value.Length -ge 4) { $Text = $Text.Replace($value, '[redacted]') }
+            }
+        }
+    }
+    if ($script:DbPassword -and $script:DbPassword.Length -ge 4) { $Text = $Text.Replace($script:DbPassword, '[redacted]') }
+    $Text = [regex]::Replace($Text, '(?i)((?:postgres(?:ql)?|https?)://)[^/\s:@]+:[^@\s/]+@', '$1[redacted]@')
+    return [regex]::Replace($Text, '(?i)(Bearer\s+)\S+', '$1[redacted]')
+}
+
+function Write-RuntimeLog([string]$Level, [string]$Message, [switch]$Failure) {
+    $record = [ordered]@{
+        at = [DateTimeOffset]::Now.ToString('o')
+        action = $Action
+        phase = $script:StartupPhase
+        level = $Level
+        message = (Protect-LogText $Message)
+    }
+    $line = ($record | ConvertTo-Json -Compress) + [Environment]::NewLine
+    [IO.File]::AppendAllText($StartupLog, $line, (New-Object Text.UTF8Encoding($false)))
+    if ($Failure) { [IO.File]::AppendAllText($StartupErrorLog, $line, (New-Object Text.UTF8Encoding($false))) }
+}
+
+function Write-Stage([string]$Phase, [string]$Message) {
+    $script:StartupPhase = $Phase
+    Write-Host ("[{0}] [{1}] {2}" -f (Get-Date -Format 'HH:mm:ss'), $Phase.ToUpperInvariant(), $Message)
+    Write-RuntimeLog 'info' $Message
+}
 
 function Assert-ProjectPath([string]$Target) {
     $resolved = [IO.Path]::GetFullPath($Target)
@@ -48,10 +84,27 @@ function Read-Config {
 
 function Invoke-NodeScript([string]$RelativePath, [string[]]$ExtraArgs = @()) {
     Push-Location $ProjectRoot
+    $previousPreference = $ErrorActionPreference
+    $diagnostics = New-Object 'System.Collections.Generic.List[string]'
     try {
-        & $Node "--env-file=$EnvFile" (Join-Path $ProjectRoot $RelativePath) @ExtraArgs
-        if ($LASTEXITCODE -ne 0) { throw "$RelativePath failed; see the console or .data/logs." }
-    } finally { Pop-Location }
+        # In Windows PowerShell 5.1 native stderr is an ErrorRecord. Capture it without losing
+        # the actual child exit code, while keeping credentials out of console and logs.
+        $ErrorActionPreference = 'Continue'
+        & $Node "--env-file=$EnvFile" (Join-Path $ProjectRoot $RelativePath) @ExtraArgs 2>&1 | ForEach-Object {
+            $line = Protect-LogText ([string]$_)
+            Write-Host $line
+            $bounded = $line.Substring(0, [Math]::Min(2000, $line.Length))
+            if ($diagnostics.Count -lt 4 -and $bounded -match '(?i)(Error|exception|out of memory|failed|refusing|missing)') { $diagnostics.Add($bounded) }
+            Write-RuntimeLog 'output' $bounded
+        }
+        $exitCode = $LASTEXITCODE
+        $ErrorActionPreference = $previousPreference
+        if ($exitCode -ne 0) {
+            $diagnostic = $diagnostics.ToArray() -join ' | '
+            if (-not $diagnostic) { $diagnostic = 'See startup.log for the child output.' }
+            throw "$RelativePath failed (exit $exitCode): $diagnostic"
+        }
+    } finally { $ErrorActionPreference = $previousPreference; Pop-Location }
 }
 
 function Test-OwnedProcess($Record, [string]$ExpectedEntry) {
@@ -134,9 +187,11 @@ function Install-Postgres {
 }
 
 function Start-Database {
+    Write-Stage 'database-files' 'Checking the independent PostgreSQL runtime.'
     Install-Postgres
     Assert-ProjectPath $PgData
     if (-not (Test-Path -LiteralPath (Join-Path $PgData 'PG_VERSION'))) {
+        Write-Stage 'database-initialize' 'Initializing the independent PostgreSQL data directory.'
         $passwordFile = Join-Path $RuntimeDir 'initdb-password.tmp'
         Assert-ProjectPath $passwordFile
         try {
@@ -150,6 +205,7 @@ function Start-Database {
     $ownedPg = Get-OwnedPostgresPid
     Assert-PortFree $PgPort $ownedPg
     if (-not $ownedPg) {
+        Write-Stage 'database-start' 'Starting PostgreSQL on 127.0.0.1:5448.'
         $pgCtl = Join-Path $PgRoot 'bin\pg_ctl.exe'
         $pgLog = Join-Path $LogDir 'postgres.log'
         $args = @('start', '-D', ('"' + $PgData + '"'), '-o', '"-h 127.0.0.1 -p 5448"', '-l', ('"' + $pgLog + '"'), '-w', '-t', '60')
@@ -162,6 +218,7 @@ function Start-Database {
         if ($null -ne $started.ExitCode -and $started.ExitCode -ne 0) { throw 'PostgreSQL failed to start; see .data/logs/postgres.log.' }
         if (-not (Get-OwnedPostgresPid)) { throw 'PostgreSQL PID or command identity could not be verified.' }
     }
+    Write-Stage 'database-authenticate' 'Verifying PostgreSQL identity, authentication and independent databases.'
     $oldPassword = $env:PGPASSWORD
     try {
         $env:PGPASSWORD = $DbPassword
@@ -175,7 +232,7 @@ function Start-Database {
             }
         }
     } finally { $env:PGPASSWORD = $oldPassword }
-    Write-Host "Independent PostgreSQL is ready on 127.0.0.1:$PgPort (corescope / corescope_test)."
+    Write-Stage 'database-ready' "Independent PostgreSQL is ready on 127.0.0.1:$PgPort. Application startup continues below."
 }
 
 function Wait-Health([string]$Url) {
@@ -202,35 +259,45 @@ function Assert-ApplicationProcesses($Saved) {
 }
 
 function Start-System {
+    Write-Stage 'existing-processes' 'Checking for an already running CoreScope supervisor.'
     $existing = Get-SupervisorState
     if ($existing) {
+        Write-Stage 'existing-health' 'Checking the database-backed API and all application process identities.'
         Wait-Health "http://127.0.0.1:$WebPort/api/health"
         Assert-ApplicationProcesses (Get-SupervisorState)
-        Write-Host "CoreScope is already running: $($Config.SITE_URL)"
+        Write-Stage 'ready' "CoreScope is already running: $($Config.SITE_URL)"
         if (-not $NoBrowser) { Start-Process $Config.SITE_URL }
         return
     }
+    Write-Stage 'ports' 'Checking that application ports 8780 and 8781 are free.'
     Assert-PortFree $WebPort
     Assert-PortFree $ApiPort
     Start-Database
     Push-Location $ProjectRoot
     try {
         if (-not (Test-Path -LiteralPath (Join-Path $ProjectRoot 'node_modules'))) {
+            Write-Stage 'dependencies' 'Installing application dependencies with npm ci.'
             & npm.cmd ci
             if ($LASTEXITCODE -ne 0) { throw 'npm ci failed.' }
         }
+        Write-Stage 'migration' 'Applying any pending database migrations.'
         Invoke-NodeScript 'scripts/migrate.ts'
+        Write-Stage 'seed' 'Synchronizing topics, sources and the model directory.'
         Invoke-NodeScript 'scripts/seed.ts'
+        Write-Stage 'budgets' 'Checking the initial model request budgets.'
         Invoke-NodeScript 'scripts/corescope-operations.ts' @('configure')
+        Write-Stage 'web-build-check' 'Checking whether the production web build needs updating.'
         $buildFile = Join-Path $ProjectRoot 'apps\web\build\server\index.js'
         $sourceFiles = @(Get-ChildItem -LiteralPath (Join-Path $ProjectRoot 'apps\web\app'), (Join-Path $ProjectRoot 'industry'), (Join-Path $ProjectRoot 'packages\contracts\src') -Recurse -File)
         $needsBuild = -not (Test-Path -LiteralPath $buildFile)
         if (-not $needsBuild) { $needsBuild = @($sourceFiles | Where-Object { $_.LastWriteTimeUtc -gt (Get-Item -LiteralPath $buildFile).LastWriteTimeUtc }).Count -gt 0 }
         if ($needsBuild) {
+            Write-Stage 'web-build' 'Building the production website.'
             & npm.cmd run build -w '@aihot/web'
             if ($LASTEXITCODE -ne 0) { throw 'Web build failed.' }
         }
     } finally { Pop-Location }
+    Write-Stage 'supervisor-start' 'Starting the API, website, worker and configured V2 bridge.'
     $savedEnvironment = @{}
     try {
         foreach ($property in $Config.PSObject.Properties) {
@@ -244,8 +311,11 @@ function Start-System {
     } finally {
         foreach ($key in $savedEnvironment.Keys) { [Environment]::SetEnvironmentVariable($key, $savedEnvironment[$key], 'Process') }
     }
+    Write-Stage 'api-health' 'Waiting for the API to answer a real database health query.'
     Wait-Health "http://127.0.0.1:$ApiPort/api/health"
+    Write-Stage 'web-health' 'Waiting for the website to proxy the database health query.'
     Wait-Health "http://127.0.0.1:$WebPort/api/health"
+    Write-Stage 'worker-health' 'Waiting for the worker to complete startup.'
     $workerDeadline = (Get-Date).AddSeconds(90)
     do {
         $pending = Get-SupervisorState
@@ -256,7 +326,7 @@ function Start-System {
     if (-not $saved) { throw 'Supervisor identity check failed.' }
     if (-not $saved.children.worker.ready) { throw 'Worker did not finish startup; inspect .data/logs/worker.error.log.' }
     Assert-ApplicationProcesses $saved
-    Write-Host "CoreScope is ready: $($Config.SITE_URL) | admin: /admin | logs: .data/logs"
+    Write-Stage 'ready' "CoreScope is ready: $($Config.SITE_URL) | admin: /admin | logs: .data/logs"
     if (-not $NoBrowser) { Start-Process $Config.SITE_URL }
 }
 
@@ -281,6 +351,10 @@ function Stop-System {
 }
 
 try {
+    New-Item -ItemType Directory -Force $RuntimeDir, $LogDir | Out-Null
+    Write-Stage 'node-runtime' 'Checking Node.js 24.11 or newer.'
+    $Node = (Get-Command node.exe -ErrorAction Stop).Source
+    Write-Stage 'configuration' 'Validating local configuration without displaying credentials.'
     Read-Config
     switch ($Action) {
         'Install' { Install-Postgres }
@@ -295,7 +369,11 @@ try {
         }
     }
 } catch {
-    Write-Host $_.ScriptStackTrace
-    Write-Error $_.Exception.Message
+    $failure = Protect-LogText $_.Exception.Message
+    try { Write-RuntimeLog 'error' $failure -Failure }
+    catch { Write-Host 'The error log could not be written; check the project directory permissions and disk space.' }
+    Write-Host "[FAILED] CoreScope $Action failed during '$($script:StartupPhase)': $failure" -ForegroundColor Red
+    Write-Host "Failure details: $StartupErrorLog"
+    Write-Host "Step output: $StartupLog"
     exit 1
 }

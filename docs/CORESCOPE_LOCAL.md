@@ -15,6 +15,10 @@ CoreScope 使用独立 PostgreSQL、API、网页、worker 和 V2 只读桥。它
 
 启动器初始化数据库、运行增量迁移、幂等导入主题和新增信源、按需安装依赖与构建前端，然后隐藏启动各个进程并检查真实数据库健康。重复启动会复用已经确认归属的进程。若端口被其他进程占用，会报错并保留该进程，不按端口强行停止。
 
+启动窗口依次显示配置检查、数据库认证、迁移、种子同步、预算检查、网页构建和应用健康检查的进度。只有最后出现 `[READY] CoreScope is ready` 或 `[READY] CoreScope is already running` 才表示完整系统可用；中途的 PostgreSQL ready 只表示数据库准备完成。
+
+启动失败时窗口保留 `[FAILED]` 以及失败步骤。错误时间、步骤和原因追加写入 `.data/logs/startup.error.log`，每一步和迁移、种子等子脚本输出保存在 `.data/logs/startup.log`；两者为 UTF-8 JSON 行日志，启动器会隐藏已配置密钥、密码和数据库连接串。可以把错误日志中的最新错误交给维护人员排查，不要发送 `.env` 或运行状态文件。双击启动器失败后会等待按键，按键关闭窗口后日志仍然保留。
+
 | 组件 | 监听或位置 |
 | --- | --- |
 | 网页、管理后台、RSS、公开 API、MCP | `127.0.0.1:8780` |
@@ -23,6 +27,7 @@ CoreScope 使用独立 PostgreSQL、API、网页、worker 和 V2 只读桥。它
 | 正式库 / 测试库 | `corescope` / `corescope_test` |
 | 数据库文件 | `.data/runtime/postgres-data/` |
 | API / web / worker / bridge / PostgreSQL 日志 | `.data/logs/` |
+| 启动步骤、子脚本输出 / 启动失败详情 | `.data/logs/startup.log` / `.data/logs/startup.error.log` |
 | 监督进程与子进程 PID、入口、启动时间 | `.data/runtime/processes.json` |
 
 控制脚本可在 PowerShell 中单独执行：
