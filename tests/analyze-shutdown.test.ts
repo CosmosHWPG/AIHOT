@@ -25,7 +25,7 @@ let active: {
 const provider = await stub(async (_hit, request) => {
   const body = JSON.parse(request.body);
   const system = String(body.messages[0]?.content ?? "");
-  const step: Step = system.includes("宽召回的AI相关性预筛") ? "prefilter" : system.includes("事件注意力评分器") ? "score"
+  const step: Step = system.includes("宽召回") && system.includes("预筛") ? "prefilter" : system.includes("事件注意力评分器") ? "score"
     : system.includes("资料结构化助手") ? "structure" : "understand";
   active.calls.push(step);
   const count = active.calls.filter(s => s === step).length;
@@ -59,6 +59,9 @@ function worker(queue: string) {
       await closeDb();
       process.disconnect();
     });
+    process.on('message', message => {
+      if (message && message.action === 'shutdown') process.emit('SIGTERM');
+    });
     await registerContentJobs(await getBoss(), 1);
     process.send({ ready: true });
   `;
@@ -66,7 +69,7 @@ function worker(queue: string) {
     PREFILTER_MODEL: "qwen3.7-flash", SCORE_MODEL: "glm-5.3-flash-selection", STRUCTURE_MODEL: "qwen3.8-flash", UNDERSTAND_MODEL: "glm-5.3-flash" };
   for (const name of ["DASHSCOPE_BASE_URL", "ZHIPU_BASE_URL", "DEEPSEEK_BASE_URL"]) (env as Record<string, string>)[name] = `${provider.url}/v1`;
   for (const name of ["DASHSCOPE_API_KEY", "ZHIPU_API_KEY", "DEEPSEEK_API_KEY"]) (env as Record<string, string>)[name] = "test-key";
-  const child = spawn(process.execPath, ["--input-type=module", "-e", script], { cwd: process.cwd(), env, stdio: ["ignore", "pipe", "pipe", "ipc"] });
+  const child = spawn(process.execPath, ["--input-type=module", "-e", script], { cwd: process.cwd(), env, windowsHide: true, stdio: ["ignore", "pipe", "pipe", "ipc"] });
   children.add(child);
   const ready = gate();
   const stopping = gate();
@@ -79,6 +82,10 @@ function worker(queue: string) {
   });
   return { child, ready: ready.promise, stopping: stopping.promise, done };
 }
+function requestShutdown(child: ReturnType<typeof spawn>) {
+  if (process.platform === "win32") child.send({ action: "shutdown" });
+  else child.kill("SIGTERM");
+}
 async function until(check: () => Promise<boolean>, label: string) {
   const deadline = Date.now() + 12_000;
   while (!(await check())) { if (Date.now() > deadline) assert.fail(`timeout waiting for ${label}`); await delay(20); }
@@ -90,7 +97,7 @@ before(async () => {
 });
 after(async () => {
   active?.scoreAnswer.open(); active?.structureAnswer.open(); active?.writingAnswer?.open();
-  for (const child of children) child.kill("SIGTERM");
+  for (const child of children) requestShutdown(child);
   await provider.close(); await stopBoss(); await closeDb();
 });
 
@@ -106,7 +113,7 @@ test("SIGTERM during the final paid writing call still commits the complete anal
   const jobId = await boss.send(queue, { articleId }, { singletonKey: articleId });
   const running = worker(queue);
   await Promise.race([Promise.all([running.ready, active.writingAsked!.promise]), running.done.then(() => assert.fail("worker exited before writing"))]);
-  running.child.kill("SIGTERM"); await running.stopping;
+  requestShutdown(running.child); await running.stopping;
   active.writingAnswer!.open(); await running.done;
   assert.deepEqual(active.calls.slice().sort(), ["prefilter", "score", "score", "structure", "understand"]);
   assert.equal((await sql`SELECT state FROM pgboss.job WHERE id=${jobId}`)[0]!.state, "completed");
@@ -130,7 +137,7 @@ for (const failScore of [false, true]) test(`SIGTERM during ${failScore ? "faile
   const jobId = await boss.send(queue, { articleId }, { singletonKey: articleId });
   const first = worker(queue);
   await Promise.race([Promise.all([first.ready, active.scoreAsked.promise, active.structureAsked.promise]), first.done.then(() => assert.fail("worker exited before both requests"))]);
-  first.child.kill("SIGTERM"); await first.stopping;
+  requestShutdown(first.child); await first.stopping;
   active.scoreAnswer.open();
   await until(async () => !!(await sql`SELECT 1 FROM receipts WHERE subject=${`article:${articleId}@1`} AND purpose='score_article' AND status IN ('received','failed')`)[0], "score receipt");
   assert.equal(first.child.exitCode, null, "the process stays alive while structure owns a paid response");
@@ -146,7 +153,7 @@ for (const failScore of [false, true]) test(`SIGTERM during ${failScore ? "faile
   assert.equal((await sql`SELECT state FROM pgboss.job WHERE id=${jobId}`)[0]!.state, "retry", "pg-boss owns restart recovery");
   const restarted = worker(queue); await restarted.ready;
   await until(async () => (await sql`SELECT state FROM pgboss.job WHERE id=${jobId}`)[0]?.state === "completed", "completed retry");
-  restarted.child.kill("SIGTERM"); await restarted.done;
+  requestShutdown(restarted.child); await restarted.done;
   assert.equal(active.calls.filter(s => s === "prefilter").length, 1);
   assert.equal(active.calls.filter(s => s === "structure").length, 1, "the slow structure answer was saved and reused");
   assert.equal(active.calls.filter(s => s === "score").length, failScore ? 3 : 2, "two ordered successful scores, only a rejected request repeats");

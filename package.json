@@ -14,6 +14,11 @@
     "fflate": "0.7.5"
   },
   "scripts": {
+    "corescope:start": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/corescope-runtime.ps1 -Action Start",
+    "corescope:stop": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/corescope-runtime.ps1 -Action Stop",
+    "corescope:status": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/corescope-runtime.ps1 -Action Status",
+    "corescope:verify": "node --env-file-if-exists=.env scripts/corescope-operations.ts status",
+    "corescope:test": "node scripts/corescope-test.ts",
     "db:migrate": "node --env-file-if-exists=.env scripts/migrate.ts",
     "dev:api": "npm run dev -w @aihot/api",
     "dev:worker": "npm run dev -w @aihot/worker",

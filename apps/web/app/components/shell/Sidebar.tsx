@@ -43,8 +43,9 @@ export function Sidebar({ changelogVersion }: { changelogVersion: string | null 
   return (
     <aside className="sticky top-0 hidden h-dvh w-[180px] shrink-0 flex-col border-r border-line bg-sidebar px-3 pb-3.5 pt-6 lg:flex">
       <Link to="/" className="mb-4 flex h-[50px] items-center px-1 text-ink" aria-label={`${SITE.name} 首页`}>
-        <Wordmark size={24} />
+        <Wordmark size={21} />
       </Link>
+      <p className="mb-1 px-2 text-[10.5px] leading-relaxed text-ink-4">核心网与 AI 技术洞察</p>
       <nav className="-mx-1 flex-1 overflow-y-auto px-1" aria-label="主导航">
         {SIDEBAR.map((section) => (
           <div key={section.title}>

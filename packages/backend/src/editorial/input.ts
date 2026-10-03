@@ -81,6 +81,7 @@ export function buildMaterial(a: AnalyzeInputArticle): string {
   lines.push(`类型：${KIND_LABEL[a.source.kind] ?? a.source.kind}；分级：${a.source.tier}；一手来源：${a.source.firstParty ? "是" : "否"}`);
   lines.push("</source>");
   lines.push("<material>");
+  if (a.bodyStatus === "unconfirmed") lines.push("材料完整性：未确认。仅依据现有原始文本，不推断缺失内容或完整性。");
   if (a.publishedAt) lines.push(`发布时间：${beijingDate(a.publishedAt)} ${beijingTime(a.publishedAt)}（北京时间）`);
   if (a.author) lines.push(`作者：${a.author}`);
   if (a.xPost) {

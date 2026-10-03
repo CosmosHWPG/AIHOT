@@ -23,6 +23,8 @@ const GROUPS: Array<{ title: string; rows: Row[] }> = [
   {
     title: "内容",
     rows: [
+      { to: "/?tag=%E6%A0%B8%E5%BF%83%E7%BD%91", label: "核心网精选", icon: <IconGrid size={18} /> },
+      { to: "/?tag=AI", label: "AI 精选", icon: <IconGrid size={18} /> },
       { to: "/topics", label: "主题索引", icon: <IconGrid size={18} /> },
       ...(FEATURES.leaderboard ? [{ to: "/leaderboard", label: "模型榜", icon: <IconChart size={18} /> }] : []),
       ...(FEATURES.codexResetMonitor ? [{ to: "/codex-reset", label: "Tibo重置监控", icon: <IconHistory size={18} /> }] : []),

@@ -76,6 +76,8 @@ export function needsShortTweetTranslation(text: string): boolean {
 const unfetchedXArticle = (a: AnalyzeInputArticle) => !!a.xPost && a.bodyStatus !== "ok" && onlyXArticleLink(String(a.xPost.text ?? ""));
 
 function materialQuality(a: AnalyzeInputArticle): string {
+  if (a.bodyText && a.bodyStatus === "unconfirmed") return "来源原始文本（完整性未确认；仅依据现有文本，不补写缺失结论）";
+  if (a.bodyText && a.bodyStatus === "pending") return "部分来源文本（正文仍待获取，不能视为完整全文）";
   if (a.xPost) return "完整正文（来自 RSS / API 自带的 content 字段）";
   if (a.bodyText) return a.source.fetchesBody ? "完整正文（抓自原始网页）" : "完整正文（来自 RSS / API 自带的 content 字段）";
   if (a.excerpt) return "仅摘要（feed 未提供完整正文）";

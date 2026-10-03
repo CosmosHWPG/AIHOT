@@ -1,23 +1,547 @@
 {
-  "exportedAt": "2026-09-26",
+  "exportedAt": "2026-10-03",
   "groups": [
     {
-      "key": "company",
-      "name": "公司与模型",
-      "blurb": "按厂商与模型系追踪：谁发了什么、又赢了哪一局"
+      "key": "field",
+      "name": "技术与决策方向",
+      "blurb": "核心网、AI，以及架构、标准、安全与商业问题"
     },
     {
-      "key": "field",
-      "name": "技术方向",
-      "blurb": "按技术领域深挖：Agent、多模态、具身智能……"
+      "key": "company",
+      "name": "公司与标准组织",
+      "blurb": "只收实际主体，区分当事方与顺带提及"
     },
     {
       "key": "genre",
       "name": "内容形态",
-      "blurb": "按内容类型浏览：论文、教程、观点、政策……"
+      "blurb": "按研究、工程、产品、产业与政策积累证据"
     }
   ],
   "topics": [
+    {
+      "slug": "core-network",
+      "name": "核心网全景",
+      "group": "field",
+      "tags": [
+        "核心网"
+      ],
+      "definition": "追踪移动核心网的技术、架构、标准、安全与商业进展，保留从研究到商用的阶段边界。",
+      "related": [
+        "5gc",
+        "cloud-native-network",
+        "standards"
+      ]
+    },
+    {
+      "slug": "ai",
+      "name": "AI 技术与产业",
+      "group": "field",
+      "tags": [
+        "AI"
+      ],
+      "definition": "汇集模型、智能体、工程基础设施、安全治理与产业商业的一手进展。",
+      "related": [
+        "agent",
+        "ai-infrastructure",
+        "ai-business"
+      ]
+    },
+    {
+      "slug": "5gc",
+      "name": "5GC 与核心网演进",
+      "group": "field",
+      "tags": [
+        "5GC/核心网"
+      ],
+      "definition": "5GC、EPC、IMS 与核心网网元、服务化架构、用户面及会话管理的能力与工程变化。",
+      "related": [
+        "core-network",
+        "cloud-native-network",
+        "network-security"
+      ]
+    },
+    {
+      "slug": "6g",
+      "name": "6G 架构与标准研究",
+      "group": "field",
+      "tags": [
+        "6G"
+      ],
+      "definition": "关注面向 6G 的需求、架构、研究项目和标准路线，区分研究、提案、冻结与实现。",
+      "related": [
+        "standards",
+        "3gpp",
+        "network-intelligence"
+      ]
+    },
+    {
+      "slug": "standards",
+      "name": "标准与协议",
+      "group": "field",
+      "tags": [
+        "标准/协议"
+      ],
+      "definition": "3GPP、ETSI、IETF 等规范、工作项目与协议演进，保留编号、版本与成熟度。",
+      "related": [
+        "3gpp",
+        "etsi",
+        "ietf"
+      ]
+    },
+    {
+      "slug": "cloud-native-network",
+      "name": "云原生网络与 Telco Cloud",
+      "group": "field",
+      "tags": [
+        "云原生网络"
+      ],
+      "definition": "网络功能、容器平台、NFV 管理编排及电信云的部署、生命周期与架构取舍。",
+      "related": [
+        "red-hat",
+        "cncf",
+        "network-resilience"
+      ]
+    },
+    {
+      "slug": "network-security",
+      "name": "网络安全与信任",
+      "group": "field",
+      "tags": [
+        "网络安全"
+      ],
+      "definition": "核心网、网络 API 与云基础设施的攻击面、鉴权、防御、安全通报与合规依据。",
+      "related": [
+        "network-resilience",
+        "network-api",
+        "standards"
+      ]
+    },
+    {
+      "slug": "network-intelligence",
+      "name": "网络智能化与自治",
+      "group": "field",
+      "tags": [
+        "网络智能化"
+      ],
+      "definition": "网络数据分析、NWDAF、意图驱动、自治运维与 AI 赋能网络的可验证能力变化。",
+      "related": [
+        "tm-forum",
+        "agent",
+        "5gc"
+      ]
+    },
+    {
+      "slug": "network-api",
+      "name": "网络开放与 API 商业化",
+      "group": "field",
+      "tags": [
+        "网络开放/API"
+      ],
+      "definition": "NEF、网络能力开放、GSMA Open Gateway 与 CAMARA 的接口、实现范围及商业模式进展。",
+      "related": [
+        "gsma",
+        "5gc",
+        "commercial-strategy"
+      ]
+    },
+    {
+      "slug": "private-edge",
+      "name": "专网与边缘网络",
+      "group": "field",
+      "tags": [
+        "专网/边缘"
+      ],
+      "definition": "专网、边缘计算与分布式核心网的场景、架构、性能成本及部署实践。",
+      "related": [
+        "5gc",
+        "on-device",
+        "cloud-native-network"
+      ]
+    },
+    {
+      "slug": "network-resilience",
+      "name": "网络韧性与可观测性",
+      "group": "field",
+      "tags": [
+        "网络韧性"
+      ],
+      "definition": "网络可靠性、容灾、容量、性能与故障复盘，保留指标的环境与端到端边界。",
+      "related": [
+        "network-security",
+        "cloud-native-network",
+        "engineering"
+      ]
+    },
+    {
+      "slug": "rag",
+      "name": "RAG 与知识系统",
+      "group": "field",
+      "tags": [
+        "RAG"
+      ],
+      "definition": "检索增强生成、索引、知识组织与企业知识系统的评测、边界和工程实践。",
+      "related": [
+        "ai-memory",
+        "ai-evaluation",
+        "agent"
+      ]
+    },
+    {
+      "slug": "ai-memory",
+      "name": "AI 记忆与上下文",
+      "group": "field",
+      "tags": [
+        "AI记忆"
+      ],
+      "definition": "智能体长期记忆、上下文管理、记忆评测与数据治理，关注可复用的方法与证据。",
+      "related": [
+        "rag",
+        "agent",
+        "ai-safety"
+      ]
+    },
+    {
+      "slug": "ai-evaluation",
+      "name": "AI 评测与能力边界",
+      "group": "field",
+      "tags": [
+        "AI评测"
+      ],
+      "definition": "模型与智能体评测的方法、可靠性、真实任务和能力边界，区分成绩与生产表现。",
+      "related": [
+        "benchmarks",
+        "ai-safety",
+        "agent"
+      ]
+    },
+    {
+      "slug": "ai-safety",
+      "name": "AI 安全与治理",
+      "group": "field",
+      "tags": [
+        "AI安全"
+      ],
+      "definition": "提示注入、越狱、权限隔离、模型与智能体安全评测，以及治理和合规变化。",
+      "related": [
+        "safety",
+        "ai-memory",
+        "policy"
+      ]
+    },
+    {
+      "slug": "ai-infrastructure",
+      "name": "AI 基础设施与架构",
+      "group": "field",
+      "tags": [
+        "AI基础设施"
+      ],
+      "definition": "训练与推理基础设施、算力、部署、成本效率和可观测性，为架构与选型提供依据。",
+      "related": [
+        "engineering",
+        "nvidia",
+        "data-training"
+      ]
+    },
+    {
+      "slug": "commercial-strategy",
+      "name": "技术战略与商业规划",
+      "group": "field",
+      "tags": [
+        "商业/战略"
+      ],
+      "definition": "核心网与 AI 的市场结构、商业模式、生态合作、投入与成本证据，区分承诺与已兑现结果。",
+      "related": [
+        "industry",
+        "network-api",
+        "ai-business"
+      ]
+    },
+    {
+      "slug": "ai-business",
+      "name": "AI 产业与商业",
+      "group": "field",
+      "tags": [
+        "AI商业"
+      ],
+      "definition": "AI 的商业模式、经营事实、竞争格局与战略取舍，保留证据和已兑现结果。",
+      "related": [
+        "commercial-strategy",
+        "industry",
+        "ai-infrastructure"
+      ]
+    },
+    {
+      "slug": "ericsson",
+      "name": "Ericsson 爱立信",
+      "group": "company",
+      "tags": [
+        "Ericsson",
+        "entity:ericsson"
+      ],
+      "definition": "核心网产品、云原生网络、网络 API 与架构路线。",
+      "related": [
+        "5gc",
+        "network-api",
+        "cloud-native-network"
+      ],
+      "entityId": "ericsson"
+    },
+    {
+      "slug": "nokia",
+      "name": "Nokia 诺基亚",
+      "group": "company",
+      "tags": [
+        "Nokia",
+        "entity:nokia"
+      ],
+      "definition": "核心网、网络能力开放、云平台与产品经营进展。",
+      "related": [
+        "5gc",
+        "network-api",
+        "commercial-strategy"
+      ],
+      "entityId": "nokia"
+    },
+    {
+      "slug": "huawei",
+      "name": "华为 Huawei",
+      "group": "company",
+      "tags": [
+        "华为",
+        "entity:huawei"
+      ],
+      "definition": "核心网、通信架构、网络智能化以及 AI 技术与基础设施进展。",
+      "related": [
+        "5gc",
+        "network-intelligence",
+        "ai-infrastructure"
+      ],
+      "entityId": "huawei"
+    },
+    {
+      "slug": "zte",
+      "name": "中兴 ZTE",
+      "group": "company",
+      "tags": [
+        "中兴",
+        "entity:zte"
+      ],
+      "definition": "核心网、网络云原生化、网络智能化与产业合作进展。",
+      "related": [
+        "5gc",
+        "cloud-native-network",
+        "network-intelligence"
+      ],
+      "entityId": "zte"
+    },
+    {
+      "slug": "samsung",
+      "name": "Samsung 三星",
+      "group": "company",
+      "tags": [
+        "Samsung",
+        "entity:samsung"
+      ],
+      "definition": "核心网、网络软件、架构研究与 AI 能力进展。",
+      "related": [
+        "5gc",
+        "6g",
+        "ai-infrastructure"
+      ],
+      "entityId": "samsung"
+    },
+    {
+      "slug": "cisco",
+      "name": "Cisco 思科",
+      "group": "company",
+      "tags": [
+        "Cisco",
+        "entity:cisco"
+      ],
+      "definition": "网络、安全、通信平台与 AI 基础设施的能力与架构变化。",
+      "related": [
+        "network-security",
+        "ai-infrastructure",
+        "cloud-native-network"
+      ],
+      "entityId": "cisco"
+    },
+    {
+      "slug": "oracle",
+      "name": "Oracle",
+      "group": "company",
+      "tags": [
+        "Oracle",
+        "entity:oracle"
+      ],
+      "definition": "核心网、通信平台、云服务与 AI 基础设施进展。",
+      "related": [
+        "5gc",
+        "cloud-native-network",
+        "ai-infrastructure"
+      ],
+      "entityId": "oracle"
+    },
+    {
+      "slug": "red-hat",
+      "name": "Red Hat",
+      "group": "company",
+      "tags": [
+        "Red Hat",
+        "entity:red-hat"
+      ],
+      "definition": "电信云、容器平台、网络功能生命周期和 AI 部署工程。",
+      "related": [
+        "cloud-native-network",
+        "cncf",
+        "engineering"
+      ],
+      "entityId": "red-hat"
+    },
+    {
+      "slug": "3gpp",
+      "name": "3GPP",
+      "group": "company",
+      "tags": [
+        "3GPP",
+        "entity:3gpp"
+      ],
+      "definition": "规范、研究与工作项目、Release 和各阶段冻结，保留标准的版本与状态。",
+      "related": [
+        "standards",
+        "5gc",
+        "6g"
+      ],
+      "entityId": "3gpp"
+    },
+    {
+      "slug": "etsi",
+      "name": "ETSI",
+      "group": "company",
+      "tags": [
+        "ETSI",
+        "entity:etsi"
+      ],
+      "definition": "NFV、Telco Cloud、网络管理编排与通信安全相关的标准和工作进展。",
+      "related": [
+        "standards",
+        "cloud-native-network",
+        "network-security"
+      ],
+      "entityId": "etsi"
+    },
+    {
+      "slug": "ietf",
+      "name": "IETF",
+      "group": "company",
+      "tags": [
+        "IETF",
+        "entity:ietf"
+      ],
+      "definition": "与通信网络及 AI 基础设施相关的 Internet-Draft、RFC 和协议工作进展。",
+      "related": [
+        "standards",
+        "network-security",
+        "network-api"
+      ],
+      "entityId": "ietf"
+    },
+    {
+      "slug": "gsma",
+      "name": "GSMA",
+      "group": "company",
+      "tags": [
+        "GSMA",
+        "entity:gsma"
+      ],
+      "definition": "运营商产业、Open Gateway、网络 API 与行业治理的公开进展。",
+      "related": [
+        "network-api",
+        "commercial-strategy",
+        "standards"
+      ],
+      "entityId": "gsma"
+    },
+    {
+      "slug": "tm-forum",
+      "name": "TM Forum",
+      "group": "company",
+      "tags": [
+        "TM Forum",
+        "entity:tm-forum"
+      ],
+      "definition": "自治网络、意图、运营架构与产业协作的标准和实践依据。",
+      "related": [
+        "network-intelligence",
+        "commercial-strategy",
+        "standards"
+      ],
+      "entityId": "tm-forum"
+    },
+    {
+      "slug": "o-ran",
+      "name": "O-RAN Alliance",
+      "group": "company",
+      "tags": [
+        "O-RAN Alliance",
+        "entity:o-ran"
+      ],
+      "definition": "开放网络架构、接口、智能化与核心网相关协作；不把 O-RAN 等同于核心网。",
+      "related": [
+        "standards",
+        "network-intelligence",
+        "6g"
+      ],
+      "entityId": "o-ran"
+    },
+    {
+      "slug": "cncf",
+      "name": "CNCF",
+      "group": "company",
+      "tags": [
+        "CNCF",
+        "entity:cncf"
+      ],
+      "definition": "云原生项目、架构、生态与网络及 AI 系统的工程实践。",
+      "related": [
+        "cloud-native-network",
+        "ai-infrastructure",
+        "engineering"
+      ],
+      "entityId": "cncf"
+    },
+    {
+      "slug": "ngmn",
+      "name": "NGMN",
+      "group": "company",
+      "tags": [
+        "NGMN",
+        "entity:ngmn"
+      ],
+      "definition": "运营商网络需求、6G 路线、架构与可持续性的行业研究。",
+      "related": [
+        "6g",
+        "commercial-strategy",
+        "network-resilience"
+      ],
+      "entityId": "ngmn"
+    },
+    {
+      "slug": "itu",
+      "name": "ITU 国际电信联盟",
+      "group": "company",
+      "tags": [
+        "ITU",
+        "entity:itu"
+      ],
+      "definition": "通信标准、未来网络研究与相关政策治理的阶段进展。",
+      "related": [
+        "6g",
+        "standards",
+        "policy"
+      ],
+      "entityId": "itu"
+    },
     {
       "slug": "openai",
       "name": "OpenAI / ChatGPT",
@@ -76,7 +600,7 @@
         "DeepSeek",
         "entity:deepseek"
       ],
-      "definition": "DeepSeek（深度求索）的模型发布、开源权重与技术报告——开源大模型价格与性能双卷的风向标。",
+      "definition": "DeepSeek 的模型发布、开源权重、技术报告与工程能力边界。",
       "related": [
         "qwen",
         "open-source",
@@ -168,7 +692,7 @@
         "Meta",
         "entity:meta"
       ],
-      "definition": "Meta 的 AI 动态：Llama 开源模型系列、超级智能实验室与元宇宙之外的 AI 豪赌。",
+      "definition": "Meta 的模型、开源生态、研究与产品经营进展。",
       "related": [
         "xai",
         "open-source",
@@ -199,7 +723,7 @@
       "tags": [
         "entity:nvidia"
       ],
-      "definition": "英伟达的 AI 芯片与生态动态：GPU 新品、CUDA 生态、机器人平台与 AI 算力市场的风向。",
+      "definition": "NVIDIA 的算力、模型与部署生态，关注架构能力、性能成本及适用范围。",
       "related": [
         "engineering",
         "industry",
@@ -230,7 +754,7 @@
       "tags": [
         "entity:cursor"
       ],
-      "definition": "Cursor 编辑器的产品迭代与生态动态——AI 编码工具竞争中最受关注的玩家之一。",
+      "definition": "Cursor 的编码工具、智能体工作流、产品能力与商业变化。",
       "related": [
         "coding",
         "agent",
@@ -245,7 +769,7 @@
       "tags": [
         "entity:openrouter"
       ],
-      "definition": "OpenRouter 模型路由平台动态：新模型上架、用量排行与开发者选型的真实市场信号。",
+      "definition": "OpenRouter 的模型路由、接入能力、价格及开发者选型信号。",
       "related": [
         "engineering",
         "model-releases",
@@ -259,7 +783,7 @@
       "tags": [
         "Agent"
       ],
-      "definition": "让模型自主规划、调用工具、完成多步任务的技术方向——从 Claude Code、Manus 到各家 Agent 框架与评测基准的全部动态。",
+      "definition": "智能体运行循环、规划、工具与权限、工程框架、真实任务和评测进展。",
       "related": [
         "mcp",
         "coding",
@@ -273,7 +797,7 @@
       "tags": [
         "编码"
       ],
-      "definition": "AI 写代码的一切：编码助手、Vibe Coding、代码模型评测与开发工作流变革。",
+      "definition": "AI 编码工具、代码模型评测、开发流程与工程可靠性的变化。",
       "related": [
         "agent",
         "cursor",
@@ -386,7 +910,7 @@
         "开源生态",
         "开源/仓库"
       ],
-      "definition": "开源模型、框架与仓库动态：权重开放、社区项目爆火、开源与闭源的力量消长。",
+      "definition": "模型、框架与仓库的开源进展，区分权重、源码、许可证和商业使用范围。",
       "related": [
         "model-releases",
         "hugging-face",
@@ -400,7 +924,7 @@
       "tags": [
         "部署/工程"
       ],
-      "definition": "把模型跑起来的工程实践：推理优化、显存与成本、Serving 架构与基础设施选型。",
+      "definition": "模型与系统的部署、性能优化、可观测性及成本取舍，关注可迁移实践。",
       "related": [
         "open-source",
         "data-training",
@@ -426,7 +950,7 @@
       "name": "安全对齐",
       "group": "field",
       "tags": [
-        "安全/对齐"
+        "AI安全"
       ],
       "definition": "AI 安全与对齐：越狱与防御、模型行为研究、安全评测与治理框架的进展。",
       "related": [
@@ -470,7 +994,7 @@
       "tags": [
         "产品更新"
       ],
-      "definition": "AI 产品与应用的功能上新、改版与商业化动态——谁家的产品变强了、变贵了、能用了。",
+      "definition": "核心网与 AI 产品、平台及网络能力的发布更新，保留能力与成熟度边界。",
       "related": [
         "model-releases",
         "industry",
@@ -484,7 +1008,7 @@
       "tags": [
         "论文/研究"
       ],
-      "definition": "值得读的 AI 论文与研究成果：架构创新、训练方法、能力测量与理论进展的精选解读。",
+      "definition": "核心网与 AI 的论文、技术报告、研究方法和能力测量，保留实验范围。",
       "related": [
         "reasoning",
         "safety",
@@ -498,7 +1022,7 @@
       "tags": [
         "评测/基准"
       ],
-      "definition": "模型到底谁强：Benchmark 成绩、评测方法论争议与排行榜变化的持续记录。",
+      "definition": "模型、智能体与系统的评测方法、基准结果、可靠性及对照条件。",
       "related": [
         "model-releases",
         "papers",
@@ -521,12 +1045,12 @@
     },
     {
       "slug": "opinions",
-      "name": "大佬观点",
+      "name": "专业观点与洞察",
       "group": "genre",
       "tags": [
         "大佬观点"
       ],
-      "definition": "行业关键人物在想什么：创始人访谈、研究者论战、投资人判断的观点集合。",
+      "definition": "技术与产业人士的原创分析、深度访谈、架构取舍与商业判断。",
       "related": [
         "trends",
         "industry"
@@ -553,7 +1077,7 @@
       "tags": [
         "行业动态"
       ],
-      "definition": "AI 行业的商业脉搏：融资并购、人事变动、合作与竞争、政策与市场信号。",
+      "definition": "核心网与 AI 的公司经营、市场竞争、生态合作、融资并购与商业进展。",
       "related": [
         "trends",
         "opinions",
@@ -567,7 +1091,7 @@
       "tags": [
         "政策/监管"
       ],
-      "definition": "AI 相关政策法规与政府监管动态：立法进展、出口管制与全球治理框架的追踪。",
+      "definition": "通信网络与 AI 相关的政策、监管、出口管制、合规及治理进展。",
       "related": [
         "industry",
         "safety",
