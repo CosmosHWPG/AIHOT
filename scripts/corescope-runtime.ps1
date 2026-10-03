@@ -206,16 +206,7 @@ function Start-Database {
     Assert-PortFree $PgPort $ownedPg
     if (-not $ownedPg) {
         Write-Stage 'database-start' 'Starting PostgreSQL on 127.0.0.1:5448.'
-        $pgCtl = Join-Path $PgRoot 'bin\pg_ctl.exe'
-        $pgLog = Join-Path $LogDir 'postgres.log'
-        $args = @('start', '-D', ('"' + $PgData + '"'), '-o', '"-h 127.0.0.1 -p 5448"', '-l', ('"' + $pgLog + '"'), '-w', '-t', '60')
-        $started = Start-Process -FilePath $pgCtl -ArgumentList $args -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $LogDir 'pg-control.log') -RedirectStandardError (Join-Path $LogDir 'pg-control.error.log')
-        $null = $started.Handle
-        if (-not $started.WaitForExit(65000)) { throw 'PostgreSQL control startup timed out; inspect the database log before retrying.' }
-        $started.Refresh()
-        # Windows PowerShell can report a null exit code for an already exited detached launcher.
-        # Ownership and the authenticated query below remain required before we call it ready.
-        if ($null -ne $started.ExitCode -and $started.ExitCode -ne 0) { throw 'PostgreSQL failed to start; see .data/logs/postgres.log.' }
+        Invoke-NodeScript 'scripts/corescope-runtime.ts' @('launch-postgres')
         if (-not (Get-OwnedPostgresPid)) { throw 'PostgreSQL PID or command identity could not be verified.' }
     }
     Write-Stage 'database-authenticate' 'Verifying PostgreSQL identity, authentication and independent databases.'
@@ -298,19 +289,7 @@ function Start-System {
         }
     } finally { Pop-Location }
     Write-Stage 'supervisor-start' 'Starting the API, website, worker and configured V2 bridge.'
-    $savedEnvironment = @{}
-    try {
-        foreach ($property in $Config.PSObject.Properties) {
-            $savedEnvironment[$property.Name] = [Environment]::GetEnvironmentVariable($property.Name, 'Process')
-            [Environment]::SetEnvironmentVariable($property.Name, [string]$property.Value, 'Process')
-        }
-        $savedEnvironment['NODE_ENV'] = $env:NODE_ENV
-        $env:NODE_ENV = 'production'
-        $args = @(('"--env-file=' + $EnvFile + '"'), ('"' + $SupervisorEntry + '"'), 'daemon')
-        Start-Process -FilePath $Node -ArgumentList $args -WorkingDirectory $ProjectRoot -WindowStyle Hidden -RedirectStandardOutput (Join-Path $LogDir 'supervisor.log') -RedirectStandardError (Join-Path $LogDir 'supervisor.error.log') | Out-Null
-    } finally {
-        foreach ($key in $savedEnvironment.Keys) { [Environment]::SetEnvironmentVariable($key, $savedEnvironment[$key], 'Process') }
-    }
+    Invoke-NodeScript 'scripts/corescope-runtime.ts' @('launch-supervisor')
     Write-Stage 'api-health' 'Waiting for the API to answer a real database health query.'
     Wait-Health "http://127.0.0.1:$ApiPort/api/health"
     Write-Stage 'web-health' 'Waiting for the website to proxy the database health query.'

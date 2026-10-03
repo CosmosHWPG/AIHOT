@@ -4,6 +4,7 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { existsSync, mkdirSync, openSync, closeSync, readFileSync, writeFileSync } from "node:fs";
 import net from "node:net";
 import path from "node:path";
+import { launchDetached, loadLaunchEnvironment } from "./corescope-runtime-launch.ts";
 
 const root = path.resolve(import.meta.dirname, "..");
 const runtime = path.join(root, ".data/runtime");
@@ -32,7 +33,36 @@ function requestControl(command: "status" | "stop"): Promise<unknown> {
   });
 }
 
-if (action === "status" || action === "stop") {
+if (action === "launch-supervisor" || action === "launch-postgres") {
+  mkdirSync(logs, { recursive: true });
+  try {
+    const isPostgres = action === "launch-postgres";
+    // Keep the launcher's contract: the private file overrides inherited shell settings.
+    const environment = loadLaunchEnvironment(envFile);
+    const result = await launchDetached(
+      isPostgres ? path.join(runtime, "pgsql/bin/pg_ctl.exe") : process.execPath,
+      isPostgres
+        ? ["start", "-D", path.join(runtime, "postgres-data"), "-o", "-h 127.0.0.1 -p 5448", "-l", path.join(logs, "postgres.log"), "-w", "-t", "60"]
+        : [`--env-file=${envFile}`, path.resolve(import.meta.filename), "daemon"],
+      {
+        cwd: root,
+        stdout: path.join(logs, isPostgres ? "pg-control.log" : "supervisor.log"),
+        stderr: path.join(logs, isPostgres ? "pg-control.error.log" : "supervisor.error.log"),
+        env: environment,
+        waitForExit: isPostgres,
+        timeoutMs: 70_000,
+      },
+    );
+    console.log(JSON.stringify({ role: isPostgres ? "postgres-control" : "supervisor", ...result }));
+    if (isPostgres && result.exitCode !== 0) {
+      console.error("PostgreSQL control failed; inspect .data/logs/pg-control.error.log and postgres.log.");
+      process.exitCode = typeof result.exitCode === "number" && result.exitCode > 0 && result.exitCode <= 255 ? result.exitCode : 1;
+    }
+  } catch (error) {
+    console.error(JSON.stringify({ error: error instanceof Error ? error.message : "Background launch failed" }));
+    process.exitCode = 1;
+  }
+} else if (action === "status" || action === "stop") {
   try {
     console.log(JSON.stringify(await requestControl(action)));
   } catch (error) {
@@ -147,6 +177,6 @@ if (action === "status" || action === "stop") {
   process.on("SIGTERM", () => { void stop().then(() => control.close(() => process.exit(0))); });
   process.on("SIGINT", () => { void stop().then(() => control.close(() => process.exit(0))); });
 } else {
-  console.error("Use daemon, status or stop");
+  console.error("Use launch-supervisor, launch-postgres, daemon, status or stop");
   process.exitCode = 1;
 }

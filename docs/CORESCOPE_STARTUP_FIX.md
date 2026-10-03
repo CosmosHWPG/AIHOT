@@ -34,3 +34,17 @@ Get-Content .data/logs/startup.error.log -Tail 30
 - API、web、worker、V2 只读 bridge 均 `ready=true`、重启数 0；再次启动复用这些进程，全站 33 项 smoke 通过，浏览器已实际打开精选页。
 
 本次仅修复独立 CoreScope 的目录同步与启动诊断，不更改 V2 服务、V2 数据库、模型服务配置或行业评分规则。
+
+## 2026-10-04 关闭启动窗口后的后台存活
+
+用户确认凌晨关闭过启动窗口。随后检查发现 API、web、worker、bridge、supervisor 和 PostgreSQL 均已退出；状态文件仍停留在 `ready=true/stopping=false`，没有主动 Stop、应用正常停止或数据库 shutdown 记录。最后 bridge 轮次结束于 00:50:54，数据库 checkpoint 结束于 00:51:43；这些日志没有记录精确的进程退出时刻，不能据此单独判定 crash 或 Windows job 终止。
+
+原 PowerShell `Start-Process` 路线替换为显式独立后台启动：Node `spawn` 使用 `detached:true`、`windowsHide:true`、忽略 stdin、stdout/stderr 直接接日志文件，并 `unref()`。数据库控制程序仍等待真实退出码；完整启动仍需验证 PostgreSQL 路径/PID、认证查询、应用身份及健康。监督进程继续通过带本机认证 token 的控制管道优雅停止，frontend 环境白名单不变。私有 `.env` 继续优先于继承的 shell 配置，处理 Windows 环境变量键名大小写。
+
+新增 7 项隔离假进程回归：父进程自然退出或仅该假父进程被终止后，后台 PID 和随机 nonce heartbeat 继续有效；附着且保持 ref 的父进程等待子进程自退出；真实非零控制退出码与文件日志；缺失程序；控制超时后子进程仍可观测；私有配置优先级且假凭据不出现在日志中。测试不读取正式配置、不运行 PostgreSQL、不调用模型、不操作用户窗口。此验证覆盖父进程生命周期及文件 stdio；真实 Windows `CTRL_CLOSE` / 用户手动关窗未由自动测试模拟，不能把这两项等同。
+
+02:44 执行修复后的真实 Database 冷启动，命令完整返回 exit 0，PostgreSQL 控制退出码 0，身份与认证查询通过。恢复后正式库保留 425 个来源、179 条材料、2189 个模型和 7096 个别名；新备份 `.data/backups/corescope-before-detached-startup-fix-20261004.dump` 为 6,395,695 字节，`pg_restore --list` 成功。
+
+完整验收：全仓类型检查、生产 web 构建、web 32/32、独立空库后端 590/590（含新增 7 项）通过。全停止 CoreScope 后，从项目外目录运行真正的 `Start-CoreScope.cmd`，02:50:31 开始、02:50:40 到达 READY；这次启动命令自身完整返回 exit 0，未留下等待后台 stdout/stderr 的 exec 会话。之后再查状态，PostgreSQL、supervisor 及 api/web/worker/bridge 都仍在运行，所有应用 ready、重启数 0。全站 33 项 smoke 通过。
+
+02:51 的只读数据复核显示 RSS 新增 4 条材料，桥接轮次正常完成并仍读取 0 条新增；worker 开始处理积压并按原每分钟模型额度延迟下一轮。这证明后台活动已恢复，不代表 161 个来源的独立采集迁移已经完成。此来源覆盖与处理吞吐缺口单独记录于 `CORESCOPE_SOURCE_AUDIT.md`。
