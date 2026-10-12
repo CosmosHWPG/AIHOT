@@ -27,7 +27,7 @@ $script:DbPassword = $null
 function Protect-LogText([string]$Text) {
     if ($script:Config) {
         foreach ($property in $script:Config.PSObject.Properties) {
-            if ($property.Name -match '(?i)(API_KEY|PASSWORD|SECRET|TOKEN|^DATABASE_URL$)') {
+            if ($property.Name -match '(?i)(API_KEY|DAJIALA_KEY|SOCIALDATA_KEY|PASSWORD|SECRET|TOKEN|^DATABASE_URL$)') {
                 $value = [string]$property.Value
                 if ($value.Length -ge 4) { $Text = $Text.Replace($value, '[redacted]') }
             }

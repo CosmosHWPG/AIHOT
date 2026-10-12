@@ -15,7 +15,7 @@ database.pathname = "/corescope_test";
 const env: NodeJS.ProcessEnv = { ...process.env, DATABASE_URL: database.href, NODE_ENV: "test", COLLECT_ENABLED: "false",
   FEISHU_CONTENT_PUSH_ENABLED: "false", FEISHU_INTERNAL_ENABLED: "false", INDEXNOW_SUBMIT_ENABLED: "false" };
 for (const key of Object.keys(env)) {
-  if (/API_KEY|TOKEN|SECRET|PASSWORD|BASE_URL|_MODEL$|^LLM_|^EMBEDDING_|^DEV_AUTH_|^AIHOT_CREDENTIALS_DIR$/.test(key) && key !== "DATABASE_URL") delete env[key];
+  if (/API_KEY|DAJIALA_KEY|SOCIALDATA_KEY|TOKEN|SECRET|PASSWORD|BASE_URL|_MODEL$|^LLM_|^EMBEDDING_|^DEV_AUTH_|^AIHOT_CREDENTIALS_DIR$/.test(key) && key !== "DATABASE_URL") delete env[key];
 }
 // Tests explicitly enable model calls against their HTTP stubs; no real provider is configured.
 env.MODEL_CALLS_ENABLED = "true";

@@ -30,6 +30,8 @@ flowchart LR
   V[V2 SQLite 只读增量] --> B[保留来源身份与原始正文证据]
   R[公开 RSS 网页列表 JSON] --> I[去重入库]
   W[本机公众号缓存只读] --> I
+  M[Dajiala 公众号原文] --> I
+  X[Xquik 原始 X 账号] --> I
   B --> I
   I --> P[领域预筛与两次独立评分]
   P --> C[中文标题 摘要 标签 主体]
@@ -41,9 +43,9 @@ flowchart LR
 
 V2 的已有摘要与分数不是新站原始正文或新站精选结果。桥接保留原始标题、URL、发表时间、采集时间及正文证据，由新站规则重新分析。正文未经来源确认时明确标为 `unconfirmed`，不会因篇幅较长就宣称完整全文。
 
-2026-10-12 已逐源复核 425 个 canonical 来源，配置为 **284 条原生路线、125 条只读桥接路线、16 条关闭路线**。原生路线包括 203 个 RSS、15 个网页列表、15 个 JSON 接口和 51 个公众号缓存入口。修正了把“候选、未确认、待验证”一律停用的迁移规则，227 个来源重新取得接入资格；14 个原暂停来源保留冻结名单。桥接来源仍依赖 V2 产生新材料，不代表已实现直接访问源站。
+2026-10-12 在原425个 canonical 来源上补齐191个入口，当前 **616个来源、600个启用**：480条原生、120条只读桥接、16条关闭路线。原生包括245 RSS、40网页列表、20 JSON、114 X、61公众号（52缓存、9 API）。所有原ID和暂停保留；原有5个可接入X账号改用Xquik，不再重复桥接。72个新增公开入口和10个新增公众号均完成正式库采集；X完成有预算的三账号批次验收，继续逐批采集。完整差异、重复清单、191个入口和证据见 [本次补齐验收](docs/CORESCOPE_ONLINE_EXPANSION.md)。桥接仍依赖V2产生新材料。
 
-10 个非文章页独立处理：8 个监测明确的资源条目，2 个保留入口并说明接入限制；材料使用 `isolated` 模式，不进入新闻精选和热点。前端“更多 → 研究与开发资源”展示目录、关注范围和监测状态。微信公众号从已授权本机缓存只读增量入库，依赖缓存更新，不直接抓取微信服务器，也不管理共享采集程序。
+10 个非文章页独立处理：8 个监测明确的资源条目，2 个保留入口并说明接入限制；材料使用 `isolated` 模式，不进入新闻精选和热点。前端“更多 → 研究与开发资源”展示目录、关注范围和监测状态。缓存公众号依赖已授权缓存更新；新增9个公众号使用Dajiala官方url-selector，按公开biz核验账号身份，不管理共享采集程序。
 
 来源配置和接入路线不代表每次抓取成功。逐源访问结果、日期证据及限制见 [接入审计](docs/corescope-source-admission-audit.json)，原 ID 映射及去重理由见 [来源映射](docs/corescope-v2-sources.json)。Qwen、AutoGPT、腾讯云等错配入口已改为各自公开入口；旧新智元中继缺少原文链接，暂时拒绝桥接新材料，其准确公众号来源另由缓存路线覆盖。
 
@@ -73,6 +75,6 @@ node scripts/smoke.ts --base http://127.0.0.1:8780
 
 `corescope:test` 每次重建独立的临时 `corescope_test` 数据库，再迁移并移除真实模型密钥，只使用测试 HTTP stub。它拒绝重建仍有活动连接的测试库，不修改正式库。
 
-[设计说明](docs/CORESCOPE_DESIGN.md) · [本机运行](docs/CORESCOPE_LOCAL.md) · [桥接说明](docs/CORESCOPE_V2_BRIDGE.md) · [交付验收](docs/CORESCOPE_ACCEPTANCE.md) · [热点与主题机制](docs/CORESCOPE_MECHANISM.md) · [行业定制](docs/customize.md) · [部署](docs/deploy.md)
+[设计说明](docs/CORESCOPE_DESIGN.md) · [本机运行](docs/CORESCOPE_LOCAL.md) · [桥接说明](docs/CORESCOPE_V2_BRIDGE.md) · [信息源补齐验收](docs/CORESCOPE_ONLINE_EXPANSION.md) · [交付验收](docs/CORESCOPE_ACCEPTANCE.md) · [热点与主题机制](docs/CORESCOPE_MECHANISM.md) · [行业定制](docs/customize.md) · [部署](docs/deploy.md)
 
 本版本首先交付本机完整系统。外网部署需要配置域名、访问策略及运维，不属于本机启动脚本。保留上游 MIT 许可证与版权声明，品牌和行业定制不代表上游作者认可。

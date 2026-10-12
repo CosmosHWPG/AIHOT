@@ -19,8 +19,8 @@ const KEYS: Record<SourceRow["kind"], string[]> = {
     "urlTemplate", "urlTemplateFallback", "rawDropKeys", "requireBoolean", "minNumeric",
   ],
   // X accounts are mostly read in shards, which apply only these.
-  x_search: ["_aihot", "ingestNoiseFilter", "itemUrlPrefixRewrite", "query", "searchType"],
-  mp_account: ["wxid", "ghid", "nickname", "transport", "account", "limit", "lookbackDays", "cacheDirectoryEnv", "fetchPublicContent"],
+  x_search: ["_aihot", "ingestNoiseFilter", "itemUrlPrefixRewrite", "query", "searchType", "provider"],
+  mp_account: ["wxid", "ghid", "nickname", "transport", "account", "limit", "lookbackDays", "cacheDirectoryEnv", "fetchPublicContent", "articleUrl", "biz"],
   external: [],
 };
 
@@ -39,7 +39,8 @@ const NESTED: Record<string, string[]> = {
 
 const VALUES: Record<string, string[]> = {
   adapter: ["mimo_home", "article_links"],
-  parseMode: ["html", "markdown", "docusaurus_changelog"],
+  parseMode: ["html", "markdown", "docusaurus_changelog", "dated_sections"],
+  provider: ["socialdata", "xquik"],
   transport: ["dajiala", "wx_cache"],
 };
 

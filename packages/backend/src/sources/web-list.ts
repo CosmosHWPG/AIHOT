@@ -270,6 +270,50 @@ function fromDocusaurusChangelog(html: string, base: string, source: SourceRow):
   return out;
 }
 
+/** A dated update section is one material, even when all updates share the same page URL. */
+export function fromDatedSections(html: string, base: string, source: SourceRow): Candidate[] {
+  const $ = cheerio.load(html);
+  const out: Candidate[] = [];
+  const seen = new Set<string>();
+  const selector = source.config.itemSelector ?? "article h2[id], article h3[id]";
+  const daily = /^(?:\d{4}\s*[-/.年]\s*\d{1,2}\s*[-/.月]\s*\d{1,2}\s*日?|(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})$/i;
+  for (const node of $(selector).toArray()) {
+    const head = $(node);
+    const id = head.attr("id");
+    const heading = collapseWhitespace(head.clone().find("a").remove().end().text()).replace(/[\u200b\ue09a#]+$/g, "").trim();
+    if (!id || !/^h[1-6]$/i.test(node.tagName) || !daily.test(heading)) continue;
+    const compact = heading.replace(/\s*(年|月|日)\s*/g, "$1");
+    const publishedAt = parseLooseDate(compact, source.config.publishedAtUtcOffset ?? "+00:00");
+    if (!publishedAt) continue;
+    const level = Number(node.tagName.slice(1));
+    const parts: string[] = [];
+    // Intercom help pages wrap each heading in its own block beside the paragraph blocks.
+    const flowHead = !head.next().length && head.parent().children().length === 1 ? head.parent() : head;
+    let next = flowHead.next();
+    while (next.length) {
+      const boundary = next.is("h1,h2,h3,h4,h5,h6") ? next : next.find("h1,h2,h3,h4,h5,h6").first();
+      const boundaryTag = boundary[0]?.type === "tag" ? boundary[0].name : "";
+      if (boundaryTag && Number(boundaryTag.slice(1)) <= level) break;
+      parts.push($.html(next));
+      next = next.next();
+    }
+    const bodyHtml = sanitizeBody(parts.join(""), base);
+    const bodyText = collapseWhitespace(stripTags(bodyHtml));
+    if (bodyText.length < 20) continue;
+    const url = new URL(base);
+    url.hash = id;
+    if (seen.has(url.toString()) || !allowed(url.toString(), source)) continue;
+    const section = cheerio.load(bodyHtml);
+    const label = collapseWhitespace(section("h3,h4,strong,b").first().text()) || bodyText.slice(0, 120);
+    seen.add(url.toString());
+    out.push({
+      url: url.toString(), identityKey: `url:${url.toString()}`, title: `${label} (${heading})`, publishedAt,
+      excerpt: bodyText.slice(0, 2000), bodyHtml, bodyText, bodyStatus: "ok",
+    });
+  }
+  return out;
+}
+
 async function fetchScript(url: string): Promise<string> {
   const res = await guardedFetch(url, { timeoutMs: 25_000 });
   if (res.status !== 200) throw new FetchError(`HTTP ${res.status} for ${url}`, res.status);
@@ -349,6 +393,7 @@ export async function fetchWebList(source: SourceRow, opts: { preview?: boolean 
     else if (mode === "article_links") out = fromArticleLinks(text, base, source);
     else if (mode === "markdown") out = fromMarkdown(text, base, source);
     else if (mode === "docusaurus_changelog") out = fromDocusaurusChangelog(text, base, source);
+    else if (mode === "dated_sections") out = fromDatedSections(text, base, source);
     else out = fromHtml(text, base, source);
     if (out.length === 0) throw new FetchError(`no items matched (${mode})`);
     // A preview has no material commit; a successfully parsed page finishes its round here.

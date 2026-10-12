@@ -1576,18 +1576,24 @@
     {
       "id": "v2-source-186",
       "name": "X - emollick",
-      "kind": "external",
-      "config": {},
+      "kind": "x_search",
+      "config": {
+        "query": "from:emollick -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
       "tier": "T2",
       "first_party": false,
       "owner_entity_id": null,
-      "signal_group_id": "feed:6d8ee44d6f9d0369d78f",
+      "signal_group_id": "author:one-useful-thing",
       "participation_mode": "editorial",
-      "interval_minutes": 60,
+      "interval_minutes": 180,
       "tags": [
         "产业新闻",
-        "社区/社交/目录",
-        "V2只读桥"
+        "社区/社交/目录"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false,
@@ -6469,18 +6475,24 @@
     {
       "id": "v2-source-188",
       "name": "X - GeminiApp",
-      "kind": "external",
-      "config": {},
+      "kind": "x_search",
+      "config": {
+        "query": "from:GeminiApp -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
       "tier": "T2",
       "first_party": false,
       "owner_entity_id": null,
-      "signal_group_id": "feed:a33d5303c89bb47f8561",
+      "signal_group_id": "publisher:google",
       "participation_mode": "editorial",
-      "interval_minutes": 60,
+      "interval_minutes": 180,
       "tags": [
         "AI应用与产品化场景",
-        "社区/社交/目录",
-        "V2只读桥"
+        "社区/社交/目录"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false,
@@ -6508,18 +6520,24 @@
     {
       "id": "v2-source-190",
       "name": "X - OpenAI",
-      "kind": "external",
-      "config": {},
+      "kind": "x_search",
+      "config": {
+        "query": "from:OpenAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
       "tier": "T2",
       "first_party": false,
       "owner_entity_id": null,
-      "signal_group_id": "feed:c2fe940a6a0bf2da0b99",
+      "signal_group_id": "publisher:openai",
       "participation_mode": "editorial",
-      "interval_minutes": 60,
+      "interval_minutes": 180,
       "tags": [
         "AI应用与产品化场景",
-        "社区/社交/目录",
-        "V2只读桥"
+        "社区/社交/目录"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false,
@@ -6528,18 +6546,24 @@
     {
       "id": "v2-source-191",
       "name": "X - sama",
-      "kind": "external",
-      "config": {},
+      "kind": "x_search",
+      "config": {
+        "query": "from:sama -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
       "tier": "T2",
       "first_party": false,
       "owner_entity_id": null,
-      "signal_group_id": "feed:d6bb2f5dea4934597c94",
+      "signal_group_id": "author:sam-altman",
       "participation_mode": "editorial",
-      "interval_minutes": 60,
+      "interval_minutes": 180,
       "tags": [
         "AI应用与产品化场景",
-        "大咖言论 / X",
-        "V2只读桥"
+        "大咖言论 / X"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false,
@@ -9756,18 +9780,24 @@
     {
       "id": "v2-source-3725",
       "name": "X - karpathy",
-      "kind": "external",
-      "config": {},
+      "kind": "x_search",
+      "config": {
+        "query": "from:karpathy -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
       "tier": "T2",
       "first_party": false,
       "owner_entity_id": null,
-      "signal_group_id": "feed:81251766dffd794209fc",
+      "signal_group_id": "author:andrej-karpathy",
       "participation_mode": "editorial",
-      "interval_minutes": 60,
+      "interval_minutes": 180,
       "tags": [
         "AI模型",
-        "大咖言论 / X",
-        "V2只读桥"
+        "大咖言论 / X"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false,
@@ -9981,6 +10011,5223 @@
       "syndicate_fulltext": false,
       "enabled": true,
       "signal_group_id": "publisher:import-ai"
+    },
+    {
+      "id": "corescope-rss-ithome-com-5479b994",
+      "name": "IT之家 · 全站RSS（AI按分析筛选）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.ithome.com/rss/",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:ithome.com",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-browser-use-com-b05a52d6",
+      "name": "Browser Use",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://browser-use.com/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:browser-use",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-marktechpost-com-7d33969b",
+      "name": "MarkTechPost",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.marktechpost.com/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:marktechpost.com",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-cartesia-ai-03bf92a2",
+      "name": "Cartesia 产品与研究",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.cartesia.ai/blog",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/blog/[^/?#]+(?:/[^/?#]+)?/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:cartesia",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-sakana-ai-08bc6298",
+      "name": "Sakana AI：Blog",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://sakana.ai/feed.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:sakana",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-recodechinaai-com-04fbdf26",
+      "name": "Recode China AI",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.recodechinaai.com/feed",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:recodechinaai.com",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-every-to-20907bfd",
+      "name": "Every：最新文章",
+      "kind": "web_list",
+      "config": {
+        "url": "https://every.to/",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/(?:chain-of-thought|context-window|napkin-math|divinations|also-true-for-humans|thesis|superorganizers)/[^/?#]+",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:every.to",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-chinatalk-media-2a38e59e",
+      "name": "ChinaTalk",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.chinatalk.media/feed",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:chinatalk.media",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-exponentialview-co-b912a3c2",
+      "name": "Azeem Azhar：Exponential View",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.exponentialview.co/feed",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:exponentialview.co",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-json-list-api-github-com-c7fe6a79",
+      "name": "蚂蚁 inclusionAI：GitHub 新仓库",
+      "kind": "json_list",
+      "config": {
+        "url": "https://api.github.com/orgs/inclusionAI/repos?sort=created&per_page=30",
+        "titlePaths": [
+          "name"
+        ],
+        "publishedAtPath": "created_at",
+        "urlTemplate": "{raw:html_url}",
+        "externalIdPath": "id",
+        "summaryPaths": [
+          "description"
+        ],
+        "requireBoolean": {
+          "path": "fork",
+          "equals": false
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:ant-ling",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-agibot-com-cn-614f4b07",
+      "name": "AGIBOT 智元",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.agibot.com.cn/",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/article/\\d+/detail/\\d+\\.html$",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": ".article h1,.article h2,h1,.title",
+          "summarySelector": "meta[name=\"description\"]",
+          "publishedAtRegex": "发布时间[：:]\\s*(20\\d{2}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2})"
+        },
+        "itemSelector": "a[href*=\"/article/\"][href*=\"/detail/\"]",
+        "titleSelector": ".con p",
+        "publishedAtSelector": ".con span",
+        "publishedAtUtcOffset": "+08:00",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:agibot.com.cn",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-ampcode-com-1319cadb",
+      "name": "Amp Chronicle",
+      "kind": "web_list",
+      "config": {
+        "url": "https://ampcode.com/news",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/news/[^/?#]+/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "itemSelector": "a[href^=\"/news/\"]",
+        "titleSelector": "h2,h3",
+        "publishedAtSelector": "time",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:amp",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-garymarcus-substack-com-94c28c84",
+      "name": "Gary Marcus：The Road to AI We Can Trust",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://garymarcus.substack.com/feed",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:gary-marcus",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-alignment-openai-com-3ef47766",
+      "name": "OpenAI：失准报告与通报",
+      "kind": "web_list",
+      "config": {
+        "url": "https://alignment.openai.com/misalignment-reports/",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/misalignment-reports/[^/?#]+/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "itemSelector": "a.report-title",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "openai",
+      "signal_group_id": "publisher:openai",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-figma-com-0ebdc311",
+      "name": "Figma AI / Agent / Make",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.figma.com/blog/feed/atom.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:figma",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-allenai-org-27c23a3b",
+      "name": "Ai2 / Allen Institute for AI",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://allenai.org/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:ai2",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-anthropic-com-5ab5dc8b",
+      "name": "Anthropic：Research",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.anthropic.com/research",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/research/[^/?#]+/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": true,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "itemSelector": "a[class*=\"PublicationList\"][href]",
+        "titleSelector": "[class*=\"__title\"]",
+        "publishedAtSelector": "time",
+        "publishedAtUtcOffset": "+00:00",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "anthropic",
+      "signal_group_id": "publisher:anthropic",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-blog-redwoodresearch-org-ab832962",
+      "name": "Redwood Research：Blog",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://blog.redwoodresearch.org/feed",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:redwood-research",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-interconnects-ai-36557ac4",
+      "name": "Nathan Lambert：Interconnects",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.interconnects.ai/feed",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:interconnects",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-primeintellect-ai-b7b85f06",
+      "name": "Prime Intellect",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.primeintellect.ai/blog",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/blog/[^/?#]+(?:/[^/?#]+)?/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:prime-intellect",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-databricks-com-4b0d7518",
+      "name": "Databricks：Blog",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.databricks.com/feed",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:databricks",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-sierra-ai-70c04a28",
+      "name": "Sierra：Blog",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://sierra.ai/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:sierra",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-youtube-com-ab4c5c34",
+      "name": "Claude：YouTube",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.youtube.com/feeds/videos.xml?channel_id=UCV03SRZXJEz-hchIAogeJOg",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "anthropic",
+      "signal_group_id": "publisher:anthropic",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-json-list-api-github-com-5b88ee22",
+      "name": "Claude Code：GitHub Releases",
+      "kind": "json_list",
+      "config": {
+        "url": "https://api.github.com/repos/anthropics/claude-code/releases?per_page=20",
+        "titlePaths": [
+          "name",
+          "tag_name"
+        ],
+        "publishedAtPath": "published_at",
+        "urlTemplate": "{raw:html_url}",
+        "externalIdPath": "id",
+        "summaryPaths": [
+          "body"
+        ],
+        "summaryIsBody": true,
+        "requireBoolean": {
+          "path": "draft",
+          "equals": false
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "anthropic",
+      "signal_group_id": "publisher:anthropic",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-epochai-substack-com-bfc16181",
+      "name": "Epoch AI：Gradient Updates",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://epochai.substack.com/feed",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:epochai.substack.com",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-baseten-co-7f6bc157",
+      "name": "Baseten 工程博客",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.baseten.co/blog/",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/blog/[^/?#]+/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "itemSelector": "h4 a[href^=\"/blog/\"]",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:baseten",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-json-list-api-github-com-7f657830",
+      "name": "Codex：GitHub Releases",
+      "kind": "json_list",
+      "config": {
+        "url": "https://api.github.com/repos/openai/codex/releases?per_page=20",
+        "titlePaths": [
+          "name",
+          "tag_name"
+        ],
+        "publishedAtPath": "published_at",
+        "urlTemplate": "{raw:html_url}",
+        "externalIdPath": "id",
+        "summaryPaths": [
+          "body"
+        ],
+        "summaryIsBody": true,
+        "requireBoolean": {
+          "path": "draft",
+          "equals": false
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "openai",
+      "signal_group_id": "publisher:openai",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-a16z-news-0e9c1ee9",
+      "name": "a16z：News",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.a16z.news/feed",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:a16z.news",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-newcomer-co-fbb7e5fc",
+      "name": "Newcomer 新闻长文",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.newcomer.co/feed",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:newcomer.co",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-github-blog-72a225e6",
+      "name": "GitHub Blog",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://github.blog/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:github",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-404media-co-398bb41e",
+      "name": "404 Media",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.404media.co/rss/",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:404media.co",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-wheresyoured-at-f7a7c607",
+      "name": "Ed Zitron 长文 / Where’s Your Ed At",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.wheresyoured.at/rss/",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:wheresyoured.at",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-oreilly-com-4d46873e",
+      "name": "O'Reilly Radar",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.oreilly.com/radar/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:oreilly.com",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-factory-com-9c3220c0",
+      "name": "Factory 研究 / 产品",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://factory.com/news/rss",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:factory.com",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-tessl-io-0c7db98b",
+      "name": "Tessl：产品与工程博客",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://tessl.io/feed",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true,
+        "allowUrlPrefixes": [
+          "https://tessl.io/blog/"
+        ]
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:tessl",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-ai-google-dev-e19abb36",
+      "name": "Gemini API：更新日志",
+      "kind": "web_list",
+      "config": {
+        "url": "https://ai.google.dev/gemini-api/docs/changelog?hl=en",
+        "parseMode": "dated_sections",
+        "itemSelector": "article h2[id]",
+        "preserveUrlFragment": true,
+        "publishedAtUtcOffset": "+00:00",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "google",
+      "signal_group_id": "publisher:google",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-platformer-news-0b2f1c3c",
+      "name": "Platformer",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.platformer.news/rss/",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:platformer.news",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-claude-com-417569d6",
+      "name": "Claude：Blog",
+      "kind": "web_list",
+      "config": {
+        "url": "https://claude.com/blog",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/resources/articles/[^/?#]+/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": true,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "itemSelector": "a[href^=\"/resources/articles/\"]",
+        "titleSelector": "h3",
+        "publishedAtSelector": "[class*=\"__meta\"]",
+        "publishedAtUtcOffset": "+00:00",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "anthropic",
+      "signal_group_id": "publisher:anthropic",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-updates-midjourney-com-a0c219c9",
+      "name": "Midjourney：Updates",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://updates.midjourney.com/rss/",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:midjourney",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-json-list-runway-com-9bf8b188",
+      "name": "Runway：News",
+      "kind": "json_list",
+      "config": {
+        "url": "https://runway.com/news",
+        "mode": "html_json_key",
+        "jsonKey": "posts",
+        "itemsPath": "posts",
+        "titlePaths": [
+          "title"
+        ],
+        "publishedAtPath": "date",
+        "urlTemplate": "https://runway.com/{raw:slug}",
+        "summaryPaths": [
+          "summary",
+          "description"
+        ],
+        "externalIdPath": "_id",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:runway",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-artificialanalysis-ai-3da9409d",
+      "name": "Artificial Analysis 完整文章",
+      "kind": "web_list",
+      "config": {
+        "url": "https://artificialanalysis.ai/articles",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/articles/[^/?#]+(?:/[^/?#]+)?/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:artificial-analysis",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-blog-comfy-org-a9c12e1c",
+      "name": "Comfy Blog",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://blog.comfy.org/feed",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:comfy",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-developers-googleblog-com-d6fea2bd",
+      "name": "Google Developers Blog",
+      "kind": "web_list",
+      "config": {
+        "url": "https://developers.googleblog.com/",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/(?!search|feeds|labels|about)[^/?#]+/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "google",
+      "signal_group_id": "publisher:google",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-livekit-com-b9cda020",
+      "name": "LiveKit 产品与工程博客",
+      "kind": "web_list",
+      "config": {
+        "url": "https://livekit.com/blog",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/blog/[^/?#]+(?:/[^/?#]+)?/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:livekit.com",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-llamaindex-ai-edc405fb",
+      "name": "LlamaIndex：产品、工程与评测",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.llamaindex.ai/blog",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/blog/[^/?#]+/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": true,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]",
+          "publishedAtSelector": ".PostDate"
+        },
+        "itemSelector": ".Post",
+        "linkSelector": ".PostTitle a",
+        "titleSelector": ".PostTitle",
+        "publishedAtSelector": ".PostDate",
+        "publishedAtUtcOffset": "+00:00",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:llamaindex",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-goodfire-com-eca9a77c",
+      "name": "Goodfire Research",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.goodfire.com/research",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/research/[^/?#]+/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]",
+          "publishedAtRegex": "<div[^>]*class=\"post-date\"[^>]*>([^<]*20\\d{2})</div>",
+          "publishedAtAuthoritative": true,
+          "publishedAtUtcOffset": "+00:00"
+        },
+        "itemSelector": ".blog-c-item",
+        "linkSelector": "a.link-block",
+        "titleSelector": "h2,h3",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:goodfire.com",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-claude-dev-368e8af0",
+      "name": "Anthropic：Claude.dev 开发者博客",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://claude.dev/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "anthropic",
+      "signal_group_id": "publisher:anthropic",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-augmentcode-com-078c0707",
+      "name": "Augment Code 博客",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.augmentcode.com/blog/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:augment-code",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-waymo-com-7aa4ca25",
+      "name": "Waymo：Blog",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://waymo.com/blog/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:waymo",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-zyphra-com-881479c3",
+      "name": "Zyphra Research",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.zyphra.com/our-work",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/our-work/[^/?#]+",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:zyphra",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-understandingai-org-e677c69b",
+      "name": "Timothy B. Lee：Understanding AI",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.understandingai.org/feed",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:understandingai.org",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-press-airstreet-com-597fc296",
+      "name": "Air Street Press",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://press.airstreet.com/feed",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:press.airstreet.com",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-mastra-ai-a993d77f",
+      "name": "Mastra Blog",
+      "kind": "web_list",
+      "config": {
+        "url": "https://mastra.ai/blog",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/blog/[^/?#]+/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": true,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "itemSelector": "a[href^=\"/blog/\"]",
+        "titleSelector": "h2",
+        "publishedAtSelector": "span.shrink-0",
+        "publishedAtUtcOffset": "+00:00",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:mastra",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-openrouter-ai-0670d609",
+      "name": "OpenRouter：Announcements",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://openrouter.ai/blog/feed.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:openrouter",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-modem-ai-d843a7c9",
+      "name": "Modem：Blog",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://modem.ai/blog/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:modem.ai",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-deploymentsafety-openai-com-3034d880",
+      "name": "OpenAI：部署安全与系统卡",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://deploymentsafety.openai.com/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "openai",
+      "signal_group_id": "publisher:openai",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-platform-claude-com-3dcc1d09",
+      "name": "Claude Platform：开发者版本说明",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://platform.claude.com/docs/en/release-notes/feed.xml",
+        "preserveUrlFragment": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "anthropic",
+      "signal_group_id": "publisher:anthropic",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-dev-to-10f81b7a",
+      "name": "Google AI：DEV 作者专属",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://dev.to/feed/googleai",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "google",
+      "signal_group_id": "publisher:google",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-support-claude-com-c0236bd6",
+      "name": "Claude 应用发布说明",
+      "kind": "web_list",
+      "config": {
+        "url": "https://support.claude.com/en/articles/12138966-release-notes",
+        "parseMode": "dated_sections",
+        "itemSelector": "h3[id]",
+        "preserveUrlFragment": true,
+        "publishedAtUtcOffset": "+00:00",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "anthropic",
+      "signal_group_id": "publisher:anthropic",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-hai-stanford-edu-3455f777",
+      "name": "Stanford HAI News",
+      "kind": "web_list",
+      "config": {
+        "url": "https://hai.stanford.edu/news",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/news/[^/?#]+/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]",
+          "publishedAtSelector": "[class*=\"DetailMeta_row\"]:has(> div:first-child:contains(\"Date\")) > div:last-child",
+          "publishedAtAuthoritative": true,
+          "publishedAtUtcOffset": "+00:00"
+        },
+        "itemSelector": "a[class*=\"titleLink\"][href]",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:stanford",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-liquid-ai-183a0df6",
+      "name": "Liquid AI 模型与工程博客",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.liquid.ai/blog",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/blog/[^/?#]+(?:/[^/?#]+)?/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:liquid-ai",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-tomtunguz-com-b8913f25",
+      "name": "Tomasz Tunguz 博客",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://tomtunguz.com/index.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:tomasz-tunguz",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-aisi-gov-uk-30854c83",
+      "name": "英国 AI Security Institute：Blog",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.aisi.gov.uk/blog",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/blog/[^/?#]+/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": true,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "itemSelector": ".card.in-grid",
+        "linkSelector": "a.text-link-hover",
+        "titleSelector": "h3",
+        "publishedAtSelector": "[fs-list-field=\"date\"]",
+        "publishedAtUtcOffset": "+00:00",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:aisi",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-json-list-promptarmor-com-f2402342",
+      "name": "PromptArmor：Threat Intelligence",
+      "kind": "json_list",
+      "config": {
+        "url": "https://www.promptarmor.com/resources",
+        "mode": "html_json_key",
+        "jsonKey": "articles",
+        "itemsPath": "articles",
+        "titlePaths": [
+          "fields.title"
+        ],
+        "publishedAtPath": "fields.publishedAt",
+        "urlTemplate": "https://www.promptarmor.com/resources/{fields.slug}",
+        "summaryPaths": [
+          "fields.description"
+        ],
+        "requireBoolean": {
+          "path": "fields.isDraft",
+          "equals": false
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:promptarmor",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-preferred-jp-592b7d0a",
+      "name": "Preferred Networks：AI 研究与产品",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.preferred.jp/ja/news/",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/ja/news/[^/?#]+",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:preferred-networks",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-alignment-openai-com-6c85baf8",
+      "name": "OpenAI：Alignment 研究博客",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://alignment.openai.com/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "openai",
+      "signal_group_id": "publisher:openai",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-cursor-com-20cade3e",
+      "name": "Cursor：Changelog",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://cursor.com/changelog/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:cursor",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-together-ai-4f67f28e",
+      "name": "Together AI 研究与产品博客",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.together.ai/blog/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:together",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-metr-org-f8f3e1e7",
+      "name": "METR：Blog",
+      "kind": "web_list",
+      "config": {
+        "url": "https://metr.org/blog/",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/blog/20\\d{2}-\\d{2}-\\d{2}-[^/?#]+",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:metr",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-reflection-ai-4852f5d4",
+      "name": "Reflection Blog",
+      "kind": "web_list",
+      "config": {
+        "url": "https://reflection.ai/blog",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/blog/[^/?#]+/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "itemSelector": "main a[href^=\"/blog/\"]",
+        "titleSelector": "h2,h3",
+        "publishedAtSelector": "p.tracking-wider",
+        "publishedAtUtcOffset": "+00:00",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:reflection",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-canarymedia-com-bdcf7427",
+      "name": "Canary Media：Data Centers 原创报道",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.canarymedia.com/rss.rss",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true,
+        "allowUrlPrefixes": [
+          "https://www.canarymedia.com/articles/data-centers/"
+        ]
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:canarymedia.com",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-list-suno-com-e3885772",
+      "name": "Suno：Blog",
+      "kind": "web_list",
+      "config": {
+        "url": "https://suno.com/blog",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/blog/[^/?#]+(?:/[^/?#]+)?/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": false,
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "summarySelector": "meta[name=\"description\"]"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:suno",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-rohanpaul-ai",
+      "name": "Rohan Paul · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:rohanpaul_ai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:rohanpaul_ai",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-workbuddy-ai",
+      "name": "Tencent WorkBuddy · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:WorkBuddy_AI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:tencent",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-elonmusk",
+      "name": "Elon Musk · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:elonmusk -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:elonmusk",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-reach-vb",
+      "name": "Vaibhav Srivastav · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:reach_vb -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:reach_vb",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-shao--meng",
+      "name": "邵猛 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:shao__meng -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:shao__meng",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-indigox",
+      "name": "indigo · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:indigox -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:indigox",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-howie-serious",
+      "name": "howie.serious · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:howie_serious -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:howie_serious",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-oran-ge",
+      "name": "Oran Ge · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:oran_ge -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:oran_ge",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-poteto",
+      "name": "Lauren Tan · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:poteto -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:poteto",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-thexpin",
+      "name": "X.PIN · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:thexpin -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:thexpin",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-testingcatalog",
+      "name": "Testing Catalog · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:testingcatalog -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:testingcatalog",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-thsottiaux",
+      "name": "Tibo · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:thsottiaux -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:thsottiaux",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-dongxi-nlp",
+      "name": "马东锡 NLP · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:dongxi_nlp -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:dongxi_nlp",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-yuchenj-uw",
+      "name": "Yuchen Jin · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Yuchenj_UW -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:yuchenj_uw",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-trq212",
+      "name": "Thariq · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:trq212 -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:trq212",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-tripoai",
+      "name": "Tripo · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:tripoai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:tripo",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-clementdelangue",
+      "name": "Clément Delangue · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ClementDelangue -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:clementdelangue",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-cohere",
+      "name": "Cohere · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:cohere -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:cohere",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-polynoamial",
+      "name": "Noam Brown · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:polynoamial -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:polynoamial",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-galaxeadynamics",
+      "name": "星海图 Galaxea · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:GalaxeaDynamics -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:galaxea",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-elevenlabs",
+      "name": "ElevenLabs · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ElevenLabs -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:elevenlabs",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-typesafeai",
+      "name": "TypeSafe AI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:typesafeai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:typesafeai",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-fchollet",
+      "name": "Francois Chollet · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:fchollet -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:fchollet",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-natolambert",
+      "name": "Nathan Lambert · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:natolambert -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:interconnects",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-dexhorthy",
+      "name": "Dex Horthy · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:dexhorthy -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:dexhorthy",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-pixverse",
+      "name": "PixVerse · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:PixVerse -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:pixverse",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-higgsfield",
+      "name": "Higgsfield AI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:higgsfield -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:higgsfield",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-viggleai",
+      "name": "Viggle AI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ViggleAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:viggle",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-arena",
+      "name": "Arena · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:arena -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:arena",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-mustafasuleyman",
+      "name": "Mustafa Suleyman · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:mustafasuleyman -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:mustafasuleyman",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-alexeheath",
+      "name": "Alex Heath · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:alexeheath -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:alexeheath",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-aiwarts",
+      "name": "卡尔的 AI 沃茨 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:aiwarts -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:aiwarts",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-satyanadella",
+      "name": "Satya Nadella · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:satyanadella -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:satyanadella",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-saitowu",
+      "name": "Saito 硬地骇客 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:SaitoWu -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:saitowu",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-kling-ai",
+      "name": "可灵 Kling AI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Kling_ai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:kling",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-antlingagi",
+      "name": "蚂蚁百灵 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:AntLingAGI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:ant-ling",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-stepfun-ai",
+      "name": "阶跃星辰 StepFun · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:StepFun_ai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:stepfun",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-midjourney",
+      "name": "Midjourney · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:midjourney -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:midjourney",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-cognition",
+      "name": "Cognition · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:cognition -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:cognition",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-openrouter",
+      "name": "OpenRouter · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:OpenRouter -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:openrouter",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-artificialanlys",
+      "name": "Artificial Analysis · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ArtificialAnlys -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:artificial-analysis",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-lumalabsai",
+      "name": "Luma AI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:LumaLabsAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:luma",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-physical-int",
+      "name": "Physical Intelligence · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:physical_int -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:physical-intelligence",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-chelseabfinn",
+      "name": "Chelsea Finn · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:chelseabfinn -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:chelseabfinn",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-noahzweben",
+      "name": "Noah Zweben · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:noahzweben -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:noahzweben",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-sherwinwu",
+      "name": "Sherwin Wu · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:sherwinwu -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:sherwinwu",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-ericzakariasson",
+      "name": "Eric Zakariasson · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ericzakariasson -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:ericzakariasson",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-suno",
+      "name": "Suno · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:suno -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:suno",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-bot",
+      "name": "Grok Bot · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:bot -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:bot",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-grok",
+      "name": "Grok · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:grok -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:xai",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-arcprize",
+      "name": "ARC Prize · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:arcprize -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:arcprize",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-unslothai",
+      "name": "Unsloth · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:UnslothAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:unsloth",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-aravsrinivas",
+      "name": "Aravind Srinivas · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:AravSrinivas -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:aravsrinivas",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x--philschmid",
+      "name": "Philipp Schmid · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:_philschmid -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:_philschmid",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-thom-wolf",
+      "name": "Thomas Wolf · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Thom_Wolf -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:thom_wolf",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-openbmb",
+      "name": "面壁智能 OpenBMB · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:OpenBMB -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:openbmb",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-ring-hyacinth",
+      "name": "Ring Hyacinth · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ring_hyacinth -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:ring_hyacinth",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-drfeifei",
+      "name": "Fei-Fei Li · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:drfeifei -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:drfeifei",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-tencenthunyuan",
+      "name": "腾讯混元 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:TencentHunyuan -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:tencent",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-fal",
+      "name": "fal · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:fal -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:fal",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-sundarpichai",
+      "name": "Sundar Pichai · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:sundarpichai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:sundarpichai",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-demishassabis",
+      "name": "Demis Hassabis · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:demishassabis -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:demishassabis",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-spacexai",
+      "name": "SpaceXAI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:SpaceXAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:spacexai",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-generalistai",
+      "name": "Generalist · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:GeneralistAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:generalist",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-odysseyml",
+      "name": "Odyssey · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:odysseyml -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:odyssey",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-waymo",
+      "name": "Waymo · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Waymo -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:waymo",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-opencode",
+      "name": "opencode · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:opencode -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:opencode",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-officiallogank",
+      "name": "Logan Kilpatrick · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:OfficialLoganK -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:officiallogank",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-arthurmensch",
+      "name": "Arthur Mensch · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:arthurmensch -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:arthurmensch",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-alibaba-wan",
+      "name": "Wan · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Alibaba_Wan -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "alibaba",
+      "signal_group_id": "publisher:alibaba",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-jeffdean",
+      "name": "Jeff Dean · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:JeffDean -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:jeffdean",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-bcherny",
+      "name": "Boris Cherny · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:bcherny -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:bcherny",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-lisasu",
+      "name": "Lisa Su · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:LisaSu -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:lisasu",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x--catwu",
+      "name": "Cat Wu · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:_catwu -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:_catwu",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-enjalot",
+      "name": "Ian Johnson · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:enjalot -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:enjalot",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-markchen90",
+      "name": "Mark Chen · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:markchen90 -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:markchen90",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-ggerganov",
+      "name": "Georgi Gerganov · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ggerganov -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:ggerganov",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-gdb",
+      "name": "Greg Brockman · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:gdb -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:gdb",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-dashhuang",
+      "name": "Dash · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:DashHuang -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:dashhuang",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-perplexity-ai",
+      "name": "Perplexity · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:perplexity_ai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:perplexity",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-krea-ai",
+      "name": "Krea AI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:krea_ai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:krea",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-drjimfan",
+      "name": "Jim Fan · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:DrJimFan -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:drjimfan",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-baidu-inc",
+      "name": "百度 Baidu · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Baidu_Inc -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:baidu",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-sensetime-ai",
+      "name": "商汤 SenseTime · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:SenseTime_AI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:sensetime",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-robbyant-brain",
+      "name": "Robbyant 蚂蚁灵波 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:robbyant_brain -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:robbyant",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-joshwoodward",
+      "name": "Josh Woodward · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:joshwoodward -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:joshwoodward",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-haoailab",
+      "name": "UCSD Hao AI Lab · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:haoailab -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:hao-ai-lab",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-jietang",
+      "name": "唐杰 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:jietang -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:jietang",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-gemini-notebook",
+      "name": "Gemini Notebook · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Gemini_Notebook -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:gemini_notebook",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-meshyai",
+      "name": "Meshy · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:MeshyAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:meshy",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-tianyi",
+      "name": "Tianyi Cui · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:tianyi -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:tianyi",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-khazix0918",
+      "name": "卡兹克 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Khazix0918 -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:kazike",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-openclaw",
+      "name": "OpenClaw · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:openclaw -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:openclaw",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-minimax-ai",
+      "name": "MiniMax · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:MiniMax_AI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:minimax",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-anthropicai",
+      "name": "Anthropic · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:AnthropicAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "anthropic",
+      "signal_group_id": "publisher:anthropic",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-chatgpt",
+      "name": "ChatGPT · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ChatGPT -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "openai",
+      "signal_group_id": "publisher:openai",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-claudedevs",
+      "name": "Claude Devs · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ClaudeDevs -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "anthropic",
+      "signal_group_id": "publisher:anthropic",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-openaidevs",
+      "name": "OpenAI Developers · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:OpenAIDevs -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "openai",
+      "signal_group_id": "publisher:openai",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-googleai",
+      "name": "Google AI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:GoogleAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "google",
+      "signal_group_id": "publisher:google",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-google",
+      "name": "Google · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Google -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "google",
+      "signal_group_id": "publisher:google",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-alibaba-qwen",
+      "name": "通义千问 / Qwen · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Alibaba_Qwen -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "alibaba",
+      "signal_group_id": "publisher:alibaba",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-openainewsroom",
+      "name": "OpenAI Newsroom · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:OpenAINewsroom -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "openai",
+      "signal_group_id": "publisher:openai",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-hailuo-ai",
+      "name": "MiniMax Design (H3) · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Hailuo_AI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:minimax",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-claudeai",
+      "name": "Claude · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:claudeai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "anthropic",
+      "signal_group_id": "publisher:anthropic",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-cursor-ai",
+      "name": "Cursor · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:cursor_ai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:cursor",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-msftresearch",
+      "name": "Microsoft Research · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:MSFTResearch -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "microsoft",
+      "signal_group_id": "publisher:microsoft",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-manusai",
+      "name": "Manus · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ManusAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:manus",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-mistralai",
+      "name": "Mistral AI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:MistralAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:mistral",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-googledeepmind",
+      "name": "Google DeepMind · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:GoogleDeepMind -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "google",
+      "signal_group_id": "publisher:google",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-stepfun",
+      "name": "公众号：阶跃星辰",
+      "kind": "mp_account",
+      "config": {
+        "transport": "wx_cache",
+        "account": "gh_03a8689b9133",
+        "biz": "MzkyNTYxNzg5Mg==",
+        "cacheDirectoryEnv": "WX_CACHE_DIRECTORY",
+        "lookbackDays": 31,
+        "limit": 2,
+        "fetchPublicContent": false
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:stepfun",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-aiwarts",
+      "name": "公众号：卡尔的AI沃茨",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=Mzg3MTk3NzYzNw%3D%3D&mid=2247512289&idx=1&sn=0c7b6141051a21dd2c1eabe374fd0686",
+        "biz": "Mzg3MTk3NzYzNw==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:aiwarts",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-openbmb",
+      "name": "公众号：面壁智能",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=Mzg3Mzg2MTg2NQ%3D%3D&mid=2247499394&idx=1&sn=b318967c9876710d88d878b1c571da58",
+        "biz": "Mzg3Mzg2MTg2NQ==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:openbmb",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-kling",
+      "name": "公众号：可灵AI",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzU5NTkwNDU2OA%3D%3D&mid=2247497164&idx=1&sn=c0c05d3e0aab71762315517b29b31dbb",
+        "biz": "MzU5NTkwNDU2OA==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:kling",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-kunlun",
+      "name": "公众号：昆仑万维",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzI1MzE1NDc3Mg%3D%3D&mid=2247510479&idx=1&sn=f8aae9d05f100c568356428560773c3c",
+        "biz": "MzI1MzE1NDc3Mg==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:kunlun",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-baidu",
+      "name": "公众号：百度智能云",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzA5NTQ5MzE5OQ%3D%3D&mid=2653160731&idx=2&sn=6d5b9d0b28aeeb97488d6362c2e37cba",
+        "biz": "MzA5NTQ5MzE5OQ==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:baidu",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-xiaohongshu",
+      "name": "公众号：小红书技术",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=Mzg4OTc2MzczNg%3D%3D&mid=2247496567&idx=1&sn=707a1262ada97313ce809fadbed18c69",
+        "biz": "Mzg4OTc2MzczNg==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:xiaohongshu",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-tencent",
+      "name": "公众号：腾讯元宝",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=Mzk0NzY4MjM5MA%3D%3D&mid=2247526785&idx=1&sn=1554249f247544530c445666b9f4a4f6",
+        "biz": "Mzk0NzY4MjM5MA==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:tencent",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-shengshu",
+      "name": "公众号：生数科技",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkzMDQ5NTQwMQ%3D%3D&mid=2247489335&idx=1&sn=880949d2257914e1830aa6c46762d189",
+        "biz": "MzkzMDQ5NTQwMQ==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:shengshu",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-volcengine",
+      "name": "公众号：火山引擎",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzI0NzU1NzI5NQ%3D%3D&mid=2247544768&idx=1&sn=5ab489c85e0812a9131e1ac8f6701ab5",
+        "biz": "MzI0NzU1NzI5NQ==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:volcengine",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
     }
   ]
 }

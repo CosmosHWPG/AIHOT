@@ -77,7 +77,50 @@ function findKey(obj: unknown, key: string, depth = 0): unknown {
   return undefined;
 }
 
-function embeddedJson(html: string, source: SourceRow): unknown {
+/** Read one JSON object/array without treating delimiters inside strings as boundaries. */
+export function jsonValueAt(text: string, start: number): { value: unknown; end: number } | null {
+  while (/\s/.test(text[start] ?? "") && start < text.length) start++;
+  if (text[start] !== "{" && text[start] !== "[") return null;
+  const stack: string[] = [];
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i++) {
+    const char = text[i]!;
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') inString = true;
+    else if (char === "{" || char === "[") stack.push(char === "{" ? "}" : "]");
+    else if (char === "}" || char === "]") {
+      if (stack.pop() !== char) return null;
+      if (!stack.length) {
+        try { return { value: JSON.parse(text.slice(start, i + 1)), end: i + 1 }; }
+        catch { return null; }
+      }
+    }
+  }
+  return null;
+}
+
+function arrayProperty(text: string, key: string): unknown[] | null {
+  const literal = JSON.stringify(key);
+  let from = 0;
+  for (;;) {
+    const index = text.indexOf(literal, from);
+    if (index < 0) return null;
+    from = index + literal.length;
+    let start = from;
+    while (/\s/.test(text[start] ?? "") && start < text.length) start++;
+    if (text[start++] !== ":") continue;
+    const parsed = jsonValueAt(text, start);
+    if (parsed && Array.isArray(parsed.value)) return parsed.value;
+  }
+}
+
+export function embeddedJson(html: string, source: SourceRow): unknown {
   const mode = source.config.mode;
   if (mode === "html_window_var") {
     const name = String(source.config.windowVar);
@@ -85,23 +128,8 @@ function embeddedJson(html: string, source: SourceRow): unknown {
     const m = re.exec(html);
     if (!m) throw new FetchError(`window.${name} not found`);
     const start = m.index + m[0].length;
-    // Balanced-brace scan to find the object literal's end.
-    let depth = 0, inStr: string | null = null, esc = false;
-    for (let i = start; i < html.length; i++) {
-      const ch = html[i]!;
-      if (inStr) {
-        if (esc) esc = false;
-        else if (ch === "\\") esc = true;
-        else if (ch === inStr) inStr = null;
-        continue;
-      }
-      if (ch === '"' || ch === "'") inStr = ch;
-      else if (ch === "{" || ch === "[") depth++;
-      else if (ch === "}" || ch === "]") {
-        depth--;
-        if (depth === 0) return JSON.parse(html.slice(start, i + 1));
-      }
-    }
+    const parsed = jsonValueAt(html, start);
+    if (parsed) return parsed.value;
     throw new FetchError(`window.${name} not terminated`);
   }
   // html_json_key: scan JSON script blocks (e.g. __NEXT_DATA__) for the key.
@@ -124,13 +152,8 @@ function embeddedJson(html: string, source: SourceRow): unknown {
     if (flight) {
       try {
         const decoded = JSON.parse(`"${flight[1]}"`) as string;
-        const idx = decoded.indexOf(`"${key}"`);
-        if (idx >= 0) {
-          const objStart = decoded.lastIndexOf("{", idx);
-          const parsed = JSON.parse(decoded.slice(objStart, decoded.indexOf("]", idx) + 1) + "}");
-          const found = findKey(parsed, key);
-          if (found) return { [key]: found };
-        }
+        const found = arrayProperty(decoded, key);
+        if (found) return { [key]: found };
       } catch {
         // keep scanning
       }

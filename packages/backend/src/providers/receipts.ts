@@ -59,6 +59,15 @@ export interface ReceiptRequest {
   requestSummary?: Record<string, unknown>;
   /** Distinguishes an explicit re-run (e.g. admin "re-evaluate") from recovery of the same request. */
   attemptTag?: string;
+  /** New metered services must not become unlimited when an operator removes their budget. */
+  requireBudget?: boolean;
+  creditBudget?: {
+    maximum: number;
+    dailyLimit: number;
+    reserve: number;
+    /** Lazy, non-billed account check: saved responses are reused without another network call. */
+    availableCredits: () => Promise<number>;
+  };
 }
 
 export interface ReceiptResult {
@@ -82,10 +91,13 @@ interface ReceiptRow {
   updated_at: Date;
 }
 
-async function checkBudget(tx: Db, service: string): Promise<void> {
+async function checkBudget(tx: Db, service: string, required = false): Promise<void> {
   const [budget] = await tx<{ per_minute: number; per_hour: number; per_day: number }[]>`
     SELECT per_minute, per_hour, per_day FROM budgets WHERE service = ${service}`;
-  if (!budget) return; // default rows come with the migrations; a service an operator removed is unlimited
+  if (!budget) {
+    if (required) throw new BudgetExceededError(service, "unconfigured", 3600);
+    return; // preserve the operator-owned policy for existing services
+  }
   // Every request sent counts, retries of the same logical request included.
   const [counts] = await tx<{ minute: number; hour: number; day: number }[]>`
     SELECT
@@ -101,6 +113,24 @@ async function checkBudget(tx: Db, service: string): Promise<void> {
   if (c.minute >= budget.per_minute) throw new BudgetExceededError(service, "minute", 60);
   if (c.hour >= budget.per_hour) throw new BudgetExceededError(service, "hour", 600);
   if (c.day >= budget.per_day) throw new BudgetExceededError(service, "day", 3600);
+}
+
+async function checkCredits(tx: Db, req: ReceiptRequest): Promise<void> {
+  const budget = req.creditBudget;
+  if (!budget) return;
+  if (![budget.maximum, budget.dailyLimit, budget.reserve].every(Number.isSafeInteger)
+    || budget.maximum < 1 || budget.dailyLimit < 1 || budget.reserve < 0) {
+    throw new Error("Invalid credit budget");
+  }
+  const [usage] = await tx<{ reserved: number; pending: number }[]>`
+    SELECT coalesce(sum(greatest(reserved_credits, coalesce((usage->>'credits')::numeric, 0))), 0)::int AS reserved,
+      coalesce(sum(reserved_credits) FILTER (WHERE status IN ('pending', 'unknown')), 0)::int AS pending
+    FROM receipt_attempts WHERE service = ${req.service} AND origin = 'live'
+      AND started_at > now() - interval '1 day'`;
+  if (usage!.reserved + budget.maximum > budget.dailyLimit) throw new BudgetExceededError(req.service, "credits-day", 3600);
+  const balance = await budget.availableCredits();
+  if (!Number.isSafeInteger(balance) || balance < 0) throw new BudgetExceededError(req.service, "balance-unavailable", 3600);
+  if (balance - usage!.pending - budget.maximum < budget.reserve) throw new BudgetExceededError(req.service, "credits-reserve", 3600);
 }
 
 /**
@@ -127,13 +157,15 @@ export async function paidRequest(req: ReceiptRequest, call: () => Promise<CallO
       }
       if (existing.status === "unknown") return { kind: "unknown" as const, row: existing };
       // failed: the provider did not take the request, or its answer was unusable; a new attempt is allowed.
-      await checkBudget(tx, req.service);
+      await checkBudget(tx, req.service, req.requireBudget);
+      await checkCredits(tx, req);
       const [r] = await tx<{ attempts: number }[]>`
         UPDATE receipts SET status = 'pending', attempts = attempts + 1, error = NULL, updated_at = now() WHERE id = ${existing.id} RETURNING attempts`;
       const attemptId = await startAttempt(tx, existing.id, r!.attempts, req);
       return { kind: "call" as const, id: existing.id, attemptId };
     }
-    await checkBudget(tx, req.service);
+    await checkBudget(tx, req.service, req.requireBudget);
+    await checkCredits(tx, req);
     const [row] = await tx<{ id: number }[]>`
       INSERT INTO receipts (logical_key, service, model, purpose, subject, status, request, attempts)
       VALUES (${logicalKey}, ${req.service}, ${req.model ?? null}, ${req.purpose}, ${req.subject ?? null}, 'pending',
@@ -190,7 +222,8 @@ export async function paidRequest(req: ReceiptRequest, call: () => Promise<CallO
 
 async function startAttempt(tx: Db, receiptId: number, attempt: number, req: ReceiptRequest): Promise<number> {
   const [row] = await tx<{ id: number }[]>`
-    INSERT INTO receipt_attempts (receipt_id, attempt, service, model, status) VALUES (${receiptId}, ${attempt}, ${req.service}, ${req.model ?? null}, 'pending')
+    INSERT INTO receipt_attempts (receipt_id, attempt, service, model, status, reserved_credits)
+    VALUES (${receiptId}, ${attempt}, ${req.service}, ${req.model ?? null}, 'pending', ${req.creditBudget?.maximum ?? 0})
     RETURNING id`;
   return row!.id;
 }

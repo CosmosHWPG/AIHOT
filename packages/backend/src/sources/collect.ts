@@ -10,7 +10,7 @@ import { fetchRss } from "./rss.ts";
 import { allowed, fetchDetail, fetchWebList, type DetailNeed } from "./web-list.ts";
 import { unsupportedConfig } from "./config-keys.ts";
 import { fetchJsonList } from "./json-list.ts";
-import { fetchXSearch, planXShards, readXSearch, shardHandle, shardQuery, SHARDABLE_SQL, tweetToCandidate, type XBacklog } from "./x.ts";
+import { accountHandle, fetchXSearch, initialXWatermark, planXBootstrap, planXShards, readXSearch, shardHandle, shardQuery, SHARDABLE_SQL, tweetToCandidate, xProvider, type XBacklog } from "./x.ts";
 import { FetchError, type Candidate, type SourceRow } from "./types.ts";
 
 export interface CollectResult {
@@ -185,7 +185,7 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
 
     // A Jina listing round that was pending when this run started has been received by now.
     delete nextCursor.jinaListingRound;
-    if (firstImport) nextCursor.initializedAt = new Date().toISOString();
+    if (firstImport && (source.kind !== "x_search" || xProvider(source) !== "xquik" || candidates.length > 0)) nextCursor.initializedAt = new Date().toISOString();
     nextCursor.lastOkAt = new Date().toISOString();
     await sql.begin(async (tx) => {
       await tx`
@@ -248,8 +248,12 @@ export async function collectXShard(key: string, sourceIds: string[]): Promise<{
     await sql<SourceRow[]>`
       SELECT id, name, kind, config, tier, participation_mode, first_party, interval_minutes, enabled, cursor, fail_count
       FROM sources WHERE id = ANY(${sourceIds}::text[])`
-  ).filter((m) => m.enabled && shardHandle(m)).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  ).filter((m) => m.enabled && (shardHandle(m) || (xProvider(m) === "xquik" && accountHandle(m))))
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   if (members.length === 0) return { key, status: "skipped", accounts: 0, found: 0, created: 0 };
+  const provider = xProvider(members[0]!);
+  if (members.some(m => xProvider(m) !== provider)) throw new FetchError("mixed X providers in one shard");
+  const bootstrap = provider === "xquik" && members.some(m => !m.cursor?.lastTweetId);
   const minutes = shardMinutes(members[0]!.participation_mode);
   const runs = new Map((await sql<{ id: number; source_id: string }[]>`
     INSERT INTO fetch_runs ${sql(members.map(m => ({ source_id: m.id })), "source_id")} RETURNING id, source_id`
@@ -257,7 +261,7 @@ export async function collectXShard(key: string, sourceIds: string[]): Promise<{
   let found = 0;
   let created = 0;
   try {
-    const since = members.map(coveredTo).reduce((a, b) => (b < a ? b : a));
+    const since = members.map(m => m.cursor?.lastTweetId ? coveredTo(m) : BigInt(initialXWatermark())).reduce((a, b) => (b < a ? b : a));
     const backlog: XBacklog[] = [];
     const stretches = new Set<string>();
     for (const m of members) {
@@ -266,13 +270,16 @@ export async function collectXShard(key: string, sourceIds: string[]): Promise<{
         stretches.add(`${b.query} ${b.next}`);
       }
     }
-    const read = await readXSearch(shardQuery(members.map((m) => shardHandle(m)!)), { lastId: String(since), backlog, subject: `x-shard:${key}` });
-    const detail = { shard: key, accounts: members.length, pages: read.pages, truncated: read.truncated, backlog: read.backlog.length, backlogPages: read.backlogPages, dropped: read.dropped };
+    const query = shardQuery(members.map((m) => accountHandle(m)!));
+    const read = await readXSearch(bootstrap ? `${query} since_id:${since}` : query,
+      { lastId: bootstrap ? null : String(since), backlog, subject: `x-shard:${key}`, provider });
+    const detail = { shard: key, provider, bootstrap, accounts: members.length, pages: read.pages, truncated: read.truncated, backlog: read.backlog.length, backlogPages: read.backlogPages, dropped: read.dropped };
     const counts = new Map<string, { found: number; created: number }>();
     for (const m of members) {
-      const handle = shardHandle(m)!.toLowerCase();
+      const handle = accountHandle(m)!.toLowerCase();
       const mine = read.tweets.filter((t) => t.user.screen_name.toLowerCase() === handle);
-      const stored = await store(m.id, mine.map(tweetToCandidate).map((c) => rewriteUrl(c, m)).filter((c) => !noiseFiltered(c, m)), null);
+      const stored = await store(m.id, mine.map(t => tweetToCandidate(t, provider)).map((c) => rewriteUrl(c, m)).filter((c) => !noiseFiltered(c, m)),
+        provider === "xquik" && !m.cursor?.initializedAt ? "first-import" : null);
       found += mine.length;
       created += stored.created;
       counts.set(m.id, { found: mine.length, created: stored.created });
@@ -281,8 +288,13 @@ export async function collectXShard(key: string, sourceIds: string[]): Promise<{
     // material already committed is idempotent, and no member is left half-finished.
     await sql.begin(async tx => {
       for (const m of members) {
-        const own = String(m.cursor!.lastTweetId);
-        const cursor: Record<string, unknown> = { ...m.cursor, lastTweetId: read.lastId && BigInt(read.lastId) > BigInt(own) ? read.lastId : own, lastOkAt: new Date().toISOString() };
+        const own = m.cursor?.lastTweetId ? String(m.cursor.lastTweetId) : null;
+        const ownPosts = read.tweets.filter(t => t.user.screen_name.toLowerCase() === accountHandle(m)!.toLowerCase());
+        const newest = provider === "xquik" ? ownPosts.reduce<string | null>((latest, t) => latest === null || BigInt(t.id_str) > BigInt(latest) ? t.id_str : latest, own) : read.lastId;
+        const cursor: Record<string, unknown> = { ...(m.cursor ?? {}), lastOkAt: new Date().toISOString() };
+        if (newest) cursor.lastTweetId = newest;
+        if (provider !== "xquik" && own && (!newest || BigInt(own) > BigInt(newest))) cursor.lastTweetId = own;
+        if (provider === "xquik" && ownPosts.length && !cursor.initializedAt) cursor.initializedAt = new Date().toISOString();
         if (read.backlog.length) cursor.xBacklog = read.backlog;
         else delete cursor.xBacklog;
         await tx`
@@ -317,7 +329,8 @@ export async function collectXShard(key: string, sourceIds: string[]): Promise<{
 }
 
 /** X accounts read by shard: a plain query and a watermark (the first fetch of an account is its own). */
-const sharded = () => sql`kind = 'x_search' AND config->>'query' ~* ${SHARDABLE_SQL} AND coalesce(config->>'searchType', 'Latest') = 'Latest' AND cursor->>'lastTweetId' IS NOT NULL`;
+const sharded = () => sql`kind = 'x_search' AND config->>'query' ~* ${SHARDABLE_SQL} AND coalesce(config->>'searchType', 'Latest') = 'Latest'
+  AND (cursor->>'lastTweetId' IS NOT NULL OR config->>'provider' = 'xquik')`;
 
 /** Every minute: a shard is read when any of its accounts is due, all of them at once. */
 async function scheduleXShards(): Promise<number> {
@@ -326,7 +339,7 @@ async function scheduleXShards(): Promise<number> {
     FROM sources WHERE enabled AND ${sharded()}`;
   const due = new Set(rows.filter((r) => r.due).map((r) => r.id));
   let enqueued = 0;
-  for (const shard of planXShards(rows)) {
+  for (const shard of [...planXShards(rows), ...planXBootstrap(rows)]) {
     if (!shard.sourceIds.some((id) => due.has(id))) continue;
     await enqueue(QUEUES.fetchXShard, { key: shard.key, sourceIds: shard.sourceIds }, { singletonKey: shard.key });
     await sql`UPDATE sources SET next_fetch_at = now() + interval '10 minutes' WHERE id IN ${sql(shard.sourceIds)}`;

@@ -107,7 +107,13 @@ node --env-file=.env scripts/corescope-source-upgrade.ts --apply
 
 探测脚本默认更新本项目的 profile 与审计 JSON，`--no-write` 仅显示结果；两种方式都不会自动升级正式库。`seed.ts` 不覆盖已存在来源，必须使用专用升级脚本迁移既有采集路线。14 个原暂停来源的冻结名单在重跑时保留；原生路线和桥接路线互斥，同一入口不能同时采用两者。管理员受保护配置冲突会在升级结果中报告，不应通过盲目覆盖消除。
 
-完成正式库升级后，再运行 `Start-CoreScope.cmd` 并用实际 source 状态、队列、新增材料和发布回执验收。**本节记录 2026-10-12 已完成的接入配置和源站验证，不宣称正式库升级及完整运行验收已经完成。** 逐源证据和原 2026-10-04 验收数据见 `CORESCOPE_SOURCE_AUDIT.md`；历史材料数不能当作今日运行数据。
+完成正式库升级后，再运行 `Start-CoreScope.cmd` 并用实际 source 状态、队列、新增材料和发布回执验收。本节维护操作本身不证明运行成功；2026-10-12最新616源、191个补齐入口的正式库与采集验收见 [补齐记录](CORESCOPE_ONLINE_EXPANSION.md)。原425源与2026-10-04历史验收见 `CORESCOPE_SOURCE_AUDIT.md`，历史材料数不能当作今日运行数据。
+
+## X与公众号API配置
+
+在本项目私有 `.env` 填写 `X_TWITTER_SCRAPER_API_KEY` 和 `DAJIALA_KEY`；默认服务地址无需额外填写。`COLLECT_KINDS` 包含 `x_search` 后启用原生X定时调度。修改密钥后用 `Stop-CoreScope.cmd` 正常停止，再运行 `Start-CoreScope.cmd` 重新加载配置。不要将密钥提交Git或发送到聊天。
+
+公众号无需猜测ghid：新增目录已含公开原文长链与核验biz。Dajiala每轮新增正文上限2篇，并遵守既有请求预算；余额不足明确保留错误，充值后下轮或后台手动采集可续读已存回执。缓存通道使用只读账号匹配，独立于API充值。X预算与credit预留详见 [Xquik配置](CORESCOPE_XQUIK.md)。
 
 ## 构建、测试与验收
 

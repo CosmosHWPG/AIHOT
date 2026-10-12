@@ -25,6 +25,7 @@ type ManagedField = typeof MANAGED_FIELDS[number];
 export interface UpgradeSource {
   id: string; kind: SourceRow["kind"]; config: Record<string, unknown>;
   enabled: boolean; participation_mode: SourceRow["participation_mode"]; interval_minutes: number;
+  signal_group_id?: string | null;
 }
 export interface SourceProfileManifest {
   schemaVersion: number; preserveDisabledSourceIds: string[];
@@ -48,6 +49,11 @@ export interface UpgradeResult {
   sourceId: string; status: "missing" | "skipped" | "unchanged" | "would_update" | "updated";
   changedFields: ManagedField[]; preservedFields: ManagedField[]; reasons: string[];
   profileHash: string; resetCursor: boolean; ledgerWritten: boolean;
+  signalGroup?: SignalGroupUpgradeResult;
+}
+export interface SignalGroupUpgradeResult {
+  status: "unchanged" | "preserved" | "would_update" | "updated";
+  previous: string | null; target: string; reason?: string;
 }
 
 function baseline(source: UpgradeSource): Baseline {
@@ -82,6 +88,11 @@ function validateInputs(sources: UpgradeSource[], profiles: SourceProfileManifes
   }
   for (const profile of Object.values(profiles.profiles)) {
     if (!["native", "bridge", "blocked"].includes(profile.policy)) throw new Error("Invalid source profile policy");
+    if (owns(profile, "previousSignalGroupId") && (typeof profile.signalGroupId !== "string"
+      || !profile.signalGroupId.trim() || profile.signalGroupId.length > 120
+      || !(profile.previousSignalGroupId === null || typeof profile.previousSignalGroupId === "string" && profile.previousSignalGroupId.length <= 120))) {
+      throw new Error("Invalid reviewed signal group transition");
+    }
   }
   const ids = new Set<string>();
   for (const s of sources) {
@@ -94,6 +105,9 @@ function validateInputs(sources: UpgradeSource[], profiles: SourceProfileManifes
     }
     assertSupportedConfig(s.kind, s.config);
     const profile = profiles.profiles[s.id];
+    if (profile && owns(profile, "previousSignalGroupId") && s.signal_group_id !== profile.signalGroupId) {
+      throw new Error(`Source ${s.id} has conflicting reviewed signal group`);
+    }
     if (profile?.nonArticle && s.participation_mode !== "isolated") {
       throw new Error(`Non-article source ${s.id} must stay isolated`);
     }
@@ -106,6 +120,39 @@ function validateInputs(sources: UpgradeSource[], profiles: SourceProfileManifes
       throw new Error(`Blocked source ${s.id} is enabled in the reviewed pack`);
     }
   }
+}
+
+/** Explicit group transitions have their own ownership check, independent of the route ledger. */
+async function reconcileSignalGroup(db: Tx, desired: UpgradeSource, profiles: SourceProfileManifest,
+  apply: boolean): Promise<SignalGroupUpgradeResult | undefined> {
+  const profile = profiles.profiles[desired.id];
+  if (!profile || !owns(profile, "previousSignalGroupId")) return undefined;
+  const previous = profile.previousSignalGroupId as string | null;
+  const target = profile.signalGroupId as string;
+  const result: SignalGroupUpgradeResult = { status: "preserved", previous, target };
+  if (profiles.preserveDisabledSourceIds.includes(desired.id)) {
+    result.reason = "frozen_source_group_preserved"; return result;
+  }
+  // reconcileOne already took the shared admin identity lock for apply. Re-locking the row keeps
+  // group writes and route writes within that same transaction and prevents concurrent admin edits.
+  const [current] = await db<{ signal_group_id: string | null }[]>`SELECT signal_group_id FROM sources
+    WHERE id=${desired.id} ${apply ? db`FOR UPDATE` : db``}`;
+  if (!current) { result.reason = "source_missing_run_seed_first"; return result; }
+  // Search all history, not the route ledger watermark: a past no-op is still explicit ownership.
+  const owned = await db<{ id: number }[]>`SELECT id FROM audit_log
+    WHERE subject=${`source:${desired.id}`} AND actor<>${UPGRADE_ACTOR}
+      AND action IN ('source.update','source.create')
+      AND (before ? 'signal_group_id' OR after ? 'signal_group_id') LIMIT 1`;
+  if (owned.length) { result.reason = "operator_signal_group_preserved"; return result; }
+  if (current.signal_group_id === target) { result.status = "unchanged"; return result; }
+  if (current.signal_group_id !== previous) { result.reason = "signal_group_drift_needs_review"; return result; }
+  result.status = apply ? "updated" : "would_update";
+  if (apply) {
+    await db`UPDATE sources SET signal_group_id=${target},updated_at=now() WHERE id=${desired.id}`;
+    await audit(UPGRADE_ACTOR, "source.signal-group-upgrade", `source:${desired.id}`, "应用已核验的参与主体群组，保留人工归属",
+      { signal_group_id: previous }, { signal_group_id: target }, { db });
+  }
+  return result;
 }
 
 function validLedger(value: unknown): value is ManagedLedger {
@@ -249,9 +296,15 @@ export async function upgradeSources(options: UpgradeOptions = {}) {
   const connection = options.db ?? sql;
   const results: UpgradeResult[] = [];
   for (const desired of sources) {
+    const reconcile = async (tx: Tx) => {
+      const result = await reconcileOne(tx, desired, profiles, legacyNativeConfigs, options.apply === true);
+      result.signalGroup = await reconcileSignalGroup(tx, desired, profiles, options.apply === true);
+      if (result.signalGroup?.status === "updated" || result.signalGroup?.status === "would_update") result.status = result.signalGroup.status;
+      return result;
+    };
     const one = options.apply
-      ? await connection.begin((tx) => reconcileOne(tx, desired, profiles, legacyNativeConfigs, true))
-      : await connection.begin("read only", (tx) => reconcileOne(tx, desired, profiles, legacyNativeConfigs, false));
+      ? await connection.begin(reconcile)
+      : await connection.begin("read only", reconcile);
     results.push(one as UpgradeResult);
   }
   return { apply: options.apply === true, total: results.length,

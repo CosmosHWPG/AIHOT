@@ -16,6 +16,77 @@ SPEC.loader.exec_module(MOD)
 
 class BridgeExportTests(unittest.TestCase):
     @staticmethod
+    def supplement(*sources):
+        return {"schemaVersion": 1, "sources": list(sources), "verifications": {
+            s["id"]: {"status": "verified", "scope": "fixture"} for s in sources}}
+
+    def test_supplements_survive_refresh_and_dedupe_effective_profiles(self):
+        row = {"id": 45, "name": "Existing publisher", "status": "已接入", "rss_url": "https://example.org/old"}
+        profile = {"policy": "native", "adapter": {"kind": "rss", "config": {"feedUrl": "https://example.org/feed"}},
+                   "verification": {"status": "verified"}}
+        duplicate = {"id": "corescope-existing-alias", "name": "Community", "kind": "rss",
+                     "config": {"feedUrl": "https://example.org/feed/"}, "enabled": True}
+        distinct = {**duplicate, "id": "corescope-other-channel", "config": {"feedUrl": "https://example.org/feed?topic=core"}}
+        manifests = [self.supplement(duplicate, distinct)]
+        args = ([row], [], set(), self.manifest({"v2-source-45": profile}), None, manifests)
+        first = MOD.source_pack(*args)
+        second = MOD.source_pack(*args)
+        self.assertEqual(first, second)
+        self.assertEqual([s["id"] for s in first[0]], ["v2-source-45", "corescope-other-channel"])
+        self.assertEqual(first[2]["supplemental_aliases"][0]["canonical_source_id"], "v2-source-45")
+        self.assertEqual(first[2]["supplemental_added"], 1)
+        self.assertFalse(first[1][0]["bridge_enabled"])
+
+    def test_supplement_x_exact_handle_reuses_paused_v2_id_without_reactivation(self):
+        row = {"id": 193, "name": "Paused X", "status": "已接入", "original_url": "https://x.com/Zai_org"}
+        x = {"id": "corescope-x-zai-org", "name": "Zai X", "kind": "x_search",
+             "config": {"query": "from:zai_ORG -filter:replies", "provider": "xquik"}, "enabled": True}
+        pack, _, stats = MOD.source_pack([row], [], set(), self.manifest(frozen=["v2-source-193"]), None, [self.supplement(x)])
+        self.assertEqual(len(pack), 1)
+        self.assertFalse(pack[0]["enabled"])
+        self.assertEqual(stats["supplemental_aliases"][0]["canonical_source_id"], "v2-source-193")
+
+    def test_supplement_mp_identity_requires_biz_and_preserves_distinct_channels(self):
+        sources = [{"id": "corescope-mp-a", "name": "A", "kind": "mp_account", "config": {"biz": "MzkyNTYxNzg5Mg==", "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkyNTYxNzg5Mg==&mid=1"}, "enabled": True},
+                   {"id": "corescope-mp-alias", "name": "Different name", "kind": "mp_account", "config": {"biz": "MzkyNTYxNzg5Mg==", "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkyNTYxNzg5Mg==&mid=2"}, "enabled": True},
+                   {"id": "corescope-mp-b", "name": "A", "kind": "mp_account", "config": {"biz": "Mzg3MTk3NzYzNw=="}, "enabled": True}]
+        pack, _, stats = MOD.source_pack([], [], set(), None, None, [self.supplement(*sources)])
+        self.assertEqual([s["id"] for s in pack], ["corescope-mp-a", "corescope-mp-b"])
+        self.assertEqual(len(stats["supplemental_aliases"]), 1)
+
+    def test_supplements_reject_unreviewed_routes_feedback_and_private_config(self):
+        s = {"id": "corescope-source", "kind": "rss", "config": {"feedUrl": "https://example.org/feed"}, "enabled": True}
+        bad = self.supplement(s)
+        bad["verifications"] = {}
+        with self.assertRaisesRegex(ValueError, "verification"):
+            MOD.source_pack([], [], set(), None, None, [bad])
+        for url in ["https://aihot.news/feed", "https://localhost:8780/feed", "https://example.org/feed?api_key=fixture"]:
+            s["config"]["feedUrl"] = url
+            with self.assertRaises(ValueError):
+                MOD.source_pack([], [], {"localhost:8780"}, None, None, [self.supplement(s)])
+
+    def test_verified_cache_public_biz_reuses_old_source_without_merging_names(self):
+        biz = "MzkyNTYxNzg5Mg=="
+        row = {"id": 7000, "name": "Existing cache account", "status": "已接入"}
+        profile = {"policy": "native", "adapter": {"kind": "mp_account", "config": {"transport": "wx_cache", "account": "Public name"}},
+                   "verification": {"status": "verified", "samples": [{"url": "http://mp.weixin.qq.com/s?__biz=" + biz + "&mid=1"}]}}
+        candidate = {"id": "corescope-mp-cache-alias", "name": "Different label", "kind": "mp_account",
+                     "config": {"articleUrl": "https://mp.weixin.qq.com/s?__biz=" + biz + "&mid=2", "biz": biz}, "enabled": True}
+        pack, _, stats = MOD.source_pack([row], [], set(), self.manifest({"v2-source-7000": profile}), None, [self.supplement(candidate)])
+        self.assertEqual([s["id"] for s in pack], ["v2-source-7000"])
+        self.assertEqual(stats["supplemental_aliases"][0]["canonical_source_id"], "v2-source-7000")
+
+    def test_mp_conflicting_biz_and_nested_feedback_are_rejected_before_dedup(self):
+        mp = {"id": "corescope-mp-conflict", "kind": "mp_account", "config": {"biz": "Mzg3MTk3NzYzNw==",
+              "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkyNTYxNzg5Mg==&mid=1"}, "enabled": True}
+        with self.assertRaisesRegex(ValueError, "disagree"):
+            MOD.source_pack([], [], set(), None, None, [self.supplement(mp)])
+        nested = {"id": "corescope-json-loop", "kind": "json_list", "config": {
+            "url": "https://example.org/api", "bodyJson": {"url": "https://aihot.news/all"}}, "enabled": True}
+        with self.assertRaisesRegex(ValueError, "feedback loop"):
+            MOD.source_pack([], [], set(), None, None, [self.supplement(nested)])
+
+    @staticmethod
     def manifest(profiles=None, frozen=None):
         return {"schemaVersion": 1, "preserveDisabledSourceIds": frozen or [], "profiles": profiles or {}}
 

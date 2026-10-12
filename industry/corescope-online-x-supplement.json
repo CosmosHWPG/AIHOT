@@ -1,0 +1,4529 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-12T10:21:22.914783+00:00",
+  "evidenceScope": "Partial public AIHOT metadata observation, not its private production source export",
+  "sources": [
+    {
+      "id": "corescope-x-rohanpaul-ai",
+      "name": "Rohan Paul · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:rohanpaul_ai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:rohanpaul_ai",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-workbuddy-ai",
+      "name": "Tencent WorkBuddy · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:WorkBuddy_AI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:tencent",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-elonmusk",
+      "name": "Elon Musk · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:elonmusk -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:elonmusk",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-reach-vb",
+      "name": "Vaibhav Srivastav · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:reach_vb -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:reach_vb",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-shao--meng",
+      "name": "邵猛 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:shao__meng -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:shao__meng",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-indigox",
+      "name": "indigo · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:indigox -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:indigox",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-howie-serious",
+      "name": "howie.serious · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:howie_serious -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:howie_serious",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-oran-ge",
+      "name": "Oran Ge · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:oran_ge -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:oran_ge",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-poteto",
+      "name": "Lauren Tan · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:poteto -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:poteto",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-thexpin",
+      "name": "X.PIN · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:thexpin -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:thexpin",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-testingcatalog",
+      "name": "Testing Catalog · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:testingcatalog -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:testingcatalog",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-thsottiaux",
+      "name": "Tibo · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:thsottiaux -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:thsottiaux",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-dongxi-nlp",
+      "name": "马东锡 NLP · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:dongxi_nlp -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:dongxi_nlp",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-yuchenj-uw",
+      "name": "Yuchen Jin · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Yuchenj_UW -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:yuchenj_uw",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-trq212",
+      "name": "Thariq · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:trq212 -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:trq212",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-tripoai",
+      "name": "Tripo · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:tripoai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:tripo",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-clementdelangue",
+      "name": "Clément Delangue · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ClementDelangue -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:clementdelangue",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-cohere",
+      "name": "Cohere · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:cohere -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:cohere",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-polynoamial",
+      "name": "Noam Brown · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:polynoamial -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:polynoamial",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-galaxeadynamics",
+      "name": "星海图 Galaxea · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:GalaxeaDynamics -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:galaxea",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-elevenlabs",
+      "name": "ElevenLabs · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ElevenLabs -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:elevenlabs",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-typesafeai",
+      "name": "TypeSafe AI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:typesafeai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:typesafeai",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-fchollet",
+      "name": "Francois Chollet · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:fchollet -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:fchollet",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-natolambert",
+      "name": "Nathan Lambert · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:natolambert -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:interconnects",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-dexhorthy",
+      "name": "Dex Horthy · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:dexhorthy -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:dexhorthy",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-pixverse",
+      "name": "PixVerse · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:PixVerse -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:pixverse",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-higgsfield",
+      "name": "Higgsfield AI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:higgsfield -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:higgsfield",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-viggleai",
+      "name": "Viggle AI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ViggleAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:viggle",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-arena",
+      "name": "Arena · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:arena -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:arena",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-mustafasuleyman",
+      "name": "Mustafa Suleyman · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:mustafasuleyman -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:mustafasuleyman",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-alexeheath",
+      "name": "Alex Heath · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:alexeheath -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:alexeheath",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-aiwarts",
+      "name": "卡尔的 AI 沃茨 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:aiwarts -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:aiwarts",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-satyanadella",
+      "name": "Satya Nadella · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:satyanadella -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:satyanadella",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-saitowu",
+      "name": "Saito 硬地骇客 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:SaitoWu -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:saitowu",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-kling-ai",
+      "name": "可灵 Kling AI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Kling_ai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:kling",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-antlingagi",
+      "name": "蚂蚁百灵 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:AntLingAGI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:ant-ling",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-stepfun-ai",
+      "name": "阶跃星辰 StepFun · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:StepFun_ai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:stepfun",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-midjourney",
+      "name": "Midjourney · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:midjourney -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:midjourney",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-cognition",
+      "name": "Cognition · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:cognition -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:cognition",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-openrouter",
+      "name": "OpenRouter · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:OpenRouter -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:openrouter",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-artificialanlys",
+      "name": "Artificial Analysis · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ArtificialAnlys -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:artificial-analysis",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-lumalabsai",
+      "name": "Luma AI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:LumaLabsAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:luma",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-physical-int",
+      "name": "Physical Intelligence · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:physical_int -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:physical-intelligence",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-chelseabfinn",
+      "name": "Chelsea Finn · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:chelseabfinn -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:chelseabfinn",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-noahzweben",
+      "name": "Noah Zweben · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:noahzweben -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:noahzweben",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-sherwinwu",
+      "name": "Sherwin Wu · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:sherwinwu -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:sherwinwu",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-ericzakariasson",
+      "name": "Eric Zakariasson · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ericzakariasson -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:ericzakariasson",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-suno",
+      "name": "Suno · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:suno -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:suno",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-bot",
+      "name": "Grok Bot · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:bot -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:bot",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-grok",
+      "name": "Grok · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:grok -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:xai",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-arcprize",
+      "name": "ARC Prize · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:arcprize -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:arcprize",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-unslothai",
+      "name": "Unsloth · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:UnslothAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:unsloth",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-aravsrinivas",
+      "name": "Aravind Srinivas · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:AravSrinivas -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:aravsrinivas",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x--philschmid",
+      "name": "Philipp Schmid · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:_philschmid -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:_philschmid",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-thom-wolf",
+      "name": "Thomas Wolf · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Thom_Wolf -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:thom_wolf",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-openbmb",
+      "name": "面壁智能 OpenBMB · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:OpenBMB -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:openbmb",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-ring-hyacinth",
+      "name": "Ring Hyacinth · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ring_hyacinth -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:ring_hyacinth",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-drfeifei",
+      "name": "Fei-Fei Li · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:drfeifei -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:drfeifei",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-tencenthunyuan",
+      "name": "腾讯混元 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:TencentHunyuan -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:tencent",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-fal",
+      "name": "fal · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:fal -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:fal",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-sundarpichai",
+      "name": "Sundar Pichai · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:sundarpichai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:sundarpichai",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-demishassabis",
+      "name": "Demis Hassabis · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:demishassabis -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:demishassabis",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-spacexai",
+      "name": "SpaceXAI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:SpaceXAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:spacexai",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-generalistai",
+      "name": "Generalist · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:GeneralistAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:generalist",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-odysseyml",
+      "name": "Odyssey · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:odysseyml -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:odyssey",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-waymo",
+      "name": "Waymo · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Waymo -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:waymo",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-opencode",
+      "name": "opencode · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:opencode -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:opencode",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-officiallogank",
+      "name": "Logan Kilpatrick · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:OfficialLoganK -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:officiallogank",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-arthurmensch",
+      "name": "Arthur Mensch · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:arthurmensch -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:arthurmensch",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-alibaba-wan",
+      "name": "Wan · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Alibaba_Wan -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "alibaba",
+      "signal_group_id": "publisher:alibaba",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-jeffdean",
+      "name": "Jeff Dean · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:JeffDean -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:jeffdean",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-bcherny",
+      "name": "Boris Cherny · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:bcherny -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:bcherny",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-lisasu",
+      "name": "Lisa Su · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:LisaSu -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:lisasu",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x--catwu",
+      "name": "Cat Wu · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:_catwu -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:_catwu",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-enjalot",
+      "name": "Ian Johnson · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:enjalot -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:enjalot",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-markchen90",
+      "name": "Mark Chen · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:markchen90 -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:markchen90",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-ggerganov",
+      "name": "Georgi Gerganov · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ggerganov -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:ggerganov",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-gdb",
+      "name": "Greg Brockman · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:gdb -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:gdb",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-dashhuang",
+      "name": "Dash · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:DashHuang -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:dashhuang",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-perplexity-ai",
+      "name": "Perplexity · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:perplexity_ai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:perplexity",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-krea-ai",
+      "name": "Krea AI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:krea_ai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:krea",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-drjimfan",
+      "name": "Jim Fan · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:DrJimFan -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:drjimfan",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-baidu-inc",
+      "name": "百度 Baidu · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Baidu_Inc -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:baidu",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-sensetime-ai",
+      "name": "商汤 SenseTime · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:SenseTime_AI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:sensetime",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-robbyant-brain",
+      "name": "Robbyant 蚂蚁灵波 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:robbyant_brain -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:robbyant",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-joshwoodward",
+      "name": "Josh Woodward · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:joshwoodward -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:joshwoodward",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-haoailab",
+      "name": "UCSD Hao AI Lab · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:haoailab -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:hao-ai-lab",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-jietang",
+      "name": "唐杰 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:jietang -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:jietang",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-gemini-notebook",
+      "name": "Gemini Notebook · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Gemini_Notebook -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:gemini_notebook",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-meshyai",
+      "name": "Meshy · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:MeshyAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:meshy",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-tianyi",
+      "name": "Tianyi Cui · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:tianyi -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:tianyi",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-khazix0918",
+      "name": "卡兹克 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Khazix0918 -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:kazike",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-openclaw",
+      "name": "OpenClaw · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:openclaw -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:openclaw",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-minimax-ai",
+      "name": "MiniMax · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:MiniMax_AI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:minimax",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-anthropicai",
+      "name": "Anthropic · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:AnthropicAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "anthropic",
+      "signal_group_id": "publisher:anthropic",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-chatgpt",
+      "name": "ChatGPT · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ChatGPT -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "openai",
+      "signal_group_id": "publisher:openai",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-claudedevs",
+      "name": "Claude Devs · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ClaudeDevs -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "anthropic",
+      "signal_group_id": "publisher:anthropic",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-openaidevs",
+      "name": "OpenAI Developers · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:OpenAIDevs -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "openai",
+      "signal_group_id": "publisher:openai",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-googleai",
+      "name": "Google AI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:GoogleAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "google",
+      "signal_group_id": "publisher:google",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-google",
+      "name": "Google · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Google -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "google",
+      "signal_group_id": "publisher:google",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-alibaba-qwen",
+      "name": "通义千问 / Qwen · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Alibaba_Qwen -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "alibaba",
+      "signal_group_id": "publisher:alibaba",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-openainewsroom",
+      "name": "OpenAI Newsroom · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:OpenAINewsroom -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "openai",
+      "signal_group_id": "publisher:openai",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-hailuo-ai",
+      "name": "MiniMax Design (H3) · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Hailuo_AI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:minimax",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-claudeai",
+      "name": "Claude · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:claudeai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "anthropic",
+      "signal_group_id": "publisher:anthropic",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-cursor-ai",
+      "name": "Cursor · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:cursor_ai -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:cursor",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-msftresearch",
+      "name": "Microsoft Research · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:MSFTResearch -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "microsoft",
+      "signal_group_id": "publisher:microsoft",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-manusai",
+      "name": "Manus · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ManusAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:manus",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-mistralai",
+      "name": "Mistral AI · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:MistralAI -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:mistral",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-googledeepmind",
+      "name": "Google DeepMind · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:GoogleDeepMind -filter:replies",
+        "searchType": "Latest",
+        "provider": "xquik",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "google",
+      "signal_group_id": "publisher:google",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "X原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    }
+  ],
+  "aliases": [
+    {
+      "observedIdentity": "x:emollick",
+      "name": "Ethan Mollick",
+      "canonicalSourceId": "v2-source-186",
+      "reason": "exact handle already in V2; keep original source ID and frozen pause",
+      "evidenceArticleUrl": "https://aihot.news/item/d41zhpn9jvsr5ljm0l58rswfv"
+    },
+    {
+      "observedIdentity": "x:karpathy",
+      "name": "Andrej Karpathy",
+      "canonicalSourceId": "v2-source-3725",
+      "reason": "exact handle already in V2; keep original source ID and frozen pause",
+      "evidenceArticleUrl": "https://aihot.news/item/f572f90oc11zg6w7s815vz6m4"
+    },
+    {
+      "observedIdentity": "x:sama",
+      "name": "Sam Altman",
+      "canonicalSourceId": "v2-source-191",
+      "reason": "exact handle already in V2; keep original source ID and frozen pause",
+      "evidenceArticleUrl": "https://aihot.news/item/sd9421ibml14y7yog6u3gqtx0"
+    },
+    {
+      "observedIdentity": "x:openai",
+      "name": "OpenAI",
+      "canonicalSourceId": "v2-source-190",
+      "reason": "exact handle already in V2; keep original source ID and frozen pause",
+      "evidenceArticleUrl": "https://aihot.news/item/b9fqh7eiix11bleqgup10lqwk"
+    },
+    {
+      "observedIdentity": "x:geminiapp",
+      "name": "Gemini",
+      "canonicalSourceId": "v2-source-188",
+      "reason": "exact handle already in V2; keep original source ID and frozen pause",
+      "evidenceArticleUrl": "https://aihot.news/item/o2uot53gklowmfcv7bvqvc7zl"
+    },
+    {
+      "observedIdentity": "x:zai_org",
+      "name": "智谱 Z.ai",
+      "canonicalSourceId": "v2-source-193",
+      "reason": "exact handle already in V2; keep original source ID and frozen pause",
+      "evidenceArticleUrl": "https://aihot.news/item/q74v4lhkbjw6z7wg0ziufr9zy"
+    }
+  ],
+  "pending": [
+    {
+      "key": "name:amjadmasad",
+      "name": "Amjad Masad",
+      "onlineKind": "x_search",
+      "xHandle": null,
+      "originalArticleUrl": null,
+      "aihotEvidencePage": "https://aihot.news/",
+      "evidenceLevel": "display_name_and_collector_kind",
+      "localMatches": [
+        {
+          "id": "v2-source-661",
+          "name": "Amjad Masad",
+          "enabledInCommittedBaseline": true,
+          "kind": "rss",
+          "profilePolicy": "native",
+          "feedUrl": "https://amasad.me/rss",
+          "listingUrl": null,
+          "accountName": null,
+          "accountTransport": null
+        }
+      ],
+      "preserveExistingIds": [
+        "v2-source-661"
+      ],
+      "decision": "identity_pending_do_not_add_yet",
+      "reason": "Only a display name/channel was observed. No exact X handle, RSS feed path/query, JSON/listing endpoint, or WeChat biz was established.",
+      "nextVerification": "Find the exact publicly documented collector identity and compare it with the complete existing endpoints before adding."
+    },
+    {
+      "key": "name:jackclark",
+      "name": "Jack Clark",
+      "onlineKind": "x_search",
+      "xHandle": null,
+      "originalArticleUrl": null,
+      "aihotEvidencePage": "https://aihot.news/",
+      "evidenceLevel": "display_name_and_collector_kind",
+      "localMatches": [
+        {
+          "id": "rss-import-ai",
+          "name": "Import AI",
+          "enabledInCommittedBaseline": true,
+          "kind": "rss",
+          "profilePolicy": "native",
+          "feedUrl": "https://importai.substack.com/feed",
+          "listingUrl": null,
+          "accountName": null,
+          "accountTransport": null
+        }
+      ],
+      "preserveExistingIds": [
+        "rss-import-ai"
+      ],
+      "decision": "identity_pending_do_not_add_yet",
+      "reason": "Only a display name/channel was observed. No exact X handle, RSS feed path/query, JSON/listing endpoint, or WeChat biz was established.",
+      "nextVerification": "Find the exact publicly documented collector identity and compare it with the complete existing endpoints before adding."
+    },
+    {
+      "key": "name:semianalysis",
+      "name": "SemiAnalysis",
+      "onlineKind": "x_search",
+      "xHandle": null,
+      "originalArticleUrl": null,
+      "aihotEvidencePage": "https://aihot.news/",
+      "evidenceLevel": "display_name_and_collector_kind",
+      "localMatches": [
+        {
+          "id": "v2-source-76",
+          "name": "SemiAnalysis",
+          "enabledInCommittedBaseline": true,
+          "kind": "rss",
+          "profilePolicy": "native",
+          "feedUrl": "https://newsletter.semianalysis.com/feed",
+          "listingUrl": null,
+          "accountName": null,
+          "accountTransport": null
+        }
+      ],
+      "preserveExistingIds": [
+        "v2-source-76"
+      ],
+      "decision": "identity_pending_do_not_add_yet",
+      "reason": "Only a display name/channel was observed. No exact X handle, RSS feed path/query, JSON/listing endpoint, or WeChat biz was established.",
+      "nextVerification": "Find the exact publicly documented collector identity and compare it with the complete existing endpoints before adding."
+    },
+    {
+      "key": "name:aiatmeta",
+      "name": "AI at Meta",
+      "onlineKind": "x_search",
+      "xHandle": null,
+      "originalArticleUrl": null,
+      "aihotEvidencePage": "https://aihot.news/",
+      "evidenceLevel": "display_name_and_collector_kind",
+      "localMatches": [
+        {
+          "id": "v2-source-4",
+          "name": "Meta AI Blog",
+          "enabledInCommittedBaseline": true,
+          "kind": "rss",
+          "profilePolicy": "native",
+          "feedUrl": "https://rsshub.bestblogs.dev/meta/ai/blog",
+          "listingUrl": null,
+          "accountName": null,
+          "accountTransport": null
+        }
+      ],
+      "preserveExistingIds": [
+        "v2-source-4"
+      ],
+      "decision": "identity_pending_do_not_add_yet",
+      "reason": "Only a display name/channel was observed. No exact X handle, RSS feed path/query, JSON/listing endpoint, or WeChat biz was established.",
+      "nextVerification": "Find the exact publicly documented collector identity and compare it with the complete existing endpoints before adding."
+    }
+  ],
+  "verifications": {
+    "corescope-x-rohanpaul-ai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "rohanpaul_ai",
+      "evidencePage": "https://aihot.news/item/owh1fh19xuqeq86gd2r1ysa5x",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-workbuddy-ai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "WorkBuddy_AI",
+      "evidencePage": "https://aihot.news/item/kbx5i7e3sc3urjnkdc5dbyyv0",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-elonmusk": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "elonmusk",
+      "evidencePage": "https://aihot.news/item/hlj6rjn38uo3imznewx6iixhz",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-reach-vb": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "reach_vb",
+      "evidencePage": "https://aihot.news/item/l7eourl8yragaaa0eawgavbz4",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-shao--meng": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "shao__meng",
+      "evidencePage": "https://aihot.news/item/kgpv993veobjwrgpco1c0didx",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-indigox": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "indigox",
+      "evidencePage": "https://aihot.news/item/u205t7rtr2q2bex8oeg420dcg",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-howie-serious": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "howie_serious",
+      "evidencePage": "https://aihot.news/item/xf52padh24qdl5pgo2l0fgct3",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-oran-ge": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "oran_ge",
+      "evidencePage": "https://aihot.news/item/ow74qa293gwrl3p6mv1usrt5a",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-poteto": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "poteto",
+      "evidencePage": "https://aihot.news/item/twgekfn2b8ycq67qnnc9bme1z",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-thexpin": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "thexpin",
+      "evidencePage": "https://aihot.news/item/xmhnt9ovc9sslrjt3tqb1twih",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-testingcatalog": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "testingcatalog",
+      "evidencePage": "https://aihot.news/item/v0i9dzstwuwdjimhitpd9z6vp",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-thsottiaux": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "thsottiaux",
+      "evidencePage": "https://aihot.news/item/z54sznsd0r2teb6gqyvwu4nc2",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-dongxi-nlp": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "dongxi_nlp",
+      "evidencePage": "https://aihot.news/item/xfdje5fd4a9qhdohffpanyeuh",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-yuchenj-uw": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "Yuchenj_UW",
+      "evidencePage": "https://aihot.news/item/ctcleux2p8s4v3omdkjnskppx",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-trq212": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "trq212",
+      "evidencePage": "https://aihot.news/item/lssuxyy5blo7vquz1zjgw10fe",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-tripoai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "tripoai",
+      "evidencePage": "https://aihot.news/item/ajntci3w3wwka70ah8s9nny28",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-clementdelangue": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "ClementDelangue",
+      "evidencePage": "https://aihot.news/item/mum1uuzhhn80x6rw28nqcii1p",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-cohere": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "cohere",
+      "evidencePage": "https://aihot.news/item/gjm1vpdje5wil2x85gjldr85j",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-polynoamial": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "polynoamial",
+      "evidencePage": "https://aihot.news/item/i2ase10t10llw3qhi08p684vw",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-galaxeadynamics": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "GalaxeaDynamics",
+      "evidencePage": "https://aihot.news/item/aa8mlz8jz8awg9lxs1cp9ic28",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-elevenlabs": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "ElevenLabs",
+      "evidencePage": "https://aihot.news/item/et5vstq274oz88i7n2mfqpy3a",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-typesafeai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "typesafeai",
+      "evidencePage": "https://aihot.news/item/ozhvo6f3qekb83pi0rletx0p5",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-fchollet": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "fchollet",
+      "evidencePage": "https://aihot.news/item/ncd6vnl8lzk89klqlzxk4eyv6",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-natolambert": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "natolambert",
+      "evidencePage": "https://aihot.news/item/e0w7vb27mlhv1p8e2hsobc5v5",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-dexhorthy": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "dexhorthy",
+      "evidencePage": "https://aihot.news/item/duy22lj5eltnjmpdcmckue8vs",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-pixverse": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "PixVerse",
+      "evidencePage": "https://aihot.news/item/jo2zdx8wqnk69rpc30q7mdj9l",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-higgsfield": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "higgsfield",
+      "evidencePage": "https://aihot.news/item/gg1g8zcjgwnga8m6uhdkeikfi",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-viggleai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "ViggleAI",
+      "evidencePage": "https://aihot.news/item/v9ad0ggs85zz4d0et5g395cqf",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-arena": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "arena",
+      "evidencePage": "https://aihot.news/item/x75ppn09v87pw4jrpnl21wgn1",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-mustafasuleyman": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "mustafasuleyman",
+      "evidencePage": "https://aihot.news/item/n4lso6p9agtlaop7fqxmgtef0",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-alexeheath": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "alexeheath",
+      "evidencePage": "https://aihot.news/item/lahuztqitfbro4kg9otro2kpe",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-aiwarts": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "aiwarts",
+      "evidencePage": "https://aihot.news/item/uqymxv6amg9zljbgmkpsomqd1",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-satyanadella": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "satyanadella",
+      "evidencePage": "https://aihot.news/item/pjg4wb67gjg8j3ufbroq9956r",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-saitowu": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "SaitoWu",
+      "evidencePage": "https://aihot.news/item/o5zngxopb4x93yjjnyafkvgxa",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-kling-ai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "Kling_ai",
+      "evidencePage": "https://aihot.news/item/bt65d3vxjtfughs2vioxt3m86",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-antlingagi": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "AntLingAGI",
+      "evidencePage": "https://aihot.news/item/inzwnmwdzgnt3whjv3oi9vhs8",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-stepfun-ai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "StepFun_ai",
+      "evidencePage": "https://aihot.news/item/oxhthbp52iixqbunehy2po916",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-midjourney": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "midjourney",
+      "evidencePage": "https://aihot.news/item/o5kpu7l3pfo84p7gzq1s3umls",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-cognition": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "cognition",
+      "evidencePage": "https://aihot.news/item/in5c7vtm6ma47ovo2d8xx7c31",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-openrouter": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "OpenRouter",
+      "evidencePage": "https://aihot.news/item/t6ogdjxta6chq8hny7x9on903",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-artificialanlys": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "ArtificialAnlys",
+      "evidencePage": "https://aihot.news/item/k8c0h7xx10spo8cn308ql5uxz",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-lumalabsai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "LumaLabsAI",
+      "evidencePage": "https://aihot.news/item/h4yiuekal36f5cf2sxdg5z5rc",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-physical-int": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "physical_int",
+      "evidencePage": "https://aihot.news/item/q51sd1hn46z6i6hahqib1uvr6",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-chelseabfinn": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "chelseabfinn",
+      "evidencePage": "https://aihot.news/item/vetw93by9u94muxcuoa5bgag2",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-noahzweben": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "noahzweben",
+      "evidencePage": "https://aihot.news/item/t388qxy25o573n1d2znnuhbqr",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-sherwinwu": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "sherwinwu",
+      "evidencePage": "https://aihot.news/item/ksa89e8xz3j2ov63wdgoa4sn0",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-ericzakariasson": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "ericzakariasson",
+      "evidencePage": "https://aihot.news/item/krilbugglxj9mk22648lb2vo4",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-suno": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "suno",
+      "evidencePage": "https://aihot.news/item/zn3tucqtox9akgqlgdmgq85qm",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-bot": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "bot",
+      "evidencePage": "https://aihot.news/item/n7vfd4jh96qo2acanth17fdwa",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-grok": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "grok",
+      "evidencePage": "https://aihot.news/item/m77leauczmowax4odp8ql7dkl",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-arcprize": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "arcprize",
+      "evidencePage": "https://aihot.news/item/syftcjix95a8n9lxiwwoqrxkb",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-unslothai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "UnslothAI",
+      "evidencePage": "https://aihot.news/item/jgwl5kwbth7ulxmbkovklyyd6",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-aravsrinivas": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "AravSrinivas",
+      "evidencePage": "https://aihot.news/item/y6tukh010jabz63ne4a83i7c1",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x--philschmid": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "_philschmid",
+      "evidencePage": "https://aihot.news/item/addc41fnma94fira4p4ei1tcf",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-thom-wolf": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "Thom_Wolf",
+      "evidencePage": "https://aihot.news/item/e3qnw3hrbiakzh05coz811uni",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-openbmb": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "OpenBMB",
+      "evidencePage": "https://aihot.news/item/oqujzsqx9ycmxpy16qzmyn4nk",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-ring-hyacinth": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "ring_hyacinth",
+      "evidencePage": "https://aihot.news/item/bio2ffefy6ziobb3kux71o23l",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-drfeifei": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "drfeifei",
+      "evidencePage": "https://aihot.news/item/vm8h3a5g4517akqupzeuhz0sl",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-tencenthunyuan": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "TencentHunyuan",
+      "evidencePage": "https://aihot.news/item/k1d8tpo8krkqdw5g4s3lu2l5p",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-fal": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "fal",
+      "evidencePage": "https://aihot.news/item/u74c7gihuk3ky2exkd47f6uvd",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-sundarpichai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "sundarpichai",
+      "evidencePage": "https://aihot.news/item/pdrjostq5h1gdx9dmdlfmumvh",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-demishassabis": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "demishassabis",
+      "evidencePage": "https://aihot.news/item/ad3wo3an984o3at60qv4okkk2",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-spacexai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "SpaceXAI",
+      "evidencePage": "https://aihot.news/item/x8gp6nzlbe2rdlc955afe9cgm",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-generalistai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "GeneralistAI",
+      "evidencePage": "https://aihot.news/item/sdzwd85r11kpiekbpollpnall",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-odysseyml": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "odysseyml",
+      "evidencePage": "https://aihot.news/item/cpeu2bmv97j1ecqv8s99ncoqw",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-waymo": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "Waymo",
+      "evidencePage": "https://aihot.news/item/stshar7b11dvtiuaxrp5s2u7q",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-opencode": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "opencode",
+      "evidencePage": "https://aihot.news/item/t7l5fy5lt82w9gy63835kqfxd",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-officiallogank": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "OfficialLoganK",
+      "evidencePage": "https://aihot.news/item/xpn12mlhe62d68nztoy24bwiy",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-arthurmensch": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "arthurmensch",
+      "evidencePage": "https://aihot.news/item/wpu01gqz9gb9oxkvmd067sy9b",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-alibaba-wan": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "Alibaba_Wan",
+      "evidencePage": "https://aihot.news/item/j4vcjiltdzwilu5xyfz1uzrej",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-jeffdean": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "JeffDean",
+      "evidencePage": "https://aihot.news/item/stxv8ddy3lz4tw8mmbd4tv5jw",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-bcherny": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "bcherny",
+      "evidencePage": "https://aihot.news/item/z37nbj7nqac6oa6huyxlt5ogg",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-lisasu": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "LisaSu",
+      "evidencePage": "https://aihot.news/item/qv3qwfiu6zfpe3br6i0ilg87j",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x--catwu": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "_catwu",
+      "evidencePage": "https://aihot.news/item/vkfqzehcj1oakh8gsl0r1hpto",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-enjalot": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "enjalot",
+      "evidencePage": "https://aihot.news/item/rcizcm4drxctjuvr6l3597di3",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-markchen90": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "markchen90",
+      "evidencePage": "https://aihot.news/item/e9x6n5jwnvfek828vpdbhirwx",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-ggerganov": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "ggerganov",
+      "evidencePage": "https://aihot.news/item/xjoaci1h6gw4wpd7uo9cjpt8v",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-gdb": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "gdb",
+      "evidencePage": "https://aihot.news/item/sbjw9mf3n1o9mdcckqfv0jw0q",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-dashhuang": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "DashHuang",
+      "evidencePage": "https://aihot.news/item/yqv3waoe1yrxfe00tqjuzuvej",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-perplexity-ai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "perplexity_ai",
+      "evidencePage": "https://aihot.news/item/gxdftq1dep1enl1gw5cl210h2",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-krea-ai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "krea_ai",
+      "evidencePage": "https://aihot.news/item/dl9wyf4dhfpj3utxkaqkadjym",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-drjimfan": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "DrJimFan",
+      "evidencePage": "https://aihot.news/item/e7g4wqtsex46g5vl2px40k9v0",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-baidu-inc": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "Baidu_Inc",
+      "evidencePage": "https://aihot.news/item/wfer3mujvx08x4tfnfrymtgir",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-sensetime-ai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "SenseTime_AI",
+      "evidencePage": "https://aihot.news/item/zisrspghpu58xp1r0ep2nmrtf",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-robbyant-brain": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "robbyant_brain",
+      "evidencePage": "https://aihot.news/item/xsgwp6p0g4o9caq1hxwkhqxks",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-joshwoodward": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "joshwoodward",
+      "evidencePage": "https://aihot.news/item/d3qx5y4tlypar1un5jyy33xe6",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-haoailab": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "haoailab",
+      "evidencePage": "https://aihot.news/item/a5xfl04l6g6xc1refuometmmg",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-jietang": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "jietang",
+      "evidencePage": "https://aihot.news/item/k8k8jpywk59n78zu713dse7mw",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-gemini-notebook": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "Gemini_Notebook",
+      "evidencePage": "https://aihot.news/item/wuz0couqpni9do5tspsxv71he",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-meshyai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "MeshyAI",
+      "evidencePage": "https://aihot.news/item/ctwyipdca2hehwnddieyfqse6",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-tianyi": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "tianyi",
+      "evidencePage": "https://aihot.news/item/a38g9lw8b6fpayyhrydpvvmcq",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-khazix0918": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "Khazix0918",
+      "evidencePage": "https://aihot.news/item/hvxwaxeyj6i82xv44ef4ce6fz",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-openclaw": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "openclaw",
+      "evidencePage": "https://aihot.news/item/luthssmpxrbef2gxnr8ft2i1a",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-minimax-ai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "MiniMax_AI",
+      "evidencePage": "https://aihot.news/item/p6e383238q3f815oeex4uk5gs",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-anthropicai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "AnthropicAI",
+      "evidencePage": "https://aihot.news/item/ksq76mkdzyup0kpjs4vxx35qi",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-chatgpt": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "ChatGPT",
+      "evidencePage": "https://aihot.news/item/pastkwfxctzau1k8vyaakhg6b",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-claudedevs": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "ClaudeDevs",
+      "evidencePage": "https://aihot.news/item/axppc6b9a6avnnp27z21uja3h",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-openaidevs": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "OpenAIDevs",
+      "evidencePage": "https://aihot.news/item/map6felwz8l7yh4marqbxxqi8",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-googleai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "GoogleAI",
+      "evidencePage": "https://aihot.news/item/zknfg8l938mnovlo8a7054tgi",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-google": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "Google",
+      "evidencePage": "https://aihot.news/item/ejhj56b103fpp2b0d5eyso9fw",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-alibaba-qwen": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "Alibaba_Qwen",
+      "evidencePage": "https://aihot.news/item/rterpw2istnq3vb4gamrp0aom",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-openainewsroom": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "OpenAINewsroom",
+      "evidencePage": "https://aihot.news/item/uceike4yt1on0k7sj37f9nfeh",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-hailuo-ai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "Hailuo_AI",
+      "evidencePage": "https://aihot.news/item/i5mz5ag3t9zwph06u47aol8p4",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-claudeai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "claudeai",
+      "evidencePage": "https://aihot.news/item/c1756nmcrmy76itlzxucv9nsc",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-cursor-ai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "cursor_ai",
+      "evidencePage": "https://aihot.news/item/h7xcmz4f6aikhzf7r15hhjoiw",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-msftresearch": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "MSFTResearch",
+      "evidencePage": "https://aihot.news/item/fdhvdaj48md66ttp9fhn0fqag",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-manusai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "ManusAI",
+      "evidencePage": "https://aihot.news/item/zas8tsnde3b6gfeh87ow0wmbx",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-mistralai": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "MistralAI",
+      "evidencePage": "https://aihot.news/item/ujnbr3zgyzgdmttfhjujm8kmy",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    },
+    "corescope-x-googledeepmind": {
+      "status": "verified",
+      "scope": "exact_public_x_account_identity_and_tested_read_only_adapter_contract",
+      "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+      "handle": "GoogleDeepMind",
+      "evidencePage": "https://aihot.news/item/fqn3blsf244tabuehydo5fw0q",
+      "paidRuntimeAcceptance": "pending bounded collection; not inferred from account identity"
+    }
+  },
+  "coverage": [
+    {
+      "observedIdentity": "x:rohanpaul_ai",
+      "sourceId": "corescope-x-rohanpaul-ai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/owh1fh19xuqeq86gd2r1ysa5x"
+    },
+    {
+      "observedIdentity": "x:workbuddy_ai",
+      "sourceId": "corescope-x-workbuddy-ai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/kbx5i7e3sc3urjnkdc5dbyyv0"
+    },
+    {
+      "observedIdentity": "x:elonmusk",
+      "sourceId": "corescope-x-elonmusk",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/hlj6rjn38uo3imznewx6iixhz"
+    },
+    {
+      "observedIdentity": "x:reach_vb",
+      "sourceId": "corescope-x-reach-vb",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/l7eourl8yragaaa0eawgavbz4"
+    },
+    {
+      "observedIdentity": "x:shao__meng",
+      "sourceId": "corescope-x-shao--meng",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/kgpv993veobjwrgpco1c0didx"
+    },
+    {
+      "observedIdentity": "x:indigox",
+      "sourceId": "corescope-x-indigox",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/u205t7rtr2q2bex8oeg420dcg"
+    },
+    {
+      "observedIdentity": "x:howie_serious",
+      "sourceId": "corescope-x-howie-serious",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/xf52padh24qdl5pgo2l0fgct3"
+    },
+    {
+      "observedIdentity": "x:oran_ge",
+      "sourceId": "corescope-x-oran-ge",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/ow74qa293gwrl3p6mv1usrt5a"
+    },
+    {
+      "observedIdentity": "x:poteto",
+      "sourceId": "corescope-x-poteto",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/twgekfn2b8ycq67qnnc9bme1z"
+    },
+    {
+      "observedIdentity": "x:thexpin",
+      "sourceId": "corescope-x-thexpin",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/xmhnt9ovc9sslrjt3tqb1twih"
+    },
+    {
+      "observedIdentity": "x:testingcatalog",
+      "sourceId": "corescope-x-testingcatalog",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/v0i9dzstwuwdjimhitpd9z6vp"
+    },
+    {
+      "observedIdentity": "x:thsottiaux",
+      "sourceId": "corescope-x-thsottiaux",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/z54sznsd0r2teb6gqyvwu4nc2"
+    },
+    {
+      "observedIdentity": "x:dongxi_nlp",
+      "sourceId": "corescope-x-dongxi-nlp",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/xfdje5fd4a9qhdohffpanyeuh"
+    },
+    {
+      "observedIdentity": "x:yuchenj_uw",
+      "sourceId": "corescope-x-yuchenj-uw",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/ctcleux2p8s4v3omdkjnskppx"
+    },
+    {
+      "observedIdentity": "x:trq212",
+      "sourceId": "corescope-x-trq212",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/lssuxyy5blo7vquz1zjgw10fe"
+    },
+    {
+      "observedIdentity": "x:tripoai",
+      "sourceId": "corescope-x-tripoai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/ajntci3w3wwka70ah8s9nny28"
+    },
+    {
+      "observedIdentity": "x:clementdelangue",
+      "sourceId": "corescope-x-clementdelangue",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/mum1uuzhhn80x6rw28nqcii1p"
+    },
+    {
+      "observedIdentity": "x:cohere",
+      "sourceId": "corescope-x-cohere",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/gjm1vpdje5wil2x85gjldr85j"
+    },
+    {
+      "observedIdentity": "x:polynoamial",
+      "sourceId": "corescope-x-polynoamial",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/i2ase10t10llw3qhi08p684vw"
+    },
+    {
+      "observedIdentity": "x:galaxeadynamics",
+      "sourceId": "corescope-x-galaxeadynamics",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/aa8mlz8jz8awg9lxs1cp9ic28"
+    },
+    {
+      "observedIdentity": "x:elevenlabs",
+      "sourceId": "corescope-x-elevenlabs",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/et5vstq274oz88i7n2mfqpy3a"
+    },
+    {
+      "observedIdentity": "x:typesafeai",
+      "sourceId": "corescope-x-typesafeai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/ozhvo6f3qekb83pi0rletx0p5"
+    },
+    {
+      "observedIdentity": "x:fchollet",
+      "sourceId": "corescope-x-fchollet",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/ncd6vnl8lzk89klqlzxk4eyv6"
+    },
+    {
+      "observedIdentity": "x:natolambert",
+      "sourceId": "corescope-x-natolambert",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/e0w7vb27mlhv1p8e2hsobc5v5"
+    },
+    {
+      "observedIdentity": "x:dexhorthy",
+      "sourceId": "corescope-x-dexhorthy",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/duy22lj5eltnjmpdcmckue8vs"
+    },
+    {
+      "observedIdentity": "x:pixverse",
+      "sourceId": "corescope-x-pixverse",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/jo2zdx8wqnk69rpc30q7mdj9l"
+    },
+    {
+      "observedIdentity": "x:higgsfield",
+      "sourceId": "corescope-x-higgsfield",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/gg1g8zcjgwnga8m6uhdkeikfi"
+    },
+    {
+      "observedIdentity": "x:viggleai",
+      "sourceId": "corescope-x-viggleai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/v9ad0ggs85zz4d0et5g395cqf"
+    },
+    {
+      "observedIdentity": "x:arena",
+      "sourceId": "corescope-x-arena",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/x75ppn09v87pw4jrpnl21wgn1"
+    },
+    {
+      "observedIdentity": "x:mustafasuleyman",
+      "sourceId": "corescope-x-mustafasuleyman",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/n4lso6p9agtlaop7fqxmgtef0"
+    },
+    {
+      "observedIdentity": "x:alexeheath",
+      "sourceId": "corescope-x-alexeheath",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/lahuztqitfbro4kg9otro2kpe"
+    },
+    {
+      "observedIdentity": "x:aiwarts",
+      "sourceId": "corescope-x-aiwarts",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/uqymxv6amg9zljbgmkpsomqd1"
+    },
+    {
+      "observedIdentity": "x:satyanadella",
+      "sourceId": "corescope-x-satyanadella",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/pjg4wb67gjg8j3ufbroq9956r"
+    },
+    {
+      "observedIdentity": "x:saitowu",
+      "sourceId": "corescope-x-saitowu",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/o5zngxopb4x93yjjnyafkvgxa"
+    },
+    {
+      "observedIdentity": "x:kling_ai",
+      "sourceId": "corescope-x-kling-ai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/bt65d3vxjtfughs2vioxt3m86"
+    },
+    {
+      "observedIdentity": "x:antlingagi",
+      "sourceId": "corescope-x-antlingagi",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/inzwnmwdzgnt3whjv3oi9vhs8"
+    },
+    {
+      "observedIdentity": "x:stepfun_ai",
+      "sourceId": "corescope-x-stepfun-ai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/oxhthbp52iixqbunehy2po916"
+    },
+    {
+      "observedIdentity": "x:midjourney",
+      "sourceId": "corescope-x-midjourney",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/o5kpu7l3pfo84p7gzq1s3umls"
+    },
+    {
+      "observedIdentity": "x:cognition",
+      "sourceId": "corescope-x-cognition",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/in5c7vtm6ma47ovo2d8xx7c31"
+    },
+    {
+      "observedIdentity": "x:openrouter",
+      "sourceId": "corescope-x-openrouter",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/t6ogdjxta6chq8hny7x9on903"
+    },
+    {
+      "observedIdentity": "x:artificialanlys",
+      "sourceId": "corescope-x-artificialanlys",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/k8c0h7xx10spo8cn308ql5uxz"
+    },
+    {
+      "observedIdentity": "x:lumalabsai",
+      "sourceId": "corescope-x-lumalabsai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/h4yiuekal36f5cf2sxdg5z5rc"
+    },
+    {
+      "observedIdentity": "x:physical_int",
+      "sourceId": "corescope-x-physical-int",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/q51sd1hn46z6i6hahqib1uvr6"
+    },
+    {
+      "observedIdentity": "x:chelseabfinn",
+      "sourceId": "corescope-x-chelseabfinn",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/vetw93by9u94muxcuoa5bgag2"
+    },
+    {
+      "observedIdentity": "x:noahzweben",
+      "sourceId": "corescope-x-noahzweben",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/t388qxy25o573n1d2znnuhbqr"
+    },
+    {
+      "observedIdentity": "x:sherwinwu",
+      "sourceId": "corescope-x-sherwinwu",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/ksa89e8xz3j2ov63wdgoa4sn0"
+    },
+    {
+      "observedIdentity": "x:ericzakariasson",
+      "sourceId": "corescope-x-ericzakariasson",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/krilbugglxj9mk22648lb2vo4"
+    },
+    {
+      "observedIdentity": "x:suno",
+      "sourceId": "corescope-x-suno",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/zn3tucqtox9akgqlgdmgq85qm"
+    },
+    {
+      "observedIdentity": "x:bot",
+      "sourceId": "corescope-x-bot",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/n7vfd4jh96qo2acanth17fdwa"
+    },
+    {
+      "observedIdentity": "x:grok",
+      "sourceId": "corescope-x-grok",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/m77leauczmowax4odp8ql7dkl"
+    },
+    {
+      "observedIdentity": "x:arcprize",
+      "sourceId": "corescope-x-arcprize",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/syftcjix95a8n9lxiwwoqrxkb"
+    },
+    {
+      "observedIdentity": "x:unslothai",
+      "sourceId": "corescope-x-unslothai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/jgwl5kwbth7ulxmbkovklyyd6"
+    },
+    {
+      "observedIdentity": "x:aravsrinivas",
+      "sourceId": "corescope-x-aravsrinivas",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/y6tukh010jabz63ne4a83i7c1"
+    },
+    {
+      "observedIdentity": "x:_philschmid",
+      "sourceId": "corescope-x--philschmid",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/addc41fnma94fira4p4ei1tcf"
+    },
+    {
+      "observedIdentity": "x:thom_wolf",
+      "sourceId": "corescope-x-thom-wolf",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/e3qnw3hrbiakzh05coz811uni"
+    },
+    {
+      "observedIdentity": "x:openbmb",
+      "sourceId": "corescope-x-openbmb",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/oqujzsqx9ycmxpy16qzmyn4nk"
+    },
+    {
+      "observedIdentity": "x:ring_hyacinth",
+      "sourceId": "corescope-x-ring-hyacinth",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/bio2ffefy6ziobb3kux71o23l"
+    },
+    {
+      "observedIdentity": "x:drfeifei",
+      "sourceId": "corescope-x-drfeifei",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/vm8h3a5g4517akqupzeuhz0sl"
+    },
+    {
+      "observedIdentity": "x:tencenthunyuan",
+      "sourceId": "corescope-x-tencenthunyuan",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/k1d8tpo8krkqdw5g4s3lu2l5p"
+    },
+    {
+      "observedIdentity": "x:fal",
+      "sourceId": "corescope-x-fal",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/u74c7gihuk3ky2exkd47f6uvd"
+    },
+    {
+      "observedIdentity": "x:sundarpichai",
+      "sourceId": "corescope-x-sundarpichai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/pdrjostq5h1gdx9dmdlfmumvh"
+    },
+    {
+      "observedIdentity": "x:demishassabis",
+      "sourceId": "corescope-x-demishassabis",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/ad3wo3an984o3at60qv4okkk2"
+    },
+    {
+      "observedIdentity": "x:spacexai",
+      "sourceId": "corescope-x-spacexai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/x8gp6nzlbe2rdlc955afe9cgm"
+    },
+    {
+      "observedIdentity": "x:generalistai",
+      "sourceId": "corescope-x-generalistai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/sdzwd85r11kpiekbpollpnall"
+    },
+    {
+      "observedIdentity": "x:odysseyml",
+      "sourceId": "corescope-x-odysseyml",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/cpeu2bmv97j1ecqv8s99ncoqw"
+    },
+    {
+      "observedIdentity": "x:waymo",
+      "sourceId": "corescope-x-waymo",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/stshar7b11dvtiuaxrp5s2u7q"
+    },
+    {
+      "observedIdentity": "x:opencode",
+      "sourceId": "corescope-x-opencode",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/t7l5fy5lt82w9gy63835kqfxd"
+    },
+    {
+      "observedIdentity": "x:officiallogank",
+      "sourceId": "corescope-x-officiallogank",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/xpn12mlhe62d68nztoy24bwiy"
+    },
+    {
+      "observedIdentity": "x:arthurmensch",
+      "sourceId": "corescope-x-arthurmensch",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/wpu01gqz9gb9oxkvmd067sy9b"
+    },
+    {
+      "observedIdentity": "x:alibaba_wan",
+      "sourceId": "corescope-x-alibaba-wan",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/j4vcjiltdzwilu5xyfz1uzrej"
+    },
+    {
+      "observedIdentity": "x:jeffdean",
+      "sourceId": "corescope-x-jeffdean",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/stxv8ddy3lz4tw8mmbd4tv5jw"
+    },
+    {
+      "observedIdentity": "x:bcherny",
+      "sourceId": "corescope-x-bcherny",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/z37nbj7nqac6oa6huyxlt5ogg"
+    },
+    {
+      "observedIdentity": "x:lisasu",
+      "sourceId": "corescope-x-lisasu",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/qv3qwfiu6zfpe3br6i0ilg87j"
+    },
+    {
+      "observedIdentity": "x:_catwu",
+      "sourceId": "corescope-x--catwu",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/vkfqzehcj1oakh8gsl0r1hpto"
+    },
+    {
+      "observedIdentity": "x:enjalot",
+      "sourceId": "corescope-x-enjalot",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/rcizcm4drxctjuvr6l3597di3"
+    },
+    {
+      "observedIdentity": "x:markchen90",
+      "sourceId": "corescope-x-markchen90",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/e9x6n5jwnvfek828vpdbhirwx"
+    },
+    {
+      "observedIdentity": "x:ggerganov",
+      "sourceId": "corescope-x-ggerganov",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/xjoaci1h6gw4wpd7uo9cjpt8v"
+    },
+    {
+      "observedIdentity": "x:gdb",
+      "sourceId": "corescope-x-gdb",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/sbjw9mf3n1o9mdcckqfv0jw0q"
+    },
+    {
+      "observedIdentity": "x:dashhuang",
+      "sourceId": "corescope-x-dashhuang",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/yqv3waoe1yrxfe00tqjuzuvej"
+    },
+    {
+      "observedIdentity": "x:perplexity_ai",
+      "sourceId": "corescope-x-perplexity-ai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/gxdftq1dep1enl1gw5cl210h2"
+    },
+    {
+      "observedIdentity": "x:krea_ai",
+      "sourceId": "corescope-x-krea-ai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/dl9wyf4dhfpj3utxkaqkadjym"
+    },
+    {
+      "observedIdentity": "x:drjimfan",
+      "sourceId": "corescope-x-drjimfan",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/e7g4wqtsex46g5vl2px40k9v0"
+    },
+    {
+      "observedIdentity": "x:baidu_inc",
+      "sourceId": "corescope-x-baidu-inc",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/wfer3mujvx08x4tfnfrymtgir"
+    },
+    {
+      "observedIdentity": "x:sensetime_ai",
+      "sourceId": "corescope-x-sensetime-ai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/zisrspghpu58xp1r0ep2nmrtf"
+    },
+    {
+      "observedIdentity": "x:robbyant_brain",
+      "sourceId": "corescope-x-robbyant-brain",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/xsgwp6p0g4o9caq1hxwkhqxks"
+    },
+    {
+      "observedIdentity": "x:joshwoodward",
+      "sourceId": "corescope-x-joshwoodward",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/d3qx5y4tlypar1un5jyy33xe6"
+    },
+    {
+      "observedIdentity": "x:haoailab",
+      "sourceId": "corescope-x-haoailab",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/a5xfl04l6g6xc1refuometmmg"
+    },
+    {
+      "observedIdentity": "x:jietang",
+      "sourceId": "corescope-x-jietang",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/k8k8jpywk59n78zu713dse7mw"
+    },
+    {
+      "observedIdentity": "x:gemini_notebook",
+      "sourceId": "corescope-x-gemini-notebook",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/wuz0couqpni9do5tspsxv71he"
+    },
+    {
+      "observedIdentity": "x:meshyai",
+      "sourceId": "corescope-x-meshyai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/ctwyipdca2hehwnddieyfqse6"
+    },
+    {
+      "observedIdentity": "x:tianyi",
+      "sourceId": "corescope-x-tianyi",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/a38g9lw8b6fpayyhrydpvvmcq"
+    },
+    {
+      "observedIdentity": "x:khazix0918",
+      "sourceId": "corescope-x-khazix0918",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/hvxwaxeyj6i82xv44ef4ce6fz"
+    },
+    {
+      "observedIdentity": "x:openclaw",
+      "sourceId": "corescope-x-openclaw",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/luthssmpxrbef2gxnr8ft2i1a"
+    },
+    {
+      "observedIdentity": "x:minimax_ai",
+      "sourceId": "corescope-x-minimax-ai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/p6e383238q3f815oeex4uk5gs"
+    },
+    {
+      "observedIdentity": "x:anthropicai",
+      "sourceId": "corescope-x-anthropicai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/ksq76mkdzyup0kpjs4vxx35qi"
+    },
+    {
+      "observedIdentity": "x:chatgpt",
+      "sourceId": "corescope-x-chatgpt",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/pastkwfxctzau1k8vyaakhg6b"
+    },
+    {
+      "observedIdentity": "x:claudedevs",
+      "sourceId": "corescope-x-claudedevs",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/axppc6b9a6avnnp27z21uja3h"
+    },
+    {
+      "observedIdentity": "x:openaidevs",
+      "sourceId": "corescope-x-openaidevs",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/map6felwz8l7yh4marqbxxqi8"
+    },
+    {
+      "observedIdentity": "x:googleai",
+      "sourceId": "corescope-x-googleai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/zknfg8l938mnovlo8a7054tgi"
+    },
+    {
+      "observedIdentity": "x:google",
+      "sourceId": "corescope-x-google",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/ejhj56b103fpp2b0d5eyso9fw"
+    },
+    {
+      "observedIdentity": "x:alibaba_qwen",
+      "sourceId": "corescope-x-alibaba-qwen",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/rterpw2istnq3vb4gamrp0aom"
+    },
+    {
+      "observedIdentity": "x:openainewsroom",
+      "sourceId": "corescope-x-openainewsroom",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/uceike4yt1on0k7sj37f9nfeh"
+    },
+    {
+      "observedIdentity": "x:hailuo_ai",
+      "sourceId": "corescope-x-hailuo-ai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/i5mz5ag3t9zwph06u47aol8p4"
+    },
+    {
+      "observedIdentity": "x:claudeai",
+      "sourceId": "corescope-x-claudeai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/c1756nmcrmy76itlzxucv9nsc"
+    },
+    {
+      "observedIdentity": "x:cursor_ai",
+      "sourceId": "corescope-x-cursor-ai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/h7xcmz4f6aikhzf7r15hhjoiw"
+    },
+    {
+      "observedIdentity": "x:msftresearch",
+      "sourceId": "corescope-x-msftresearch",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/fdhvdaj48md66ttp9fhn0fqag"
+    },
+    {
+      "observedIdentity": "x:manusai",
+      "sourceId": "corescope-x-manusai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/zas8tsnde3b6gfeh87ow0wmbx"
+    },
+    {
+      "observedIdentity": "x:mistralai",
+      "sourceId": "corescope-x-mistralai",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/ujnbr3zgyzgdmttfhjujm8kmy"
+    },
+    {
+      "observedIdentity": "x:googledeepmind",
+      "sourceId": "corescope-x-googledeepmind",
+      "status": "configured_exact_account",
+      "evidencePage": "https://aihot.news/item/fqn3blsf244tabuehydo5fw0q"
+    }
+  ]
+}

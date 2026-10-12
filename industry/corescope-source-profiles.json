@@ -2519,17 +2519,25 @@
       }
     },
     "v2-source-186": {
-      "policy": "bridge",
+      "policy": "native",
       "participationMode": "editorial",
-      "verification": {
-        "status": "private_transport",
-        "reason": "Private feed or subscription identifier is not present in public profiles",
-        "checkedAt": "2026-10-12T06:05:52.190Z",
-        "transport": "guardedFetch:configured-egress-proxy; .cn/direct routing",
-        "httpStatus": null,
-        "items": 0
+      "intervalMinutes": 180,
+      "adapter": {
+        "kind": "x_search",
+        "config": {
+          "query": "from:emollick -filter:replies",
+          "searchType": "Latest",
+          "provider": "xquik"
+        }
       },
-      "fallback": "V2 read-only bridge; private source URL is never copied"
+      "verification": {
+        "status": "verified",
+        "scope": "exact existing X account and tested read-only adapter; paid runtime tracked separately",
+        "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+        "evidencePage": "https://aihot.news/item/d41zhpn9jvsr5ljm0l58rswfv"
+      },
+      "signalGroupId": "author:one-useful-thing",
+      "previousSignalGroupId": "feed:6d8ee44d6f9d0369d78f"
     },
     "v2-source-184": {
       "policy": "native",
@@ -9906,19 +9914,25 @@
       "reason": "preserve_original_paused"
     },
     "v2-source-188": {
-      "policy": "bridge",
+      "policy": "native",
       "participationMode": "editorial",
-      "verification": {
-        "status": "adapter_required",
-        "reason": "No safe public feed or explicit article listing parser is available",
-        "checkedAt": "2026-10-12T06:06:32.449Z",
-        "transport": "guardedFetch:configured-egress-proxy; .cn/direct routing",
-        "httpStatus": null,
-        "items": 0,
-        "attempts": []
+      "intervalMinutes": 180,
+      "adapter": {
+        "kind": "x_search",
+        "config": {
+          "query": "from:GeminiApp -filter:replies",
+          "searchType": "Latest",
+          "provider": "xquik"
+        }
       },
-      "reason": "native_route_unverified",
-      "fallback": "V2 read-only bridge; this is collection eligibility, not proof of current origin-site collection"
+      "verification": {
+        "status": "verified",
+        "scope": "exact existing X account and tested read-only adapter; paid runtime tracked separately",
+        "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+        "evidencePage": "https://aihot.news/item/o2uot53gklowmfcv7bvqvc7zl"
+      },
+      "signalGroupId": "publisher:google",
+      "previousSignalGroupId": "feed:a33d5303c89bb47f8561"
     },
     "v2-source-189": {
       "policy": "blocked",
@@ -9935,19 +9949,25 @@
       "reason": "preserve_original_paused"
     },
     "v2-source-190": {
-      "policy": "bridge",
+      "policy": "native",
       "participationMode": "editorial",
-      "verification": {
-        "status": "adapter_required",
-        "reason": "No safe public feed or explicit article listing parser is available",
-        "checkedAt": "2026-10-12T06:06:32.453Z",
-        "transport": "guardedFetch:configured-egress-proxy; .cn/direct routing",
-        "httpStatus": null,
-        "items": 0,
-        "attempts": []
+      "intervalMinutes": 180,
+      "adapter": {
+        "kind": "x_search",
+        "config": {
+          "query": "from:OpenAI -filter:replies",
+          "searchType": "Latest",
+          "provider": "xquik"
+        }
       },
-      "reason": "native_route_unverified",
-      "fallback": "V2 read-only bridge; this is collection eligibility, not proof of current origin-site collection"
+      "verification": {
+        "status": "verified",
+        "scope": "exact existing X account and tested read-only adapter; paid runtime tracked separately",
+        "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+        "evidencePage": "https://aihot.news/item/b9fqh7eiix11bleqgup10lqwk"
+      },
+      "signalGroupId": "publisher:openai",
+      "previousSignalGroupId": "feed:c2fe940a6a0bf2da0b99"
     },
     "v2-source-175": {
       "policy": "native",
@@ -10139,17 +10159,25 @@
       "fallback": "V2 read-only bridge; this is collection eligibility, not proof of current origin-site collection"
     },
     "v2-source-191": {
-      "policy": "bridge",
+      "policy": "native",
       "participationMode": "editorial",
-      "verification": {
-        "status": "private_transport",
-        "reason": "Opaque subscription/account feed route is not copied to public profiles",
-        "checkedAt": "2026-10-12T06:20:27.729Z",
-        "transport": "guardedFetch:configured-egress-proxy; .cn/direct routing",
-        "httpStatus": null,
-        "items": 0
+      "intervalMinutes": 180,
+      "adapter": {
+        "kind": "x_search",
+        "config": {
+          "query": "from:sama -filter:replies",
+          "searchType": "Latest",
+          "provider": "xquik"
+        }
       },
-      "fallback": "V2 readonly bridge; private route requires local-only configuration"
+      "verification": {
+        "status": "verified",
+        "scope": "exact existing X account and tested read-only adapter; paid runtime tracked separately",
+        "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+        "evidencePage": "https://aihot.news/item/sd9421ibml14y7yog6u3gqtx0"
+      },
+      "signalGroupId": "author:sam-altman",
+      "previousSignalGroupId": "feed:d6bb2f5dea4934597c94"
     },
     "v2-source-597": {
       "policy": "native",
@@ -15391,17 +15419,25 @@
       }
     },
     "v2-source-3725": {
-      "policy": "bridge",
+      "policy": "native",
       "participationMode": "editorial",
-      "verification": {
-        "status": "private_transport",
-        "reason": "Opaque subscription/account feed route is not copied to public profiles",
-        "checkedAt": "2026-10-12T06:20:27.729Z",
-        "transport": "guardedFetch:configured-egress-proxy; .cn/direct routing",
-        "httpStatus": null,
-        "items": 0
+      "intervalMinutes": 180,
+      "adapter": {
+        "kind": "x_search",
+        "config": {
+          "query": "from:karpathy -filter:replies",
+          "searchType": "Latest",
+          "provider": "xquik"
+        }
       },
-      "fallback": "V2 readonly bridge; private route requires local-only configuration"
+      "verification": {
+        "status": "verified",
+        "scope": "exact existing X account and tested read-only adapter; paid runtime tracked separately",
+        "checkedAt": "2026-10-12T10:21:22.914783+00:00",
+        "evidencePage": "https://aihot.news/item/f572f90oc11zg6w7s815vz6m4"
+      },
+      "signalGroupId": "author:andrej-karpathy",
+      "previousSignalGroupId": "feed:81251766dffd794209fc"
     },
     "rss-mistral": {
       "policy": "native",

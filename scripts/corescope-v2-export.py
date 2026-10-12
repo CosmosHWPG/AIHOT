@@ -7,6 +7,7 @@ under .data/, which is excluded from Git.
 from __future__ import annotations
 
 import argparse
+import base64
 import contextlib
 import datetime as dt
 import hashlib
@@ -225,8 +226,147 @@ def validate_profiles(manifest: dict) -> dict:
     return manifest
 
 
+def verified_mp_biz(config: dict) -> str | None:
+    article = config.get("articleUrl")
+    from_url = None
+    if article:
+        p = url_parts(article)
+        if p.scheme != "https" or p.hostname != "mp.weixin.qq.com" or p.path != "/s":
+            raise ValueError("MP source requires an original WeChat long link")
+        from_url = dict(urllib.parse.parse_qsl(p.query)).get("__biz")
+        if not from_url:
+            raise ValueError("MP source article URL has no account biz")
+    biz = config.get("biz") or from_url
+    if biz:
+        try:
+            decoded = base64.b64decode(biz, validate=True)
+        except (ValueError, TypeError) as error:
+            raise ValueError("MP source has invalid biz") from error
+        if not re.fullmatch(rb"[0-9]{8,10}", decoded) or base64.b64encode(decoded).decode() != biz:
+            raise ValueError("MP source has invalid biz")
+        if config.get("biz") and article and biz != from_url:
+            raise ValueError("MP source biz and article URL disagree")
+    return biz
+
+
+def collector_identity(source: dict, row: dict | None = None) -> str:
+    """An entry is an account or a complete effective collector route, never a name."""
+    kind, config = source["kind"], source.get("config", {})
+    if kind == "rss":
+        # Filters can define separate editorial channels even on the same feed.
+        filters = {k: v for k, v in config.items() if k not in {"feedUrl", "_aihot"}}
+        return "rss:" + normalized_feed(config.get("feedUrl")) + ":" + json.dumps(filters, sort_keys=True)
+    if kind == "x_search":
+        match = re.fullmatch(r"from:([A-Za-z0-9_]{1,15})(?:\s+-filter:replies)?", str(config.get("query", "")).strip())
+        return "x:" + match[1].lower() if match else ""
+    if kind == "external" and row:
+        p = url_parts(row.get("original_url"))
+        if (p.hostname or "").lower() in {"x.com", "www.x.com", "twitter.com", "www.twitter.com"}:
+            handle = p.path.strip("/")
+            if re.fullmatch(r"[A-Za-z0-9_]{1,15}", handle):
+                return "x:" + handle.lower()
+    if kind == "mp_account":
+        biz = verified_mp_biz(config)
+        if biz:
+            return "mp:" + biz
+        if config.get("ghid"):
+            return "mp-ghid:" + config["ghid"]
+        if re.fullmatch(r"gh_[a-z0-9]+", str(config.get("account", "")), re.I):
+            return "mp-ghid:" + config["account"].lower()
+    if kind in {"web_list", "json_list"}:
+        route = {k: v for k, v in config.items() if k != "_aihot"}
+        return kind + ":" + json.dumps(route, sort_keys=True, ensure_ascii=False)
+    return ""
+
+
+def merge_supplements(sources: list[dict], source_rows: dict[str, dict], supplements: list[dict], self_hosts: set[str], profiles: dict) -> dict:
+    by_id = {s["id"]: s for s in sources}
+    identities = {collector_identity(s, source_rows.get(s["id"])): s["id"] for s in sources
+                  if collector_identity(s, source_rows.get(s["id"]))}
+    # A verified cache profile proves the selected account through its original
+    # public article URLs. Display names alone never establish a WeChat alias.
+    for s in sources:
+        proof = profiles.get(s["id"], {}).get("verification", {})
+        if s["kind"] != "mp_account" or s["config"].get("transport") != "wx_cache" or proof.get("status") != "verified":
+            continue
+        biz_set = set()
+        for sample in proof.get("samples", []):
+            p = url_parts(sample.get("url"))
+            if p.scheme in {"http", "https"} and p.hostname == "mp.weixin.qq.com" and p.path == "/s":
+                try:
+                    biz = verified_mp_biz({"articleUrl": urllib.parse.urlunsplit(("https", p.netloc, p.path, p.query, ""))})
+                    if biz:
+                        biz_set.add(biz)
+                except ValueError:
+                    pass
+        if len(biz_set) == 1:
+            identities.setdefault("mp:" + next(iter(biz_set)), s["id"])
+    aliases, added, pending = [], [], []
+    for pack in supplements:
+        if pack.get("schemaVersion") != 1 or not isinstance(pack.get("sources"), list):
+            raise ValueError("Unsupported supplemental source manifest")
+        for source in pack["sources"]:
+            source_id = source.get("id")
+            if not isinstance(source_id, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]{2,79}", source_id):
+                raise ValueError("Invalid supplemental source ID")
+            if source.get("kind") not in NATIVE_KINDS or not isinstance(source.get("config"), dict):
+                raise ValueError(f"Supplement {source_id} needs a native route")
+            verification = pack.get("verifications", {}).get(source_id)
+            if not isinstance(verification, dict) or verification.get("status") != "verified":
+                raise ValueError(f"Supplement {source_id} has no reviewed route/identity verification")
+            # Verification records state their scope: public collector parsing,
+            # or an account identity plus tested adapter contract. Paid runtime
+            # acceptance is recorded separately, never inferred here.
+            validate_profiles({"schemaVersion": 1, "profiles": {source_id: {
+                "policy": "native", "adapter": {"kind": source["kind"], "config": source["config"]},
+                "verification": verification}}})
+            if source["kind"] == "rss" and not normalized_feed(source["config"].get("feedUrl")):
+                raise ValueError(f"Supplement {source_id} has no valid feed identity")
+            def public_values(value):
+                if isinstance(value, dict):
+                    for child in value.values():
+                        yield from public_values(child)
+                elif isinstance(value, list):
+                    for child in value:
+                        yield from public_values(child)
+                else:
+                    yield value
+            for value in public_values(source["config"]):
+                if isinstance(value, str) and url_parts(value).scheme in {"http", "https"} and loop({"url": value}, self_hosts):
+                    raise ValueError(f"Supplement {source_id} would collect an AIHOT/self-site feedback loop")
+            if source.get("site_fulltext") or source.get("syndicate_fulltext"):
+                raise ValueError(f"Supplement {source_id} requires a separate fulltext license review")
+            if source_id in by_id:
+                if collector_identity(source) != collector_identity(by_id[source_id], source_rows.get(source_id)):
+                    raise ValueError(f"Supplement {source_id} conflicts with an existing route")
+                continue
+            identity = collector_identity(source)
+            existing_id = identities.get(identity) if identity else None
+            if existing_id:
+                aliases.append({"source_id": source_id, "canonical_source_id": existing_id,
+                                "reason": "identical effective collector/account identity"})
+                continue
+            entry = {**source, "config": {**source["config"]}}
+            if entry["kind"] != "mp_account":
+                entry["config"]["_aihot"] = {**entry["config"].get("_aihot", {}), "initialBackfillLimit": 2}
+            sources.append(entry)
+            by_id[source_id] = entry
+            if identity:
+                identities[identity] = source_id
+            added.append(source_id)
+        for alias in pack.get("aliases", []):
+            target = alias.get("canonicalSourceId") or alias.get("canonical_source_id")
+            if target not in by_id:
+                raise ValueError("Supplemental alias has no existing canonical source")
+            aliases.append(alias)
+        pending.extend(pack.get("pending", []))
+    return {"supplemental_added": len(added), "supplemental_source_ids": added,
+            "supplemental_aliases": aliases, "supplemental_pending": pending}
+
+
 def source_pack(rows: list[dict], upstream: list[dict], self_hosts: set[str],
-                manifest: dict | None = None, previous_mapping: list[dict] | None = None) -> tuple[list[dict], list[dict], dict]:
+                manifest: dict | None = None, previous_mapping: list[dict] | None = None,
+                supplements: list[dict] | None = None) -> tuple[list[dict], list[dict], dict]:
     manifest = validate_profiles(manifest) if manifest is not None else {"profiles": {}, "preserveDisabledSourceIds": []}
     profiles = manifest["profiles"]
     frozen = set(manifest.get("preserveDisabledSourceIds", []))
@@ -338,9 +478,15 @@ def source_pack(rows: list[dict], upstream: list[dict], self_hosts: set[str],
                     s["interval_minutes"] = profile["intervalMinutes"]
         if s["id"] in frozen or status in INACTIVE:
             s["enabled"] = False
+        if profile and profile.get("signalGroupId") and s["id"] not in frozen:
+            group = profile["signalGroupId"]
+            if not isinstance(group, str) or len(group) > 120:
+                raise ValueError("Invalid reviewed signal group")
+            s["signal_group_id"] = group
         s["tags"] = [tag for tag in s.get("tags", []) if tag != "V2只读桥"]
         if s["kind"] == "external" and s["enabled"]:
             s["tags"].append("V2只读桥")
+    supplemental_summary = merge_supplements(sources, source_rows, supplements or [], self_hosts, profiles)
     for public in mapping:
         s = source_by_id.get(public["canonical_source_id"])
         profile = profiles.get(public["canonical_source_id"])
@@ -370,7 +516,7 @@ def source_pack(rows: list[dict], upstream: list[dict], self_hosts: set[str],
                "canonical_sources": len(sources), "enabled_sources": sum(s["enabled"] for s in sources),
                "enabled_native_sources": sum(s["enabled"] and s["kind"] != "external" for s in sources),
                "enabled_bridge_sources": sum(s["enabled"] and s["kind"] == "external" for s in sources),
-               "upstream_aliases": upstream_aliases}
+               "upstream_aliases": upstream_aliases, **supplemental_summary}
     return sources, sorted(mapping, key=lambda r: r["id"]), summary
 
 
@@ -485,12 +631,13 @@ def export(args) -> dict:
     manifest = json.loads(profile_path.read_text(encoding="utf-8")) if profile_path and profile_path.exists() else None
     previous_path = ROOT / "docs/corescope-v2-sources.json"
     previous_mapping = json.loads(previous_path.read_text(encoding="utf-8")).get("sources", []) if previous_path.exists() else []
+    supplements = [json.loads(p.read_text(encoding="utf-8")) for p in getattr(args, "supplement", []) if p.exists()]
     with contextlib.closing(sqlite3.connect(db.as_uri() + "?mode=ro", uri=True, timeout=10)) as conn:
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA query_only=ON")
         conn.execute("BEGIN")
         rows = [dict(r) for r in conn.execute(f"SELECT {SOURCE_FIELDS} FROM sources")]
-        sources, mapping, summary = source_pack(rows, upstream, self_hosts, manifest, previous_mapping)
+        sources, mapping, summary = source_pack(rows, upstream, self_hosts, manifest, previous_mapping, supplements)
         source_by_business = {r["source_id"]: r for r in mapping}
         latest = dict(conn.execute("SELECT MAX(crawled_at) crawled_at, MAX(updated_at) updated_at FROM articles").fetchone())
         upper_row = conn.execute("SELECT COALESCE(updated_at,created_at) updated_at,id FROM articles ORDER BY COALESCE(updated_at,created_at) DESC,id DESC LIMIT 1").fetchone()
@@ -604,6 +751,10 @@ def main() -> None:
     parser.add_argument("--source-map", type=pathlib.Path)
     parser.add_argument("--source-profiles", type=pathlib.Path, default=ROOT / "industry/corescope-source-profiles.json",
                         help="Reviewed native routes, preserved pauses and dedicated non-article profiles")
+    parser.add_argument("--supplement", type=pathlib.Path, action="append", default=[
+        ROOT / "industry/corescope-online-supplement.json", ROOT / "industry/corescope-online-x-supplement.json",
+        ROOT / "industry/corescope-online-mp-supplement.json"],
+                        help="Additive reviewed source packs, retained on every V2 catalogue refresh")
     parser.add_argument("--state", type=pathlib.Path)
     parser.add_argument("--sources-only", action="store_true")
     parser.add_argument("--bootstrap", action="store_true", help="Bounded history sample; afterward resume at the snapshot upper watermark")

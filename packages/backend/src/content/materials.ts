@@ -16,6 +16,7 @@ export interface MediaItem {
 
 export interface XPostData {
   tweetId: string;
+  provider?: "socialdata" | "xquik";
   authorName: string;
   handle: string;
   avatarUrl?: string | null;
