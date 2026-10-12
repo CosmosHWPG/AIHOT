@@ -179,6 +179,10 @@ export function fromHtml(html: string, base: string, source: SourceRow): Candida
   const listing = String(c.url ?? base).replace(JINA_PREFIX, "");
   // Sections of the listing page are posts only for sources that keep fragments as identity.
   const sectionsArePosts = c.preserveUrlFragment === true;
+  const articleProfile = c.adapter === "article_links";
+  if (articleProfile && !c.itemUrlPattern) throw new FetchError("article_links: itemUrlPattern missing");
+  const pattern = articleProfile ? new RegExp(String(c.itemUrlPattern), "i") : null;
+  const minimum = Math.max(2, Math.min(200, Number(c.minTitleLength) || 8));
   const itemSel: string | undefined = c.itemSelector;
   const nodes = itemSel ? $(itemSel).toArray() : $("a[href]").toArray();
   for (const node of nodes) {
@@ -187,9 +191,15 @@ export function fromHtml(html: string, base: string, source: SourceRow): Candida
     const url = absolute(linkEl.attr("href"), base);
     if (!url || seen.has(url) || !allowed(url, source)) continue;
     if (!sectionsArePosts && listingItself(url, listing)) continue;
+    if (articleProfile) {
+      const parsed = new URL(url);
+      if (c.sameOrigin !== false && parsed.origin !== new URL(base).origin) continue;
+      if (navigationLink(url, listing) || !pattern!.test(`${parsed.pathname}${parsed.search}`)) continue;
+    }
     const titleEl = c.titleSelector ? (el.is(c.titleSelector) ? el : el.find(c.titleSelector).first()) : linkEl;
     const title = collapseWhitespace(titleEl.text() || linkEl.attr("title") || "");
     if (!title) continue;
+    if (articleProfile && (title.length < minimum || /^(?:read more|learn more|continue reading|more|home|news|blog|about|contact|sign in|log in|view all|阅读全文|阅读更多|查看详情|了解更多|首页|新闻|博客|关于我们)$/i.test(title))) continue;
     let publishedAt: Date | null = null;
     if (c.publishedAtSelector) {
       const dateEl = el.find(c.publishedAtSelector).first();
@@ -199,10 +209,17 @@ export function fromHtml(html: string, base: string, source: SourceRow): Candida
       const m = new RegExp(c.publishedAtRegex).exec($.html(el));
       publishedAt = parseLooseDate(m?.[1], c.publishedAtUtcOffset);
     }
+    if (articleProfile && c.requirePublishedAt === true && !publishedAt) continue;
+    const excerpt = c.summarySelector ? collapseWhitespace(el.find(c.summarySelector).first().text()).slice(0, 2000) : "";
     seen.add(url);
-    out.push({ url, title, publishedAt });
+    out.push({ url, title, publishedAt, ...(excerpt ? { excerpt } : {}) });
   }
   return out;
+}
+
+/** Explicit article-link profiles keep menus and resource directories out of the material stream. */
+export function fromArticleLinks(html: string, base: string, source: SourceRow): Candidate[] {
+  return fromHtml(html, base, { ...source, config: { ...source.config, adapter: "article_links" } });
 }
 
 /** A changelog heading that is only a date, bare or after a short label: "时间: 2026-09-10", "时间：2024-05-17". */
@@ -325,10 +342,11 @@ async function fromMimoHome(html: string, base: string, source: SourceRow): Prom
 
 export async function fetchWebList(source: SourceRow, opts: { preview?: boolean } = {}): Promise<Candidate[]> {
   const { text, viaJina, base, round } = await fetchListingText(source);
-  const mode = source.config.adapter === "mimo_home" ? "mimo_home" : source.config.parseMode ?? (viaJina ? "markdown" : "html");
+  const mode = source.config.adapter ?? source.config.parseMode ?? (viaJina ? "markdown" : "html");
   try {
     let out: Candidate[];
     if (mode === "mimo_home") out = await fromMimoHome(text, base, source);
+    else if (mode === "article_links") out = fromArticleLinks(text, base, source);
     else if (mode === "markdown") out = fromMarkdown(text, base, source);
     else if (mode === "docusaurus_changelog") out = fromDocusaurusChangelog(text, base, source);
     else out = fromHtml(text, base, source);

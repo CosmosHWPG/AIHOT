@@ -3,7 +3,7 @@ import test, { after, before } from "node:test";
 import assert from "node:assert/strict";
 import { closeDb, sql } from "@aihot/backend/db";
 import { stopBoss } from "@aihot/backend/jobs/queue";
-import { importBatch, type BridgeBatch, type BridgeItem, validateBatch } from "../scripts/corescope-v2-core.ts";
+import { importBatch, type BridgeBatch, type BridgeItem, validateBatch, bridgeIntakeAllowed, validateBridgeIntakePrefixes } from "../scripts/corescope-v2-core.ts";
 import { tag } from "./setup.ts";
 
 const T = tag();
@@ -99,4 +99,71 @@ test("replaying an older fingerprint after a correction cannot rewind the ledger
 test("credential URLs and fabricated fulltext confirmation are rejected before database writes", () => {
   assert.throws(() => validateBatch(batch([item(1006, { url: "https://example.org/news?api_key=secret" })])), /Unsafe/);
   assert.throws(() => validateBatch(batch([item(1006, { bodyEvidence: { fulltextVerified: true } })])), /verification/);
+});
+
+test("source directory refresh preserves a manual pause instead of enabling it from V2 status", async () => {
+  const paused = { ...source, id: `v2-source-manual-paused-${T}`, enabled: true };
+  await sql`INSERT INTO sources (id,name,kind,enabled,health) VALUES (${paused.id},'Operator paused source','external',false,'paused')`;
+  const [state] = await sql`SELECT cursor FROM corescope_bridge_state WHERE client='corescope-v2'`;
+  await importBatch(batch([], { sources: [paused], cursorBefore: state!.cursor, cursorAfter: state!.cursor }));
+  const [saved] = await sql`SELECT enabled,health FROM sources WHERE id=${paused.id}`;
+  assert.deepEqual([saved!.enabled, saved!.health], [false, "paused"]);
+});
+
+test("native routes suppress the bridge before and after source database reconciliation", async () => {
+  const pending = { ...source, id: `v2-source-native-pending-${T}`, kind: "rss", config: { feedUrl: "https://example.org/pending.xml" } };
+  const ready = { ...source, id: `v2-source-native-ready-${T}`, kind: "rss", config: { feedUrl: "https://example.org/ready.xml" } };
+  await sql`INSERT INTO sources (id,name,kind,enabled) VALUES (${pending.id},'Pending route reconciliation','external',true)`;
+  await sql`INSERT INTO sources (id,name,kind,config,enabled) VALUES (${ready.id},'Native route','rss',${sql.json(ready.config)},true)`;
+  const [state] = await sql`SELECT cursor FROM corescope_bridge_state WHERE client='corescope-v2'`;
+  const input = batch([item(1010, { sourceId: pending.id }), item(1011, { sourceId: ready.id })],
+    { sources: [pending, { ...ready, kind: "external", config: {} }], cursorBefore: state!.cursor });
+  const result = await importBatch(input);
+  assert.equal(result.nativeSkipped, 2);
+  assert.deepEqual([result.created, result.revised, result.queued], [0, 0, 0]);
+  assert.equal((await sql`SELECT 1 FROM articles WHERE source_id IN (${pending.id},${ready.id})`).length, 0);
+  assert.equal((await sql`SELECT 1 FROM corescope_bridge_ledger WHERE upstream_id IN (1010,1011)`).length, 0);
+  const [saved] = await sql`SELECT kind,config FROM sources WHERE id=${ready.id}`;
+  assert.deepEqual([saved!.kind, saved!.config], ["rss", ready.config]);
+});
+
+test("publisher intake boundaries reject hostile hosts, sibling paths and private prefixes", () => {
+  const prefixes = validateBridgeIntakePrefixes(["https://qwen.ai/blog/"]);
+  assert.equal(bridgeIntakeAllowed("http://QWEN.AI:80/blog/release?lang=en", prefixes), true);
+  for (const url of ["https://qwen.ai.evil.example/blog/release", "https://qwen.ai/blogger/release",
+    "https://qwen.ai/blog/%2e%2e/other", "https://qwen.ai/blog/release?api_key=fixture"]) {
+    assert.equal(bridgeIntakeAllowed(url, prefixes), false);
+  }
+  assert.equal(bridgeIntakeAllowed("https://any.example/news", []), false);
+  assert.equal(bridgeIntakeAllowed("https://any.example/news"), true);
+  for (const invalid of ["not-an-array", ["ftp://example.org/feed"], ["https://user:fixture@example.org/news"],
+    ["https://example.org/news?lang=en"], ["https://example.org/news#part"], ["https://rss.app/feeds/fixture-private-handle.xml"]]) {
+    assert.throws(() => validateBridgeIntakePrefixes(invalid));
+  }
+});
+
+test("file imports enforce local publisher guards, preserve other sources and advance past rejected material", async () => {
+  const guarded = { ...source, id: `v2-source-publisher-${T}` };
+  const blocked = { ...source, id: `v2-source-no-publisher-${T}` };
+  const profiles = { [guarded.id]: { policy: "bridge", bridgeIntakeUrlPrefixes: ["https://qwen.ai/blog/"] },
+    [blocked.id]: { policy: "bridge", bridgeIntakeUrlPrefixes: [] } };
+  const [state] = await sql`SELECT cursor FROM corescope_bridge_state WHERE client='corescope-v2'`;
+  const input = batch([
+    item(1012, { sourceId: guarded.id, sourceAlias: guarded.id, url: `https://wrong-publisher.example/news-${T}` }),
+    item(1013, { sourceId: guarded.id, sourceAlias: guarded.id, url: `https://qwen.ai/blog/news-${T}` }),
+    item(1014, { sourceId: blocked.id, sourceAlias: blocked.id, url: `https://mp.sohu.com/a/blocked-${T}` }),
+    item(1015),
+  ], { sources: [source, guarded, blocked], cursorBefore: state!.cursor });
+  const result = await importBatch(input, { queue: false, intakeProfiles: profiles });
+  assert.deepEqual([result.created, result.intakeSkipped], [2, 2]);
+  assert.equal((await sql`SELECT 1 FROM corescope_bridge_ledger WHERE upstream_id IN (1012,1014)`).length, 0);
+  assert.equal((await sql`SELECT cursor FROM corescope_bridge_state WHERE client='corescope-v2'`)[0]!.cursor.id, 1015);
+  const repeated = await importBatch(input, { queue: false, intakeProfiles: profiles });
+  assert.deepEqual([repeated.created, repeated.intakeSkipped, repeated.replayed], [0, 2, true]);
+  const [next] = await sql`SELECT cursor FROM corescope_bridge_state WHERE client='corescope-v2'`;
+  const rejected = batch([item(1016, { sourceId: blocked.id, sourceAlias: blocked.id })],
+    { sources: [blocked], cursorBefore: next!.cursor });
+  const empty = await importBatch(rejected, { queue: false, intakeProfiles: profiles });
+  assert.deepEqual([empty.created, empty.intakeSkipped], [0, 1]);
+  assert.equal((await sql`SELECT cursor FROM corescope_bridge_state WHERE client='corescope-v2'`)[0]!.cursor.id, 1016);
 });

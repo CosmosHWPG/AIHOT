@@ -1,6 +1,9 @@
 // Internal raw-material bridge. It deliberately uses the same material, queue,
 // receipts and public projection as native collectors; V2 analysis is metadata.
 import { sql, type Db } from "@aihot/backend/db";
+import { readFileSync, existsSync } from "node:fs";
+import path from "node:path";
+import { REPO_ROOT } from "@aihot/backend/config";
 import { upsertMaterial } from "@aihot/backend/content/materials";
 import { queueProcessing } from "@aihot/backend/jobs/content";
 import { normalizeUrl } from "@aihot/backend/lib/url";
@@ -27,6 +30,69 @@ export interface BridgeBatch {
   schemaVersion: number; client: string; generatedAt: string; initialSince: string;
   cursorBefore: BridgeCursor | null; cursorAfter: BridgeCursor | null; hasMore: boolean;
   sources: BridgeSource[]; items: BridgeItem[]; dataLatest: Record<string, unknown>;
+}
+
+export type BridgeIntakeProfiles = Record<string, { policy: string; bridgeIntakeUrlPrefixes?: string[] }>;
+
+function publisherUrl(value: string, prefix = false) {
+  const url = new URL(value);
+  if (!["http:", "https:"].includes(url.protocol) || url.username || url.password
+    || [...url.searchParams.keys()].some((key) => /token|secret|password|passwd|api[-_]?key|auth|signature|cookie|credential|access[-_]?key/i.test(key))
+    || prefix && (url.search || url.hash)) throw new Error("Invalid bridge publisher URL prefix or original URL");
+  const hostname = url.hostname.toLowerCase().replace(/\.$/, "");
+  const privateFeed = (["rss.app", "www.rss.app", "kill-the-newsletter.com", "www.kill-the-newsletter.com"].includes(hostname) && url.pathname.startsWith("/feeds/"))
+    || hostname === "api.xgo.ing" && /^\/rss\/users?\/[a-f0-9]{20,}(?:\.xml)?\/?$/i.test(url.pathname)
+    || ["wechat2rss.xlab.app", "wechat2rss.bestblogs.dev"].includes(hostname) && /^\/feed\/[a-f0-9]{20,}(?:\.xml)?\/?$/i.test(url.pathname)
+    || hostname === "rss.jintiankansha.me" && /^\/rss\/[^/]{20,}\/?$/.test(url.pathname)
+    || /(^|\.)google\./.test(hostname) && /^\/alerts\/feeds\/[^/]+\/[^/]+\/?$/.test(url.pathname);
+  if (!/^[a-z0-9.-]+$/.test(hostname) || privateFeed) throw new Error("Invalid public bridge publisher URL");
+  let pathname = url.pathname;
+  for (let i = 0; i < 3; i++) {
+    const decoded = decodeURIComponent(pathname);
+    if (decoded === pathname) break;
+    pathname = decoded;
+  }
+  if (/[\x00-\x1f\x7f]|%(?:2e|2f|5c)/i.test(pathname)) throw new Error("Invalid bridge publisher path");
+  const segments: string[] = [];
+  for (const segment of pathname.replaceAll("\\", "/").split("/")) {
+    if (!segment || segment === ".") continue;
+    if (segment === "..") segments.pop();
+    else segments.push(segment);
+  }
+  return { hostname, port: url.port, pathname: `/${segments.join("/")}` };
+}
+
+export function validateBridgeIntakePrefixes(value: unknown): string[] {
+  if (!Array.isArray(value) || value.some((prefix) => typeof prefix !== "string")) throw new Error("bridgeIntakeUrlPrefixes must be an array");
+  for (const prefix of value) publisherUrl(prefix, true);
+  return value as string[];
+}
+
+export function bridgeIntakeAllowed(value: string, prefixes?: readonly string[]): boolean {
+  if (prefixes === undefined) return true;
+  try {
+    const url = publisherUrl(value);
+    return prefixes.some((prefix) => {
+      const allowed = publisherUrl(prefix, true);
+      return url.hostname === allowed.hostname && url.port === allowed.port
+        && (allowed.pathname === "/" || url.pathname === allowed.pathname || url.pathname.startsWith(`${allowed.pathname}/`));
+    });
+  } catch { return false; }
+}
+
+function intakeGuards(profiles?: BridgeIntakeProfiles): Map<string, string[]> {
+  if (profiles === undefined) {
+    const filename = path.join(REPO_ROOT, "industry/corescope-source-profiles.json");
+    profiles = existsSync(filename) ? JSON.parse(readFileSync(filename, "utf8")).profiles : {};
+  }
+  if (!profiles || typeof profiles !== "object" || Array.isArray(profiles)) throw new Error("Invalid local bridge intake profiles");
+  const guards = new Map<string, string[]>();
+  for (const [id, profile] of Object.entries(profiles)) {
+    if (profile.policy === "bridge" && Object.prototype.hasOwnProperty.call(profile, "bridgeIntakeUrlPrefixes")) {
+      guards.set(id, validateBridgeIntakePrefixes(profile.bridgeIntakeUrlPrefixes));
+    }
+  }
+  return guards;
 }
 
 function date(value: string | null): Date | null {
@@ -84,8 +150,12 @@ function sameCursor(a: BridgeCursor | null, b: BridgeCursor | null): boolean {
 }
 
 /** Atomic progress: no cursor acknowledgment can survive a failed material/queue write. */
-export async function importBatch(input: unknown, opts: { queue?: boolean; db?: typeof sql } = {}) {
+export async function importBatch(input: unknown, opts: { queue?: boolean; db?: typeof sql; intakeProfiles?: BridgeIntakeProfiles } = {}) {
   const batch = validateBatch(input);
+  // A --file payload cannot remove the reviewed local publisher boundary.
+  const guards = intakeGuards(opts.intakeProfiles);
+  const items = batch.items.filter((item) => bridgeIntakeAllowed(item.url, guards.get(item.sourceId)));
+  const intakeSkipped = batch.items.length - items.length;
   const connection = opts.db ?? sql;
   return connection.begin(async (tx) => {
     await tx`INSERT INTO corescope_bridge_state (client,initial_since) VALUES (${batch.client},${date(batch.initialSince)})
@@ -94,25 +164,28 @@ export async function importBatch(input: unknown, opts: { queue?: boolean; db?: 
     const cursorMatches = sameCursor(state!.cursor, batch.cursorBefore);
     if (!cursorMatches) {
       // A retried already-committed file succeeds without rolling progress back.
-      const ids = batch.items.map((i) => i.v2Id);
+      const ids = items.map((i) => i.v2Id);
       const known = ids.length ? await tx<{ upstream_id: number; raw_fingerprint: string }[]>`
         SELECT upstream_id,raw_fingerprint FROM corescope_bridge_ledger WHERE client=${batch.client} AND upstream_id=ANY(${ids})` : [];
       const fingerprints = new Map(known.map((r) => [r.upstream_id, r.raw_fingerprint]));
-      if (batch.items.length && batch.items.every((i) => fingerprints.get(i.v2Id) === i.fingerprint)) {
-        return { received: batch.items.length, created: 0, revised: 0, unchanged: batch.items.length, queued: 0, replayed: true };
+      if (items.length && items.every((i) => fingerprints.get(i.v2Id) === i.fingerprint)) {
+        return { received: batch.items.length, created: 0, revised: 0, unchanged: items.length, queued: 0, intakeSkipped, replayed: true };
       }
-      if (batch.items.length || !sameCursor(state!.cursor, batch.cursorAfter)) {
+      if (items.length || !sameCursor(state!.cursor, batch.cursorAfter)) {
         throw new Error("Bridge cursor changed: export a fresh batch before importing");
       }
     }
     await seedSources(batch.sources, tx);
+    const advertisedSources = new Map(batch.sources.map((s) => [s.id, s]));
     let created = 0, revised = 0, unchanged = 0, queued = 0, nativeSkipped = 0;
-    for (const it of batch.items) {
+    for (const it of items) {
       const [source] = await tx<{ enabled: boolean; kind: string }[]>`SELECT enabled,kind FROM sources WHERE id=${it.sourceId} FOR SHARE`;
       if (!source?.enabled) throw new Error(`Bridge source ${it.sourceId} is paused; progress stays unchanged`);
-      if (source.kind !== "external") {
+      if (source.kind !== "external" || advertisedSources.get(it.sourceId)?.kind !== "external") {
         // An operator may promote this canonical source to native RSS. Its own
         // collector then owns updates; the bridge must not alternate revisions.
+        // A reviewed native profile also owns the route while its database
+        // reconciliation is pending: a stale external row is no bridge fallback.
         nativeSkipped += 1;
         continue;
       }
@@ -155,8 +228,8 @@ export async function importBatch(input: unknown, opts: { queue?: boolean; db?: 
       last_ok_at=now(),last_error=NULL,last_error_at=NULL,imported_count=imported_count+${created},updated_at=now()
       WHERE client=${batch.client}`;
     await tx`INSERT INTO ingest_events (client,kind,status,summary) VALUES (${batch.client},'items','ok',
-      ${tx.json({ received: batch.items.length, created, revised, unchanged, queued, nativeSkipped, dataLatest: batch.dataLatest } as never)})`;
-    return { received: batch.items.length, created, revised, unchanged, queued, nativeSkipped, replayed: false };
+      ${tx.json({ received: batch.items.length, created, revised, unchanged, queued, nativeSkipped, intakeSkipped, dataLatest: batch.dataLatest } as never)})`;
+    return { received: batch.items.length, created, revised, unchanged, queued, nativeSkipped, intakeSkipped, replayed: false };
   });
 }
 

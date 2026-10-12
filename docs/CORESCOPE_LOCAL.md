@@ -57,9 +57,17 @@ CORESCOPE_V2_BATCH_LIMIT=6
 CORESCOPE_V2_POLL_SECONDS=120
 CORESCOPE_BRIDGE_ENTRY=scripts/corescope-v2-bridge.ts
 CORESCOPE_BRIDGE_ENABLED=true
+# 公开采集与源站探测使用相同出口；填写本机有效 HTTP 代理，未使用时可省略
+EGRESS_PROXY_URL=<本机可用HTTP代理>
+# 仅为已授权本机公众号解密缓存目录，不填入公共 source profile
+WX_CACHE_DIRECTORY=<授权公众号缓存目录>
 ```
 
 所有进程都使用真实管理员鉴权，禁止设置 `DEV_AUTH_ROLE`。数据库只监听本机地址。飞书推送、飞书告警和 IndexNow 默认关闭；这些外部出口不属于本机交付。
+
+`EGRESS_PROXY_URL` 控制 `guardedFetch` 的采集出口，不能只以终端中另一种 HTTP 客户端成功来断言 worker 可达。2026-10-12 的迁移使用同一采集出口验证 RSS、官网列表和 JSON；代理配置仅保存在本机 `.env`。
+
+`WX_CACHE_DIRECTORY` 只给只读公众号适配器定位已授权本机缓存。CoreScope 仅读取公开账号文章，不运行 `wx`、不启动或停止 daemon、不写缓存、不读私人聊天、不管理 V2。该路径不属于公开 profile，也不得提交 Git。已有本机缓存刷新流程必须继续提供新数据；仅启动 CoreScope 不会登录微信或自动刷新该缓存。
 
 `COLLECT_ENABLED` 和 `MODEL_CALLS_ENABLED` 是真实安全阀：设为 `false` 仍可浏览、管理和查看已发布资料，但停止相应的直接采集或模型调用。开启后由 worker 的模型回执和预算熔断控制开销；V2 桥只读原系统，不在原系统写入或重启服务。更改 `.env` 后先停止再启动，保证所有进程加载同一份配置。
 
@@ -72,6 +80,34 @@ node --env-file=.env scripts/corescope-v2-bridge.ts --watch
 ```
 
 启动器已经包含这个桥进程，请勿在正常运行期间另起重复 watch。单次导入和历史补齐参数以桥脚本的帮助输出及 V2 接入文档为准。
+
+## 2026-10-12 信源迁移与资源目录
+
+本次接入 profile 取代最初 174 个启用、13 个原生 RSS 的配置。425 个 canonical 来源目前拟定为 284 个原生路线（203 RSS、15 网页列表、15 JSON、51 只读公众号缓存）、125 个 V2 桥接路线、14 个原暂停来源和 2 个未接入资源目录。原生路线已保留真实解析证据；这些配置数字不能代替正式库的实时健康或发布产出。
+
+原 251 个关闭来源中，227 个恢复资格来源已逐项复核（146 个原生、81 个受限桥接），14 个原暂停来源继续关闭，10 个非文章页单独进入资源目录。资源目录 `/resources` 将 8 个已验证监测入口与 2 个参考入口分开说明；资源记录使用 `isolated`，不进入精选新闻或热点计数。Docker 仅观察 vLLM 官方容器标签，GitLab 仅观察 `machine-learning` 公共项目，npm 使用 AI 关键词搜索，PyPI 是全站更新元数据；不能宣传为完整监测整个平台。
+
+在停止 CoreScope 应用、保留 V2 只读边界的维护阶段，先探测和审阅配置，再预览正式库变化：
+
+```powershell
+# 有界源站验证；只读已授权公众号缓存，不调用模型或付费提供商
+node --env-file=.env scripts/corescope-source-probe.ts
+node --env-file=.env scripts/corescope-source-probe.ts --resume
+# 只核查指定来源，不改 profile、审计或增量进度
+node --env-file=.env scripts/corescope-source-probe.ts --ids=v2-source-183,v2-source-106 --no-write
+# 从只读 V2 目录与已审阅 profile 生成 source pack
+python scripts/corescope-v2-export.py --db "<V2 SQLite路径>" --sources-only --source-profiles industry/corescope-source-profiles.json --source-pack industry/sources.json --source-map docs/corescope-v2-sources.json
+# 只启动本项目数据库，准备维护；完整应用此时仍停止
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/corescope-runtime.ps1 -Action Database
+node --env-file=.env scripts/seed.ts
+node --env-file=.env scripts/corescope-source-upgrade.ts --dry-run
+# 审阅预览回执后应用；该命令不写 V2
+node --env-file=.env scripts/corescope-source-upgrade.ts --apply
+```
+
+探测脚本默认更新本项目的 profile 与审计 JSON，`--no-write` 仅显示结果；两种方式都不会自动升级正式库。`seed.ts` 不覆盖已存在来源，必须使用专用升级脚本迁移既有采集路线。14 个原暂停来源的冻结名单在重跑时保留；原生路线和桥接路线互斥，同一入口不能同时采用两者。管理员受保护配置冲突会在升级结果中报告，不应通过盲目覆盖消除。
+
+完成正式库升级后，再运行 `Start-CoreScope.cmd` 并用实际 source 状态、队列、新增材料和发布回执验收。**本节记录 2026-10-12 已完成的接入配置和源站验证，不宣称正式库升级及完整运行验收已经完成。** 逐源证据和原 2026-10-04 验收数据见 `CORESCOPE_SOURCE_AUDIT.md`；历史材料数不能当作今日运行数据。
 
 ## 构建、测试与验收
 

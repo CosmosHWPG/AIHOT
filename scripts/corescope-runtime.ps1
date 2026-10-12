@@ -275,6 +275,10 @@ function Start-System {
         Invoke-NodeScript 'scripts/migrate.ts'
         Write-Stage 'seed' 'Synchronizing topics, sources and the model directory.'
         Invoke-NodeScript 'scripts/seed.ts'
+        if (Test-Path -LiteralPath (Join-Path $ProjectRoot 'industry\corescope-source-profiles.json')) {
+            Write-Stage 'source-routes' 'Applying reviewed source routes while preserving administrator changes.'
+            Invoke-NodeScript 'scripts/corescope-source-upgrade.ts' @('--apply')
+        }
         Write-Stage 'budgets' 'Checking the initial model request budgets.'
         Invoke-NodeScript 'scripts/corescope-operations.ts' @('configure')
         Write-Stage 'web-build-check' 'Checking whether the production web build needs updating.'

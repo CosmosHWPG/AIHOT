@@ -1,5 +1,4 @@
-// WeChat official accounts. Dajiala (极致了, a paid service) supplies each account's latest posts and
-// article bodies; every enabled account is checked once per source interval.
+// WeChat official accounts: a read-only local cache or Dajiala's paid list/body service.
 import { sql } from "../db.ts";
 import { upsertMaterial } from "../content/materials.ts";
 import { enqueue, QUEUES } from "../jobs/queue.ts";
@@ -9,6 +8,9 @@ import { sanitizeBody } from "../content/sanitize.ts";
 import { identityKeyForUrl } from "../lib/url.ts";
 import { mpArticle, mpHistory, type MpArticle } from "../providers/dajiala.ts";
 import { BudgetExceededError, ProviderRejectedError } from "../providers/receipts.ts";
+import { readWxCache } from "./wx-cache.ts";
+import { unsupportedConfig } from "./config-keys.ts";
+import { shutdownSignal } from "../lib/shutdown.ts";
 
 const MAX_NEW_PER_CHECK = 8;
 /** Posts older than this on the first check of an account are history, not news. */
@@ -31,16 +33,63 @@ async function fetchBody(url: string, sourceId: string, identity: string): Promi
 interface MpSource {
   id: string;
   name: string;
-  config: { wxid?: string; ghid?: string; nickname?: string };
+  config: Record<string, any>;
   cursor: Record<string, unknown> | null;
   enabled: boolean;
   participation_mode: string;
+}
+
+async function checkWxCacheAccount(source: MpSource, reason: "schedule" | "manual") {
+  const sourceId = source.id;
+  const [run] = await sql<{ id: number }[]>`INSERT INTO fetch_runs (source_id, detail) VALUES (${sourceId}, ${sql.json({ reason, transport: "wx_cache" })}) RETURNING id`;
+  const firstCheck = !source.cursor?.lastCheckedAt;
+  let created = 0;
+  let revised = 0;
+  try {
+    const bad = unsupportedConfig("mp_account", source.config);
+    if (bad.length) throw new Error(`unsupported config: ${bad.join(", ")}`);
+    // Known entries must not consume the source's new-material cap and starve older unseen entries.
+    const read = readWxCache(source, { maxCandidates: 320 });
+    const limit = Math.max(1, Math.min(40, Number(source.config.limit) || 8));
+    for (const candidate of read.candidates) {
+      if (created + revised >= limit) break;
+      const result = await upsertMaterial({ ...candidate, sourceId, via: "fetch", backfill: firstCheck ? "first-import" : null });
+      created += result.created ? 1 : 0;
+      revised += result.revised ? 1 : 0;
+      if (result.created || result.revised) await queueProcessing(result.articleId);
+    }
+    const detail = {
+      reason, transport: "wx_cache", cacheUpdatedAt: read.cacheUpdatedAt.toISOString(),
+      latestMessageAt: read.latestMessageAt?.toISOString() ?? null, stale: read.stale,
+    };
+    const cursor = { ...(source.cursor ?? {}), lastCheckedAt: new Date().toISOString(), wxCache: detail };
+    const warning = read.stale ? `wx_cache stale: last cache refresh ${detail.cacheUpdatedAt}` : null;
+    await sql.begin(async (tx) => {
+      await tx`UPDATE sources SET last_fetch_at = now(), last_ok_at = now(), fail_count = 0, last_error = ${warning},
+        health = ${read.stale ? "degraded" : "ok"}, cursor = ${tx.json(cursor as never)},
+        next_fetch_at = now() + make_interval(mins => interval_minutes), updated_at = now() WHERE id = ${sourceId}`;
+      await tx`UPDATE fetch_runs SET status = 'ok', finished_at = now(), found_count = ${read.candidates.length}, new_count = ${created},
+        detail = ${tx.json(detail)} WHERE id = ${run!.id}`;
+    });
+    return { sourceId, status: "ok" as const, found: read.candidates.length, created, revised, stale: read.stale };
+  } catch (error) {
+    if (shutdownSignal.signal.aborted) throw error;
+    const message = String(error instanceof Error ? error.message : error).slice(0, 500);
+    await sql`UPDATE sources SET last_fetch_at = now(), last_error = ${message}, fail_count = fail_count + 1,
+      health = CASE WHEN fail_count + 1 >= 3 THEN 'failing' ELSE 'degraded' END,
+      next_fetch_at = now() + make_interval(mins => LEAST(interval_minutes * (fail_count + 2), 360)), updated_at = now()
+      WHERE id = ${sourceId}`;
+    await sql`UPDATE fetch_runs SET status = 'failed', finished_at = now(), new_count = ${created}, error = ${message} WHERE id = ${run!.id}`;
+    return { sourceId, status: "failed" as const, error: message };
+  }
 }
 
 export async function checkMpAccount(sourceId: string, reason: "schedule" | "manual") {
   const [source] = await sql<MpSource[]>`SELECT id, name, config, cursor, enabled, participation_mode FROM sources WHERE id = ${sourceId} AND kind = 'mp_account'`;
   if (!source) return { sourceId, status: "missing" as const };
   if (!source.enabled && reason !== "manual") return { sourceId, status: "paused" as const };
+  if (source.config.transport === "wx_cache") return checkWxCacheAccount(source, reason);
+  if (source.config.transport && source.config.transport !== "dajiala") throw new Error("unsupported WeChat transport");
   const ghid = source.config.ghid ?? source.config.wxid;
   if (!ghid) return { sourceId, status: "unconfigured" as const };
   const [run] = await sql<{ id: number }[]>`INSERT INTO fetch_runs (source_id, detail) VALUES (${sourceId}, ${sql.json({ reason })}) RETURNING id`;
@@ -116,7 +165,8 @@ export async function checkMpAccount(sourceId: string, reason: "schedule" | "man
     await sql`
       UPDATE sources SET last_fetch_at = now(), last_error = ${message},
         fail_count = CASE WHEN ${soft} THEN fail_count ELSE fail_count + 1 END,
-        health = CASE WHEN ${soft} THEN health WHEN fail_count + 1 >= 3 THEN 'failing' ELSE 'degraded' END, updated_at = now()
+        health = CASE WHEN ${soft} THEN health WHEN fail_count + 1 >= 3 THEN 'failing' ELSE 'degraded' END,
+        next_fetch_at = now() + make_interval(mins => CASE WHEN ${soft} THEN 15 ELSE LEAST(interval_minutes * (fail_count + 2), 360) END), updated_at = now()
       WHERE id = ${sourceId}`;
     await sql`UPDATE fetch_runs SET status = 'failed', finished_at = now(), new_count = ${created}, error = ${message} WHERE id = ${run!.id}`;
     if (soft) throw error; // retried by the queue
@@ -124,15 +174,17 @@ export async function checkMpAccount(sourceId: string, reason: "schedule" | "man
   }
 }
 
-/** Every enabled account is checked once per its interval (the paid list call is the cost). */
+/** Each enabled account is checked when due; failed transports keep their backoff. */
 export async function scheduleMpReconcile(now = new Date()) {
   const rows = await sql<{ id: string; last: string | null; interval_minutes: number }[]>`
-    SELECT id, cursor->>'lastCheckedAt' AS last, interval_minutes FROM sources WHERE kind = 'mp_account' AND enabled`;
+    SELECT id, cursor->>'lastCheckedAt' AS last, interval_minutes FROM sources WHERE kind = 'mp_account' AND enabled
+      AND (next_fetch_at IS NULL OR next_fetch_at <= ${now})`;
   let enqueued = 0;
   for (const s of rows) {
     const since = s.last ? now.getTime() - Date.parse(s.last) : Infinity;
     if (since <= s.interval_minutes * 60_000) continue;
     await enqueue(QUEUES.mpCheck, { sourceId: s.id, reason: "schedule" }, { singletonKey: `mp:${s.id}` });
+    await sql`UPDATE sources SET next_fetch_at = ${now}::timestamptz + interval '10 minutes' WHERE id = ${s.id}`;
     enqueued += 1;
   }
   return { enqueued };

@@ -15,6 +15,110 @@ SPEC.loader.exec_module(MOD)
 
 
 class BridgeExportTests(unittest.TestCase):
+    @staticmethod
+    def manifest(profiles=None, frozen=None):
+        return {"schemaVersion": 1, "preserveDisabledSourceIds": frozen or [], "profiles": profiles or {}}
+
+    def test_governance_candidates_remain_bridge_eligible_without_claiming_native_health(self):
+        allowed = ["已接入", "已确认", "候选", "未确认", "待验证"]
+        blocked = ["暂停", "需删除", "去激活", "非文章页", "未知状态", ""]
+        rows = [{"id": i, "name": f"Source {i}", "status": status} for i, status in enumerate(allowed + blocked, 1)]
+        pack, mapping, stats = MOD.source_pack(rows, [], set())
+        by_id = {s["id"]: s for s in pack}
+        for row in mapping:
+            should_enable = row["status"] in allowed
+            source = by_id[row["canonical_source_id"]]
+            self.assertEqual(source["enabled"], should_enable)
+            self.assertEqual(row["bridge_enabled"], should_enable)
+            self.assertEqual(row["collection_route"], "bridge" if should_enable else "blocked")
+            self.assertEqual((source["kind"], source["config"]), ("external", {}))
+        self.assertEqual(stats["enabled_bridge_sources"], len(allowed))
+        self.assertEqual(stats["enabled_native_sources"], 0)
+
+    def test_preserved_pause_cannot_be_reactivated_by_status_or_upstream_alias(self):
+        rows = [{"id": 10, "name": "Previously paused", "status": "已接入", "rss_url": "https://example.org/feed"},
+                {"id": 11, "name": "Paused upstream", "status": "暂停", "rss_url": "https://example.net/feed"}]
+        upstream = [{"id": f"rss-{i}", "name": "Upstream", "kind": "rss", "config": {"feedUrl": row["rss_url"]}}
+                    for i, row in enumerate(rows)]
+        pack, mapping, _ = MOD.source_pack(rows, upstream, set(), self.manifest(frozen=["v2-source-10"]))
+        self.assertTrue(all(not s["enabled"] for s in pack))
+        self.assertTrue(all(not r["bridge_enabled"] for r in mapping))
+
+    def test_native_profile_owns_every_alias_and_labels_do_not_change_canonical_identity(self):
+        rows = [{"id": 20, "name": "Stable primary", "status": "候选", "rss_url": "https://example.org/feed"},
+                {"id": 30, "name": "Newly connected alias", "status": "已接入", "rss_url": "https://example.org/feed"}]
+        previous = [{"aihot_source_id": "v2-source-20", "canonical_source_id": "v2-source-20"},
+                    {"aihot_source_id": "v2-source-30", "canonical_source_id": "v2-source-20"}]
+        profile = {"policy": "native", "adapter": {"kind": "rss", "config": {"feedUrl": "https://example.org/feed"}},
+                   "verification": {"status": "verified"}}
+        pack, mapping, stats = MOD.source_pack(rows, [], set(), self.manifest({"v2-source-20": profile}), previous)
+        self.assertEqual([s["id"] for s in pack], ["v2-source-20"])
+        self.assertEqual(pack[0]["kind"], "rss")
+        self.assertNotIn("V2只读桥", pack[0]["tags"])
+        self.assertEqual(pack[0]["config"]["_aihot"]["initialBackfillLimit"], 2)
+        self.assertTrue(all(r["canonical_source_id"] == "v2-source-20" and not r["bridge_enabled"] for r in mapping))
+        self.assertTrue(all(r["collection_route"] == "native" for r in mapping))
+        self.assertEqual(stats["enabled_native_sources"], 1)
+        self.assertEqual(stats["enabled_bridge_sources"], 0)
+
+    def test_bridge_publisher_guard_checks_normalized_host_and_path_boundaries(self):
+        prefixes = ["https://qwen.ai/blog/"]
+        rows = [{"id": 183, "name": "Qwen", "status": "已接入"}]
+        manifest = self.manifest({"v2-source-183": {"policy": "bridge", "bridgeIntakeUrlPrefixes": prefixes}})
+        pack, mapping, _ = MOD.source_pack(rows, [], set(), manifest)
+        self.assertEqual(mapping[0]["bridge_intake_url_prefixes"], prefixes)
+        self.assertIn("V2只读桥", pack[0]["tags"])
+        for url in ["https://qwen.ai/blog/release", "http://QWEN.AI:80/blog/release", "https://qwen.ai/blog/./release", "https://qwen.ai/blog/release?lang=en"]:
+            self.assertTrue(MOD.bridge_intake_allowed(url, prefixes), url)
+        for url in ["https://qwen.ai.evil.example/blog/release", "https://other-publisher.example/blog/release",
+                    "https://qwen.ai/blogger/release", "https://qwen.ai/blog/%2e%2e/other",
+                    "https://qwen.ai/blog/release?api_key=fixture", "https://user:fixture@qwen.ai/blog/release",
+                    "https://qwen.ai:8443/blog/release"]:
+            self.assertFalse(MOD.bridge_intake_allowed(url, prefixes), url)
+
+    def test_explicit_empty_bridge_publisher_guard_denies_all_and_invalid_prefixes_are_rejected(self):
+        url = "https://mp.sohu.com/a/fixture"
+        self.assertFalse(MOD.bridge_intake_allowed(url, []))
+        self.assertTrue(MOD.bridge_intake_allowed(url, None))
+        row = {"id": 3335, "name": "Reviewed wrong feed", "status": "已接入"}
+        for invalid in ["not-an-array", [""], ["ftp://example.org/news"], ["https://user:fixture@example.org/news"],
+                        ["https://example.org/news?api_key=fixture"], ["https://example.org/news?lang=en"], ["https://example.org/news#part"]]:
+            manifest = self.manifest({"v2-source-3335": {"policy": "bridge", "bridgeIntakeUrlPrefixes": invalid}})
+            with self.assertRaises(ValueError):
+                MOD.source_pack([row], [], set(), manifest)
+
+    def test_non_article_sources_require_verified_isolated_dedicated_profiles(self):
+        row = {"id": 27, "name": "Package catalog", "status": "非文章页"}
+        pack, mapping, _ = MOD.source_pack([row], [], set())
+        self.assertEqual((pack[0]["enabled"], pack[0]["participation_mode"], mapping[0]["bridge_enabled"]),
+                         (False, "isolated", False))
+        bridge = self.manifest({"v2-source-27": {"policy": "bridge", "nonArticle": True, "participationMode": "isolated"}})
+        self.assertFalse(MOD.source_pack([row], [], set(), bridge)[0][0]["enabled"])
+        profile = {"policy": "native", "nonArticle": True, "participationMode": "isolated",
+                   "adapter": {"kind": "json_list", "config": {"url": "https://example.org/packages.json", "itemsPath": "items"}},
+                   "verification": {"status": "verified"}}
+        pack, mapping, _ = MOD.source_pack([row], [], set(), self.manifest({"v2-source-27": profile}))
+        self.assertEqual((pack[0]["enabled"], pack[0]["participation_mode"], mapping[0]["bridge_enabled"]),
+                         (True, "isolated", False))
+        profile["participationMode"] = "editorial"
+        with self.assertRaisesRegex(ValueError, "isolated dedicated"):
+            MOD.source_pack([row], [], set(), self.manifest({"v2-source-27": profile}))
+
+    def test_profile_policies_and_native_verification_are_explicit_and_private_endpoints_are_rejected(self):
+        row = {"id": 1, "name": "Candidate", "status": "候选"}
+        with self.assertRaisesRegex(ValueError, "policy"):
+            MOD.source_pack([row], [], set(), self.manifest({"v2-source-1": {"policy": "unknown"}}))
+        profile = {"policy": "native", "adapter": {"kind": "rss", "config": {"feedUrl": "https://example.org/feed"}},
+                   "verification": {"status": "candidate"}}
+        with self.assertRaisesRegex(ValueError, "verified"):
+            MOD.source_pack([row], [], set(), self.manifest({"v2-source-1": profile}))
+        profile["verification"]["status"] = "verified"
+        for url in ["https://user:password@example.org/feed", "https://example.org/feed?token=fixture",
+                    "https://rss.app/feeds/fictional-subscription-id.xml"]:
+            profile["adapter"]["config"]["feedUrl"] = url
+            with self.assertRaisesRegex(ValueError, "private endpoint"):
+                MOD.source_pack([row], [], set(), self.manifest({"v2-source-1": profile}))
+
     def test_dedupe_requires_full_feed_identity_and_preserves_v2_aliases(self):
         sources = [
             {"id": 1, "source_id": "SRC-A", "name": "One", "status": "已接入", "rss_url": "https://example.org/feed?topic=ai"},
@@ -63,6 +167,45 @@ class BridgeExportTests(unittest.TestCase):
         self.assertFalse(MOD.private_subscription_path(public))
         self.assertFalse(MOD.private_subscription_path(docs))
 
+    def test_known_opaque_subscription_routes_are_redacted_without_collapsing_identity(self):
+        first = "a" * 32
+        second = "b" * 32
+        cases = [
+            (f"https://api.xgo.ing/rss/user/{first}", "https://api.xgo.ing/rss/user/[REDACTED]"),
+            (f"https://api.xgo.ing/rss/users/{second}.xml", "https://api.xgo.ing/rss/users/[REDACTED].xml"),
+            (f"https://wechat2rss.xlab.app/feed/{first}.xml", "https://wechat2rss.xlab.app/feed/[REDACTED].xml"),
+            (f"https://wechat2rss.bestblogs.dev/feed/{second}.xml", "https://wechat2rss.bestblogs.dev/feed/[REDACTED].xml"),
+            ("https://rss.jintiankansha.me/rss/fixture-opaque-subscription-handle-123456.xml", "https://rss.jintiankansha.me/rss/[REDACTED].xml"),
+            ("https://www.google.com.tw/alerts/feeds/11111111111111111111/22222222222222222222", "https://www.google.com.tw/alerts/feeds/[REDACTED]/[REDACTED]"),
+        ]
+        for raw, redacted in cases:
+            self.assertTrue(MOD.private_subscription_path(raw))
+            self.assertEqual(MOD.safe_url(raw, subscription_entry=True), redacted)
+            self.assertEqual(MOD.normalized_feed(raw), raw)
+        rows = [{"id": i, "name": f"Hosted {i}", "status": "候选", "rss_url": url}
+                for i, url in enumerate([f"https://api.xgo.ing/rss/user/{first}", f"https://api.xgo.ing/rss/user/{second}"], 1)]
+        pack, mapping, stats = MOD.source_pack(rows, [], set())
+        self.assertEqual(stats["v2_duplicate_aliases"], 0)
+        self.assertEqual(len(pack), 2)
+        self.assertNotEqual(pack[0]["signal_group_id"], pack[1]["signal_group_id"])
+        self.assertTrue(all(r["credentials_redacted"] for r in mapping))
+        self.assertNotIn(first, json.dumps(mapping))
+        self.assertNotIn(second, json.dumps(mapping))
+
+    def test_subscription_redaction_does_not_hide_public_feed_slugs_or_other_hosts(self):
+        public = [
+            "https://example.org/feed/a-public-technical-news-feed.xml",
+            "https://example.org/rss/user/" + "a" * 32,
+            "https://plink.anyfeeder.com/weixin/AI_era",
+            "https://api.xgo.ing/rss/user/a-public-feed-slug",
+            "https://wechat2rss.xlab.app/feed/a-public-documentation-slug.xml",
+            "https://rss.jintiankansha.me/docs/a-public-documentation-route",
+            "https://www.google.com.tw/blog/feeds/posts/default",
+        ]
+        for url in public:
+            self.assertFalse(MOD.private_subscription_path(url))
+            self.assertEqual(MOD.safe_url(url, subscription_entry=True), url)
+
     def test_body_length_never_claims_fulltext_and_model_summary_is_metadata_only(self):
         row = {"id": 1, "title": "Original", "summary": "Source abstract", "raw_content": "Source abstract", "model_summary": "AI result"}
         item = MOD.raw_material(row, [], {"canonical_source_id": "v2-source-1", "aihot_source_id": "v2-source-1"})
@@ -99,7 +242,7 @@ class BridgeExportTests(unittest.TestCase):
             conn = sqlite3.connect(db)
             cols = ",".join(f"{name} TEXT" for name in MOD.SOURCE_FIELDS.split(",") if name != "id")
             conn.execute(f"CREATE TABLE sources (id INTEGER PRIMARY KEY,{cols})")
-            conn.execute("INSERT INTO sources (id,source_id,name,status) VALUES (1,'SRC-A','Fixture','已接入')")
+            conn.execute("INSERT INTO sources (id,source_id,name,status) VALUES (1,'SRC-A','Fixture','候选')")
             conn.execute("CREATE TABLE articles (id INTEGER PRIMARY KEY,article_id TEXT,source_id TEXT,title TEXT,url TEXT,publish_time TEXT,crawled_at TEXT,created_at TEXT,updated_at TEXT,raw_content TEXT,summary TEXT)")
             conn.execute("CREATE TABLE article_source_evidence (id INTEGER,article_id INTEGER)")
             stamp = "2026-10-01T10:00:00+00:00"

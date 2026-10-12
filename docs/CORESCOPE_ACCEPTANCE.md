@@ -1,5 +1,32 @@
 # CoreScope 本机交付验收
 
+## 2026-10-12 来源迁移与真实运行验收
+
+以下结果取代初始交付的来源数量，运行快照约为北京时间 16:40。历史记录仍保留在下方。
+
+- 正式库 425 个来源：284 条原生路线、125 条 V2 只读桥接路线、16 条关闭路线。原生为 203 RSS、15 网页列表、15 JSON、51 公众号缓存入口。
+- 原 227 个候选/未确认/待验证来源全部取得接入资格：146 原生、81 桥接；14 个暂停来源仍冻结。10 个非文章页单独登记，8 个启用 `isolated` 资源监测、2 个保留参考入口。隔离资源公开新闻泄漏数为 0。
+- 先完成可恢复的 PostgreSQL 备份，再逐源升级 361 个来源，保留既有材料；再次检查 425 个来源均无待修改项。升级保护管理员手动暂停及配置更改，不依赖 seed 覆盖旧行。
+- 284 个原生来源全部实际执行过采集，**281 个已在正式库留下成功采集记录**。RSS 为 200/203，网页、JSON、公众号缓存均全部成功。C114 技术、Red Hat、Convince and Convert、Azure、OpenClaw 的暂时访问失败经正式 worker 重试恢复；arXiv cs.AI、arXiv cs.LG 仍连接超时，极客公园仍有 DNS 解析失败，保留退避与后台错误记录，不宣称全部实时可达。
+- 正式材料从升级前 214 条增至快照 10,503 条，其中原生发现材料 10,250 条；可公开内容 194 条、精选 27 条。计数持续变化，材料入库不等于分析完毕。原有历史补齐设计会按真实发布时间归档并降低分析优先级；原时间未知的条目不提供今天发表的证据。模型分析继续受原有 20/分钟、180/小时、800/滚动24小时预算限制，未为此次验收提高预算。
+- 恢复来源 TechCrunch News 的新入库文章已通过实际模型分析和公共发布，在网页展示中文导读、评分、标签、原始来源及日期；桌面 1280×900、手机 390×844 核验通过。资源目录在桌面侧栏及手机“更多”均有入口，8 个资源监测范围和 2 个参考入口说明可见。资源页面只提供公开目录信息，不公开隔离材料、适配器或本机缓存路径。
+- `Start-CoreScope.cmd` 实际执行冷启动并得到 `READY`，数据库、API、web、worker、桥接均正常；关闭验收启动进程后后台继续运行。仅 web 为加载最终前端构建进行了 1 次受控重启，其他角色在本轮快照中重启次数为 0。
+- V2 SQLite 仅以 `mode=ro`、`query_only` 访问；公众号缓存只读，不启动/更新共享 wx 程序。V2 的 app、store、runtime、source_helpers、wechat_cli 五个核心文件 SHA256 前后相同，未重启 V2 或修改其数据库。
+
+| 本轮检查 | 结果 |
+| --- | --- |
+| TypeScript 全仓检查 | 通过 |
+| 正式来源配置兼容性、干运行及重复升级 | 通过 |
+| 独立空测试库完整后台回归 | 621/621，无失败、取消或跳过；真实模型密钥已移除 |
+| V2 Python 只读导出回归 | 17/17 |
+| 网页生产构建与回归 | 构建通过，32/32 |
+| 最终页面及接口 smoke | 35/35，含资源页面/API、RSS、公开 API、MCP |
+| 真实采集、入库与公开文章详情 | 通过；3 个当时网络不可达来源保留说明 |
+
+主要本机证据均留在忽略的 `.data/qa/`：`source-migration-config-proof.json`、`source-upgrade-apply.json`、`source-upgrade-repeat.json`、`source-migration-full-tests.log`、`source-migration-final-runtime.json`、`source-migration-final-queues.json`、`source-migration-publication-proof.json`、`source-migration-final-smoke.log`、`source-migration-final-status.log`、`source-migration-after-launcher-exit.log`、`rss-runtime-failures-guarded-probe.json`、`v2-code-readonly-final-20261012.json` 及桌面/手机截图。数据库和上述本机运行证据不提交 GitHub；公共逐源审计见 `corescope-source-admission-audit.json`。
+
+## 2026-10-03 初始交付记录（历史）
+
 验收日期：2026-10-03，北京时间。代码基于 AIHOT 上游提交 `3343fe2b20db4be7269113752d82d3992fc52b6b`，独立品牌为 CoreScope。
 
 ## 可访问的完整系统

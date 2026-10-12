@@ -15,6 +15,7 @@ import { assertSupportedConfig } from "../sources/config-keys.ts";
 import type { SourceRow } from "../sources/types.ts";
 import { fetchWebList } from "../sources/web-list.ts";
 import { fetchXSearch } from "../sources/x.ts";
+import { readWxCache } from "../sources/wx-cache.ts";
 
 
 export interface SourceListFilters {
@@ -84,6 +85,7 @@ export async function previewSource(draft: Pick<SourceRow, "id" | "kind" | "conf
   else if (source.kind === "web_list") candidates = await fetchWebList(source, { preview: true });
   else if (source.kind === "json_list") candidates = await fetchJsonList(source);
   else if (source.kind === "x_search") candidates = (await fetchXSearch(source)).candidates;
+  else if (source.kind === "mp_account" && source.config.transport === "wx_cache") candidates = readWxCache(source).candidates;
   else throw new Error(`preview is not available for ${source.kind} sources`);
   return {
     ms: Date.now() - started,
@@ -180,7 +182,7 @@ export function sourceIdentity(kind: string, config: Record<string, unknown>): s
   }
   // A WeChat account is one account whichever id names it .
   if (kind === "mp_account") {
-    const id = String(config.ghid ?? config.wxid ?? "").trim().toLowerCase();
+    const id = String(config.ghid ?? config.wxid ?? config.account ?? "").trim().toLowerCase();
     return id ? `mp:${id}` : null;
   }
   if (!raw) return null;

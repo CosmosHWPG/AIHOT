@@ -76,7 +76,7 @@ export const SCHEDULES: Scheduled[] = [
     ? [
         { name: "sources.schedule", cron: "* * * * *", run: () => scheduleDueSources() },
         { name: "sources.adapt-intervals", cron: "20 4 * * *", run: adaptIntervals },
-        // WeChat official accounts (paid), each once per its interval.
+        // WeChat accounts via the configured transport (read-only cache or paid provider), once per interval.
         { name: "sources.mp-reconcile", cron: "*/15 * * * *", run: () => scheduleMpReconcile() },
       ]
     : []),

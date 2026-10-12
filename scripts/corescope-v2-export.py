@@ -19,10 +19,16 @@ import sqlite3
 import urllib.parse
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-INACTIVE = {"暂停", "需删除", "去激活", "非文章页"}
+# Source governance labels are not collector health. V2 still collects eligible
+# candidates; do not silently translate "候选" into a disconnected source.
+BRIDGE_STATUSES = {"已接入", "已确认", "候选", "未确认", "待验证"}
+INACTIVE = {"暂停", "需删除", "去激活"}
+PROFILE_POLICIES = {"native", "bridge", "blocked"}
+NATIVE_KINDS = {"rss", "web_list", "json_list", "x_search", "mp_account"}
 LOOP_IDS = {9285, 9614, 9615, 9616, 9617}
 PRIVATE = re.compile(r"token|secret|password|passwd|api[-_]?key|auth|signature|cookie|credential|access[-_]?key", re.I)
 SUBSCRIPTION_FEED_HOSTS = {"rss.app", "www.rss.app", "kill-the-newsletter.com", "www.kill-the-newsletter.com"}
+WECHAT_SUBSCRIPTION_HOSTS = {"wechat2rss.xlab.app", "wechat2rss.bestblogs.dev"}
 SOURCE_FIELDS = "id,source_id,name,status,source_channel_type,source_type,source_info_category,primary_board,board,access_method,language,source_tier,rss_url,original_url,created_at,updated_at,last_crawled_at,consecutive_failures,cooldown_until,last_ingest_failure_at"
 OFFICIAL_OWNERS = {
     "openai.com": "openai", "anthropic.com": "anthropic", "deepmind.google": "google",
@@ -57,12 +63,29 @@ def credentialed(value: str | None) -> bool:
     return bool(p.username or p.password or any(PRIVATE.search(k) for k, _ in urllib.parse.parse_qsl(p.query)))
 
 
-def private_subscription_path(value: str | None) -> bool:
+def subscription_audit_path(value: str | None) -> str | None:
     p = url_parts(value)
     # These hosted feed routes use opaque subscription identifiers. Redact the
     # public audit copy only; the original feed still defines source identity.
-    return bool((p.hostname or "").lower() in SUBSCRIPTION_FEED_HOSTS
-                and p.path.startswith("/feeds/") and p.path[len("/feeds/"):])
+    host = (p.hostname or "").lower()
+    suffix = ".xml" if p.path.endswith(".xml") else ""
+    if host in SUBSCRIPTION_FEED_HOSTS and p.path.startswith("/feeds/") and p.path[len("/feeds/"):]:
+        return "/feeds/[REDACTED]" + suffix
+    if host == "api.xgo.ing":
+        match = re.fullmatch(r"(/rss/users?/)[a-f0-9]{20,}(?:\.xml)?/?", p.path, re.I)
+        if match:
+            return match[1] + "[REDACTED]" + suffix
+    if host in WECHAT_SUBSCRIPTION_HOSTS and re.fullmatch(r"/feed/[a-f0-9]{20,}(?:\.xml)?/?", p.path, re.I):
+        return "/feed/[REDACTED]" + suffix
+    if host == "rss.jintiankansha.me" and re.fullmatch(r"/rss/[^/]{20,}/?", p.path):
+        return "/rss/[REDACTED]" + suffix
+    if re.search(r"(^|\.)google\.", host) and re.fullmatch(r"/alerts/feeds/[^/]+/[^/]+/?", p.path):
+        return "/alerts/feeds/[REDACTED]/[REDACTED]"
+    return None
+
+
+def private_subscription_path(value: str | None) -> bool:
+    return subscription_audit_path(value) is not None
 
 
 def safe_url(value: str | None, *, subscription_entry: bool = False) -> str:
@@ -78,8 +101,7 @@ def safe_url(value: str | None, *, subscription_entry: bool = False) -> str:
     except ValueError:
         return ""
     q = [(k, "[REDACTED]" if PRIVATE.search(k) else v) for k, v in urllib.parse.parse_qsl(p.query, keep_blank_values=True)]
-    redact_path = subscription_entry and private_subscription_path(value)
-    path = "/feeds/[REDACTED]" + (".xml" if p.path.endswith(".xml") else "") if redact_path else p.path
+    path = (subscription_audit_path(value) if subscription_entry else None) or p.path
     return urllib.parse.urlunsplit((p.scheme, hostname, path, urllib.parse.urlencode(q), ""))
 
 
@@ -106,11 +128,118 @@ def loop(row: dict, self_hosts: set[str]) -> bool:
                for k in ("rss_url", "original_url", "url"))
 
 
-def source_pack(rows: list[dict], upstream: list[dict], self_hosts: set[str]) -> tuple[list[dict], list[dict], dict]:
+def source_status_eligible(row: dict) -> bool:
+    return str(row.get("status") or "").strip() in BRIDGE_STATUSES
+
+
+def intake_url_parts(value: str, *, prefix: bool = False) -> tuple[str, int | None, str]:
+    p = url_parts(value)
+    if p.scheme.lower() not in {"http", "https"} or not p.hostname or credentialed(value):
+        raise ValueError("Bridge intake URL must be an uncredentialed HTTP(S) publisher URL")
+    if prefix and (p.query or p.fragment):
+        raise ValueError("Bridge intake URL prefix must not contain query or fragment")
+    if private_subscription_path(value):
+        raise ValueError("Bridge intake URL must not contain a private subscription handle")
+    try:
+        host = urllib.parse.unquote(p.hostname, errors="strict").encode("idna").decode("ascii").lower().rstrip(".")
+        port = p.port
+        path = p.path or "/"
+        for _ in range(3):
+            decoded = urllib.parse.unquote(path, errors="strict")
+            if decoded == path:
+                break
+            path = decoded
+    except (ValueError, UnicodeError) as error:
+        raise ValueError("Invalid bridge intake publisher URL") from error
+    if not re.fullmatch(r"[a-z0-9.-]+", host) or re.search(r"[\x00-\x1f\x7f]|%(?:2e|2f|5c)", path, re.I):
+        raise ValueError("Invalid bridge intake publisher URL")
+    parts: list[str] = []
+    for segment in path.replace("\\", "/").split("/"):
+        if not segment or segment == ".":
+            continue
+        if segment == "..":
+            if parts:
+                parts.pop()
+        else:
+            parts.append(segment)
+    default_port = 80 if p.scheme.lower() == "http" else 443
+    return host, None if port in {None, default_port} else port, "/" + "/".join(parts)
+
+
+def validate_intake_prefixes(value) -> list[str]:
+    if not isinstance(value, list) or any(not isinstance(p, str) for p in value):
+        raise ValueError("bridgeIntakeUrlPrefixes must be an array of public publisher URL prefixes")
+    for prefix in value:
+        intake_url_parts(prefix, prefix=True)
+    return value
+
+
+def bridge_intake_allowed(url: str, prefixes: list[str] | None) -> bool:
+    if prefixes is None:
+        return True
+    try:
+        host, port, path = intake_url_parts(url)
+    except ValueError:
+        return False
+    for prefix in prefixes:
+        allowed_host, allowed_port, allowed_path = intake_url_parts(prefix, prefix=True)
+        if host == allowed_host and port == allowed_port and (allowed_path == "/" or path == allowed_path or path.startswith(allowed_path + "/")):
+            return True
+    return False
+
+
+def validate_profiles(manifest: dict) -> dict:
+    if manifest.get("schemaVersion") != 1 or not isinstance(manifest.get("profiles"), dict):
+        raise ValueError("Unsupported CoreScope source profile manifest")
+    frozen = manifest.get("preserveDisabledSourceIds", [])
+    if not isinstance(frozen, list) or any(not isinstance(v, str) for v in frozen):
+        raise ValueError("preserveDisabledSourceIds must contain source IDs")
+    for source_id, profile in manifest["profiles"].items():
+        if not isinstance(source_id, str) or not isinstance(profile, dict) or profile.get("policy") not in PROFILE_POLICIES:
+            raise ValueError("Invalid CoreScope source profile policy")
+        if profile["policy"] == "bridge" and "bridgeIntakeUrlPrefixes" in profile:
+            validate_intake_prefixes(profile["bridgeIntakeUrlPrefixes"])
+        if profile["policy"] != "native":
+            continue
+        adapter = profile.get("adapter")
+        if not isinstance(adapter, dict) or adapter.get("kind") not in NATIVE_KINDS or not isinstance(adapter.get("config"), dict):
+            raise ValueError(f"Source profile {source_id} has no supported native adapter")
+        verification = profile.get("verification")
+        if not isinstance(verification, dict) or verification.get("status") != "verified":
+            raise ValueError(f"Source profile {source_id} has no verified native route")
+        # Profiles are committed public configuration. Subscription handles and
+        # credentials must stay in a private runtime configuration, never here.
+        def check_config(value):
+            if isinstance(value, dict):
+                for key, child in value.items():
+                    if re.fullmatch(r"authorization|proxy-authorization|cookie|password|passwd|secret|token|api[-_]?key|access[-_]?key", str(key), re.I):
+                        raise ValueError(f"Source profile {source_id} contains private request configuration")
+                    check_config(child)
+            elif isinstance(value, list):
+                for child in value:
+                    check_config(child)
+            elif isinstance(value, str) and url_parts(value).scheme in {"http", "https"}:
+                if credentialed(value) or private_subscription_path(value):
+                    raise ValueError(f"Source profile {source_id} contains a private endpoint")
+        check_config(adapter["config"])
+    return manifest
+
+
+def source_pack(rows: list[dict], upstream: list[dict], self_hosts: set[str],
+                manifest: dict | None = None, previous_mapping: list[dict] | None = None) -> tuple[list[dict], list[dict], dict]:
+    manifest = validate_profiles(manifest) if manifest is not None else {"profiles": {}, "preserveDisabledSourceIds": []}
+    profiles = manifest["profiles"]
+    frozen = set(manifest.get("preserveDisabledSourceIds", []))
+    # Keep already published canonical IDs when labels change. An identical feed
+    # still has to be present today; old aliases never merge unrelated new URLs.
+    prior_canonical = {r.get("canonical_source_id") for r in previous_mapping or []
+                       if r.get("canonical_source_id") == r.get("aihot_source_id")}
     mapping: list[dict] = []
     canonical: dict[str, dict] = {}
     sources: list[dict] = []
-    for row in sorted(rows, key=lambda r: (r.get("status") != "已接入", r["id"])):
+    source_rows: dict[str, dict] = {}
+    for row in sorted(rows, key=lambda r: (f"v2-source-{r['id']}" not in prior_canonical,
+                                          r.get("status") != "已接入", r["id"])):
         source_id = f"v2-source-{row['id']}"
         reason = "AIHOT/self-site feedback loop" if loop(row, self_hosts) else None
         # Two non-RSS website adapters can have different parsers. Only a complete,
@@ -134,7 +263,7 @@ def source_pack(rows: list[dict], upstream: list[dict], self_hosts: set[str]) ->
                        "original_url": safe_url(row.get("original_url"), subscription_entry=True),
                        "aihot_source_id": source_id, "canonical_source_id": None if reason else canonical_id,
                        "excluded_reason": reason, "dedup_reason": "identical feed URL including query" if existing and not reason else None,
-                       "bridge_enabled": row.get("status") == "已接入" and not reason,
+                       "bridge_enabled": False,
                        "credentials_redacted": any(credentialed(row.get(k)) or private_subscription_path(row.get(k))
                                                    for k in ("rss_url", "original_url"))})
         mapping.append(public)
@@ -144,8 +273,10 @@ def source_pack(rows: list[dict], upstream: list[dict], self_hosts: set[str]) ->
         entry = {"id": source_id, "name": row["name"], "kind": "external", "config": {},
                  "tier": "T1" if owner else "T2", "first_party": bool(owner), "owner_entity_id": owner,
                  "signal_group_id": signal_group, "participation_mode": "editorial", "interval_minutes": 60,
-                 "tags": tags, "site_fulltext": False, "syndicate_fulltext": False, "enabled": row.get("status") == "已接入"}
+                 "tags": tags, "site_fulltext": False, "syndicate_fulltext": False,
+                 "enabled": source_status_eligible(row) and source_id not in frozen}
         sources.append(entry)
+        source_rows[source_id] = row
         if feed:
             canonical[feed] = entry
     upstream_aliases = []
@@ -159,9 +290,10 @@ def source_pack(rows: list[dict], upstream: list[dict], self_hosts: set[str]) ->
             for key in ("tier", "first_party", "owner_entity_id"):
                 if s.get(key) is not None:
                     existing[key] = s[key]
-            if not existing["enabled"]:
-                # A V2 candidate with no connected collector must not disable an
-                # upstream working RSS route. Keep the V2 ID, choose native RSS.
+            row = source_rows[existing["id"]]
+            if source_status_eligible(row) and existing["id"] not in frozen and existing["id"] not in profiles:
+                # A known upstream feed is a native route, not a second bridge
+                # collector. Preserve its stable V2 ID and never revive a pause.
                 existing["kind"] = "rss"
                 existing["config"] = {**s.get("config", {}), "_aihot": {"initialBackfillLimit": 2}}
                 existing["enabled"] = True
@@ -171,10 +303,73 @@ def source_pack(rows: list[dict], upstream: list[dict], self_hosts: set[str]) ->
         publisher = mapped_host(s.get("config", {}).get("feedUrl"), PUBLISHER_GROUPS)
         entry["signal_group_id"] = f"publisher:{publisher}" if publisher else "feed:" + hashlib.sha256(feed.encode()).hexdigest()[:20]
         sources.append(entry)
+    source_by_id = {s["id"]: s for s in sources}
+    for s in sources:
+        row = source_rows.get(s["id"])
+        profile = profiles.get(s["id"])
+        status = str(row.get("status") or "").strip() if row else None
+        non_article = status == "非文章页" or bool(profile and profile.get("nonArticle"))
+        if non_article:
+            # Catalog/model/package pages need a deliberate non-editorial
+            # adapter. A label or a bridge must never turn them into news.
+            s["participation_mode"] = "isolated"
+            s["enabled"] = False
+        if profile:
+            policy = profile["policy"]
+            if policy == "blocked":
+                s["enabled"] = False
+                s["kind"], s["config"] = "external", {}
+            elif policy == "bridge":
+                s["kind"], s["config"] = "external", {}
+                s["enabled"] = bool(row and source_status_eligible(row) and not non_article)
+            else:
+                s["kind"] = profile["adapter"]["kind"]
+                s["config"] = {**profile["adapter"]["config"]}
+                if s["kind"] != "mp_account":
+                    s["config"]["_aihot"] = {**s["config"].get("_aihot", {}), "initialBackfillLimit": 2}
+                mode = profile.get("participationMode", "editorial")
+                if mode not in {"editorial", "hot_signal", "isolated"}:
+                    raise ValueError(f"Source profile {s['id']} has an invalid participation mode")
+                if non_article and (profile.get("nonArticle") is not True or mode != "isolated"):
+                    raise ValueError(f"Non-article source {s['id']} needs an isolated dedicated profile")
+                s["participation_mode"] = mode
+                s["enabled"] = bool(not row or source_status_eligible(row) or status == "非文章页")
+                if isinstance(profile.get("intervalMinutes"), int) and 15 <= profile["intervalMinutes"] <= 1440:
+                    s["interval_minutes"] = profile["intervalMinutes"]
+        if s["id"] in frozen or status in INACTIVE:
+            s["enabled"] = False
+        s["tags"] = [tag for tag in s.get("tags", []) if tag != "V2只读桥"]
+        if s["kind"] == "external" and s["enabled"]:
+            s["tags"].append("V2只读桥")
+    for public in mapping:
+        s = source_by_id.get(public["canonical_source_id"])
+        profile = profiles.get(public["canonical_source_id"])
+        status = str(public.get("status") or "").strip()
+        alias_blocked = status in INACTIVE or public["aihot_source_id"] in frozen or bool(public["excluded_reason"])
+        public["collection_route"] = ("blocked" if alias_blocked or not s or not s["enabled"]
+                                       else "bridge" if s["kind"] == "external" else "native")
+        public["bridge_enabled"] = bool(s and s["enabled"] and s["kind"] == "external"
+                                        and status in BRIDGE_STATUSES and public["aihot_source_id"] not in frozen)
+        public["profile_policy"] = profile.get("policy") if profile else None
+        public["bridge_intake_url_prefixes"] = (profile["bridgeIntakeUrlPrefixes"]
+                                                if profile and profile["policy"] == "bridge" and "bridgeIntakeUrlPrefixes" in profile
+                                                else None)
+        public["non_article"] = status == "非文章页" or bool(profile and profile.get("nonArticle"))
+        public["admission_reason"] = (public["excluded_reason"]
+                                      or ("preserved paused source" if public["aihot_source_id"] in frozen
+                                          else "V2 source paused" if status in INACTIVE
+                                          else "dedicated non-article profile required" if public["non_article"] and (not s or not s["enabled"])
+                                          else "source profile blocked" if profile and profile["policy"] == "blocked"
+                                          else "unknown V2 source status" if status not in BRIDGE_STATUSES and status != "非文章页"
+                                          else "configured native adapter" if public["collection_route"] == "native"
+                                          else "V2 raw-material bridge" if public["bridge_enabled"]
+                                          else "source is not admitted to the bridge"))
     summary = {"v2_sources": len(rows), "feedback_loops_excluded": sum(bool(r["excluded_reason"]) for r in mapping),
                "v2_duplicate_aliases": sum(bool(r["dedup_reason"]) for r in mapping), "upstream_sources": len(upstream),
                "upstream_duplicate_aliases": len(upstream_aliases), "upstream_native_rss": sum(s["kind"] == "rss" for s in sources),
                "canonical_sources": len(sources), "enabled_sources": sum(s["enabled"] for s in sources),
+               "enabled_native_sources": sum(s["enabled"] and s["kind"] != "external" for s in sources),
+               "enabled_bridge_sources": sum(s["enabled"] and s["kind"] == "external" for s in sources),
                "upstream_aliases": upstream_aliases}
     return sources, sorted(mapping, key=lambda r: r["id"]), summary
 
@@ -286,16 +481,21 @@ def export(args) -> dict:
     known_ids = {str(i) for i in state.get("knownIds", [])} | set(seen)
     since = args.since or state.get("initialSince") or (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=3 if args.bootstrap else 0)).isoformat()
     upstream = json.loads((ROOT / "docs/corescope-upstream-sources.json").read_text(encoding="utf-8"))["sources"]
+    profile_path = getattr(args, "source_profiles", None)
+    manifest = json.loads(profile_path.read_text(encoding="utf-8")) if profile_path and profile_path.exists() else None
+    previous_path = ROOT / "docs/corescope-v2-sources.json"
+    previous_mapping = json.loads(previous_path.read_text(encoding="utf-8")).get("sources", []) if previous_path.exists() else []
     with contextlib.closing(sqlite3.connect(db.as_uri() + "?mode=ro", uri=True, timeout=10)) as conn:
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA query_only=ON")
         conn.execute("BEGIN")
         rows = [dict(r) for r in conn.execute(f"SELECT {SOURCE_FIELDS} FROM sources")]
-        sources, mapping, summary = source_pack(rows, upstream, self_hosts)
+        sources, mapping, summary = source_pack(rows, upstream, self_hosts, manifest, previous_mapping)
         source_by_business = {r["source_id"]: r for r in mapping}
         latest = dict(conn.execute("SELECT MAX(crawled_at) crawled_at, MAX(updated_at) updated_at FROM articles").fetchone())
         upper_row = conn.execute("SELECT COALESCE(updated_at,created_at) updated_at,id FROM articles ORDER BY COALESCE(updated_at,created_at) DESC,id DESC LIMIT 1").fetchone()
         items = []
+        intake_filtered: dict[str, int] = {}
         scanned = 0
         after = cursor
         has_more = False
@@ -345,6 +545,10 @@ def export(args) -> dict:
                     continue
                 if not text(row.get("url")).startswith(("http://", "https://")) or credentialed(row.get("url")) or loop(row, self_hosts):
                     continue
+                if not bridge_intake_allowed(row["url"], source.get("bridge_intake_url_prefixes")):
+                    canonical_id = source["canonical_source_id"]
+                    intake_filtered[canonical_id] = intake_filtered.get(canonical_id, 0) + 1
+                    continue
                 if not cursor and not article_ids and text(row.get("crawled_at")) < since:
                     continue
                 evidence = []
@@ -384,10 +588,12 @@ def export(args) -> dict:
     batch = {"schemaVersion": 1, "client": "corescope-v2", "generatedAt": dt.datetime.now(dt.timezone.utc).isoformat(),
              "initialSince": since, "cursorBefore": cursor, "cursorAfter": after, "hasMore": has_more,
              "sourceRead": "SQLite mode=ro, PRAGMA query_only=ON, bounded read transaction", "dataLatest": latest,
-             "scanned": scanned, "sourceSummary": summary, "sources": sources, "items": items}
+             "scanned": scanned, "sourceSummary": summary, "sources": sources, "items": items,
+             "bridgeIntake": {"filtered": sum(intake_filtered.values()), "bySource": intake_filtered}}
     if args.out:
         write_json(args.out, batch)
-    return {"items": len(items), "scanned": scanned, "hasMore": has_more, "dataLatest": latest, **{k: v for k, v in summary.items() if k != "upstream_aliases"}}
+    return {"items": len(items), "scanned": scanned, "hasMore": has_more, "dataLatest": latest,
+            "bridgeIntake": batch["bridgeIntake"], **{k: v for k, v in summary.items() if k != "upstream_aliases"}}
 
 
 def main() -> None:
@@ -396,6 +602,8 @@ def main() -> None:
     parser.add_argument("--out", type=pathlib.Path)
     parser.add_argument("--source-pack", type=pathlib.Path)
     parser.add_argument("--source-map", type=pathlib.Path)
+    parser.add_argument("--source-profiles", type=pathlib.Path, default=ROOT / "industry/corescope-source-profiles.json",
+                        help="Reviewed native routes, preserved pauses and dedicated non-article profiles")
     parser.add_argument("--state", type=pathlib.Path)
     parser.add_argument("--sources-only", action="store_true")
     parser.add_argument("--bootstrap", action="store_true", help="Bounded history sample; afterward resume at the snapshot upper watermark")
