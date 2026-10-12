@@ -10,12 +10,17 @@ import { AdminPage, Button, Card, Empty, Field, Input, Select, Textarea } from "
 
 export const meta: Route.MetaFunction = () => [{ title: `新建信源 · ${SITE.name} 后台` }];
 
+const MP_TEMPLATES: Record<string, Record<string, unknown>> = {
+  wx_cache: { transport: "wx_cache", account: "", cacheDirectoryEnv: "WX_CACHE_DIRECTORY", limit: 8, lookbackDays: 7, fetchPublicContent: true },
+  dajiala: { transport: "dajiala", ghid: "", nickname: "" },
+};
+
 const TEMPLATES: Record<string, Record<string, unknown>> = {
   rss: { feedUrl: "https://example.com/feed.xml" },
   web_list: { url: "https://example.com/blog", baseUrl: "https://example.com", itemSelector: "article", linkSelector: "a", titleSelector: "h2", allowUrlPrefixes: ["https://example.com/blog/"] },
   json_list: { url: "https://example.com/api/posts", mode: "json_api", method: "GET", itemsPath: "data.items", titlePaths: ["title"], urlTemplate: "{raw:url}", summaryPaths: ["summary"] },
   x_search: { query: "from:handle -filter:replies", searchType: "Latest" },
-  mp_account: { biz: "", name: "" },
+  mp_account: MP_TEMPLATES.wx_cache!,
   external: {},
 };
 
@@ -23,11 +28,15 @@ const TEMPLATES: Record<string, Record<string, unknown>> = {
 export default function NewSource() {
   const navigate = useNavigate();
   const { run, pending } = useAdminAction();
-  const [form, setForm] = useState({ id: "", name: "", kind: "rss", tier: "T2", participation_mode: "editorial", interval_minutes: 30, first_party: false, site_fulltext: true, syndicate_fulltext: false, tags: "" });
+  const [form, setForm] = useState({ id: "", name: "", kind: "rss", tier: "T2", participation_mode: "editorial", interval_minutes: 30, first_party: false, site_fulltext: false, syndicate_fulltext: false, tags: "" });
   const [config, setConfig] = useState(JSON.stringify(TEMPLATES.rss, null, 2));
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<AdminSourcePreview | null>(null);
   const [duplicate, setDuplicate] = useState<{ id: string; name: string } | null>(null);
+  const mpTransport = (() => {
+    try { return JSON.parse(config)?.transport === "wx_cache" ? "wx_cache" : "dajiala"; }
+    catch { return "wx_cache"; }
+  })();
 
   const parsed = () => {
     try {
@@ -62,6 +71,19 @@ export default function NewSource() {
                 {Object.entries(KIND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </Select>
             </Field>
+            {form.kind === "mp_account" && (
+              <Field label="公众号采集方式" hint={mpTransport === "wx_cache"
+                ? "读取已授权本机缓存；填写准确公众号名称或原始 ID，并保持缓存更新。"
+                : "后端需配置 DAJIALA_KEY 和服务余额；列表与正文按请求计费，创建后可试抓。"}>
+                <Select value={mpTransport} onChange={(e) => {
+                  setConfig(JSON.stringify(MP_TEMPLATES[e.target.value], null, 2));
+                  setPreview(null);
+                }}>
+                  <option value="wx_cache">本机公众号缓存</option>
+                  <option value="dajiala">极致了 API</option>
+                </Select>
+              </Field>
+            )}
             <Field label="采集间隔（分钟）">
               <Input type="number" min={1} max={1440} value={form.interval_minutes} onChange={(e) => setForm({ ...form, interval_minutes: Number(e.target.value) })} />
             </Field>
@@ -105,6 +127,7 @@ export default function NewSource() {
           <div className="mt-5 flex justify-end gap-2">
             <Button
               busy={pending === "preview"}
+              disabled={form.kind === "mp_account" && mpTransport !== "wx_cache"}
               onClick={async () => {
                 const c = parsed();
                 if (!c) return;
@@ -136,9 +159,11 @@ export default function NewSource() {
             </Button>
           </div>
         </Card>
-        <Card title={preview ? `预览：${preview.count} 条（${preview.ms}ms）` : "预览"}>
+        <Card title={preview ? `预览：${preview.count} 条（${preview.ms}ms）` : form.kind === "mp_account" && mpTransport === "dajiala" ? "API 试抓" : "预览"}>
           {!preview ? (
-            <Empty>填好配置后点“预览抓取”，这里显示将会采集到的条目（不入库）。</Empty>
+            <Empty>{form.kind === "mp_account" && mpTransport === "dajiala"
+              ? "先配置后端密钥、服务余额与预算，创建信源后使用抓取按钮验证。列表及正文请求可能产生费用。"
+              : "填好配置后点“预览抓取”，这里显示将会采集到的条目（不入库）。"}</Empty>
           ) : preview.items.length ? (
             <ul className="space-y-3">
               {preview.items.map((i) => (
