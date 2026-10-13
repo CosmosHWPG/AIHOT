@@ -196,6 +196,8 @@ API沿用 `PUT /api/admin/budgets/:service`，支持 `{ enabled, reason, version
 
 2026-10-14 00:10运行快照：当前2000条公开458、自然精选10、热点10，LLM开关仍关闭，Bird/embedding次数限制保持启用。发现1条独立RSS评分终止失败（Data Center Dynamics，回执4179），最近一次响应达到1024输出tokens上限但正文为空；三次格式失败后正常保护机制停止重试，未公开。原预筛与结构化回答保留，需先核验输出长度/格式再正常审计重入队。本次心跳只读诊断该故障，没有调整模型参数、过滤门槛或重评分；安全证据和全批次状态见[持续验收](CORESCOPE_BIRD_FLEET_ACCEPTANCE.md)。
 
+2026-10-14 02:01快照：窗口公开952、自然精选46、热点10、new22，终止失败3条。除原DCD外，AWS Machine Learning Blog的score8996最新1024-token回答正文为空；Techzine Infrastructure的understand9248为itemType枚举校验失败（正常stop、非截断），均在三次输出失败后暂停且无公开记录。保留前序回答，未盲重放或更改模型参数；诊断、原始回执身份和恢复要求见持续验收记录。后台健康，LLM预算off、Bird/embedding预算原值保持。
+
 部署前备份 `.data/backups/corescope-before-budget-switch-20261013.dump` 为166,935,156字节、目录校验通过；证据存于 `.data/qa/budget-switch`。Windows托管System host、独立PG、API、web、worker及只读bridge均ready，未增加自动采集器。源配置指纹不变；V2/BirdClaw服务PID与创建时间不变，BirdClaw519个跟踪文件/config/全局CLI指纹不变。原V2整体及并行同步差异说明继续保留。
 
 事件归组/综述遇到预算不足或回执在途改为持久等待，不消耗真实失败重试额度；旧精确预算终止错误补入恢复队列一次，未知请求不因本修正重复发送。讨论补召回覆盖48小时，已建事实也补召回迟到讨论；同模型实际输入复用原回执，候选变化走正常判断，不强行挂接。精选和热点仍受原评分、公开及多来源证据规则约束；计划清单或HTTP 200不能证明已经产生新精选/热点。

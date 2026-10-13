@@ -16,6 +16,12 @@
 
 ## 当前证据与持续推进
 
+**2026-10-14 02:01更新**：原102来源71个尝试、70个真实Bird抓取成功、70个链路通过，31个尚待首次抓取，1个已知失败；全部114来源83个尝试、82个Bird历史成功、81个链路通过、31个待验收、2个已知失败。本批154条材料、51条自然公开（cohort中27条），待处理0。固定来源仍114个配置Bird，来源参与方式/句柄未变，历史完整覆盖12个、部分覆盖102个。所有来源管理员API和自然公开样本API/HTML原帖链接检查通过。SpaceXAI与emollick旧失败未恢复，没有新增Bird或本批处理故障；未手工补抓或模型处理。
+
+近期2000条中另新增两条非Bird批次的终止处理故障，均未公开、没有活跃任务：AWS Machine Learning Blog / rss-aws-ml，文章`ntcbdxez3ir2ycphfws6y5n3l`，score8996三次格式失败后01:25:38终止，最近响应达到1024输出tokens且正文为空；Techzine Infrastructure / v2-source-166，文章`tv712uwgx2kbmly6cz5aw67s5`，understand9248三次失败后01:30:51终止，`itemType`枚举校验失败，最近响应正常stop、375字符、179输出tokens，未发生截断。前序收到的回答保留可复用。分别需核验评分输出长度/格式与理解输出类型符合性，再正常审计重入队；本次未变更模型参数、释放unknown或重复评分。安全证据为`.data/qa/newest48h-2000/processing-failures-20261014-0200.json`。
+
+02:01:17窗口公开952、自然精选46、热点10，22条new继续正常处理；终止失败共3条（包含已通知Data Center Dynamics/4179），按故障单列，不能称2000条全部通过。LLM次数预算继续off，旧租约superseded，Bird/embedding原额度启用；向量日使用967/1000及小时238/240为本时点计数，后续容量等待保持pending。CoreScope与外部只读边界健康/指纹未发生新增变化，worker继续公平推进，有限验收保持ACTIVE。
+
 **2026-10-14 00:10更新**：原102来源52个真实尝试、51个Bird抓取成功，51个链路通过、50个尚待首抓、1个已知抓取失败。全部114来源64个尝试、63个Bird历史成功，62个链路通过、50个待验收、2个已知失败；本批128条材料、15条自然公开（原cohort中3条），另有15条正常待处理。配置114个Bird来源、历史Bird成功63个、完整历史覆盖12个/部分覆盖102个分别记录；跨供应商last_ok_at不作为Bird成功证据。SpaceXAI和emollick失败均未恢复，没有新增Bird抓取或本批处理故障。
 
 本次对TripoAI与WorkBuddy_AI两个尚无公开样本的editorial来源，在最近48小时最新2000条范围内、无活跃任务且重试已到的既有材料执行已授权的正常processArticle。TripoAI材料按原预筛规则排除；WorkBuddy_AI材料正常公开，原帖`https://x.com/WorkBuddy_AI/status/2109673559710974130`、公开API和HTML链接均通过。两条材料共留存7个LLM及1个embedding真实完成回执，不修改评分、来源参与方式、attemptTag或发布资格，不启动新采集器。其他已取得样本来源的待处理材料继续由原worker推进。
