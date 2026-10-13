@@ -124,9 +124,9 @@ export async function retryReleasedReceiptJobs(): Promise<number> {
 }
 
 /** The worker's handler for one queue (jobs/*.ts), called with each job's data. */
-export async function work<Q extends QueueName>(boss: PgBoss, name: Q, options: WorkOptions, handler: (data: JobData[Q]) => Promise<unknown>): Promise<void> {
+export async function work<Q extends QueueName>(boss: PgBoss, name: Q, options: WorkOptions, handler: (data: JobData[Q], context?: { id: string }) => Promise<unknown>): Promise<void> {
   await ensureQueue(name);
-  await boss.work<JobData[Q]>(name, options, async ([job]) => (job ? handler(job.data) : undefined));
+  await boss.work<JobData[Q]>(name, options, async ([job]) => (job ? handler(job.data, { id: job.id }) : undefined));
 }
 
 // Scheduled task bookkeeping: every run leaves a row, so operators see the latest result.

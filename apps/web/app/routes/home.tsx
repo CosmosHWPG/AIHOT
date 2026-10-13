@@ -1,13 +1,15 @@
 import { SITE, withSubject } from "@aihot/industry/site";
 import { isCrossPerspective } from "@aihot/industry/perspectives";
-import { data as withHeaders, redirect, useLoaderData } from "react-router";
+import { data as withHeaders, Link, redirect, useLoaderData } from "react-router";
 import type { Route } from "./+types/home";
-import type { TimelineResponse } from "@aihot/contracts/site";
+import type { PoolResponse, TimelineResponse } from "@aihot/contracts/site";
 import { isCategoryKey, isChannelKey } from "@aihot/contracts/taxonomy";
-import { loadOr404, queryString, releaseBoundCache } from "../lib/api.server";
+import { apiGet, loadOr404, queryString, releaseBoundCache } from "../lib/api.server";
 import { listPath, organizationLd, pageMeta } from "../lib/seo";
 import { Wordmark } from "../components/Logo";
 import { Timeline } from "../features/feed/Timeline";
+import { DayList } from "../features/feed/DayList";
+import { recentPublicNews } from "../features/feed/recent-news";
 import { HotTopics } from "../features/feed/HotTopics";
 import { CategoryTabs, SearchField, SearchIconLink } from "../features/feed/Filters";
 import { PerspectiveBar } from "../features/feed/PerspectiveBar";
@@ -26,7 +28,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   const topic = url.searchParams.get("topic")?.trim() || null;
   const upstream = new Headers();
   const data = await loadOr404<TimelineResponse>(`/api/site/timeline${queryString({ channel: channel === "all" ? null : channel, category, tag, topic })}`, { responseHeaders: upstream, signal: request.signal });
-  return withHeaders({ data, filters: { channel, category, tag, topic } }, { headers: releaseBoundCache(data.refreshAt, 60, Date.now(), upstream) });
+  const recentNews = await recentPublicNews(data, () => apiGet<PoolResponse>(
+    `/api/site/pool${queryString({ channel: channel === "all" ? null : channel, category, tag, topic })}`,
+    { signal: request.signal }), request.signal);
+  const allHref = `/all${queryString({ channel: channel === "all" ? null : channel, category, tag, topic })}`;
+  return withHeaders({ data, recentNews, allHref, filters: { channel, category, tag, topic } }, { headers: releaseBoundCache(data.refreshAt, 60, Date.now(), upstream) });
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -50,7 +56,7 @@ function TodayLabel() {
 }
 
 export default function Home() {
-  const { data, filters } = useLoaderData<typeof loader>();
+  const { data, recentNews, allHref, filters } = useLoaderData<typeof loader>();
   const title = isCrossPerspective(filters.tag, filters.topic) ? "核心网 × AI 精选" : filters.tag ? `${filters.tag}精选` : "精选洞察";
   return (
     <div className="pb-6">
@@ -71,12 +77,23 @@ export default function Home() {
 
       {data.hot && <HotTopics entries={data.hot} />}
 
-      <h2 className="mt-6 text-[20px] font-bold text-ink lg:hidden">{filters.tag ? title : "最新精选"}</h2>
+      <h2 className="mt-6 text-[20px] font-bold text-ink lg:hidden">{filters.tag ? title : recentNews.length ? "资讯浏览" : "最新精选"}</h2>
       <div className="-mx-4 mt-3 flex items-center gap-2 pl-4 pr-2 lg:hidden">
         <CategoryTabs base="/" category={filters.category} channel={filters.channel} layoutId="home-cat-mobile" size="sm" className="min-w-0 flex-1" />
         <SearchIconLink />
       </div>
 
+      {recentNews.length > 0 && (
+        <section aria-label="最新公开动态" className="mb-7 mt-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-[19px] font-semibold text-ink">最新公开动态</h2>
+            <Link to={allHref} className="shrink-0 text-[12.5px] text-ink-3 hover:text-accent">查看全部动态 →</Link>
+          </div>
+          <p className="mb-2 mt-1 text-[12.5px] leading-6 text-ink-3">近48小时已分析公开的动态，按发布时间排列。下方保留精选洞察。</p>
+          <DayList items={recentNews} timeBy="published" />
+        </section>
+      )}
+      {recentNews.length > 0 && <h2 className="mb-1 text-[19px] font-semibold text-ink">精选洞察</h2>}
       <Timeline initial={data} filters={data.filters} />
     </div>
   );

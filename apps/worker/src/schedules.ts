@@ -4,6 +4,10 @@ import { FEATURES } from "@aihot/industry/features";
 import { credential } from "@aihot/backend/config";
 import { ensureQueue, recordRun } from "@aihot/backend/jobs/queue";
 import { sweepUnprocessed } from "@aihot/backend/jobs/content";
+import { sweepDeferredEventJobs } from "@aihot/backend/jobs/events";
+import { reprioritizeRecentContentJobs } from "@aihot/backend/jobs/recent-content";
+import { restoreExpiredLlmBudget } from "@aihot/backend/providers/temporary-budget";
+import { rematchRecentSignals } from "@aihot/backend/events/group";
 import { translatePending } from "@aihot/backend/editorial/translate";
 import { adaptIntervals, scheduleDueSources } from "@aihot/backend/sources/collect";
 import { scheduleMpReconcile } from "@aihot/backend/sources/mp";
@@ -34,6 +38,10 @@ const collecting = process.env.COLLECT_ENABLED !== "false";
 
 export const SCHEDULES: Scheduled[] = [
   { name: "content.sweep", cron: "*/5 * * * *", run: sweepUnprocessed },
+  { name: "content.priority", cron: "* * * * *", run: reprioritizeRecentContentJobs },
+  { name: "events.capacity-sweep", cron: "* * * * *", run: sweepDeferredEventJobs },
+  { name: "events.signal-rematch", cron: "*/5 * * * *", run: () => rematchRecentSignals(50) },
+  { name: "ops.temporary-budget", cron: "* * * * *", run: restoreExpiredLlmBudget },
   // Full-text translations of newly selected items (model calls; off with MODEL_CALLS_ENABLED=false).
   { name: "content.translate", cron: "*/5 * * * *", run: () => translatePending() },
   { name: "hot.rank", cron: "*/5 * * * *", run: () => computeHotRanking() },

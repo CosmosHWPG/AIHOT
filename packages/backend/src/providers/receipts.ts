@@ -9,6 +9,7 @@
 import { sql, type Db } from "../db.ts";
 import { sha256, stableJson } from "../lib/ids.ts";
 import { shutdownSignal } from "../lib/shutdown.ts";
+import { restoreExpiredLlmBudget, temporaryLlmAllowance } from "./temporary-budget.ts";
 
 export class BudgetExceededError extends Error {
   readonly service: string;
@@ -92,6 +93,11 @@ interface ReceiptRow {
 }
 
 async function checkBudget(tx: Db, service: string, required = false): Promise<void> {
+  if (service === "llm") {
+    await restoreExpiredLlmBudget(tx);
+    const temporary = await temporaryLlmAllowance(tx);
+    if (temporary?.exhausted) throw new BudgetExceededError(service,"temporary",temporary.retryAfterSeconds);
+  }
   const [budget] = await tx<{ per_minute: number; per_hour: number; per_day: number }[]>`
     SELECT per_minute, per_hour, per_day FROM budgets WHERE service = ${service}`;
   if (!budget) {
@@ -138,6 +144,8 @@ async function checkCredits(tx: Db, req: ReceiptRequest): Promise<void> {
  * The caller parses the response and commits business results, then calls completeReceipt.
  */
 export async function paidRequest(req: ReceiptRequest, call: () => Promise<CallOutcome>): Promise<ReceiptResult> {
+  // Commit an expired restoration even when this claim subsequently rolls back on the 800/day cap.
+  if (req.service === "llm") await restoreExpiredLlmBudget();
   const logicalKey = logicalKeyFor(req);
 
   const claimed = await sql.begin(async (tx) => {
@@ -222,8 +230,9 @@ export async function paidRequest(req: ReceiptRequest, call: () => Promise<CallO
 
 async function startAttempt(tx: Db, receiptId: number, attempt: number, req: ReceiptRequest): Promise<number> {
   const [row] = await tx<{ id: number }[]>`
-    INSERT INTO receipt_attempts (receipt_id, attempt, service, model, status, reserved_credits)
-    VALUES (${receiptId}, ${attempt}, ${req.service}, ${req.model ?? null}, 'pending', ${req.creditBudget?.maximum ?? 0})
+    INSERT INTO receipt_attempts (receipt_id, attempt, service, model, status, reserved_credits, started_at)
+    VALUES (${receiptId}, ${attempt}, ${req.service}, ${req.model ?? null}, 'pending', ${req.creditBudget?.maximum ?? 0},
+      ${req.service === "llm" ? tx`clock_timestamp()` : tx`now()`})
     RETURNING id`;
   return row!.id;
 }

@@ -18,6 +18,7 @@
     "corescope:stop": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/corescope-runtime.ps1 -Action Stop",
     "corescope:status": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/corescope-runtime.ps1 -Action Status",
     "corescope:verify": "node --env-file-if-exists=.env scripts/corescope-operations.ts status",
+    "corescope:processing": "node --env-file-if-exists=.env scripts/corescope-processing.ts",
     "corescope:test": "node scripts/corescope-test.ts",
     "corescope:source-upgrade": "node --env-file-if-exists=.env scripts/corescope-source-upgrade.ts",
     "corescope:source-probe": "node --env-file-if-exists=.env scripts/corescope-source-probe.ts",
