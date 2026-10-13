@@ -2142,6 +2142,231 @@
       "site_fulltext": false,
       "syndicate_fulltext": false,
       "enabled": true
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "hot_signal",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "刷新核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-rss-infoworld",
+      "name": "InfoWorld",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.infoworld.com/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "signal_group_id": "publisher:infoworld.com"
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "hot_signal",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "刷新核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-rss-bensbites",
+      "name": "Ben's Bites",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.bensbites.com/feed",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "signal_group_id": "publisher:bensbites.com"
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "hot_signal",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "刷新核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-rss-bleepingcomputer",
+      "name": "BleepingComputer",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.bleepingcomputer.com/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "signal_group_id": "publisher:bleepingcomputer.com"
+    },
+    {
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "刷新核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-rss-armin-ronacher",
+      "name": "Armin Ronacher · 全博客（AI按相关性筛选）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://lucumr.pocoo.org/feed.atom",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "signal_group_id": "publisher:lucumr.pocoo.org"
+    },
+    {
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "刷新核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-web-berkeley-rdi",
+      "name": "Berkeley RDI：Blog",
+      "kind": "web_list",
+      "config": {
+        "url": "https://rdi.berkeley.edu/blog",
+        "adapter": "article_links",
+        "itemSelector": "a[href^=\"/blog/\"]:has(h3)",
+        "titleSelector": "h3",
+        "publishedAtSelector": "p",
+        "publishedAtUtcOffset": "+00:00",
+        "itemUrlPattern": "^/blog/[^/]+/?$",
+        "requirePublishedAt": true,
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "signal_group_id": "publisher:berkeley-rdi"
+    },
+    {
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "刷新核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-web-baseten-base-labs",
+      "name": "Baseten Base Labs：模型研究",
+      "kind": "web_list",
+      "config": {
+        "url": "https://labs.baseten.co/articles",
+        "adapter": "article_links",
+        "itemSelector": "a[href^=\"/articles/\"]:has(.type-card-title)",
+        "titleSelector": ".type-card-title",
+        "itemUrlPattern": "^/articles/[^/]+/?$",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "detail": {
+          "maxFetches": 8,
+          "publishedAtRegex": "\"datePublished\"\\s*:\\s*\"([^\"]+)\"",
+          "publishedAtUtcOffset": "+00:00",
+          "publishedAtAuthoritative": true
+        }
+      },
+      "signal_group_id": "publisher:baseten"
+    },
+    {
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "刷新核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-web-vapi-blog",
+      "name": "Vapi 产品与 Agent 方法",
+      "kind": "web_list",
+      "config": {
+        "url": "https://vapi.ai/blog",
+        "adapter": "article_links",
+        "itemSelector": "a[href^=\"/blog/\"]:has(h2),a[href^=\"/blog/\"]:has(h3)",
+        "titleSelector": "h2,h3",
+        "itemUrlPattern": "^/blog/[^/]+$",
+        "publishedAtRegex": "\\b([A-Z]{3} \\d{2}, 20\\d{2})\\b",
+        "publishedAtUtcOffset": "+00:00",
+        "requirePublishedAt": true,
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "signal_group_id": "publisher:vapi"
+    },
+    {
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "isolated",
+      "interval_minutes": 720,
+      "tags": [
+        "AI",
+        "技术学习资料",
+        "保留原始发布日期"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-rss-openai-developers-learning",
+      "name": "OpenAI Developers · 技术学习资料",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://developers.openai.com/rss.xml",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "signal_group_id": "publisher:openai"
     }
   ],
   "aliases": [
@@ -6234,6 +6459,261 @@
       "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
       "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
       "evidencePage": "https://aihot.news/item/wfk93lrvw1t9zjb1kzgbcud6s"
+    },
+    "corescope-rss-infoworld": {
+      "status": "verified",
+      "checkedAt": "2026-10-13T11:39:35.996Z",
+      "url": "https://www.infoworld.com/feed/",
+      "httpStatus": 200,
+      "itemCount": 20,
+      "datedItems": 20,
+      "feedTitle": "InfoWorld",
+      "samples": [
+        {
+          "title": "Microsoft separates decision-making from generative AI with a new model",
+          "url": "https://www.infoworld.com/article/4234290/microsoft-separates-decision-making-from-generative-ai-with-a-new-model.html",
+          "publishedAt": "2026-10-13T11:28:54.000Z"
+        },
+        {
+          "title": "The best place to run AI agents",
+          "url": "https://www.infoworld.com/article/4234013/the-best-place-to-run-ai-agents.html",
+          "publishedAt": "2026-10-13T09:00:00.000Z"
+        },
+        {
+          "title": "AI distrust is GitHub’s opportunity",
+          "url": "https://www.infoworld.com/article/4233357/ai-distrust-is-githubs-opportunity.html",
+          "publishedAt": "2026-10-13T09:00:00.000Z"
+        }
+      ],
+      "scope": "public_original_collector_parse; independently reconstructed entry; not AIHOT private config",
+      "observedSourceEvidence": "https://aihot.news/api/site/stats",
+      "collectorConfigOrigin": "independent reconstruction; AIHOT production config not public",
+      "existingPublisherIds": []
+    },
+    "corescope-rss-bensbites": {
+      "status": "verified",
+      "checkedAt": "2026-10-13T11:39:38.286Z",
+      "url": "https://www.bensbites.com/feed",
+      "httpStatus": 200,
+      "itemCount": 20,
+      "datedItems": 20,
+      "feedTitle": "Ben's Bites",
+      "samples": [
+        {
+          "title": "Text is so 2023",
+          "url": "https://www.bensbites.com/p/text-is-so-2023",
+          "publishedAt": "2026-10-08T13:00:52.000Z"
+        },
+        {
+          "title": "Thoughts from San Francisco",
+          "url": "https://www.bensbites.com/p/thoughts-from-san-francisco",
+          "publishedAt": "2026-10-06T13:01:18.000Z"
+        },
+        {
+          "title": "OpenAI DevDay 2026",
+          "url": "https://www.bensbites.com/p/openai-devday-2026",
+          "publishedAt": "2026-10-01T13:30:36.000Z"
+        }
+      ],
+      "scope": "public_original_collector_parse; independently reconstructed entry; not AIHOT private config",
+      "observedSourceEvidence": "https://aihot.news/api/site/stats",
+      "collectorConfigOrigin": "independent reconstruction; AIHOT production config not public",
+      "existingPublisherIds": []
+    },
+    "corescope-rss-bleepingcomputer": {
+      "status": "verified",
+      "checkedAt": "2026-10-13T11:39:36.620Z",
+      "url": "https://www.bleepingcomputer.com/feed/",
+      "httpStatus": 200,
+      "itemCount": 15,
+      "datedItems": 15,
+      "feedTitle": "BleepingComputer",
+      "samples": [
+        {
+          "title": "Norway fines Microsoft ad firm $9.6 million over Grindr data sharing",
+          "url": "https://www.bleepingcomputer.com/news/security/norway-fines-microsoft-ad-firm-96-million-over-grindr-data-sharing/",
+          "publishedAt": "2026-10-12T20:13:52.000Z"
+        },
+        {
+          "title": "Yandex confirms service outage as users lose access to cloud files",
+          "url": "https://www.bleepingcomputer.com/news/security/yandex-confirms-service-outage-as-users-lose-access-to-cloud-files/",
+          "publishedAt": "2026-10-12T19:23:01.000Z"
+        },
+        {
+          "title": "Anthropic takes risky AI tests offline after models breach govt sites",
+          "url": "https://www.bleepingcomputer.com/news/security/anthropic-takes-risky-ai-tests-offline-after-models-breach-govt-sites/",
+          "publishedAt": "2026-10-12T18:51:59.000Z"
+        }
+      ],
+      "scope": "public_original_collector_parse; independently reconstructed entry; not AIHOT private config",
+      "observedSourceEvidence": "https://aihot.news/api/site/stats",
+      "collectorConfigOrigin": "independent reconstruction; AIHOT production config not public",
+      "existingPublisherIds": []
+    },
+    "corescope-rss-armin-ronacher": {
+      "status": "verified",
+      "checkedAt": "2026-10-13T11:39:37.387Z",
+      "url": "https://lucumr.pocoo.org/feed.atom",
+      "httpStatus": 200,
+      "itemCount": 10,
+      "datedItems": 10,
+      "feedTitle": "Armin Ronacher's Thoughts and Writings",
+      "scope": "public_original_collector_parse; independently reconstructed entry; not AIHOT private config",
+      "samples": [
+        {
+          "title": "What is Codemode",
+          "url": "https://lucumr.pocoo.org/2026/10/6/codemode/",
+          "publishedAt": "2026-10-06T00:00:00.000Z"
+        },
+        {
+          "title": "Deser: Rethinking Rust Serialization",
+          "url": "https://lucumr.pocoo.org/2026/9/29/deser/",
+          "publishedAt": "2026-09-29T00:00:00.000Z"
+        },
+        {
+          "title": "Interpreting Pangram",
+          "url": "https://lucumr.pocoo.org/2026/9/14/interpreting-pangram/",
+          "publishedAt": "2026-09-14T00:00:00.000Z"
+        }
+      ],
+      "observedSourceEvidence": "https://aihot.news/api/site/stats",
+      "collectorConfigOrigin": "independent reconstruction; AIHOT production config not public",
+      "existingPublisherIds": []
+    },
+    "corescope-web-berkeley-rdi": {
+      "status": "verified",
+      "checkedAt": "2026-10-13T11:35:03.831Z",
+      "url": "https://rdi.berkeley.edu/blog",
+      "httpStatus": 200,
+      "itemCount": 17,
+      "datedItems": 17,
+      "samples": [
+        {
+          "title": "CUA-Lite: An Open Platform for Computer-Use Agents",
+          "url": "https://rdi.berkeley.edu/blog/cua-lite",
+          "publishedAt": "2026-09-07T00:00:00.000Z"
+        },
+        {
+          "title": "Vero: Can AI Agents Build Formally Verified Software Repositories?",
+          "url": "https://rdi.berkeley.edu/blog/vero",
+          "publishedAt": "2026-09-01T00:00:00.000Z"
+        },
+        {
+          "title": "When Coding Stops Being the Bottleneck",
+          "url": "https://rdi.berkeley.edu/blog/auto-software-dev",
+          "publishedAt": "2026-07-26T00:00:00.000Z"
+        },
+        {
+          "title": "The Malware CDN is Still Lurking in GitHub Pages, and AI Just Made It Worse",
+          "url": "https://rdi.berkeley.edu/blog/polyfill",
+          "publishedAt": "2026-06-24T00:00:00.000Z"
+        },
+        {
+          "title": "CyberGym-E2E: Scalable Real-World Benchmark for AI Agents' End-to-End Cybersecurity Capabilities",
+          "url": "https://rdi.berkeley.edu/blog/cybergym-e2e",
+          "publishedAt": "2026-06-18T00:00:00.000Z"
+        }
+      ],
+      "scope": "public_original_collector_parse; independently reconstructed entry; not AIHOT private config",
+      "observedSourceEvidence": "https://aihot.news/api/site/stats",
+      "collectorConfigOrigin": "independent reconstruction; AIHOT production config not public",
+      "existingPublisherIds": []
+    },
+    "corescope-web-baseten-base-labs": {
+      "status": "verified",
+      "checkedAt": "2026-10-13T11:39:35.302Z",
+      "url": "https://labs.baseten.co/articles",
+      "httpStatus": 200,
+      "itemCount": 6,
+      "datedItems": 6,
+      "dateBoundary": "Listing prints month/year only; actual datePublished was read from each original detail page, no month-start or crawl-time date invented",
+      "samples": [
+        {
+          "title": "Why do models forget facts that they iteratively learn?",
+          "url": "https://labs.baseten.co/articles/why-do-models-forget-facts-that-they-iteratively-learn",
+          "publishedAt": "2026-10-12T00:00:00.000Z"
+        },
+        {
+          "title": "The Unreasonable Efficiency of a Single Gradient Step",
+          "url": "https://labs.baseten.co/articles/the-unreasonable-efficiency-of-a-single-gradient-step",
+          "publishedAt": "2026-10-02T00:00:00.000Z"
+        },
+        {
+          "title": "When does distillation help reinforcement learning?",
+          "url": "https://labs.baseten.co/articles/when-does-distillation-help-reinforcement-learning",
+          "publishedAt": "2026-09-23T00:00:00.000Z"
+        },
+        {
+          "title": "Can a Language Model Learn Facts Continually in Its Weights?",
+          "url": "https://labs.baseten.co/articles/can-a-language-model-learn-facts-continually-in-its-weights",
+          "publishedAt": "2026-07-14T00:00:00.000Z"
+        },
+        {
+          "title": "Post-Training Science for Supervised Fine-Tuning",
+          "url": "https://labs.baseten.co/articles/post-training-science-for-supervised-fine-tuning",
+          "publishedAt": "2026-06-18T00:00:00.000Z"
+        },
+        {
+          "title": "Still: Amortized KV Cache Compaction in a Single Forward Pass",
+          "url": "https://labs.baseten.co/articles/still-amortized-kv-cache-compaction-in-a-single-forward-pass",
+          "publishedAt": "2026-06-10T00:00:00.000Z"
+        }
+      ],
+      "scope": "public_original_collector_parse; independently reconstructed entry; not AIHOT private config",
+      "observedSourceEvidence": "https://aihot.news/item/oslw7ep9h3q0zcu53hv8fnx9u",
+      "collectorConfigOrigin": "independent reconstruction; AIHOT production config not public",
+      "existingPublisherIds": [
+        "corescope-web-list-baseten-co-7f6bc157"
+      ]
+    },
+    "corescope-web-vapi-blog": {
+      "status": "verified",
+      "checkedAt": "2026-10-13T11:32:57.230Z",
+      "url": "https://vapi.ai/blog",
+      "httpStatus": 200,
+      "itemCount": 80,
+      "datedItems": 80,
+      "samples": [
+        {
+          "title": "GPT-Live is now in beta for every Vapi customer",
+          "url": "https://vapi.ai/blog/gpt-live-beta",
+          "publishedAt": "2026-10-02T00:00:00.000Z"
+        },
+        {
+          "title": "Have your personal assistant make the call you keep putting off",
+          "url": "https://vapi.ai/blog/vapi-personal-agent-calling",
+          "publishedAt": "2026-09-30T00:00:00.000Z"
+        },
+        {
+          "title": "Vapi for CX: own every layer, improve every week",
+          "url": "https://vapi.ai/blog/cx-toolkit",
+          "publishedAt": "2026-09-29T00:00:00.000Z"
+        },
+        {
+          "title": "Behind the Features: Your Top Questions from the Vapi Webinar, Answered",
+          "url": "https://vapi.ai/blog/behind-the-features-webinar-qa",
+          "publishedAt": "2026-09-24T00:00:00.000Z"
+        },
+        {
+          "title": "Fast decisions alongside voice AI: early experiments with Jev",
+          "url": "https://vapi.ai/blog/early-experiment-with-jev",
+          "publishedAt": "2026-09-23T00:00:00.000Z"
+        }
+      ],
+      "scope": "public_original_collector_parse; independently reconstructed entry; not AIHOT private config",
+      "observedSourceEvidence": "https://aihot.news/item/byijxcheeait7w4okuw9ebnh2",
+      "collectorConfigOrigin": "independent reconstruction; AIHOT production config not public",
+      "existingPublisherIds": []
+    },
+    "corescope-rss-openai-developers-learning": {
+      "status": "verified",
+      "scope": "official RSS independently reconstructed; learning resources, isolated from news admission",
+      "checkedAt": "2026-10-13T11:39:38.286Z",
+      "url": "https://developers.openai.com/rss.xml",
+      "httpStatus": 200,
+      "itemCount": 138,
+      "latestPublishedAt": "2026-05-05T00:00:00Z",
+      "aihotPrivateEntryConfirmed": false
     }
   },
   "coverage": [
@@ -6683,6 +7163,23 @@
       "sourceId": "corescope-web-list-suno-com-e3885772",
       "status": "public_collector_verified",
       "publicationDate": "unknown"
+    }
+  ],
+  "refreshReviews": [
+    {
+      "observedAt": "2026-10-13T06:44:51.063Z",
+      "reviewedAt": "2026-10-13T11:42:18.581Z",
+      "sourceIds": [
+        "corescope-rss-infoworld",
+        "corescope-rss-bensbites",
+        "corescope-rss-bleepingcomputer",
+        "corescope-rss-armin-ronacher",
+        "corescope-web-berkeley-rdi",
+        "corescope-web-baseten-base-labs",
+        "corescope-web-vapi-blog",
+        "corescope-rss-openai-developers-learning"
+      ],
+      "evidence": "docs/corescope-source-refresh-20261013.json"
     }
   ]
 }

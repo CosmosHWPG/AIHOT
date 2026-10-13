@@ -336,6 +336,16 @@ def merge_supplements(sources: list[dict], source_rows: dict[str, dict], supplem
                     raise ValueError(f"Supplement {source_id} would collect an AIHOT/self-site feedback loop")
             if source.get("site_fulltext") or source.get("syndicate_fulltext"):
                 raise ValueError(f"Supplement {source_id} requires a separate fulltext license review")
+            initial_backfill_limit = 2
+            if source["kind"] == "x_search" and source["config"].get("provider") == "bird":
+                # Bird's first round reads one complete page of up to 20 posts.
+                # A smaller import limit must not drop posts and advance its cursor.
+                aihot = source["config"].get("_aihot", {})
+                if not isinstance(aihot, dict):
+                    raise ValueError(f"Supplement {source_id} has invalid Bird _aihot configuration")
+                initial_backfill_limit = aihot.get("initialBackfillLimit", 20)
+                if type(initial_backfill_limit) is not int or initial_backfill_limit != 20:
+                    raise ValueError(f"Supplement {source_id} Bird initialBackfillLimit must be 20")
             if source_id in by_id:
                 if collector_identity(source) != collector_identity(by_id[source_id], source_rows.get(source_id)):
                     raise ValueError(f"Supplement {source_id} conflicts with an existing route")
@@ -348,7 +358,7 @@ def merge_supplements(sources: list[dict], source_rows: dict[str, dict], supplem
                 continue
             entry = {**source, "config": {**source["config"]}}
             if entry["kind"] != "mp_account":
-                entry["config"]["_aihot"] = {**entry["config"].get("_aihot", {}), "initialBackfillLimit": 2}
+                entry["config"]["_aihot"] = {**entry["config"].get("_aihot", {}), "initialBackfillLimit": initial_backfill_limit}
             sources.append(entry)
             by_id[source_id] = entry
             if identity:

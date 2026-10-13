@@ -14396,10 +14396,10 @@
     "v2_duplicate_aliases": 15,
     "upstream_sources": 18,
     "upstream_duplicate_aliases": 9,
-    "upstream_native_rss": 245,
-    "canonical_sources": 616,
-    "enabled_sources": 600,
-    "enabled_native_sources": 480,
+    "upstream_native_rss": 250,
+    "canonical_sources": 636,
+    "enabled_sources": 620,
+    "enabled_native_sources": 500,
     "enabled_bridge_sources": 120,
     "upstream_aliases": [
       {
@@ -14448,7 +14448,7 @@
         "reason": "identical upstream/V2 feed URL including query"
       }
     ],
-    "supplemental_added": 191,
+    "supplemental_added": 211,
     "supplemental_source_ids": [
       "corescope-rss-ithome-com-5479b994",
       "corescope-rss-browser-use-com-b05a52d6",
@@ -14522,6 +14522,14 @@
       "corescope-web-list-reflection-ai-4852f5d4",
       "corescope-rss-canarymedia-com-bdcf7427",
       "corescope-web-list-suno-com-e3885772",
+      "corescope-rss-infoworld",
+      "corescope-rss-bensbites",
+      "corescope-rss-bleepingcomputer",
+      "corescope-rss-armin-ronacher",
+      "corescope-web-berkeley-rdi",
+      "corescope-web-baseten-base-labs",
+      "corescope-web-vapi-blog",
+      "corescope-rss-openai-developers-learning",
       "corescope-x-rohanpaul-ai",
       "corescope-x-workbuddy-ai",
       "corescope-x-elonmusk",
@@ -14631,6 +14639,15 @@
       "corescope-x-manusai",
       "corescope-x-mistralai",
       "corescope-x-googledeepmind",
+      "corescope-x-iamneubert",
+      "corescope-x-ericschmidt",
+      "corescope-x-rao2z",
+      "corescope-x-rauchg",
+      "corescope-x-lateinteraction",
+      "corescope-x-nathanbenaich",
+      "corescope-x-soumithchintala",
+      "corescope-x-charlieholtz",
+      "corescope-x-karinanguyen",
       "corescope-mp-stepfun",
       "corescope-mp-aiwarts",
       "corescope-mp-openbmb",
@@ -14640,7 +14657,10 @@
       "corescope-mp-xiaohongshu",
       "corescope-mp-tencent",
       "corescope-mp-shengshu",
-      "corescope-mp-volcengine"
+      "corescope-mp-volcengine",
+      "corescope-mp-deepseek",
+      "corescope-mp-doubao",
+      "corescope-mp-tencent-hunyuan"
     ],
     "supplemental_aliases": [
       {

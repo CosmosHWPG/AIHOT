@@ -46,6 +46,59 @@ class BridgeExportTests(unittest.TestCase):
         self.assertFalse(pack[0]["enabled"])
         self.assertEqual(stats["supplemental_aliases"][0]["canonical_source_id"], "v2-source-193")
 
+    def test_bird_supplement_imports_one_bounded_page_and_preserves_manifest(self):
+        source = {"id": "corescope-x-bird-fixture", "name": "Fixture", "kind": "x_search",
+                  "config": {"query": "from:fixture -filter:replies", "provider": "bird", "searchType": "Latest",
+                             "bird": {"strategy": "user_tweets", "initialLookbackHours": 48, "maxPagesPerRound": 1},
+                             "_aihot": {"initialBackfillLimit": 20, "initialBackfillMonths": 1}}, "enabled": True}
+        manifest = self.supplement(source)
+        original = json.dumps(manifest, sort_keys=True)
+        pack, _, stats = MOD.source_pack([], [], set(), None, None, [manifest])
+        self.assertEqual(pack[0]["config"], source["config"])
+        self.assertEqual(pack[0]["config"]["_aihot"]["initialBackfillLimit"], 20)
+        self.assertEqual(stats["supplemental_added"], 1)
+        self.assertEqual(json.dumps(manifest, sort_keys=True), original)
+        default_source = {**source, "config": {k: v for k, v in source["config"].items() if k != "_aihot"}}
+        default_pack, _, _ = MOD.source_pack([], [], set(), None, None, [self.supplement(default_source)])
+        self.assertEqual(default_pack[0]["config"]["_aihot"]["initialBackfillLimit"], 20)
+        self.assertNotIn("_aihot", default_source["config"])
+
+    def test_bird_supplement_rejects_invalid_page_limits_before_account_dedup(self):
+        existing = {"id": "corescope-x-bird-existing", "kind": "x_search",
+                    "config": {"query": "from:fixture -filter:replies", "provider": "bird"}, "enabled": True}
+        for limit in [None, True, False, -1, 0, 1, 2, 19, 21, 100, 20.0, "20"]:
+            with self.subTest(limit=limit):
+                source = {**existing, "id": "corescope-x-bird-alias", "config": {
+                    **existing["config"], "_aihot": {"initialBackfillLimit": limit}}}
+                with self.assertRaisesRegex(ValueError, "Bird initialBackfillLimit must be 20"):
+                    MOD.source_pack([], [], set(), None, None, [self.supplement(source)])
+                with self.assertRaisesRegex(ValueError, "Bird initialBackfillLimit must be 20"):
+                    MOD.merge_supplements([existing], {}, [self.supplement(source)], set(), {})
+        for malformed in [None, [], "20"]:
+            with self.subTest(aihot=malformed):
+                source = {**existing, "config": {**existing["config"], "_aihot": malformed}}
+                with self.assertRaisesRegex(ValueError, "invalid Bird _aihot"):
+                    MOD.source_pack([], [], set(), None, None, [self.supplement(source)])
+
+    def test_other_supplements_keep_small_backfill_and_mp_configuration(self):
+        sources = [
+            {"id": "corescope-rss-small", "kind": "rss", "config": {"feedUrl": "https://example.org/feed"}},
+            {"id": "corescope-x-xquik-small", "kind": "x_search", "config": {
+                "query": "from:xquik_fixture -filter:replies", "provider": "xquik"}},
+            {"id": "corescope-x-social-small", "kind": "x_search", "config": {
+                "query": "from:social_fixture -filter:replies", "provider": "socialdata"}},
+            {"id": "corescope-mp-retained", "kind": "mp_account", "config": {"biz": "MzkyNTYxNzg5Mg=="}},
+        ]
+        for source in sources:
+            source["enabled"] = True
+            source["config"]["_aihot"] = {"initialBackfillLimit": 20, "initialBackfillMonths": 1}
+        pack, _, _ = MOD.source_pack([], [], set(), None, None, [self.supplement(*sources)])
+        self.assertEqual(len(pack), len(sources))
+        for source in pack:
+            self.assertEqual(source["config"]["_aihot"]["initialBackfillLimit"],
+                             20 if source["kind"] == "mp_account" else 2)
+            self.assertEqual(source["config"]["_aihot"]["initialBackfillMonths"], 1)
+
     def test_supplement_mp_identity_requires_biz_and_preserves_distinct_channels(self):
         sources = [{"id": "corescope-mp-a", "name": "A", "kind": "mp_account", "config": {"biz": "MzkyNTYxNzg5Mg==", "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkyNTYxNzg5Mg==&mid=1"}, "enabled": True},
                    {"id": "corescope-mp-alias", "name": "Different name", "kind": "mp_account", "config": {"biz": "MzkyNTYxNzg5Mg==", "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkyNTYxNzg5Mg==&mid=2"}, "enabled": True},

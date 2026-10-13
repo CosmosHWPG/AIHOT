@@ -244,6 +244,81 @@
       "site_fulltext": false,
       "syndicate_fulltext": false,
       "enabled": true
+    },
+    {
+      "id": "corescope-mp-deepseek",
+      "name": "公众号：DeepSeek",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=Mzk0OTYwNzc3NQ%3D%3D&mid=2247485745&idx=1&sn=ef3bc11042fc329e89bc66a8938e8b2c",
+        "biz": "Mzk0OTYwNzc3NQ==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:deepseek",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号",
+        "刷新核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-doubao",
+      "name": "公众号：豆包",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkzMTY2MzMzMQ%3D%3D&mid=2247486534&idx=1&sn=b8c333bd431a86419d3f79bce4ebf2f7",
+        "biz": "MzkzMTY2MzMzMQ==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:bytedance",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号",
+        "刷新核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-tencent-hunyuan",
+      "name": "公众号：腾讯混元",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkwODU2OTQyNQ%3D%3D&mid=2247498145&idx=1&sn=6968b330e01b1f306db418dc19ae4843",
+        "biz": "MzkwODU2OTQyNQ==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:tencent",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号",
+        "刷新核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
     }
   ],
   "verifications": {
@@ -450,6 +525,39 @@
           "reused": false
         }
       }
+    },
+    "corescope-mp-deepseek": {
+      "status": "verified",
+      "checkedAt": "2026-10-13T11:49:40.1913621Z",
+      "scope": "The prior AIHOT public API item and current public item page attribute this exact WeChat biz URL to this named publisher account. This does not verify WeChat certification ownership or reveal the original AIHOT collector settings.",
+      "biz": "Mzk0OTYwNzc3NQ==",
+      "evidencePage": "https://aihot.news/items/cmsdu3h2d015drofzvgy69u7x",
+      "articleUrl": "https://mp.weixin.qq.com/s?__biz=Mzk0OTYwNzc3NQ%3D%3D&mid=2247485745&idx=1&sn=ef3bc11042fc329e89bc66a8938e8b2c",
+      "originalUrlConfirmed": true,
+      "certificationOwnershipConfirmed": false,
+      "paidRuntimeAcceptance": "separate bounded Dajiala check"
+    },
+    "corescope-mp-doubao": {
+      "status": "verified",
+      "checkedAt": "2026-10-13T11:49:40.1913621Z",
+      "scope": "The prior AIHOT public API item and current public item page attribute this exact WeChat biz URL to this named publisher account. This does not verify WeChat certification ownership or reveal the original AIHOT collector settings.",
+      "biz": "MzkzMTY2MzMzMQ==",
+      "evidencePage": "https://aihot.news/items/cmsdu3g1o014crofzfheavynk",
+      "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkzMTY2MzMzMQ%3D%3D&mid=2247486534&idx=1&sn=b8c333bd431a86419d3f79bce4ebf2f7",
+      "originalUrlConfirmed": true,
+      "certificationOwnershipConfirmed": false,
+      "paidRuntimeAcceptance": "separate bounded Dajiala check"
+    },
+    "corescope-mp-tencent-hunyuan": {
+      "status": "verified",
+      "checkedAt": "2026-10-13T11:49:40.1913621Z",
+      "scope": "The prior AIHOT public API item and current public item page attribute this exact WeChat biz URL to this named publisher account. This does not verify WeChat certification ownership or reveal the original AIHOT collector settings.",
+      "biz": "MzkwODU2OTQyNQ==",
+      "evidencePage": "https://aihot.news/items/cmsdu2uhb013jrofz7ggai8af",
+      "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkwODU2OTQyNQ%3D%3D&mid=2247498145&idx=1&sn=6968b330e01b1f306db418dc19ae4843",
+      "originalUrlConfirmed": true,
+      "certificationOwnershipConfirmed": false,
+      "paidRuntimeAcceptance": "separate bounded Dajiala check"
     }
   },
   "aliases": [],
@@ -504,6 +612,17 @@
       "observedIdentity": "公众号：火山引擎",
       "sourceId": "corescope-mp-volcengine",
       "status": "configured_awaiting_local_dajiala_key"
+    }
+  ],
+  "refreshReviews": [
+    {
+      "observedAt": "2026-10-13T11:49:40.1913621Z",
+      "sourceIds": [
+        "corescope-mp-deepseek",
+        "corescope-mp-doubao",
+        "corescope-mp-tencent-hunyuan"
+      ],
+      "evidence": "docs/corescope-source-refresh-20261013.json"
     }
   ]
 }
