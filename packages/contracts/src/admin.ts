@@ -107,6 +107,17 @@ export interface AdminSourceDetail {
   history: AdminAuditEntry[];
   /** Progress of the re-derivation queued after the last change of licences, tier or participation. */
   republish: Record<string, unknown> | null;
+  /** Local routing/coverage records only; never session tokens or account fingerprints. */
+  x?: {
+    provider: "socialdata" | "xquik" | "bird" | "unknown";
+    coverage: "complete" | "partial" | "unknown";
+    checkedAt: Timestamp | null;
+    lastSuccessAt: Timestamp | null;
+    backlogCount: number;
+    archivedRoutes: number;
+    gap: { from: string; to: string; reason: string } | null;
+    profile: { name: string; state: "disabled" | "unverified" | "verified" | "cooldown" | "busy"; verifiedAt: Timestamp | null; cooldownUntil: Timestamp | null } | null;
+  };
 }
 
 /** Creating a source: refused as a duplicate of an existing one, or created. */

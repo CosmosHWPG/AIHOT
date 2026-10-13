@@ -14,6 +14,7 @@ import { resumeSourceArticles } from "@aihot/backend/jobs/content";
 import { republishKey } from "@aihot/backend/jobs/publication";
 import { publishArticleTx } from "@aihot/backend/publication/publish";
 import { enqueue, QUEUES, stopBoss } from "@aihot/backend/jobs/queue";
+import { bindHistoricXProviders, routeProvider, transitionXCursor } from "@aihot/backend/sources/x-route";
 
 export const UPGRADE_ACTOR = "system:corescope-source-upgrade";
 export const managedKey = (sourceId: string) => `corescope.source-upgrade:${sourceId}`;
@@ -40,7 +41,7 @@ interface ManagedLedger {
   auditWatermark: number; protectedFields: ManagedField[];
 }
 interface AuditRow { id: number; action: string; before: Record<string, unknown> | null; after: Record<string, unknown> | null }
-interface StoredSource extends UpgradeSource { health: string; cursor: unknown }
+interface StoredSource extends UpgradeSource { health: string; cursor: Record<string, unknown> | null }
 export interface UpgradeOptions {
   apply?: boolean; db?: typeof sql; sources?: UpgradeSource[]; profiles?: SourceProfileManifest;
   legacyNativeConfigs?: Array<{ kind: string; config: Record<string, unknown> }>;
@@ -240,22 +241,33 @@ async function reconcileOne(db: Tx, desired: UpgradeSource, profiles: SourceProf
     result.reasons.push("incomplete_route_not_activated");
   }
   result.preservedFields = [...MANAGED_FIELDS].filter((f) => protectedFields.has(f));
+  const transition = current.kind === "x_search" && after.kind === "x_search"
+    ? transitionXCursor(current.cursor, current.config, after.config) : null;
+  const providerChanged = transition !== null && transition.change !== "none";
   result.resetCursor = result.changedFields.some((f) => ROUTE_FIELDS.includes(f as typeof ROUTE_FIELDS[number]));
+  if (transition?.change === "provider-only") {
+    result.resetCursor = false;
+    result.reasons.push("x_provider_watermark_preserved_opaque_backlog_archived");
+  }
   result.status = result.changedFields.length ? apply ? "updated" : "would_update" : "unchanged";
   const nextLedger: ManagedLedger = { schemaVersion: 1, profileHash, managedFields: baseline(after),
     auditWatermark: audits.at(-1)?.id ?? ledger?.auditWatermark ?? 0, protectedFields: result.preservedFields };
   if (!apply) return result;
   if (result.changedFields.length) {
+    const historicProviders = providerChanged ? await bindHistoricXProviders(db, current) : null;
     const patch = Object.fromEntries(result.changedFields.map((f) => [f, f === "config" ? db.json(after.config as never) : after[f]]));
     await db`UPDATE sources SET ${db(patch as never, ...result.changedFields)}, updated_at=now(),
-      cursor=CASE WHEN ${result.resetCursor} THEN NULL ELSE cursor END,
-      fail_count=CASE WHEN ${result.resetCursor} THEN 0 ELSE fail_count END,
-      last_error=CASE WHEN ${result.resetCursor} THEN NULL ELSE last_error END,
+      cursor=CASE WHEN ${providerChanged} THEN ${providerChanged ? db.json(transition!.cursor as never) : null}::jsonb WHEN ${result.resetCursor} THEN NULL ELSE cursor END,
+      fail_count=CASE WHEN ${result.resetCursor || providerChanged} THEN 0 ELSE fail_count END,
+      last_error=CASE WHEN ${result.resetCursor || providerChanged} THEN NULL ELSE last_error END,
       last_fetch_at=CASE WHEN ${result.resetCursor} THEN NULL ELSE last_fetch_at END,
       last_ok_at=CASE WHEN ${result.resetCursor} THEN NULL ELSE last_ok_at END,
-      health=CASE WHEN NOT ${after.enabled} THEN 'paused' WHEN ${result.resetCursor} OR health='paused' THEN 'unknown' ELSE health END,
-      next_fetch_at=CASE WHEN ${result.resetCursor || (!current.enabled && after.enabled)} THEN now() ELSE next_fetch_at END
+      health=CASE WHEN NOT ${after.enabled} THEN 'paused' WHEN ${result.resetCursor || providerChanged} OR health='paused' THEN 'unknown' ELSE health END,
+      next_fetch_at=CASE WHEN ${result.resetCursor || providerChanged || (!current.enabled && after.enabled)} THEN now() ELSE next_fetch_at END
       WHERE id=${desired.id}`;
+    if (providerChanged) await audit(UPGRADE_ACTOR, "source.x-provider-switch", `source:${desired.id}`, "应用已复审的 X 供应商并保留账户水位",
+      { provider: routeProvider(current.config) }, { provider: routeProvider(after.config), transition: transition!.change,
+        archivedBacklog: transition!.archivedBacklog, historicProviders, watermarkPreserved: transition!.change === "provider-only" }, { db });
     if (current.participation_mode !== after.participation_mode) {
       if (current.participation_mode !== "editorial" && after.participation_mode === "editorial") {
         await resumeSourceArticles(desired.id, db);

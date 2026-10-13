@@ -6,11 +6,13 @@ import type { XPostData } from "../content/materials.ts";
 import { sha256 } from "../lib/ids.ts";
 import { FetchError, type Candidate, type SourceRow } from "./types.ts";
 import { searchXquikTweets, xquikSetting } from "../providers/xquik.ts";
+import { birdUserTweets, type BirdTweet } from "../providers/bird.ts";
+import { shutdownSignal } from "../lib/shutdown.ts";
 
-export type XProvider = "socialdata" | "xquik";
+export type XProvider = "socialdata" | "xquik" | "bird";
 export function xProvider(source: Pick<SourceRow, "config">): XProvider {
   const provider = source.config.provider ?? "socialdata";
-  if (provider !== "socialdata" && provider !== "xquik") throw new FetchError("unsupported X provider");
+  if (provider !== "socialdata" && provider !== "xquik" && provider !== "bird") throw new FetchError("unsupported X provider");
   return provider;
 }
 export function initialXWatermark(now = Date.now()): string {
@@ -65,9 +67,11 @@ export function xArticleText(article: SdArticle): { title: string; text: string 
   return text ? { title: (article.title ?? "").trim(), text } : null;
 }
 
-export function tweetToCandidate(t: SdTweet, provider: XProvider = "socialdata"): Candidate {
+export function tweetToCandidate(t: SdTweet, provider: XProvider = "socialdata", accountProfile = "birdclaw-primary"): Candidate {
   const post = toXPost(t);
-  if (provider === "xquik") post.provider = provider;
+  post.provider = provider;
+  const bird = provider === "bird" ? (t as BirdTweet).birdContent : undefined;
+  if (bird) post.bird = { accountProfile, ...bird };
   const firstLine = post.text.split("\n").find((l) => l.trim()) ?? post.text;
   return {
     url: `https://x.com/${t.user.screen_name}/status/${t.id_str}`,
@@ -78,7 +82,7 @@ export function tweetToCandidate(t: SdTweet, provider: XProvider = "socialdata")
     publishedAt: new Date(t.tweet_created_at),
     bodyText: [post.text, post.quoted ? `\n\n【引用 @${post.quoted.handle}】${post.quoted.text}` : ""].join("").trim(),
     // A linked X Article is the post's real body: extraction fetches it (jobs/content.ts route).
-    bodyStatus: linksXArticle(post.text) ? "pending" : "ok",
+    bodyStatus: linksXArticle(post.text) || bird?.kind === "article" ? "pending" : bird && bird.bodyLevel !== "full" ? "unconfirmed" : "ok",
     xPost: post,
     media: post.media ?? [],
     raw: { favorite: t.favorite_count ?? null, retweet: t.retweet_count ?? null, views: t.views_count ?? null },
@@ -120,6 +124,120 @@ export interface XRead {
 
 export interface XFetch extends Omit<XRead, "tweets"> {
   candidates: Candidate[];
+  birdCursor?: BirdCursor;
+  nextFetchMinutes?: number;
+}
+
+export interface BirdBacklog {
+  next: string;
+  lowerId: string | null;
+  since: string;
+}
+export interface BirdCursor {
+  schemaVersion: 1;
+  observedLastTweetId: string | null;
+  coverage: "complete" | "partial" | "unknown";
+  checkedAt: string;
+  lastTopAt: string | null;
+  backlog: BirdBacklog[];
+  gap?: { from: string; to: string; reason: string };
+}
+
+/** Each CLI call reads one page; opaque timeline cursors are used only to recover older stretches. */
+export async function fetchBirdTimeline(source: SourceRow, readPage = birdUserTweets, now = Date.now()): Promise<XFetch> {
+  const handle = accountHandle(source);
+  if (!handle) throw new FetchError("Bird requires a plain Latest account query");
+  const options = source.config.bird ?? {};
+  const accountProfile = String(options.accountProfile ?? process.env.BIRD_ACCOUNT_PROFILE ?? "birdclaw-primary");
+  const hours = Number(options.initialLookbackHours ?? 48);
+  const maximumPages = source.cursor?.initializedAt ? Number(options.maxPagesPerRound ?? 1) : 1;
+  if (!Number.isInteger(hours) || hours < 1 || hours > 48 || !Number.isInteger(maximumPages) || maximumPages < 1 || maximumPages > 5) {
+    throw new FetchError("Invalid Bird lookback or page limit");
+  }
+  const previous = source.cursor?.bird as Partial<BirdCursor> | undefined;
+  const backlog: BirdBacklog[] = (Array.isArray(previous?.backlog) ? previous.backlog : []).map(b => {
+    if (!b || typeof b.next !== "string" || !b.next || !Number.isFinite(Date.parse(b.since))) throw new FetchError("Invalid Bird backlog");
+    return { ...b };
+  });
+  let gap = previous?.gap;
+  let lastTopAt = previous?.lastTopAt ?? null;
+  const oldLastId = source.cursor?.lastTweetId ? String(source.cursor.lastTweetId) : null;
+  if (oldLastId && !/^\d+$/.test(oldLastId)) throw new FetchError("Invalid X watermark");
+  const lastTop = Date.parse(lastTopAt ?? "");
+  const recover = backlog.length > 0 && Number.isFinite(lastTop) && now - lastTop < source.interval_minutes * 60_000;
+  const checked = Date.parse(lastTopAt ?? String(source.cursor?.lastOkAt ?? ""));
+  const horizon = now - hours * 3_600_000;
+  const floor = Math.max(horizon, Number.isFinite(checked) ? checked - 10 * 60_000 : 0);
+  if (!gap && Number.isFinite(checked) && checked < horizon) {
+    gap = { from: new Date(checked).toISOString(), to: new Date(horizon).toISOString(), reason: "lookback_limit" };
+  }
+  const persistentGap = () => gap?.reason === "provider_switch_backlog" || gap?.reason === "lookback_limit";
+  let active: { next: string | null; lowerId: string | null; since: string } = recover ? backlog.shift()!
+    : { next: null, lowerId: oldLastId, since: new Date(floor).toISOString() };
+  const markGap = (reason: string, from = active.since) => {
+    // A former provider's unread query may cover much older data than this bounded timeline scan.
+    if (!persistentGap()) gap = { from, to: new Date(now).toISOString(), reason };
+  };
+  const all: BirdTweet[] = [];
+  const receipts: number[] = [];
+  let pages = 0, backlogPages = 0, dropped = 0;
+  let coverage: BirdCursor["coverage"] = "partial";
+  const visited = new Set<string>();
+  for (;;) {
+    let page: Awaited<ReturnType<typeof birdUserTweets>>;
+    try {
+      page = await readPage(handle, { purpose: "source_fetch", subject: `source:${source.id}`, window: windowKey(now),
+        cursor: active.next, accountProfile, signal: shutdownSignal.signal });
+    } catch (error) {
+      if (shutdownSignal.signal.aborted) throw error;
+      if (pages === 0) throw error;
+      if (active.next) backlog.push({ ...active, next: active.next });
+      markGap("later_page_failed");
+      break;
+    }
+    pages += 1;
+    if (recover) backlogPages += 1;
+    receipts.push(page.receiptId);
+    const mine = page.tweets.filter(t => t.user.screen_name.toLowerCase() === handle.toLowerCase() && !t.retweeted_status && !t.birdContent?.isRepost);
+    const since = Date.parse(active.since);
+    // Pinned old posts and another author's reposts do not mean the recent range was exhausted.
+    const ordered = mine.filter(t => !t.birdContent?.pinned);
+    // The CLI may omit pin metadata; an old outlier preceding newer posts is not a coverage boundary.
+    const descending = ordered.every((t, i) => i === 0 || Date.parse(ordered[i - 1]!.tweet_created_at) >= Date.parse(t.tweet_created_at));
+    const reachedFloor = descending && ordered.length > 0 && Date.parse(ordered.at(-1)!.tweet_created_at) < since;
+    all.push(...mine.filter(t => !t.in_reply_to_status_id_str && Date.parse(t.tweet_created_at) >= since));
+    if (!recover) lastTopAt = new Date(now).toISOString();
+    if (reachedFloor) {
+      coverage = "complete";
+      if (gap && !persistentGap() && since <= Date.parse(gap.from) && now >= Date.parse(gap.to)) gap = undefined;
+      break;
+    }
+    if (!page.nextCursor) {
+      // The CLI drops the bottom cursor on empty/duplicate pages. Its absence alone proves no range.
+      coverage = "unknown";
+      markGap(page.tweets.length ? "cli_cursor_missing" : "empty_page_without_cursor");
+      break;
+    }
+    if (page.nextCursor === active.next || visited.has(page.nextCursor)) {
+      markGap("repeated_cursor");
+      backlog.push({ ...active, next: page.nextCursor });
+      break;
+    }
+    visited.add(page.nextCursor);
+    active = { ...active, next: page.nextCursor };
+    if (pages >= maximumPages) { backlog.push({ ...active, next: page.nextCursor }); break; }
+  }
+  while (backlog.length > MAX_BACKLOG) { backlog.shift(); dropped += 1; }
+  if (dropped) markGap("backlog_limit", new Date(now - hours * 3_600_000).toISOString());
+  const unique = new Map(all.map(t => [t.id_str, t]));
+  const tweets = [...unique.values()];
+  const lastId = tweets.reduce<string | null>((last, t) => last === null || BigInt(t.id_str) > BigInt(last) ? t.id_str : last, oldLastId);
+  if (backlog.length || gap) coverage = coverage === "unknown" ? coverage : "partial";
+  const birdCursor: BirdCursor = { schemaVersion: 1, observedLastTweetId: lastId, coverage,
+    checkedAt: new Date(now).toISOString(), lastTopAt, backlog, ...(gap ? { gap } : {}) };
+  return { candidates: tweets.map(t => tweetToCandidate(t, "bird", accountProfile)), receiptIds: receipts, lastId,
+    backlog: [], pages, truncated: coverage !== "complete", backlogPages, dropped, birdCursor,
+    nextFetchMinutes: backlog.length ? Math.min(source.interval_minutes, 5) : source.interval_minutes };
 }
 
 /**
@@ -132,6 +250,7 @@ export interface XFetch extends Omit<XRead, "tweets"> {
 export async function readXSearch(base: string, opts: { lastId: string | null; backlog: XBacklog[]; subject: string; type?: "Latest" | "Top"; provider?: XProvider; limit?: number }): Promise<XRead> {
   const { lastId } = opts;
   const provider = opts.provider ?? "socialdata";
+  if (provider === "bird") throw new FetchError("Bird account timelines cannot use paid OR search shards");
   const maximumPages = provider === "xquik" ? xquikSetting("XQUIK_MAX_PAGES", 2, 1, 10) : MAX_PAGES;
   const backlog = opts.backlog.map((b) => ({ ...b }));
   const window = windowKey();
@@ -222,6 +341,7 @@ export async function fetchXSearch(source: SourceRow): Promise<XFetch> {
   let base = String(source.config.query ?? "");
   if (!base) throw new FetchError("query missing");
   const provider = xProvider(source);
+  if (provider === "bird") return fetchBirdTimeline(source);
   if (provider === "xquik" && !source.cursor?.lastTweetId) base += ` since_id:${initialXWatermark()}`;
   const { tweets, ...read } = await readXSearch(base, {
     lastId: source.cursor?.lastTweetId ?? null,
@@ -246,7 +366,7 @@ const SHARD_MAX_ACCOUNTS = 24;
 
 /** The account a source reads, when it can share a search: a plain query and a watermark already set. */
 export function shardHandle(s: Pick<SourceRow, "kind" | "config" | "cursor">): string | null {
-  if (s.kind !== "x_search" || (s.config.searchType ?? "Latest") !== "Latest" || !s.cursor?.lastTweetId) return null;
+  if (s.kind !== "x_search" || s.config.provider === "bird" || (s.config.searchType ?? "Latest") !== "Latest" || !s.cursor?.lastTweetId) return null;
   return SHARDABLE.exec(String(s.config.query ?? ""))?.[1] ?? null;
 }
 
@@ -274,6 +394,7 @@ export interface XShard {
 export function planXShards(sources: Array<Pick<SourceRow, "id" | "kind" | "config" | "cursor" | "participation_mode">>): XShard[] {
   const byMode = new Map<string, Array<{ id: string; handle: string }>>();
   for (const s of sources) {
+    if (s.config.provider === "bird") continue;
     const handle = shardHandle(s);
     const provider = xProvider(s);
     const group = provider === "socialdata" ? s.participation_mode : `${s.participation_mode}:xquik`;

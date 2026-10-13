@@ -8,7 +8,7 @@ import { stopBoss } from "@aihot/backend/jobs/queue";
 import { paidRequest, BudgetExceededError } from "@aihot/backend/providers/receipts";
 import { normalizeXquikTweet, searchXquikTweets } from "@aihot/backend/providers/xquik";
 import { planXBootstrap, planXShards, readXSearch, xArticleText } from "@aihot/backend/sources/x";
-import { collectXShard, scheduleDueSources } from "@aihot/backend/sources/collect";
+import { collectSource, collectXShard, scheduleDueSources } from "@aihot/backend/sources/collect";
 import { extractArticleBody } from "@aihot/backend/content/extract";
 
 const T = tag().slice(-7);
@@ -25,8 +25,10 @@ let failPage2 = false;
 let rows: Record<string, any>[] = [];
 let accountReads = 0;
 let searches = 0;
+let holdSearch: ReturnType<typeof gate<void>> | null = null;
+let searchEntered: ReturnType<typeof gate<void>> | null = null;
 const articleReads: string[] = [];
-const server = await stub((_hit, req) => {
+const server = await stub(async (_hit, req) => {
   const url = new URL(req.url, "http://stub");
   if (url.pathname === "/account") { accountReads += 1; return { creditInfo: { balance: String(balance) } }; }
   const article = /^\/x\/articles\/(\d+)$/.exec(url.pathname)?.[1];
@@ -36,6 +38,7 @@ const server = await stub((_hit, req) => {
   }
   if (url.pathname !== "/x/tweets/search") return new Reply(404, {});
   searches += 1;
+  if (holdSearch) { searchEntered?.open(); await holdSearch.promise; }
   assert.equal(url.searchParams.get("queryType"), "Latest");
   const query = url.searchParams.get("q") ?? "";
   const watermark = BigInt(/since_id:(\d+)/.exec(query)?.[1] ?? "0");
@@ -69,6 +72,7 @@ before(async () => {
 });
 beforeEach(async () => {
   balance = 10_000; emptyFirst = false; failPage2 = false; rows = []; searches = 0; accountReads = 0;
+  holdSearch = null; searchEntered = null;
   process.env.XQUIK_DAILY_CREDIT_LIMIT = "1000";
   await sql`DELETE FROM receipts WHERE service = 'xquik' AND subject LIKE ${`%${T}%`}`;
   await sql`UPDATE sources SET cursor = NULL, next_fetch_at = '2100-01-01' WHERE id IN ${sql(sources)}`;
@@ -204,4 +208,39 @@ test("Xquik Article extraction calls its own route and falls back to full bodyTe
   const [body] = await sql`SELECT title, x_article FROM articles WHERE id = ${material!.id}`;
   assert.equal(body!.title, "Confirmed Xquik Article"); assert.equal(body!.x_article.text, "Full original article body");
   assert.equal(xArticleText({ title: "test", content_state: { blocks: [{ type: "unstyled", text: "body" }] } })!.text, "body");
+});
+
+test("an in-flight paid single-source fetch cannot overwrite a newly selected Bird route", async () => {
+  rows = [rawTweet(baseId + 100n)]; holdSearch = gate(); searchEntered = gate();
+  const running = collectSource(sources[0]!);
+  await searchEntered.promise;
+  try {
+    await sql`UPDATE sources SET config=${sql.json({ provider: "bird", query: `from:${handles[0]} -filter:replies`, bird: { maxPagesPerRound: 1 } })},
+      cursor=${sql.json({ lastTweetId: "111", bird: { coverage: "unknown", backlog: [] } })},interval_minutes=1440 WHERE id=${sources[0]!}`;
+    holdSearch.open(); const result = await running;
+    assert.equal(result.status, "skipped"); assert.equal((await setting(sources[0]!))!.lastTweetId, "111");
+    assert.equal((await sql`SELECT id FROM articles WHERE identity_key=${`x:${baseId + 100n}`}`).length, 0);
+  } finally {
+    holdSearch.open(); holdSearch = null;
+    await sql`UPDATE sources SET config=${sql.json({ provider: "xquik", query: `from:${handles[0]} -filter:replies`, searchType: "Latest" })} WHERE id=${sources[0]!}`;
+  }
+});
+
+test("an in-flight paid shard skips only changed members and preserves their Bird cursor and interval", async () => {
+  rows = [rawTweet(baseId + 110n, handles[0]!), rawTweet(baseId + 111n, handles[1]!)];
+  holdSearch = gate(); searchEntered = gate();
+  const running = collectXShard(`editorial:xquik-switch:${T}`, sources);
+  await searchEntered.promise;
+  try {
+    await sql`UPDATE sources SET config=${sql.json({ provider: "bird", query: `from:${handles[0]} -filter:replies`, bird: { maxPagesPerRound: 1 } })},
+      cursor=${sql.json({ lastTweetId: "222", bird: { coverage: "unknown", backlog: [] } })},interval_minutes=1440 WHERE id=${sources[0]!}`;
+    holdSearch.open(); const result = await running;
+    assert.equal(result.status, "ok"); assert.equal(result.accounts, 2); assert.equal(result.created, 1);
+    assert.equal((await setting(sources[0]!))!.lastTweetId, "222");
+    assert.equal((await sql`SELECT interval_minutes FROM sources WHERE id=${sources[0]!}`)[0]!.interval_minutes, 1440);
+    assert.equal((await sql`SELECT id FROM articles WHERE identity_key=${`x:${baseId + 110n}`}`).length, 0);
+  } finally {
+    holdSearch.open(); holdSearch = null;
+    await sql`UPDATE sources SET config=${sql.json({ provider: "xquik", query: `from:${handles[0]} -filter:replies`, searchType: "Latest" })} WHERE id=${sources[0]!}`;
+  }
 });

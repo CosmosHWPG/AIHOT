@@ -19,7 +19,7 @@ const TEMPLATES: Record<string, Record<string, unknown>> = {
   rss: { feedUrl: "https://example.com/feed.xml" },
   web_list: { url: "https://example.com/blog", baseUrl: "https://example.com", itemSelector: "article", linkSelector: "a", titleSelector: "h2", allowUrlPrefixes: ["https://example.com/blog/"] },
   json_list: { url: "https://example.com/api/posts", mode: "json_api", method: "GET", itemsPath: "data.items", titlePaths: ["title"], urlTemplate: "{raw:url}", summaryPaths: ["summary"] },
-  x_search: { query: "from:handle -filter:replies", searchType: "Latest" },
+  x_search: { query: "from:handle -filter:replies", searchType: "Latest", provider: "socialdata" },
   mp_account: MP_TEMPLATES.wx_cache!,
   external: {},
 };
@@ -37,6 +37,23 @@ export default function NewSource() {
     try { return JSON.parse(config)?.transport === "wx_cache" ? "wx_cache" : "dajiala"; }
     catch { return "wx_cache"; }
   })();
+  const xProvider = (() => {
+    try { return String(JSON.parse(config)?.provider ?? "socialdata"); }
+    catch { return "socialdata"; }
+  })();
+  const setXProvider = (provider: string) => {
+    try {
+      const next = { ...JSON.parse(config), provider };
+      if (provider === "bird") {
+        next.searchType = "Latest";
+        next.bird ??= { accountProfile: "birdclaw-primary", strategy: "user_tweets", maxPagesPerRound: 1 };
+        next._aihot = { ...next._aihot, initialBackfillLimit: Math.max(20, Number(next._aihot?.initialBackfillLimit ?? 20)) };
+      } else delete next.bird;
+      setConfig(JSON.stringify(next, null, 2));
+      setError(null);
+      setPreview(null);
+    } catch { setError("请先修正采集配置 JSON，再切换 X 供应商。"); }
+  };
 
   const parsed = () => {
     try {
@@ -71,6 +88,17 @@ export default function NewSource() {
                 {Object.entries(KIND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </Select>
             </Field>
+            {form.kind === "x_search" && (
+              <Field label="X 采集供应商" hint={xProvider === "bird"
+                ? "Bird 使用后端已授权会话，只读账号时间线；仅支持 from:账号 -filter:replies。凭据保存在本机私有配置，禁止填入 JSON。"
+                : "SocialData 与 Xquik 使用后端 API 凭据及各自预算；预览也会消耗供应商额度。凭据禁止填入 JSON。"}>
+                <Select value={xProvider} onChange={(e) => setXProvider(e.target.value)}>
+                  <option value="socialdata">SocialData（搜索 API）</option>
+                  <option value="xquik">Xquik（搜索 API）</option>
+                  <option value="bird">Bird（已授权账号会话）</option>
+                </Select>
+              </Field>
+            )}
             {form.kind === "mp_account" && (
               <Field label="公众号采集方式" hint={mpTransport === "wx_cache"
                 ? "读取已授权本机缓存；填写准确公众号名称或原始 ID，并保持缓存更新。"

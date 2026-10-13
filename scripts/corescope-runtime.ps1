@@ -609,6 +609,10 @@ function Start-System {
         }
         Write-Stage 'budgets' 'Checking the initial model request budgets.'
         Invoke-NodeScript 'scripts/corescope-operations.ts' @('configure')
+        if ($Config.PSObject.Properties.Name -contains 'BIRD_ENABLED' -and $Config.BIRD_ENABLED -match '^(?i:true|1)$') {
+            Write-Stage 'bird-configuration' 'Checking the pinned read-only Bird adapter; no X request is sent.'
+            Invoke-NodeScript 'scripts/corescope-bird.ts' @('check')
+        }
         Write-Stage 'web-build-check' 'Checking whether the production web build needs updating.'
         $buildFile = Join-Path $ProjectRoot 'apps\web\build\server\index.js'
         $sourceFiles = @(Get-ChildItem -LiteralPath (Join-Path $ProjectRoot 'apps\web\app'), (Join-Path $ProjectRoot 'industry'), (Join-Path $ProjectRoot 'packages\contracts\src') -Recurse -File)

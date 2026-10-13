@@ -60,7 +60,7 @@ for (const x of [false, true]) for (const empty of [false, true]) {
     reset(1, empty);
     const tweetId = `${Date.now()}${empty ? 2 : 1}`;
     const material = { sourceId, url: `${base}/${tag()}`, title: "Original", via: "fetch" as const,
-      ...(x ? { xPost: { tweetId, authorName: "Author", handle: "author", text: "https://x.com/i/article/123" } } : {}) };
+      ...(x ? { xPost: { tweetId, provider: "socialdata" as const, authorName: "Author", handle: "author", text: "https://x.com/i/article/123" } } : {}) };
     const { articleId } = await upsertMaterial(material);
     const pending = extractArticleBody(articleId, false);
     await hold.entered.promise;
@@ -100,7 +100,7 @@ test("an obsolete extraction failure cannot penalize a newer complete report", a
   const source = `${sourceId}-worker`;
   await sql`INSERT INTO sources(id,name,kind) VALUES (${source},'Extraction worker','x_search')`;
   const material = { sourceId: source, url: `https://x.com/author/status/${Date.now()}`, title: "Original", via: "fetch" as const,
-    xPost: { tweetId: `${Date.now()}9`, authorName: "Author", handle: "author", text: "https://x.com/i/article/123" } };
+    xPost: { tweetId: `${Date.now()}9`, provider: "socialdata" as const, authorName: "Author", handle: "author", text: "https://x.com/i/article/123" } };
   const { articleId } = await upsertMaterial(material);
   const job = await queueProcessing(articleId);
   await registerExtractionJobs(await getBoss());

@@ -8,6 +8,7 @@ import { upsertMaterial } from "@aihot/backend/content/materials";
 import { QUEUES, stopBoss } from "@aihot/backend/jobs/queue";
 import { publishArticle, republishSource } from "@aihot/backend/publication/publish";
 import { listedCondition } from "@aihot/backend/publication/scope";
+import { updateSource } from "@aihot/backend/admin/sources";
 import { upgradeSources, managedKey, UPGRADE_ACTOR, type UpgradeSource, type SourceProfileManifest } from "../scripts/corescope-source-upgrade.ts";
 import { tag } from "./setup.ts";
 
@@ -175,6 +176,30 @@ test("operator-created sources keep every explicitly owned route field even when
   assert.equal(result.updated, 0);
   assert.deepEqual(await stored(s.id), before);
   assert.deepEqual(result.results[0]!.preservedFields, ["kind", "config", "participation_mode", "enabled", "interval_minutes"]);
+});
+
+test("reviewed X provider-only upgrade preserves account watermarks and a later operator choice survives directory reconciliation", async () => {
+  const config = { query: `from:u${T.slice(-8)} -filter:replies`, searchType: "Latest", provider: "xquik", _aihot: { initialBackfillLimit: 2 } };
+  const s = await source("x-provider", { kind: "x_search", enabled: true, config });
+  const xCursor = { lastTweetId: "1980000000000000000", initializedAt: "2026-10-01T00:00:00Z",
+    xBacklog: [{ query: config.query, next: "supplier-specific-backlog" }] };
+  await sql`UPDATE sources SET cursor=${sql.json(xCursor)} WHERE id=${s.id}`;
+  const desired = { ...s, config: { ...config, provider: "bird", bird: { accountProfile: "birdclaw-primary", maxPagesPerRound: 1 }, _aihot: { initialBackfillLimit: 20 } } };
+  const result = await run(desired, true, manifest(desired), [{ kind: "x_search", config }]);
+  assert.equal(result.updated, 1);
+  assert.equal(result.results[0]!.resetCursor, false);
+  let saved = await stored(s.id);
+  assert.equal(saved.cursor.lastTweetId, xCursor.lastTweetId);
+  assert.equal(saved.cursor.initializedAt, xCursor.initializedAt);
+  assert.equal(saved.cursor.xBacklog, undefined);
+  assert.equal(saved.cursor.xRouteHistory[0].backlog[0].next, "supplier-specific-backlog");
+  await updateSource(s.id, { patch: { config }, version: saved.updated_at.toISOString(), reason: "Operator chooses Xquik" }, "admin:fixture");
+  const reconciled = await run(desired);
+  saved = await stored(s.id);
+  assert.equal(saved.config.provider, "xquik");
+  assert.equal(saved.cursor.lastTweetId, xCursor.lastTweetId);
+  assert.ok(reconciled.results[0]!.preservedFields.includes("config"));
+  assert.equal((await run(desired)).updated, 0);
 });
 
 test("invalid profile policy, unverified native route and non-article editorial scope are rejected before any upgrade writes", async () => {

@@ -2,16 +2,18 @@
 // Jina Reader is the budgeted fallback for pages that only render in a browser.
 import { Readability } from "@mozilla/readability";
 import { parseHTML } from "linkedom";
-import { sql } from "../db.ts";
+import { sql, type Db } from "../db.ts";
 import { guardedFetch } from "../lib/http-fetch.ts";
 import { collapseWhitespace, stripTags } from "../lib/text.ts";
 import { jinaRead } from "../providers/jina.ts";
-import { BudgetExceededError } from "../providers/receipts.ts";
+import { BudgetExceededError, completeReceipt } from "../providers/receipts.ts";
 import { getArticle } from "../providers/socialdata.ts";
 import { getXquikArticle } from "../providers/xquik.ts";
-import { onlyXArticleLink, xArticleText, xProvider, type XProvider } from "../sources/x.ts";
+import { getBirdArticleReceipt } from "../providers/bird.ts";
+import { shutdownSignal } from "../lib/shutdown.ts";
+import { onlyXArticleLink, xArticleText } from "../sources/x.ts";
 import { sanitizeBody, trimTrailingChrome } from "./sanitize.ts";
-import { contentHash } from "./materials.ts";
+import { contentHash, type XPostData } from "./materials.ts";
 import { markdownBody } from "./markdown.ts";
 
 export interface ExtractedBody {
@@ -84,10 +86,11 @@ export function pageFetchable(url: string, sourceKind: string): boolean {
 
 /** Fetches and stores the body of one article. Unconfirmed bodies are recorded as such. */
 export async function extractArticleBody(articleId: string, allowJina = process.env.JINA_BODY_FALLBACK !== "false"): Promise<"ok" | "unconfirmed" | "skipped"> {
-  const [a] = await sql<{ id: string; url: string; body_status: string; revision: number; config: Record<string, any>; x_post: { tweetId?: string; provider?: XProvider } | null }[]>`
+  const [a] = await sql<{ id: string; url: string; body_status: string; revision: number; config: Record<string, any>; x_post: XPostData | null }[]>`
     SELECT a.id, a.url, a.body_status, a.revision, a.x_post, s.config FROM articles a JOIN sources s ON s.id = a.source_id WHERE a.id = ${articleId}`;
   if (!a || a.body_status === "ok") return "skipped";
-  if (a.x_post?.tweetId) return extractXArticle(a.id, a.x_post.tweetId, a.revision, a.x_post.provider ?? xProvider(a));
+  // An older material's route is evidence of its acquisition, never today's source setting.
+  if (a.x_post?.tweetId) return extractXArticle(a.id, a.x_post.tweetId, a.revision, a.x_post);
   const got = await extractFromUrl(a.url, { allowJina, subject: `article:${a.id}` });
   if (!got) {
     return markUnconfirmed(articleId, a.revision);
@@ -114,10 +117,14 @@ export async function extractArticleBody(articleId: string, allowJina = process.
   });
 }
 
-async function markUnconfirmed(articleId: string, revision: number): Promise<"unconfirmed" | "skipped"> {
-  const rows = await sql`UPDATE articles SET body_status = 'unconfirmed', updated_at = now()
-    WHERE id = ${articleId} AND revision = ${revision} AND body_status <> 'ok' RETURNING id`;
-  return rows.length ? "unconfirmed" : "skipped";
+async function markUnconfirmed(articleId: string, revision: number, receiptId?: number): Promise<"unconfirmed" | "skipped"> {
+  const mark = async (db: Db) => {
+    const rows = await db`UPDATE articles SET body_status = 'unconfirmed', updated_at = now()
+      WHERE id = ${articleId} AND revision = ${revision} AND body_status <> 'ok' RETURNING id`;
+    if (receiptId !== undefined) await completeReceipt(db, receiptId);
+    return rows.length ? "unconfirmed" as const : "skipped" as const;
+  };
+  return receiptId === undefined ? mark(sql) : sql.begin(mark);
 }
 
 /**
@@ -126,37 +133,58 @@ async function markUnconfirmed(articleId: string, revision: number): Promise<"un
  * No article (the link points at someone else's, or X has none) leaves the post "unconfirmed", and
  * the judging steps are told the article was not fetched.
  */
-async function extractXArticle(articleId: string, tweetId: string, revision: number, provider: XProvider): Promise<"ok" | "unconfirmed" | "skipped"> {
-  const found = await (provider === "xquik" ? getXquikArticle : getArticle)(tweetId, { purpose: "x_article", subject: `article:${articleId}` });
+async function extractXArticle(articleId: string, tweetId: string, revision: number, post: XPostData): Promise<"ok" | "unconfirmed" | "skipped"> {
+  const provider = post.provider;
+  let found;
+  let birdReceiptId: number | undefined;
+  const opts = { purpose: "x_article", subject: `article:${articleId}` };
+  if (provider === "bird") {
+    const receipt = await getBirdArticleReceipt(tweetId, { ...opts, accountProfile: post.bird?.accountProfile, signal: shutdownSignal.signal });
+    found = receipt.article;
+    birdReceiptId = receipt.receiptId;
+  } else if (provider === "xquik") found = await getXquikArticle(tweetId, opts);
+  else if (provider === "socialdata") found = await getArticle(tweetId, opts);
+  else return markUnconfirmed(articleId, revision);
   const got = found ? xArticleText(found) : null;
   if (!got) {
-    return markUnconfirmed(articleId, revision);
+    return markUnconfirmed(articleId, revision, birdReceiptId);
   }
+  const evidence = { ...got, ...(birdReceiptId === undefined ? {} : { provider: "bird", receiptId: birdReceiptId }) };
   return sql.begin(async (tx) => {
     const [row] = await tx<{ title: string; excerpt: string | null; body_text: string | null; x_post: { text?: string } | null; x_article: { title?: string | null; text?: string } | null }[]>`
       SELECT title, excerpt, body_text, x_post, x_article FROM articles
       WHERE id = ${articleId} AND revision = ${revision} AND body_status <> 'ok' FOR UPDATE`;
-    if (!row) return "skipped";
+    if (!row) {
+      if (birdReceiptId !== undefined) await completeReceipt(tx, birdReceiptId);
+      return "skipped";
+    }
     const block = (a: { title?: string | null; text?: string } | null) => (a ? [a.title ? `# ${a.title}` : "", a.text ?? ""].filter(Boolean).join("\n\n") : "");
     // The post's own text, without an article appended by an earlier extraction (an admin re-run
     // extracts again from the post; appending once more would repeat the article).
     const previous = block(row.x_article);
     let base = row.body_text ?? "";
     if (previous && base.endsWith(previous)) base = base.slice(0, -previous.length).replace(/\s+$/, "");
-    const title = got.title && onlyXArticleLink(row.x_post?.text) ? got.title : row.title;
-    const bodyText = [base, block(got)].filter(Boolean).join("\n\n");
+    const metadataArticle = post.bird?.kind === "article" && post.bird.bodyLevel !== "full";
+    const title = got.title && (onlyXArticleLink(row.x_post?.text) || metadataArticle) ? got.title : row.title;
+    const alreadyFull = provider === "bird" && post.bird?.bodyLevel === "full" && base.includes(got.text);
+    const bodyText = alreadyFull ? base : [base, block(got)].filter(Boolean).join("\n\n");
     if (bodyText === row.body_text && title === row.title) {
       // The same article again: nothing new, no new revision.
-      await tx`UPDATE articles SET body_status = 'ok', x_article = ${tx.json(got as never)}, updated_at = now() WHERE id = ${articleId}`;
+      await tx`UPDATE articles SET body_status = 'ok', x_article = ${tx.json(evidence as never)},
+        x_post=CASE WHEN x_post->>'provider'='bird' THEN jsonb_set(x_post,'{bird,bodyLevel}','"full"'::jsonb) ELSE x_post END,
+        updated_at = now() WHERE id = ${articleId}`;
+      if (birdReceiptId !== undefined) await completeReceipt(tx, birdReceiptId);
       return "ok";
     }
     const hash = contentHash({ title, bodyText, excerpt: row.excerpt });
     const [r] = await tx<{ revision: number }[]>`
-      UPDATE articles SET title = ${title}, body_text = ${bodyText}, x_article = ${tx.json(got as never)}, body_status = 'ok',
+      UPDATE articles SET title = ${title}, body_text = ${bodyText}, x_article = ${tx.json(evidence as never)}, body_status = 'ok',
+        x_post=CASE WHEN x_post->>'provider'='bird' THEN jsonb_set(x_post,'{bird,bodyLevel}','"full"'::jsonb) ELSE x_post END,
         revision = revision + 1, content_hash = ${hash}, processing_state = 'new', updated_at = now()
       WHERE id = ${articleId} RETURNING revision`;
     await tx`INSERT INTO article_revisions (article_id, revision, content_hash, title, body_text)
              VALUES (${articleId}, ${r!.revision}, ${hash}, ${title}, ${bodyText})`;
+    if (birdReceiptId !== undefined) await completeReceipt(tx, birdReceiptId);
     return "ok";
   });
 }
