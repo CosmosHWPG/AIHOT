@@ -9,8 +9,9 @@ import { config } from "@aihot/backend/config";
 import { closeDb, sql } from "@aihot/backend/db";
 import { extractArticleBody } from "@aihot/backend/content/extract";
 import { upsertMaterial } from "@aihot/backend/content/materials";
-import { getBoss, stopBoss } from "@aihot/backend/jobs/queue";
+import { getBoss, shutdownSignal, stopBoss } from "@aihot/backend/jobs/queue";
 import { queueProcessing, registerExtractionJobs } from "@aihot/backend/jobs/content";
+import { logicalKeyFor } from "@aihot/backend/providers/receipts";
 
 const sourceId = `extract-consistency-${tag()}`;
 const body = "This is the original article, with enough substantive text to extract its paragraphs. ".repeat(12);
@@ -114,4 +115,83 @@ test("an obsolete extraction failure cannot penalize a newer complete report", a
   }
   const [row] = await sql`SELECT body_status,processing_attempts,processing_error,processing_retry_at FROM articles WHERE id=${articleId}`;
   assert.deepEqual({ ...row }, { body_status: "ok", processing_attempts: 0, processing_error: null, processing_retry_at: null });
+});
+
+async function pendingXArticle(name: string) {
+  const source = `${sourceId}-${name}`;
+  const tweetId = `${Date.now()}${Math.floor(Math.random() * 10000)}`;
+  await sql`INSERT INTO sources(id,name,kind) VALUES (${source},${name},'x_search')`;
+  const { articleId } = await upsertMaterial({ sourceId: source, url: `https://x.com/author/status/${tweetId}`, title: name, via: "fetch",
+    xPost: { tweetId, provider: "socialdata", authorName: "Author", handle: "author", text: "https://x.com/i/article/123" } });
+  return { articleId, tweetId };
+}
+
+async function extractionRound(articleId: string) {
+  const job = await queueProcessing(articleId, { step: "extract" });
+  assert.ok(job);
+  const deadline = Date.now() + 12_000;
+  while ((await sql`SELECT state FROM pgboss.job WHERE id=${job}`)[0]?.state !== "completed") {
+    assert.ok(Date.now() < deadline, "extraction worker did not finish");
+    await new Promise(resolve => setTimeout(resolve, 20));
+  }
+  return (await sql`SELECT output FROM pgboss.job WHERE id=${job}`)[0]!.output;
+}
+
+for (const capacity of ["budget", "busy"] as const) test(`three ${capacity} waits preserve the pending body and prior extraction attempts`, async () => {
+  const { articleId, tweetId } = await pendingXArticle(capacity);
+  await sql`UPDATE articles SET processing_attempts=2 WHERE id=${articleId}`;
+  const hits = socialdata.hits();
+  if (capacity === "budget") await sql`UPDATE budgets SET per_minute=0 WHERE service='socialdata'`;
+  else {
+    const key = logicalKeyFor({ service: "socialdata", purpose: "x_article", identity: { article: tweetId } });
+    await sql`INSERT INTO receipts(logical_key,service,purpose,subject,status)
+      VALUES (${key},'socialdata','x_article',${`article:${articleId}`},'pending')`;
+  }
+  try {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      assert.equal((await extractionRound(articleId)).state, "waiting");
+      const [row] = await sql`SELECT processing_state,body_status,processing_attempts,processing_retry_at,processing_queued_at
+        FROM articles WHERE id=${articleId}`;
+      assert.equal(row!.processing_state, "new");
+      assert.equal(row!.body_status, "pending");
+      assert.equal(row!.processing_attempts, 2);
+      assert.equal(row!.processing_queued_at, null);
+      const seconds = capacity === "budget" ? 3600 : 60;
+      assert.ok(row!.processing_retry_at.getTime() >= Date.now() + (seconds - 3) * 1000, "honor the provider's retry window");
+    }
+    assert.equal(socialdata.hits(), hits, "capacity waits must not send another provider request");
+  } finally {
+    if (capacity === "budget") await sql`UPDATE budgets SET per_minute=1000 WHERE service='socialdata'`;
+  }
+});
+
+test("three real extraction failures still settle as an unconfirmed body", async () => {
+  reset(); hold.failed = true; hold.release.open();
+  const { articleId } = await pendingXArticle("real-failure");
+  const hits = socialdata.hits();
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    assert.equal((await extractionRound(articleId)).state, attempt === 3 ? "unconfirmed" : "retrying");
+    const [row] = await sql`SELECT body_status,processing_attempts FROM articles WHERE id=${articleId}`;
+    assert.equal(row!.body_status, attempt === 3 ? "unconfirmed" : "pending");
+    assert.equal(row!.processing_attempts, attempt === 3 ? 0 : attempt);
+  }
+  assert.equal(socialdata.hits() - hits, 3);
+});
+
+// Abort is process-wide, so this is deliberately last. A request already in flight can still fail
+// during a graceful stop; pg-boss owns its retry, without recording an article extraction failure.
+test("shutdown during a failed extraction preserves pending evidence and the previous failure count", async () => {
+  reset(); hold.failed = true;
+  const { articleId } = await pendingXArticle("shutdown");
+  await sql`UPDATE articles SET processing_attempts=2,processing_error='previous failure' WHERE id=${articleId}`;
+  const job = await queueProcessing(articleId, { step: "extract" });
+  await hold.entered.promise;
+  shutdownSignal.abort(); hold.release.open();
+  const deadline = Date.now() + 12_000;
+  while ((await sql`SELECT state FROM pgboss.job WHERE id=${job!}`)[0]?.state !== "retry") {
+    assert.ok(Date.now() < deadline, "interrupted extraction did not remain retryable");
+    await new Promise(resolve => setTimeout(resolve, 20));
+  }
+  const [row] = await sql`SELECT body_status,processing_attempts,processing_error,processing_retry_at FROM articles WHERE id=${articleId}`;
+  assert.deepEqual({ ...row }, { body_status: "pending", processing_attempts: 2, processing_error: "previous failure", processing_retry_at: null });
 });

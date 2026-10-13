@@ -219,7 +219,22 @@ export async function registerExtractionJobs(boss: PgBoss) {
       await queueProcessing(articleId);
       return { state };
     } catch (error) {
+      // Restart and capacity waits have not failed to extract the body. Keep pending evidence
+      // retryable instead of exhausting the three real extraction failures while a quota is full.
+      if (error instanceof AnalysisInterruptedError || shutdownSignal.signal.aborted) throw error;
       const message = String(error instanceof Error ? error.message : error).slice(0, 500);
+      if (error instanceof BudgetExceededError || error instanceof ReceiptBusyError) {
+        const seconds = error instanceof BudgetExceededError ? Math.max(1, error.retryAfterSeconds) : 60;
+        const retryAt = new Date(Date.now() + seconds * 1000);
+        const waiting = await sql`UPDATE articles SET processing_state='new', processing_error=${`extract: ${message}`},
+          processing_queued_at=NULL, processing_retry_at=${retryAt}
+          WHERE id=${articleId} AND revision=${input.revision} AND body_status<>'ok' RETURNING id`;
+        if (!waiting.length) {
+          await queueProcessing(articleId);
+          return { state: "skipped" };
+        }
+        return { state: "waiting", retryAt };
+      }
       const [a] = await sql<{ processing_attempts: number }[]>`
         UPDATE articles SET processing_attempts = processing_attempts + 1, processing_error = ${`extract: ${message}`},
           processing_queued_at = NULL, processing_retry_at = now() + interval '10 minutes'

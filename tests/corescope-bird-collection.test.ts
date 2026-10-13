@@ -133,6 +133,8 @@ test("a failed Bird material write rolls back queue, cursor and receipt acknowle
   try {
     const result = await collectSource(sourceId);
     assert.equal(result.status, "failed"); assert.equal(await cursor(), null);
+    const [run] = await sql`SELECT detail FROM fetch_runs WHERE source_id=${sourceId} ORDER BY id DESC LIMIT 1`;
+    assert.deepEqual(run!.detail, { provider: "bird" }, "failed attribution must not persist the source config or credentials");
     assert.equal((await sql`SELECT id FROM articles WHERE identity_key=${`x:${t.id}`}`).length, 0);
     assert.equal((await sql`SELECT status FROM receipts WHERE service='bird' AND subject=${`source:${sourceId}`}`)[0]!.status, "received");
   } finally {
@@ -229,6 +231,7 @@ test("known local budget and profile deferrals do not enqueue work or damage sou
   assert.equal((await collectSource(sourceId)).status, 'skipped');
   const [latest] = await sql`SELECT status,detail FROM fetch_runs WHERE source_id=${sourceId} ORDER BY id DESC LIMIT 1`;
   assert.equal(latest!.status, 'skipped'); assert.equal(latest!.detail.deferred, true);
+  assert.equal(latest!.detail.provider, 'bird');
   const [health] = await sql`SELECT fail_count,health FROM sources WHERE id=${sourceId}`;
   assert.equal(health!.fail_count, 0); assert.equal(health!.health, 'unknown');
 });

@@ -103,3 +103,7 @@ operations只允许独立本机5448/corescope数据库，拒绝V2或其他数据
 私有证据在 `.data/qa/`：bird-live-preflight.json、bird-pilot-processing.json、bird-http-acceptance.json、bird-replay-proof.json、bird-backend-final.log及边界快照；密钥、数据库和原始响应不提交Git。V2代码/配置、BirdClaw跟踪文件/config/全局CLI哈希和服务PID/创建时间用于边界复核。它们自己的服务正常更新数据库，不能要求运行中的数据库字节不变。17:30边界哈希复核全部一致，V2和BirdClaw服务仍为原PID及创建时间；重启后的CoreScope四角色ready，35项线上smoke通过。
 
 关闭Bird总开关停止新调用而不删除材料；通过后台回退provider，供应商游标分别归档并保留缺口。付费供应商凭据与额度另行验证，回退不取消预算。
+
+## 原102来源持续验收
+
+用户授权按既有额度继续完成剩余102个来源，固定来源清单、逐源判据、当前失败与边界比较见 [全来源续验收](CORESCOPE_BIRD_FLEET_ACCEPTANCE.md)。本轮修正失败供应商记录、历史失败统计与正文抓取预算等待，后端全套706/706、web32/32、正式smoke35/35通过；额度不变。具体来源的真实采集和展示以持续验收快照为准，代码回归通过不能代替未抓取来源的在线验收。

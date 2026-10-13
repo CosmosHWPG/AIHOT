@@ -33,8 +33,28 @@ async function status() {
   const routes = await sql`SELECT coalesce(config->>'provider','socialdata') AS provider,count(*)::int AS sources,
     count(*) FILTER (WHERE enabled)::int AS enabled,max(last_ok_at) AS latest_success FROM sources WHERE kind='x_search' GROUP BY 1 ORDER BY 1`;
   const [budget] = await sql`SELECT service,per_minute,per_hour,per_day FROM budgets WHERE service='bird'`;
+  // Old failed runs omitted detail.provider. A current Bird route alone cannot identify them:
+  // require a recorded Bird switch and a matching live attempt inside this exact run's window.
+  const birdRunProof = sql`(r.detail->>'provider'='bird' OR (
+    nullif(r.detail->>'provider','') IS NULL AND s.kind='x_search' AND s.config->>'provider'='bird'
+    AND s.cursor->'xRouteHistory'->-1->>'toProvider'='bird'
+    AND r.started_at>=(s.cursor->'xRouteHistory'->-1->>'capturedAt')::timestamptz
+    AND EXISTS(SELECT 1 FROM receipts p JOIN receipt_attempts a ON a.receipt_id=p.id
+      WHERE p.service='bird' AND p.subject='source:'||r.source_id AND a.service='bird' AND a.origin='live'
+        AND a.started_at>=r.started_at AND a.finished_at<=r.finished_at)
+    AND NOT EXISTS(SELECT 1 FROM receipts p JOIN receipt_attempts a ON a.receipt_id=p.id
+      WHERE p.service IN ('socialdata','xquik') AND p.subject='source:'||r.source_id AND a.origin='live'
+        AND a.started_at>=r.started_at AND a.started_at<=r.finished_at)))`;
   const runs = await sql`SELECT r.status,count(*)::int AS runs,coalesce(sum(r.new_count),0)::int AS new_count
-    FROM fetch_runs r WHERE r.detail->>'provider'='bird' AND r.started_at>now()-interval '24 hours' GROUP BY r.status`;
+    FROM fetch_runs r JOIN sources s ON s.id=r.source_id
+    WHERE ${birdRunProof} AND r.started_at>now()-interval '24 hours' GROUP BY r.status`;
+  const latestFailedRuns = await sql`SELECT r.id,r.source_id,s.name,r.started_at,r.finished_at,r.error,
+    CASE WHEN r.detail->>'provider'='bird' THEN 'recorded_provider' ELSE 'live_attempt_after_route_switch' END AS evidence,
+    EXISTS(SELECT 1 FROM fetch_runs ok WHERE ok.source_id=r.source_id AND ok.status='ok'
+      AND ok.detail->>'provider'='bird' AND ok.started_at>r.started_at) AS recovered
+    FROM fetch_runs r JOIN sources s ON s.id=r.source_id
+    WHERE r.status='failed' AND ${birdRunProof} AND r.started_at>now()-interval '24 hours'
+    ORDER BY r.started_at DESC,r.id DESC LIMIT 10`;
   const [fleet] = await sql`SELECT count(*)::int AS enabled,
     count(*) FILTER(WHERE checked.success)::int AS succeeded,
     count(*) FILTER(WHERE NOT checked.success)::int AS awaiting_success,
@@ -44,7 +64,7 @@ async function status() {
       WHERE r.source_id=s.id AND r.status='ok' AND r.detail->>'provider'='bird'
         AND r.started_at>=coalesce((s.cursor->'xRouteHistory'->-1->>'capturedAt')::timestamptz,'epoch'::timestamptz)) AS success) checked
     WHERE s.enabled AND s.kind='x_search' AND s.config->>'provider'='bird'`;
-  return { checkedAt: new Date().toISOString(), runtime, routes, budget, runs, fleet };
+  return { checkedAt: new Date().toISOString(), runtime, routes, budget, runs, fleet, latestFailedRuns };
 }
 async function enable() {
   const rows = await targets();

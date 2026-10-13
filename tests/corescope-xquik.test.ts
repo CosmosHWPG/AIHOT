@@ -219,6 +219,8 @@ test("an in-flight paid single-source fetch cannot overwrite a newly selected Bi
       cursor=${sql.json({ lastTweetId: "111", bird: { coverage: "unknown", backlog: [] } })},interval_minutes=1440 WHERE id=${sources[0]!}`;
     holdSearch.open(); const result = await running;
     assert.equal(result.status, "skipped"); assert.equal((await setting(sources[0]!))!.lastTweetId, "111");
+    const [run] = await sql`SELECT detail FROM fetch_runs WHERE source_id=${sources[0]!} ORDER BY id DESC LIMIT 1`;
+    assert.deepEqual(run!.detail, { provider: "xquik" }, "a newly selected Bird route cannot relabel the in-flight paid run");
     assert.equal((await sql`SELECT id FROM articles WHERE identity_key=${`x:${baseId + 100n}`}`).length, 0);
   } finally {
     holdSearch.open(); holdSearch = null;

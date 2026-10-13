@@ -13,6 +13,7 @@ import { unsupportedConfig } from "./config-keys.ts";
 import { fetchJsonList } from "./json-list.ts";
 import { accountHandle, fetchXSearch, initialXWatermark, planXBootstrap, planXShards, readXSearch, shardHandle, shardQuery, SHARDABLE_SQL, tweetToCandidate, xProvider, type XBacklog, type XProvider } from "./x.ts";
 import { FetchError, type Candidate, type SourceRow } from "./types.ts";
+import { routeProvider } from "./x-route.ts";
 
 export interface CollectResult {
   sourceId: string;
@@ -230,15 +231,19 @@ export async function collectSource(sourceId: string, opts: { force?: boolean; e
     return { sourceId, status: "ok", found, created, revised };
   } catch (error) {
     if (shutdownSignal.signal.aborted) throw error;
+    // Attribute unsuccessful runs to the original route snapshot, never to a later source edit.
+    // Only the supplier name is recorded; credentials and the rest of the config stay private.
+    const failureDetail = source.kind === "x_search" ? { provider: routeProvider(source.config) } : null;
     if (error instanceof SourceChangedDuringFetch) {
-      await sql`UPDATE fetch_runs SET status='skipped', finished_at=now(), error=${error.message} WHERE id=${run!.id}`;
+      await sql`UPDATE fetch_runs SET status='skipped', finished_at=now(), error=${error.message},
+        detail=${failureDetail ? sql.json(failureDetail) : null} WHERE id=${run!.id}`;
       return { sourceId, status: "skipped", found, created: 0, revised: 0, error: error.message };
     }
     const message = String(error instanceof Error ? error.message : error).slice(0, 1000);
     const budget = error instanceof BudgetExceededError;
     if (budget && source.kind === "x_search" && xProvider(source) === "bird") {
       const seconds = Math.max(60, error.retryAfterSeconds);
-      const detail = { deferred: true, reason: "budget_or_profile", retryAt: new Date(Date.now() + seconds * 1000).toISOString() };
+      const detail = { ...failureDetail, deferred: true, reason: "budget_or_profile", retryAt: new Date(Date.now() + seconds * 1000).toISOString() };
       await sql`UPDATE sources SET next_fetch_at=now()+make_interval(secs=>${seconds}),last_error=${message},updated_at=now()
         WHERE id=${sourceId} AND config=${sql.json(source.config)}`;
       await sql`UPDATE fetch_runs SET status='skipped',finished_at=now(),error=${message},detail=${sql.json(detail)} WHERE id=${run!.id}`;
@@ -252,7 +257,8 @@ export async function collectSource(sourceId: string, opts: { force?: boolean; e
         next_fetch_at = now() + make_interval(mins => CASE WHEN ${budget} THEN 15 ELSE LEAST(interval_minutes * (fail_count + 2), 360) END),
         updated_at = now()
       WHERE id = ${sourceId} ${source.kind === "x_search" ? sql`AND config=${sql.json(source.config)}` : sql``}`;
-    await sql`UPDATE fetch_runs SET status = 'failed', finished_at = now(), found_count = ${found}, new_count = ${created}, error = ${message} WHERE id = ${run!.id}`;
+    await sql`UPDATE fetch_runs SET status = 'failed', finished_at = now(), found_count = ${found}, new_count = ${created}, error = ${message},
+      detail=${failureDetail ? sql.json(failureDetail) : null} WHERE id = ${run!.id}`;
     return { sourceId, status: "failed", found, created, revised, error: message };
   }
 }
