@@ -12,7 +12,7 @@ Windows 11、Node.js 24.11+、Python 3.12+。第一次启动需要网络下载 P
    ```
    此操作仅只读 V2 配置与密钥，生成独立数据库/后台密码，不输出密钥。
 2. 确认模型配置后，在 `.env` 中将 `MODEL_CALLS_ENABLED` 和 `COLLECT_ENABLED` 设为 `true`。首次启动使用保守请求熔断，后台“设置”可以调整；请求次数限制不是金额上限。
-3. 双击 **Start-CoreScope.cmd**。浏览器打开 [http://127.0.0.1:8780](http://127.0.0.1:8780)。停止请双击 **Stop-CoreScope.cmd**，等待分析任务正常退出。
+3. 双击 **Start-CoreScope.cmd**，等待最后的 **[READY]**。浏览器打开 [http://127.0.0.1:8780](http://127.0.0.1:8780)。Windows 任务计划程序持续托管后台，关闭启动窗口或退出 Codex 后继续运行。双击 **Status-CoreScope.cmd** 检查运行状态；停止请双击 **Stop-CoreScope.cmd**，等待分析任务正常退出。
 
 管理员入口 `/admin/login`，密码保存在本机 `.env` 的 `ADMIN_PASSWORD`。API 使用 8781，独立 PostgreSQL 使用 5448，均绑定本机。V2 和其他现有系统不需要停止。
 

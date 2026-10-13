@@ -107,3 +107,48 @@ catch {Write-RuntimeLog 'error' $_.Exception.Message -Failure;Write-Host $_.Exce
     await instance.close();
   }
 });
+
+test("the validated private configuration wins over ambient child values and restores the caller environment", { skip: process.platform !== "win32" }, async () => {
+  const instance = await sandbox();
+  const ambientDatabase = "postgres://ambient.invalid/never_connect";
+  const privateDatabase = "postgres://private.invalid/never_connect";
+  try {
+    await writeFile(path.join(instance.root, ".env"), `DATABASE_URL=${privateDatabase}\nLLM_API_KEY=${fakeKey}\n`);
+    await writeFile(path.join(instance.root, "scripts", "fail.mjs"), `
+const valid = process.env.DATABASE_URL === ${JSON.stringify(privateDatabase)} && process.env.LLM_API_KEY === ${JSON.stringify(fakeKey)};
+console.log(valid ? 'fake private configuration verified' : 'wrong child environment');
+process.exit(valid ? 0 : 19);
+`);
+    await writeFile(path.join(instance.root, "probe.ps1"), `$ErrorActionPreference='Stop'
+$ProjectRoot=$PSScriptRoot
+$EnvFile=Join-Path $ProjectRoot '.env'
+$StartupLog=Join-Path $ProjectRoot '.data\\logs\\startup.log'
+$StartupErrorLog=Join-Path $ProjectRoot '.data\\logs\\startup.error.log'
+$Action='Start'
+$Node=(Get-Command node.exe).Source
+$script:Config=[pscustomobject]@{DATABASE_URL='${privateDatabase}';LLM_API_KEY='${fakeKey}'}
+$script:DbPassword=$null
+$tokens=$null;$parseErrors=$null
+$ast=[System.Management.Automation.Language.Parser]::ParseFile((Join-Path $ProjectRoot 'scripts\\corescope-runtime.ps1'),[ref]$tokens,[ref]$parseErrors)
+$names=@('Protect-LogText','Write-RuntimeLog','Write-Stage','Invoke-NodeScript')
+foreach($statement in $ast.EndBlock.Statements){if($statement -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $statement.Name -in $names){Invoke-Expression $statement.Extent.Text}}
+$env:DATABASE_URL='${ambientDatabase}'
+$env:LLM_API_KEY='ambient-fake-key'
+Invoke-NodeScript 'scripts/fail.mjs'
+if($env:DATABASE_URL -ne '${ambientDatabase}' -or $env:LLM_API_KEY -ne 'ambient-fake-key'){throw 'Caller environment was not restored'}
+$script:Config.DATABASE_URL='${privateDatabase}'
+$script:Config.LLM_API_KEY='intentional-fake-mismatch'
+try {Invoke-NodeScript 'scripts/fail.mjs';throw 'Expected child mismatch failure'}
+catch {if($_.Exception.Message -notmatch 'exit 19'){throw}}
+if($env:DATABASE_URL -ne '${ambientDatabase}' -or $env:LLM_API_KEY -ne 'ambient-fake-key'){throw 'Caller environment was not restored after failure'}
+Write-Host 'caller environment restored after success and failure'
+`);
+    const result = await run("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", path.join(instance.root, "probe.ps1")], { windowsHide: true, timeout: 15_000 });
+    assert.match(result.stdout, /fake private configuration verified/);
+    assert.match(result.stdout, /caller environment restored after success and failure/);
+    const logs = await readFile(path.join(instance.root, ".data", "logs", "startup.log"), "utf8");
+    assert.ok(!(result.stdout + result.stderr + logs).includes(fakeKey));
+  } finally {
+    await instance.close();
+  }
+});
