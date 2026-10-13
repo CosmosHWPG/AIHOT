@@ -32,7 +32,7 @@ async function status() {
   const runtime = await birdConfigurationStatus();
   const routes = await sql`SELECT coalesce(config->>'provider','socialdata') AS provider,count(*)::int AS sources,
     count(*) FILTER (WHERE enabled)::int AS enabled,max(last_ok_at) AS latest_success FROM sources WHERE kind='x_search' GROUP BY 1 ORDER BY 1`;
-  const [budget] = await sql`SELECT service,per_minute,per_hour,per_day FROM budgets WHERE service='bird'`;
+  const [budget] = await sql`SELECT service,enabled,per_minute,per_hour,per_day FROM budgets WHERE service='bird'`;
   // Old failed runs omitted detail.provider. A current Bird route alone cannot identify them:
   // require a recorded Bird switch and a matching live attempt inside this exact run's window.
   const birdRunProof = sql`(r.detail->>'provider'='bird' OR (
@@ -96,19 +96,19 @@ async function fetch() {
   // One operator invocation is bounded; normal workers continue the remaining fleet.
   if (rows.length > 5) throw new Error("Manual Bird verification is limited to five source IDs per invocation");
   for (const row of rows) {
-    const [capacity] = await sql<{ per_minute: number; per_hour: number; per_day: number; minute: number; hour: number; day: number; oldest_minute: Date | null }[]>`
-      SELECT b.per_minute,b.per_hour,b.per_day,
+    const [capacity] = await sql<{ enabled: boolean; per_minute: number; per_hour: number; per_day: number; minute: number; hour: number; day: number; oldest_minute: Date | null }[]>`
+      SELECT b.enabled,b.per_minute,b.per_hour,b.per_day,
         count(a.id) FILTER(WHERE a.started_at>now()-interval '1 minute')::int AS minute,
         count(a.id) FILTER(WHERE a.started_at>now()-interval '1 hour')::int AS hour,count(a.id)::int AS day,
         min(a.started_at) FILTER(WHERE a.started_at>now()-interval '1 minute') AS oldest_minute
       FROM budgets b LEFT JOIN receipt_attempts a ON a.service=b.service AND a.origin='live' AND a.started_at>now()-interval '24 hours'
-      WHERE b.service='bird' GROUP BY b.per_minute,b.per_hour,b.per_day`;
-    if (!capacity || capacity.per_minute<=0 || capacity.per_hour<=0 || capacity.per_day<=0
-      || capacity.hour>=capacity.per_hour || capacity.day>=capacity.per_day) {
+      WHERE b.service='bird' GROUP BY b.enabled,b.per_minute,b.per_hour,b.per_day`;
+    if (!capacity || (capacity.enabled && (capacity.per_minute<=0 || capacity.per_hour<=0 || capacity.per_day<=0
+      || capacity.hour>=capacity.per_hour || capacity.day>=capacity.per_day))) {
       results.push({ sourceId: row.id, status: "deferred", reason: "bird_budget" });
       continue;
     }
-    if (capacity.minute>=capacity.per_minute && capacity.oldest_minute) {
+    if (capacity.enabled && capacity.minute>=capacity.per_minute && capacity.oldest_minute) {
       const waitMs=Math.min(60_000,Math.max(1,capacity.oldest_minute.getTime()+60_250-Date.now()));
       console.log(JSON.stringify({ waitingForBudget: true, sourceId: row.id, waitMs }));
       await delay(waitMs);

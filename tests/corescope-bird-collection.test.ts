@@ -23,7 +23,7 @@ const names = ["BIRD_ENABLED", "BIRD_CLI_PATH", "BIRD_NODE_PATH", "BIRD_CREDENTI
 const original = Object.fromEntries(names.map(name => [name, process.env[name]]));
 const sourceConfig = { provider: "bird", query: `from:${handle} -filter:replies`, searchType: "Latest",
   bird: { accountProfile: profile, strategy: "user_tweets", initialLookbackHours: 48, maxPagesPerRound: 1 }, _aihot: { initialBackfillLimit: 20 } };
-let budget: Array<{ per_minute: number; per_hour: number; per_day: number; note: string | null }> = [];
+let budget: Array<{ enabled: boolean; per_minute: number; per_hour: number; per_day: number; note: string | null }> = [];
 let sequence = 0;
 const id = () => String((BigInt(Date.now() - 1288834974657) << 22n) + BigInt(++sequence));
 const raw = (tweetId = id()) => ({ id: tweetId, createdAt: new Date(Date.now() - 60_000).toISOString(), text: `Original evidence ${T}`,
@@ -44,9 +44,9 @@ else {process.stderr.write('offline unsupported command');process.exit(1);}`);
   Object.assign(process.env, { BIRD_ENABLED: "true", BIRD_CLI_PATH: path.join(root, "dist/cli.js"), BIRD_NODE_PATH: process.execPath,
     BIRD_CREDENTIAL_MODE: "process-env", BIRD_ACCOUNT_PROFILE: profile, BIRD_AUTH_TOKEN: "offline_cookie", BIRD_CT0: "offline_csrf" });
   delete process.env.BIRD_CLI_SHA256; delete process.env.BIRD_EXPECTED_USER_ID; delete process.env.BIRD_EXPECTED_USERNAME;
-  budget = await sql`SELECT per_minute,per_hour,per_day,note FROM budgets WHERE service='bird'`;
-  await sql`INSERT INTO budgets(service,per_minute,per_hour,per_day) VALUES('bird',10000,10000,10000)
-    ON CONFLICT(service) DO UPDATE SET per_minute=10000,per_hour=10000,per_day=10000`;
+  budget = await sql`SELECT enabled,per_minute,per_hour,per_day,note FROM budgets WHERE service='bird'`;
+  await sql`INSERT INTO budgets(service,enabled,per_minute,per_hour,per_day) VALUES('bird',true,10000,10000,10000)
+    ON CONFLICT(service) DO UPDATE SET enabled=true,per_minute=10000,per_hour=10000,per_day=10000`;
   await sql`INSERT INTO bird_profile_gate(profile,verified_user_id,verified_username,credential_fingerprint,verified_at)
     VALUES(${profile},'991122','offline',${birdCredentialFingerprint({ authToken: "offline_cookie", ct0: "offline_csrf" })},now())`;
   await sql`INSERT INTO sources(id,name,kind,config,tier,participation_mode,enabled,interval_minutes,next_fetch_at)
@@ -57,12 +57,13 @@ beforeEach(async () => {
   await sql`DELETE FROM receipts WHERE service='bird' AND subject LIKE ${`%${T}%`}`;
   await sql`DELETE FROM pgboss.job WHERE name='sources.fetch' AND data->>'sourceId'=${sourceId}`;
   await sql`UPDATE bird_profile_gate SET cooldown_until=NULL,lease_until=NULL,lease_owner=NULL WHERE profile=${profile}`;
+  await sql`UPDATE budgets SET enabled=true,per_minute=10000,per_hour=10000,per_day=10000 WHERE service='bird'`;
   await sql`UPDATE sources SET config=${sql.json(sourceConfig)},cursor=NULL,enabled=true,health='unknown',fail_count=0,interval_minutes=120,next_fetch_at='2100-01-01' WHERE id=${sourceId}`;
   fixture({ timeline: { tweets: [raw()], nextCursor: null } });
 });
 after(async () => {
   const previous = budget[0];
-  if (previous) await sql`UPDATE budgets SET per_minute=${previous.per_minute},per_hour=${previous.per_hour},per_day=${previous.per_day},note=${previous.note} WHERE service='bird'`;
+  if (previous) await sql`UPDATE budgets SET enabled=${previous.enabled},per_minute=${previous.per_minute},per_hour=${previous.per_hour},per_day=${previous.per_day},note=${previous.note} WHERE service='bird'`;
   else await sql`DELETE FROM budgets WHERE service='bird'`;
   await sql`DELETE FROM bird_profile_gate WHERE profile=${profile}`;
   await sql`UPDATE sources SET enabled=false WHERE id=${sourceId}`;
@@ -234,4 +235,47 @@ test("known local budget and profile deferrals do not enqueue work or damage sou
   assert.equal(latest!.detail.provider, 'bird');
   const [health] = await sql`SELECT fail_count,health FROM sources WHERE id=${sourceId}`;
   assert.equal(health!.fail_count, 0); assert.equal(health!.health, 'unknown');
+});
+
+test("disabled Bird numeric budget allows fair scheduling and collection while keeping receipt accounting", async () => {
+  process.env.COLLECT_KINDS = 'x_search';
+  await sql`UPDATE sources SET next_fetch_at=NULL WHERE id=${sourceId}`;
+  await sql`UPDATE budgets SET enabled=false,per_minute=0,per_hour=0,per_day=0 WHERE service='bird'`;
+  try {
+    await scheduleDueSources(10000); await scheduleDueSources(10000);
+    assert.equal((await sql`SELECT id FROM pgboss.job WHERE name='sources.fetch' AND data->>'sourceId'=${sourceId}`).length, 1,
+      "disabling the numeric budget preserves the ordinary one-author singleton scheduler");
+    assert.equal((await collectSource(sourceId)).status, 'ok');
+    const [receipt] = await sql`SELECT status,attempts FROM receipts WHERE service='bird' AND subject=${`source:${sourceId}`}`;
+    assert.equal(receipt!.status, 'completed'); assert.equal(receipt!.attempts, 1);
+    assert.equal((await sql`SELECT id FROM receipt_attempts WHERE service='bird' AND receipt_id IN
+      (SELECT id FROM receipts WHERE subject=${`source:${sourceId}`})`).length, 1,
+      "an uncapped request is still recorded through the formal provider receipt");
+  } finally { await sql`UPDATE budgets SET enabled=true,per_minute=10000,per_hour=10000,per_day=10000 WHERE service='bird'`; }
+});
+
+test("disabled Bird numeric budget does not bypass profile cooldown, lease or authenticated identity", async () => {
+  process.env.COLLECT_KINDS = 'x_search';
+  await sql`UPDATE sources SET next_fetch_at=NULL WHERE id=${sourceId}`;
+  await sql`UPDATE budgets SET enabled=false,per_minute=0,per_hour=0,per_day=0 WHERE service='bird'`;
+  try {
+    await sql`UPDATE bird_profile_gate SET cooldown_until=now()+interval '1 hour' WHERE profile=${profile}`;
+    await scheduleDueSources(10000);
+    assert.equal((await sql`SELECT id FROM pgboss.job WHERE name='sources.fetch' AND data->>'sourceId'=${sourceId}`).length, 0);
+    assert.equal((await collectSource(sourceId)).status, 'skipped');
+    await sql`UPDATE bird_profile_gate SET cooldown_until=NULL,lease_until=now()+interval '1 hour' WHERE profile=${profile}`;
+    await scheduleDueSources(10000);
+    assert.equal((await sql`SELECT id FROM pgboss.job WHERE name='sources.fetch' AND data->>'sourceId'=${sourceId}`).length, 0);
+    assert.equal((await collectSource(sourceId)).status, 'skipped');
+    await sql`UPDATE bird_profile_gate SET lease_until=NULL,verified_at=NULL WHERE profile=${profile}`;
+    await scheduleDueSources(10000);
+    assert.equal((await sql`SELECT id FROM pgboss.job WHERE name='sources.fetch' AND data->>'sourceId'=${sourceId}`).length, 0);
+    assert.notEqual((await collectSource(sourceId)).status, 'ok');
+    assert.equal((await sql`SELECT id FROM receipt_attempts WHERE service='bird' AND receipt_id IN
+      (SELECT id FROM receipts WHERE subject=${`source:${sourceId}`})`).length, 0,
+      "no CLI request is reserved before the account gate accepts the session");
+  } finally {
+    await sql`UPDATE bird_profile_gate SET cooldown_until=NULL,lease_until=NULL,verified_at=now() WHERE profile=${profile}`;
+    await sql`UPDATE budgets SET enabled=true,per_minute=10000,per_hour=10000,per_day=10000 WHERE service='bird'`;
+  }
 });

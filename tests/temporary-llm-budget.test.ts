@@ -2,34 +2,34 @@ import { tag } from "./setup.ts";
 import assert from "node:assert/strict";
 import { after, before, beforeEach, test } from "node:test";
 import { sql, closeDb } from "@aihot/backend/db";
-import { activateTemporaryLlmBudget, restoreExpiredLlmBudget, temporaryLlmBudgetStatus, temporaryLlmAllowance, TEMPORARY_LLM_BUDGET_KEY } from "@aihot/backend/providers/temporary-budget";
+import { activateTemporaryLlmBudget, cancelTemporaryLlmBudget, restoreExpiredLlmBudget, temporaryLlmBudgetStatus, temporaryLlmAllowance, TEMPORARY_LLM_BUDGET_KEY } from "@aihot/backend/providers/temporary-budget";
 import { BudgetExceededError, logicalKeyFor, paidRequest } from "@aihot/backend/providers/receipts";
 
 const T = tag();
 const actor = `temporary-budget-test-${T}`;
-let previousBudget: { per_minute: number; per_hour: number; per_day: number; note: string | null; at: string } | undefined;
+let previousBudget: { enabled: boolean; per_minute: number; per_hour: number; per_day: number; note: string | null; at: string } | undefined;
 let previousLease: { value: unknown; updated_by: string | null } | undefined;
 const receiptIds: number[] = [];
 const leaseIds: string[] = [];
 
 before(async () => {
-  [previousBudget] = await sql`SELECT per_minute,per_hour,per_day,note,updated_at::text AS at FROM budgets WHERE service='llm'`;
+  [previousBudget] = await sql`SELECT enabled,per_minute,per_hour,per_day,note,updated_at::text AS at FROM budgets WHERE service='llm'`;
   [previousLease] = await sql`SELECT value,updated_by FROM settings WHERE key=${TEMPORARY_LLM_BUDGET_KEY}`;
 });
 beforeEach(async () => {
   await sql`DELETE FROM receipts WHERE id=ANY(${receiptIds}::bigint[])`;
   await sql`DELETE FROM settings WHERE key=${TEMPORARY_LLM_BUDGET_KEY}`;
   await sql`INSERT INTO budgets (service,per_minute,per_hour,per_day,note) VALUES ('llm',20,180,800,'baseline')
-    ON CONFLICT (service) DO UPDATE SET per_minute=20,per_hour=180,per_day=800,note='baseline',updated_at=clock_timestamp()`;
+    ON CONFLICT (service) DO UPDATE SET enabled=true,per_minute=20,per_hour=180,per_day=800,note='baseline',updated_at=clock_timestamp()`;
 });
 after(async () => {
   await sql`DELETE FROM receipts WHERE id=ANY(${receiptIds}::bigint[])`;
-  await sql`DELETE FROM audit_log WHERE action IN ('budget.temporary.activate','budget.temporary.restore','budget.temporary.superseded')
+  await sql`DELETE FROM audit_log WHERE action IN ('budget.temporary.activate','budget.temporary.restore','budget.temporary.superseded','budget.temporary.cancel')
     AND (after->>'leaseId'=ANY(${leaseIds}::text[]) OR before->>'leaseId'=ANY(${leaseIds}::text[]))`;
   if (previousLease) await sql`INSERT INTO settings (key,value,updated_by) VALUES (${TEMPORARY_LLM_BUDGET_KEY},${sql.json(previousLease.value as never)},${previousLease.updated_by})
     ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value,updated_by=EXCLUDED.updated_by`;
   else await sql`DELETE FROM settings WHERE key=${TEMPORARY_LLM_BUDGET_KEY}`;
-  if (previousBudget) await sql`UPDATE budgets SET per_minute=${previousBudget.per_minute},per_hour=${previousBudget.per_hour},per_day=${previousBudget.per_day},
+  if (previousBudget) await sql`UPDATE budgets SET enabled=${previousBudget.enabled},per_minute=${previousBudget.per_minute},per_hour=${previousBudget.per_hour},per_day=${previousBudget.per_day},
     note=${previousBudget.note},updated_at=${previousBudget.at}::timestamptz WHERE service='llm'`;
   else await sql`DELETE FROM budgets WHERE service='llm'`;
   await closeDb();
@@ -213,4 +213,43 @@ test("the lease counter includes every live LLM status and excludes replay, impo
   assert.equal((await restoreExpiredLlmBudget()).restored,true);
   assert.equal(await temporaryLlmAllowance(),null);
   assert.equal((await temporaryLlmBudgetStatus()).budget!.perDay,800);
+});
+
+test("explicit cancellation restores the baseline, retains an off switch and never resets attempts", async () => {
+  await activate();
+  await seedAttempts("cancel-retains",3,"0 seconds");
+  // A switch alone does not change the numeric grant fingerprint.
+  await sql`UPDATE budgets SET enabled=false WHERE service='llm'`;
+  const [before] = await sql`SELECT count(*)::int AS n FROM receipt_attempts WHERE service='llm'`;
+  const cancelled = await cancelTemporaryLlmBudget(actor,"user requested unlimited initial processing");
+  assert.deepEqual([cancelled.restored,cancelled.status],[true,"superseded"]);
+  const status = await temporaryLlmBudgetStatus();
+  assert.deepEqual([status.budget!.enabled,status.budget!.perDay,status.lease!.status],[false,800,"superseded"]);
+  assert.equal((await sql`SELECT count(*)::int AS n FROM receipt_attempts WHERE service='llm'`)[0]!.n,before!.n);
+  assert.equal(await temporaryLlmAllowance(),null);
+  await expire();
+  await restoreExpiredLlmBudget();
+  assert.equal((await temporaryLlmBudgetStatus()).budget!.enabled,false,"old expiry cannot re-enable the switch");
+});
+
+test("disabled limits bypass a spent temporary allowance while still writing each real attempt", async () => {
+  await activate();
+  await sql`UPDATE settings SET value=jsonb_set(value,'{activatedAt}',to_jsonb((now()-interval '3 hours')::text))
+    WHERE key=${TEMPORARY_LLM_BUDGET_KEY}`;
+  const baseline = (await temporaryLlmAllowance())!.used;
+  await seedAttempts("off-after-1200",1200-baseline,"2 hours");
+  await sql`UPDATE budgets SET enabled=false WHERE service='llm'`;
+  const request = { service: "llm",purpose: "temporary_budget_invariant",identity: { off: T } };
+  let sent = 0;
+  const result = await paidRequest(request,async () => { sent++; return { response: { ok:true } }; });
+  receiptIds.push(result.receiptId);
+  assert.equal(sent,1);
+  assert.equal((await sql`SELECT count(*)::int AS n FROM receipt_attempts WHERE receipt_id=${result.receiptId}`)[0]!.n,1);
+  assert.equal((await paidRequest(request,async () => assert.fail("cached response replayed"))).reused,true);
+});
+
+test("a temporary grant cannot silently switch on a disabled budget", async () => {
+  await sql`UPDATE budgets SET enabled=false WHERE service='llm'`;
+  await assert.rejects(activateTemporaryLlmBudget(actor,"old activation command"),/existing LLM budget/);
+  assert.equal((await temporaryLlmBudgetStatus()).budget!.enabled,false);
 });

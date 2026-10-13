@@ -55,7 +55,7 @@ async function status() {
     (SELECT count(*)::int FROM receipts WHERE status = 'completed') AS completed_receipts,
     (SELECT count(*)::int FROM receipts WHERE status = 'unknown') AS unknown_receipts`;
   const processing = await sql`SELECT processing_state AS state, count(*)::int AS count FROM articles GROUP BY processing_state ORDER BY processing_state`;
-  const budgets = await sql`SELECT service, per_minute, per_hour, per_day FROM budgets WHERE service IN ('llm', 'embedding') ORDER BY service`;
+  const budgets = await sql`SELECT service, enabled, per_minute, per_hour, per_day FROM budgets WHERE service IN ('llm', 'embedding') ORDER BY service`;
   console.log(JSON.stringify({ checkedAt: new Date().toISOString(), counts, processing, budgets }));
 }
 

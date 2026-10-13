@@ -95,14 +95,18 @@ interface ReceiptRow {
 async function checkBudget(tx: Db, service: string, required = false): Promise<void> {
   if (service === "llm") {
     await restoreExpiredLlmBudget(tx);
-    const temporary = await temporaryLlmAllowance(tx);
-    if (temporary?.exhausted) throw new BudgetExceededError(service,"temporary",temporary.retryAfterSeconds);
   }
-  const [budget] = await tx<{ per_minute: number; per_hour: number; per_day: number }[]>`
-    SELECT per_minute, per_hour, per_day FROM budgets WHERE service = ${service}`;
+  const [budget] = await tx<{ enabled: boolean; per_minute: number; per_hour: number; per_day: number }[]>`
+    SELECT enabled, per_minute, per_hour, per_day FROM budgets WHERE service = ${service}`;
   if (!budget) {
     if (required) throw new BudgetExceededError(service, "unconfigured", 3600);
     return; // preserve the operator-owned policy for existing services
+  }
+  // The operator can disable count limits; claims, deduplication, credits and usage recording remain mandatory.
+  if (!budget.enabled) return;
+  if (service === "llm") {
+    const temporary = await temporaryLlmAllowance(tx);
+    if (temporary?.exhausted) throw new BudgetExceededError(service,"temporary",temporary.retryAfterSeconds);
   }
   // Every request sent counts, retries of the same logical request included.
   const [counts] = await tx<{ minute: number; hour: number; day: number }[]>`

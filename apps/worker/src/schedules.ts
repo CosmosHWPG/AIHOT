@@ -6,6 +6,7 @@ import { ensureQueue, recordRun } from "@aihot/backend/jobs/queue";
 import { sweepUnprocessed } from "@aihot/backend/jobs/content";
 import { sweepDeferredEventJobs } from "@aihot/backend/jobs/events";
 import { reprioritizeRecentContentJobs } from "@aihot/backend/jobs/recent-content";
+import { wakeLlmBudgetWaits } from "@aihot/backend/jobs/budget-capacity";
 import { restoreExpiredLlmBudget } from "@aihot/backend/providers/temporary-budget";
 import { rematchRecentSignals } from "@aihot/backend/events/group";
 import { translatePending } from "@aihot/backend/editorial/translate";
@@ -39,6 +40,7 @@ const collecting = process.env.COLLECT_ENABLED !== "false";
 export const SCHEDULES: Scheduled[] = [
   { name: "content.sweep", cron: "*/5 * * * *", run: sweepUnprocessed },
   { name: "content.priority", cron: "* * * * *", run: reprioritizeRecentContentJobs },
+  { name: "content.budget-wake", cron: "* * * * *", run: wakeLlmBudgetWaits },
   { name: "events.capacity-sweep", cron: "* * * * *", run: sweepDeferredEventJobs },
   { name: "events.signal-rematch", cron: "*/5 * * * *", run: () => rematchRecentSignals(50) },
   { name: "ops.temporary-budget", cron: "* * * * *", run: restoreExpiredLlmBudget },

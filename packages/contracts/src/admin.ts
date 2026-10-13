@@ -361,6 +361,7 @@ export interface AdminNotifyTarget {
 
 export interface AdminBudget {
   service: string;
+  enabled: boolean;
   per_minute: number;
   per_hour: number;
   per_day: number;
@@ -368,6 +369,16 @@ export interface AdminBudget {
   updated_at: Timestamp;
   used_day: number;
   used_hour: number;
+}
+
+/** Omitted values preserve the current budget; a switch can be edited without rewriting its limits. */
+export interface AdminBudgetUpdate {
+  enabled?: boolean;
+  perMinute?: number;
+  perHour?: number;
+  perDay?: number;
+  reason: string;
+  version?: string;
 }
 
 export interface AdminSettings {

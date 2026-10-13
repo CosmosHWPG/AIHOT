@@ -410,14 +410,17 @@ async function scheduleBirdSource(): Promise<number> {
   if (!["true", "1"].includes(process.env.BIRD_ENABLED ?? "false")) return 0;
   return sql.begin(async tx => {
     await tx`SELECT pg_advisory_xact_lock(hashtext('corescope:bird-schedule'))`;
-    const [budget] = await tx<{ per_minute: number; per_hour: number; per_day: number }[]>`
-      SELECT per_minute,per_hour,per_day FROM budgets WHERE service='bird'`;
-    if (!budget || budget.per_minute <= 0 || budget.per_hour <= 0 || budget.per_day <= 0) return 0;
-    const [counts] = await tx<{ minute: number; hour: number; day: number }[]>`
-      SELECT count(*) FILTER(WHERE started_at>now()-interval '1 minute')::int AS minute,
-        count(*) FILTER(WHERE started_at>now()-interval '1 hour')::int AS hour,count(*)::int AS day
-      FROM receipt_attempts WHERE service='bird' AND origin='live' AND started_at>now()-interval '1 day'`;
-    if (counts!.minute >= budget.per_minute || counts!.hour >= budget.per_hour || counts!.day >= budget.per_day) return 0;
+    const [budget] = await tx<{ enabled: boolean; per_minute: number; per_hour: number; per_day: number }[]>`
+      SELECT enabled,per_minute,per_hour,per_day FROM budgets WHERE service='bird'`;
+    if (!budget) return 0;
+    if (budget.enabled) {
+      if (budget.per_minute <= 0 || budget.per_hour <= 0 || budget.per_day <= 0) return 0;
+      const [counts] = await tx<{ minute: number; hour: number; day: number }[]>`
+        SELECT count(*) FILTER(WHERE started_at>now()-interval '1 minute')::int AS minute,
+          count(*) FILTER(WHERE started_at>now()-interval '1 hour')::int AS hour,count(*)::int AS day
+        FROM receipt_attempts WHERE service='bird' AND origin='live' AND started_at>now()-interval '1 day'`;
+      if (counts!.minute >= budget.per_minute || counts!.hour >= budget.per_hour || counts!.day >= budget.per_day) return 0;
+    }
     const [queued] = await tx<{ exists: boolean }[]>`SELECT EXISTS(
       SELECT 1 FROM pgboss.job j JOIN sources s ON s.id=j.data->>'sourceId'
       WHERE j.name=${QUEUES.fetchSource} AND j.state IN ('created','retry','active') AND s.enabled AND s.kind='x_search' AND s.config->>'provider'='bird'

@@ -5,7 +5,7 @@ import { audit } from "../audit.ts";
 
 export const TEMPORARY_LLM_BUDGET_KEY = "corescope.temporary_llm_budget";
 export const TEMPORARY_LLM_NEW_ATTEMPTS = 1200;
-type Budget = { perMinute: number; perHour: number; perDay: number; note: string | null; updatedAt: string };
+type Budget = { enabled: boolean; perMinute: number; perHour: number; perDay: number; note: string | null; updatedAt: string };
 export interface TemporaryLlmBudgetLease {
   version: 1;
   id: string;
@@ -32,7 +32,7 @@ export interface TemporaryLlmAllowance {
 }
 
 async function budgetRow(db: Db, lock = false): Promise<Budget | null> {
-  const [row] = await db<Budget[]>`SELECT per_minute AS "perMinute",per_hour AS "perHour",per_day AS "perDay",note,
+  const [row] = await db<Budget[]>`SELECT enabled,per_minute AS "perMinute",per_hour AS "perHour",per_day AS "perDay",note,
     to_char(updated_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "updatedAt"
     FROM budgets WHERE service='llm' ${lock ? db`FOR UPDATE` : db``}`;
   return row ?? null;
@@ -87,6 +87,34 @@ export async function restoreExpiredLlmBudget(db: Db = sql): Promise<TemporaryLl
   return "begin" in db ? (db as typeof sql).begin(lockedRestore) : lockedRestore(db);
 }
 
+/** An explicit budget-off decision ends the temporary grant, without resetting usage or enabling limits. */
+export async function cancelTemporaryLlmBudget(actor: string, reason: string, db: Db = sql): Promise<TemporaryLlmBudgetRestore> {
+  if (!actor.trim() || !reason.trim()) throw new Error("actor and reason are required");
+  const run = async (tx: Db) => {
+    await tx`SELECT pg_advisory_xact_lock(hashtext('budget:llm'))`;
+    const [saved] = await tx<{ value: unknown }[]>`SELECT value FROM settings WHERE key=${TEMPORARY_LLM_BUDGET_KEY} FOR UPDATE`;
+    if (!saved) return { restored: false, status: "none" as const };
+    const lease = parseLease(saved.value);
+    if (lease.status !== "active") return { restored: false,status: lease.status,expiresAt: lease.expiresAt };
+    const before = await budgetRow(tx,true);
+    const expected = lease.temporary;
+    const same = before && before.perMinute === expected.perMinute && before.perHour === expected.perHour &&
+      before.perDay === expected.perDay && before.note === expected.note && before.updatedAt === expected.updatedAt;
+    if (same) {
+      const original = lease.original;
+      await tx`UPDATE budgets SET per_minute=${original.perMinute},per_hour=${original.perHour},per_day=${original.perDay},
+        note=${original.note},updated_at=clock_timestamp() WHERE service='llm'`;
+    }
+    const [clock] = await tx<{ at: string }[]>`SELECT to_char(clock_timestamp() AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS at`;
+    const ended: TemporaryLlmBudgetLease = { ...lease,status: "superseded",endedAt: clock!.at };
+    await saveLease(tx,ended,actor);
+    await audit(actor,"budget.temporary.cancel","budget:llm",reason,{ leaseId: lease.id,budget: before },
+      { leaseId: lease.id,status: ended.status,budget: await budgetRow(tx),restoredLimits: !!same },{ db: tx });
+    return { restored: !!same,status: ended.status,expiresAt: lease.expiresAt };
+  };
+  return "begin" in db ? (db as typeof sql).begin(run) : run(db);
+}
+
 export async function activateTemporaryLlmBudget(actor: string, reason: string, db: Db = sql): Promise<{ lease: TemporaryLlmBudgetLease; expiresAt: string }> {
   if (!actor.trim() || !reason.trim()) throw new Error("actor and reason are required");
   const run = async (tx: Db) => {
@@ -94,7 +122,7 @@ export async function activateTemporaryLlmBudget(actor: string, reason: string, 
     const [saved] = await tx<{ value: unknown }[]>`SELECT value FROM settings WHERE key=${TEMPORARY_LLM_BUDGET_KEY} FOR UPDATE`;
     if (saved && parseLease(saved.value).status === "active") throw new Error("An unexpired temporary LLM budget lease already exists");
     const original = await budgetRow(tx,true);
-    if (!original || original.perMinute !== 20 || original.perHour !== 180 || original.perDay !== 800) {
+    if (!original || !original.enabled || original.perMinute !== 20 || original.perHour !== 180 || original.perDay !== 800) {
       throw new Error("Temporary activation requires the existing LLM budget 20/minute, 180/hour, 800/day");
     }
     const [clock] = await tx<{ at: string; expires: string }[]>`SELECT
@@ -128,7 +156,7 @@ export async function temporaryLlmAllowance(db: Db = sql): Promise<TemporaryLlmA
   if (lease.status !== "active") return null;
   const current = await budgetRow(db);
   const expected = lease.temporary;
-  if (!current || current.perMinute !== expected.perMinute || current.perHour !== expected.perHour ||
+  if (!current || !current.enabled || current.perMinute !== expected.perMinute || current.perHour !== expected.perHour ||
       current.perDay !== expected.perDay || current.note !== expected.note || current.updatedAt !== expected.updatedAt) return null;
   const [row] = await db<{ used: number; remaining: number }[]>`SELECT
     (SELECT count(*)::int FROM receipt_attempts WHERE service='llm' AND origin='live' AND started_at>=${lease.activatedAt}::timestamptz) AS used,

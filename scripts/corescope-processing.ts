@@ -3,7 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { config } from "@aihot/backend/config";
 import { closeDb, sql } from "@aihot/backend/db";
-import { audit } from "@aihot/backend/audit";
+import { wakeLlmBudgetWaits } from "@aihot/backend/jobs/budget-capacity";
 import { getRecentContentPolicy, getRecentContentScope, reprioritizeRecentContentJobs, setRecentContentPolicy } from "@aihot/backend/jobs/recent-content";
 import { queueProcessing } from "@aihot/backend/jobs/content";
 import { stopBoss } from "@aihot/backend/jobs/queue";
@@ -53,27 +53,6 @@ async function snapshot() {
   return result;
 }
 
-/** Only quota waits are woken; genuine failures, unknown receipts and retry identities stay intact. */
-async function wakeAvailableCapacity() {
-  return sql.begin(async tx => {
-    await tx`SELECT pg_advisory_xact_lock(hashtext('budget:llm'))`;
-    const [budget] = await tx`SELECT per_minute,per_hour,per_day FROM budgets WHERE service='llm'`;
-    const [used] = await tx`SELECT count(*) FILTER(WHERE started_at>now()-interval '1 minute')::int AS minute,
-      count(*) FILTER(WHERE started_at>now()-interval '1 hour')::int AS hour,count(*)::int AS day
-      FROM receipt_attempts WHERE service='llm' AND origin='live' AND started_at>now()-interval '1 day'`;
-    if (!budget || used.minute>=budget.per_minute || used.hour>=budget.per_hour || used.day>=budget.per_day) return { articles:0,events:0 };
-    const scope = await getRecentContentScope({db:tx,fresh:true});
-    const articles = await tx`UPDATE articles SET processing_retry_at=now(),processing_queued_at=NULL
-      WHERE id=ANY(${scope.rows.map(r => r.id)}::text[]) AND processing_state='new'
-        AND processing_error ~ '^(extract: )?Budget for llm exhausted [(](minute|hour|day)[)]$' RETURNING id`;
-    const events = await tx`UPDATE event_job_deferrals SET retry_at=now(),updated_at=now()
-      WHERE reason ~ '^Budget for llm exhausted [(](minute|hour|day)[)]$' RETURNING singleton_key`;
-    await audit(actor,"content.capacity-wake","content:recent-processing","Capacity available after authorized temporary quota increase",
-      null,{ articles:articles.length,events:events.length },{ db:tx });
-    return { articles:articles.length,events:events.length };
-  });
-}
-
 async function start() {
   await setRecentContentPolicy(true,actor,"User requested newest-first processing of the latest 2000 news/heat materials published within 48 hours");
   let temporaryBudget = null;
@@ -81,7 +60,7 @@ async function start() {
     // This option is explicit: regular startups never grant additional paid requests.
     temporaryBudget = await activateTemporaryLlmBudget(actor,"User explicitly authorized 800 to 2000 rolling-24h requests for 24 hours; retain 20/min and 180/hour");
   }
-  const awakened = await wakeAvailableCapacity();
+  const awakened = await wakeLlmBudgetWaits();
   const reordered = await reprioritizeRecentContentJobs();
   const scope = await getRecentContentScope({fresh:true});
   const rows = await sql<{id:string}[]>`SELECT a.id FROM articles a
