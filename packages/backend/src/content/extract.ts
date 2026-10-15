@@ -15,6 +15,7 @@ import { onlyXArticleLink, xArticleText } from "../sources/x.ts";
 import { sanitizeBody, trimTrailingChrome } from "./sanitize.ts";
 import { contentHash, type XPostData } from "./materials.ts";
 import { markdownBody } from "./markdown.ts";
+import { advanceRecoveryExtractionRevision } from "../jobs/processing-recovery.ts";
 
 export interface ExtractedBody {
   html: string;
@@ -113,6 +114,7 @@ export async function extractArticleBody(articleId: string, allowJina = process.
       WHERE id = ${articleId} RETURNING revision`;
     await tx`INSERT INTO article_revisions (article_id, revision, content_hash, title, body_text)
              VALUES (${articleId}, ${r!.revision}, ${hash}, ${row.title}, ${got.text})`;
+    await advanceRecoveryExtractionRevision(articleId, a.revision, r!.revision, tx);
     return "ok";
   });
 }
@@ -184,6 +186,7 @@ async function extractXArticle(articleId: string, tweetId: string, revision: num
       WHERE id = ${articleId} RETURNING revision`;
     await tx`INSERT INTO article_revisions (article_id, revision, content_hash, title, body_text)
              VALUES (${articleId}, ${r!.revision}, ${hash}, ${title}, ${bodyText})`;
+    await advanceRecoveryExtractionRevision(articleId, revision, r!.revision, tx);
     if (birdReceiptId !== undefined) await completeReceipt(tx, birdReceiptId);
     return "ok";
   });

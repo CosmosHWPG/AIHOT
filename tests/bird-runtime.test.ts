@@ -1,10 +1,11 @@
 // Offline fixtures only: no browser extraction, X request or real credential is used.
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { birdRuntime, loadBirdSecrets, runBirdCommand, birdChildEnvironment, redactBirdResponse, classifyBirdFailure,
+  readBirdUserCredentials, BirdCredentialReadError,
   type BirdRuntime } from "@aihot/backend/providers/bird-runtime";
 import { normalizeBirdTweet, decodeBirdTweets, birdTweetArticle, parseBirdWhoami, sanitizeBirdPublicPayload } from "@aihot/backend/providers/bird-normalize";
 
@@ -63,6 +64,80 @@ test("missing paired credentials and mismatched package integrity stop before in
   await assert.rejects(loadBirdSecrets(runtime), /AUTH_TOKEN and CT0 are required/);
   process.env.BIRD_CLI_SHA256 = "0".repeat(64); assert.throws(() => birdRuntime(), /integrity/);
   assert.equal(classifyBirdFailure("HTTP 429 private echo").retryable, true);
+});
+test("only an idempotent local credential timeout or resource failure can retry once", async () => {
+  for (const reason of [{ killed: true, signal: "SIGTERM" }, { code: "ETIMEDOUT" }, { code: "EAGAIN" }, { code: "ENOMEM" }]) {
+    let calls = 0;
+    const result = await readBirdUserCredentials(async () => {
+      if (++calls === 1) throw Object.assign(new Error("private stdout must never escape"), reason);
+      return '\uFEFF' + JSON.stringify({ authToken: "offline_retry_auth", ct0: "offline_retry_csrf" });
+    });
+    assert.deepEqual(result, { authToken: "offline_retry_auth", ct0: "offline_retry_csrf" });
+    assert.equal(calls, 2);
+  }
+  let calls = 0;
+  await assert.rejects(readBirdUserCredentials(async () => {
+    calls++; throw Object.assign(new Error("offline_secret_in_message"), { killed: true, stdout: "offline_secret_in_stdout",
+      stderr: "offline_secret_in_stderr", cmd: "offline_secret_in_command", cause: new Error("offline_secret_in_cause") });
+  }), error => {
+    assert.ok(error instanceof BirdCredentialReadError); assert.equal(error.category, "timeout"); assert.equal(error.attempts, 2);
+    assert.match(error.message, /before Bird CLI/); assert.equal(error.status, null); assert.equal(Object.hasOwn(error, "cause"), false);
+    assert.doesNotMatch(String(error.stack) + JSON.stringify(error), /offline_secret/); return true;
+  });
+  assert.equal(calls, 2);
+});
+test("nontransient local credential errors expose only their safe class and never retry", async () => {
+  for (const [reason, category] of [
+    [{ code: "ENOENT" }, "executable-unavailable"], [{ code: "EACCES" }, "permission-denied"],
+    [{ code: "EPERM" }, "permission-denied"], [{ code: 7 }, "child-exit"],
+    [{ code: "ERR_CHILD_PROCESS_STDIO_MAXBUFFER", killed: true }, "output-limit"], [{ code: "unknown-secret-code" }, "local-read-failed"],
+  ] as const) {
+    let calls = 0;
+    await assert.rejects(readBirdUserCredentials(async () => {
+      calls++; throw Object.assign(new Error("offline_secret"), reason, { stdout: "offline_secret", stderr: "offline_secret" });
+    }), error => {
+      assert.ok(error instanceof BirdCredentialReadError); assert.equal(error.category, category); assert.equal(error.attempts, 1);
+      assert.doesNotMatch(String(error.stack) + JSON.stringify(error), /offline_secret|unknown-secret-code/); return true;
+    });
+    assert.equal(calls, 1);
+  }
+});
+test("credential output parsing cannot expose raw output or mistake invalid JSON for missing cookies", async () => {
+  for (const output of ['{"authToken":"offline_secret', "null", "[]", '"offline_secret"']) {
+    let calls = 0;
+    await assert.rejects(readBirdUserCredentials(async () => { calls++; return output; }), error => {
+      assert.ok(error instanceof BirdCredentialReadError); assert.equal(error.category, "invalid-output");
+      assert.doesNotMatch(String(error.stack) + JSON.stringify(error), /offline_secret/); return true;
+    });
+    assert.equal(calls, 1);
+  }
+  let calls = 0;
+  await assert.rejects(readBirdUserCredentials(async () => { calls++; return JSON.stringify({ authToken: "offline_auth" }); }), /AUTH_TOKEN and CT0 are required/);
+  assert.equal(calls, 1);
+});
+test("unclassified CLI exit keeps safe process evidence without retrying or leaking echoed cookies", async () => {
+  const runtime = fixture(`import{appendFileSync}from'node:fs';appendFileSync('cli-count.txt','1');process.stderr.write('unclassified '+process.env.AUTH_TOKEN+' '+process.env.CT0);process.exit(7);`);
+  const secrets = await loadBirdSecrets(runtime);
+  await assert.rejects(runBirdCommand(runtime, "read", ["123"], secrets), error => {
+    assert.equal((error as any).status, null); assert.equal((error as any).retryable, true);
+    assert.match((error as Error).message, /unclassified; CLI exit 7/);
+    assert.doesNotMatch(String((error as Error).stack) + JSON.stringify(error), /offline_auth_cookie|offline_csrf_cookie/); return true;
+  });
+  assert.equal(readFileSync(path.join(runtime.cwd, "cli-count.txt"), "utf8"), "1");
+});
+test("target visibility keywords retain uncertainty instead of manufacturing an HTTP 404", () => {
+  const unknown = classifyBirdFailure("Failed to fetch tweets: User @SpaceXAI not found or unavailable", { code: 1, signal: null });
+  assert.equal(unknown.status, null); assert.equal(unknown.retryable, false);
+  assert.match(unknown.message, /no HTTP status reported; CLI exit 1; cause not confirmed/);
+  const forbidden = classifyBirdFailure("HTTP 403 protected user", { code: 1, signal: null });
+  assert.equal(forbidden.status, null); assert.match(forbidden.message, /reported HTTP 403/);
+  assert.equal(classifyBirdFailure("HTTP 404 missing").status, 404);
+  assert.equal(classifyBirdFailure("HTTP 401 auth failure").status, 401);
+  assert.equal(classifyBirdFailure("HTTP 429 protected user").retryable, true);
+  const signal = classifyBirdFailure("unclassified", { code: null, signal: "SIGTERM" });
+  assert.match(signal.message, /CLI exit unknown; signal SIGTERM/);
+  const unsafe = classifyBirdFailure("unclassified", { code: NaN, signal: "offline_secret" as any });
+  assert.doesNotMatch(unsafe.message, /NaN|offline_secret/);
 });
 test("normalization retains Note Tweet, Article evidence, references and exact large IDs", () => {
   const note = normalizeBirdTweet({ ...raw(), text: "truncated", _raw: { note_tweet: { note_tweet_results: { result: { text: "Complete long Note Tweet" } } } } });

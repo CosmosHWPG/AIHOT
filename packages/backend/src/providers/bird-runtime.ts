@@ -19,6 +19,19 @@ export interface BirdRuntime {
 export class BirdConfigurationError extends ProviderRejectedError {
   constructor(message: string) { super(message, null, false); }
 }
+export const BIRD_CREDENTIAL_READ_TIMEOUT_MS = 15_000;
+export const BIRD_CREDENTIAL_READ_MAX_ATTEMPTS = 2;
+type CredentialReadFailure = "timeout" | "resource-unavailable" | "executable-unavailable" | "permission-denied"
+  | "output-limit" | "child-exit" | "invalid-output" | "local-read-failed";
+export class BirdCredentialReadError extends BirdConfigurationError {
+  readonly category: CredentialReadFailure;
+  readonly attempts: number;
+  readonly exitCode: number | null;
+  constructor(category: CredentialReadFailure, attempts: number, exitCode: number | null = null) {
+    super(`Unable to read Bird current-user credentials (${category}${exitCode === null ? "" : `; exit ${exitCode}`}; local attempts ${attempts}/${BIRD_CREDENTIAL_READ_MAX_ATTEMPTS}; before Bird CLI)`);
+    this.category = category; this.attempts = attempts; this.exitCode = exitCode;
+  }
+}
 
 const setting = (name: string) => credential("collectors", name);
 function systemEnvironment(): NodeJS.ProcessEnv {
@@ -73,28 +86,56 @@ export function birdRuntime(accountProfile?: string): BirdRuntime {
     maxBytes: bounded("BIRD_MAX_OUTPUT_BYTES", 8 * 1024 * 1024, 8 * 1024 * 1024), expectedUserId, expectedUsername };
 }
 
-export async function loadBirdSecrets(runtime: Pick<BirdRuntime, "credentialMode">): Promise<BirdSecrets> {
-  let authToken: string | undefined; let ct0: string | undefined;
-  if (runtime.credentialMode === "user-env") {
-    // Read the current user registry rather than an old host environment snapshot. stdout is private
-    // in-memory IPC only; neither the output nor child-process errors are forwarded to logging.
-    const script = "$ErrorActionPreference='Stop'; [Console]::OutputEncoding=[Text.Encoding]::UTF8; @{authToken=[Environment]::GetEnvironmentVariable('AUTH_TOKEN','User');ct0=[Environment]::GetEnvironmentVariable('CT0','User')} | ConvertTo-Json -Compress";
-    const powershell = path.join(process.env.SystemRoot ?? "C:\\Windows", "System32/WindowsPowerShell/v1.0/powershell.exe");
-    try {
-      const { stdout } = await execFileAsync(powershell, ["-NoProfile", "-NonInteractive", "-EncodedCommand", Buffer.from(script, "utf16le").toString("base64")],
-        { windowsHide: true, timeout: 5_000, maxBuffer: 64 * 1024, encoding: "utf8", env: systemEnvironment() });
-      const parsed = JSON.parse(stdout.replace(/^\uFEFF/, ""));
-      authToken = parsed.authToken; ct0 = parsed.ct0;
-    } catch { throw new BirdConfigurationError("Unable to read Bird current-user credentials"); }
-  } else {
-    authToken = setting("BIRD_AUTH_TOKEN") ?? process.env.AUTH_TOKEN;
-    ct0 = setting("BIRD_CT0") ?? process.env.CT0;
-  }
+function validateBirdSecrets(authToken: unknown, ct0: unknown): BirdSecrets {
   if (typeof authToken !== "string" || typeof ct0 !== "string" || !authToken.trim() || !ct0.trim()
     || authToken.length > 4096 || ct0.length > 4096 || /[\x00-\x20\x7F]/.test(authToken + ct0)) {
     throw new BirdConfigurationError("Bird AUTH_TOKEN and CT0 are required");
   }
   return { authToken, ct0 };
+}
+async function readWindowsUserCredentials(): Promise<string> {
+  // Private in-memory IPC: neither output nor child-process exceptions may enter logs or error causes.
+  const script = "$ErrorActionPreference='Stop'; [Console]::OutputEncoding=[Text.Encoding]::UTF8; @{authToken=[Environment]::GetEnvironmentVariable('AUTH_TOKEN','User');ct0=[Environment]::GetEnvironmentVariable('CT0','User')} | ConvertTo-Json -Compress";
+  const powershell = path.join(process.env.SystemRoot ?? "C:\\Windows", "System32/WindowsPowerShell/v1.0/powershell.exe");
+  const { stdout } = await execFileAsync(powershell, ["-NoProfile", "-NonInteractive", "-EncodedCommand", Buffer.from(script, "utf16le").toString("base64")],
+    { windowsHide: true, timeout: BIRD_CREDENTIAL_READ_TIMEOUT_MS, maxBuffer: 64 * 1024, encoding: "utf8", env: systemEnvironment() });
+  return stdout;
+}
+function credentialReadFailure(error: unknown, attempt: number): BirdCredentialReadError {
+  const details = error && typeof error === "object" ? error as { code?: unknown; killed?: unknown } : {};
+  const code = details.code;
+  const category: CredentialReadFailure = code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER" ? "output-limit"
+    : code === "ETIMEDOUT" || details.killed === true ? "timeout"
+    : code === "EAGAIN" || code === "ENOMEM" ? "resource-unavailable"
+    : code === "ENOENT" ? "executable-unavailable"
+    : code === "EACCES" || code === "EPERM" ? "permission-denied"
+    : typeof code === "number" ? "child-exit" : "local-read-failed";
+  // Never retain message, stdout, stderr, command or cause: execFile errors can contain Cookie strings.
+  return new BirdCredentialReadError(category, attempt, typeof code === "number" && Number.isSafeInteger(code) ? code : null);
+}
+/** Only the idempotent local registry read can retry; this never starts Bird or consumes a live attempt. */
+export async function readBirdUserCredentials(read: () => Promise<string> = readWindowsUserCredentials): Promise<BirdSecrets> {
+  for (let attempt = 1; attempt <= BIRD_CREDENTIAL_READ_MAX_ATTEMPTS; attempt++) {
+    let stdout: string;
+    try {
+      stdout = await read();
+    } catch (error) {
+      const failure = credentialReadFailure(error, attempt);
+      if (attempt < BIRD_CREDENTIAL_READ_MAX_ATTEMPTS && ["timeout", "resource-unavailable"].includes(failure.category)) continue;
+      throw failure;
+    }
+    let parsed: unknown;
+    try { parsed = JSON.parse(stdout.replace(/^\uFEFF/, "")); }
+    catch { throw new BirdCredentialReadError("invalid-output", attempt); }
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new BirdCredentialReadError("invalid-output", attempt);
+    const pair = parsed as { authToken?: unknown; ct0?: unknown };
+    return validateBirdSecrets(pair.authToken, pair.ct0);
+  }
+  throw new BirdCredentialReadError("local-read-failed", BIRD_CREDENTIAL_READ_MAX_ATTEMPTS);
+}
+export async function loadBirdSecrets(runtime: Pick<BirdRuntime, "credentialMode">): Promise<BirdSecrets> {
+  if (runtime.credentialMode === "user-env") return readBirdUserCredentials();
+  return validateBirdSecrets(setting("BIRD_AUTH_TOKEN") ?? process.env.AUTH_TOKEN, setting("BIRD_CT0") ?? process.env.CT0);
 }
 export function birdCredentialFingerprint(secrets: BirdSecrets): string {
   return createHash("sha256").update(secrets.authToken).update("\0").update(secrets.ct0).digest("hex");
@@ -106,15 +147,21 @@ export function birdChildEnvironment(runtime: BirdRuntime, secrets: BirdSecrets)
   if (runtime.proxyUrl) Object.assign(env, { HTTP_PROXY: runtime.proxyUrl, HTTPS_PROXY: runtime.proxyUrl, ALL_PROXY: runtime.proxyUrl });
   return env;
 }
-export function classifyBirdFailure(stderr: string): ProviderRejectedError {
+export function classifyBirdFailure(stderr: string, exit?: { code: number | null; signal: NodeJS.Signals | null }): ProviderRejectedError {
   const status = /HTTP\s+(\d{3})\b/i.exec(stderr)?.[1];
-  const code = status ? Number(status) : null;
-  if (code === 403 && /private|protected|suspended/i.test(stderr)) return new ProviderRejectedError("Bird target is unavailable", 404, false);
+  const code = status && Number(status) >= 100 && Number(status) <= 599 ? Number(status) : null;
+  const exitCode = exit && Number.isSafeInteger(exit.code) && Math.abs(exit.code!) <= 2 ** 32 ? exit.code : null;
+  const signal = exit?.signal && ["SIGTERM", "SIGKILL", "SIGINT", "SIGABRT", "SIGSEGV", "SIGBREAK"].includes(exit.signal) ? exit.signal : null;
+  const child = exit ? `; CLI exit ${exitCode === null ? "unknown" : exitCode}${signal ? `; signal ${signal}` : ""}` : "";
+  // Keyword-based visibility evidence is not an observed HTTP 404 or proof of permanent unavailability.
+  if (code === 403 && /private|protected|suspended/i.test(stderr)) {
+    return new ProviderRejectedError(`Bird target is unavailable (reported HTTP 403${child}; cause not confirmed)`, null, false);
+  }
   if (code !== null) return new ProviderRejectedError(`Bird HTTP ${code}`, code, code === 429 || code >= 500);
   if (/credentials|unauthorized|authentication/i.test(stderr)) return new ProviderRejectedError("Bird authentication failed", 401, false);
-  if (/suspended|not found|private|protected/i.test(stderr)) return new ProviderRejectedError("Bird target is unavailable", 404, false);
+  if (/suspended|not found|private|protected/i.test(stderr)) return new ProviderRejectedError(`Bird target is unavailable (no HTTP status reported${child}; cause not confirmed)`, null, false);
   if (/unknown option|unexpected|JSON/i.test(stderr)) return new ProviderRejectedError("Bird response or command is incompatible", null, false);
-  return new ProviderRejectedError("Bird command failed", null, true);
+  return new ProviderRejectedError(`Bird command failed (unclassified${child})`, null, true);
 }
 
 /** No shell and no credential arguments. A Node CLI does not create an uncontrolled child tree. */
@@ -137,10 +184,10 @@ export async function runBirdCommand(runtime: BirdRuntime, command: string, args
     child.stdout.on("data", (chunk: Buffer) => { outBytes += chunk.length; if (outBytes > runtime.maxBytes) stop(new Error("Bird JSON output exceeded its size limit")); else stdout.push(chunk); });
     child.stderr.on("data", (chunk: Buffer) => { errBytes += chunk.length; if (errBytes <= 256 * 1024) stderr.push(chunk); else stop(new Error("Bird diagnostic output exceeded its size limit")); });
     child.on("error", () => { failed = new BirdConfigurationError("Unable to launch the configured Bird CLI"); });
-    child.on("close", (code) => {
+    child.on("close", (code, exitSignal) => {
       clearTimeout(timer); signal?.removeEventListener("abort", abort);
       if (failed) reject(failed);
-      else if (code !== 0) reject(classifyBirdFailure(Buffer.concat(stderr).toString("utf8")));
+      else if (code !== 0) reject(classifyBirdFailure(Buffer.concat(stderr).toString("utf8").replaceAll(secrets.authToken, "[redacted]").replaceAll(secrets.ct0, "[redacted]"), { code, signal: exitSignal }));
       else resolve(Buffer.concat(stdout).toString("utf8"));
     });
     if (signal?.aborted) abort();

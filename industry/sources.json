@@ -13766,10 +13766,10 @@
     },
     {
       "id": "corescope-x-spacexai",
-      "name": "SpaceXAI · X",
+      "name": "SpaceXSI · X",
       "kind": "x_search",
       "config": {
-        "query": "from:SpaceXAI -filter:replies",
+        "query": "from:SpaceXSI -filter:replies",
         "searchType": "Latest",
         "provider": "xquik",
         "_aihot": {

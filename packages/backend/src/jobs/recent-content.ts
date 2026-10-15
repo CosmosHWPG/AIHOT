@@ -2,6 +2,8 @@
 // already analysed or blocked records still occupy their place in the newest 2,000 materials.
 import { audit } from "../audit.ts";
 import { sql, type Db } from "../db.ts";
+import { getAdmittedRecoveryMembers, getRecoveryAdmission, RECOVERY_PRIORITY } from "./processing-recovery.ts";
+import { storyReportCondition, listedCondition, evidenceCondition } from "../publication/scope.ts";
 
 export const RECENT_CONTENT_POLICY_KEY = "content.recent-processing";
 export const RECENT_CONTENT_WINDOW_HOURS = 48;
@@ -33,13 +35,14 @@ export interface RecentContentScope {
 
 type ReadOptions = { db?: Db; fresh?: boolean };
 type AdmissionReason = "disabled" | "admitted" | "missing" | "isolated" | "unknown-publication"
-  | "future-publication" | "outside-window" | "outside-latest-2000";
+  | "future-publication" | "outside-window" | "outside-latest-2000" | "fixed-recovery-batch";
 export interface RecentContentAdmission {
   policy: RecentContentPolicy;
   allowed: boolean;
   priority: number | null;
   rank: number | null;
   reason: AdmissionReason;
+  recoveryBatchId?: string;
 }
 
 let scopeCache: { signature: string; expiresAt: number; value: RecentContentScope } | null = null;
@@ -99,6 +102,39 @@ export async function getRecentContentScope(options: ReadOptions = {}): Promise<
   return loadScope(await getRecentContentPolicy(options.db), options);
 }
 
+/** Digest exceptions belong only to actual eligible editorial reports, never discussion/mentions. */
+export async function isStoryInProcessingScope(storyId: number, db: Db = sql): Promise<boolean> {
+  if (!(await getRecentContentPolicy(db)).enabled) return true;
+  const scope = await getRecentContentScope({ db });
+  const [normal] = await db`SELECT 1 FROM facts f JOIN fact_articles fa ON fa.fact_id=f.id
+    WHERE f.story_id=${storyId} AND fa.article_id=ANY(${scope.rows.map(r => r.id)}::text[]) LIMIT 1`;
+  if (normal) return true;
+  const recovery = (await getAdmittedRecoveryMembers(db)).filter(m => m.mode === 'editorial');
+  if (!recovery.length) return false;
+  const now = new Date();
+  const [report] = await db`SELECT 1 FROM facts f JOIN fact_articles fa ON fa.fact_id=f.id
+    JOIN publications p ON p.article_id=fa.article_id JOIN sources s ON s.id=p.source_id
+    WHERE f.story_id=${storyId} AND fa.article_id=ANY(${recovery.map(m => m.articleId)}::text[])
+      AND fa.role IN('primary','report') AND ${storyReportCondition(now)} AND ${listedCondition(now)} AND ${evidenceCondition()} LIMIT 1`;
+  return !!report;
+}
+
+/** Set-based producer filter, applied before a bounded queue scan so paused waits cannot starve it. */
+export async function getProcessingScopeTargets(db: Db = sql) {
+  const enabled = (await getRecentContentPolicy(db)).enabled;
+  if (!enabled) return { enabled, articleIds: [] as string[], storyIds: [] as number[] };
+  const normalIds = (await getRecentContentScope({ db })).rows.map(row => row.id);
+  const recovery = await getAdmittedRecoveryMembers(db);
+  const recoveryEditorial = recovery.filter(m => m.mode === 'editorial').map(m => m.articleId);
+  const now = new Date();
+  const stories = await db<{ story_id: number }[]>`SELECT DISTINCT f.story_id FROM facts f JOIN fact_articles fa ON fa.fact_id=f.id
+    LEFT JOIN publications p ON p.article_id=fa.article_id LEFT JOIN sources s ON s.id=p.source_id
+    WHERE f.story_id IS NOT NULL AND (fa.article_id=ANY(${normalIds}::text[])
+      OR (fa.article_id=ANY(${recoveryEditorial}::text[]) AND fa.role IN('primary','report')
+        AND ${storyReportCondition(now)} AND ${listedCondition(now)} AND ${evidenceCondition()}))`;
+  return { enabled, articleIds: [...new Set([...normalIds,...recovery.map(m => m.articleId)])], storyIds: stories.map(row => row.story_id) };
+}
+
 /** Producer and consumer share admission. Date and participation changes are never hidden by a scope cache. */
 export async function getRecentContentPriority(articleId: string, options: ReadOptions = {}): Promise<RecentContentAdmission> {
   const db = options.db ?? sql;
@@ -116,7 +152,12 @@ export async function getRecentContentPriority(articleId: string, options: ReadO
   if (article.participation_mode !== "editorial" && article.participation_mode !== "hot_signal") return result("isolated");
   if (!article.published_at) return result("unknown-publication");
   if (article.future) return result("future-publication");
-  if (!article.recent) return result("outside-window");
+  const outside = async (reason: "outside-window" | "outside-latest-2000") => {
+    const recovery = await getRecoveryAdmission(articleId, db);
+    return recovery ? { ...result(reason), reason: "fixed-recovery-batch" as const, allowed: true,
+      priority: recovery.priority, recoveryBatchId: recovery.batchId } : result(reason);
+  };
+  if (!article.recent) return outside("outside-window");
   let scope = await loadScope(policy, options);
   let ranked = scope.rows.find(row => row.id === articleId);
   // New collection can enter the front of the cached scope between reads. Refresh its admission,
@@ -126,7 +167,7 @@ export async function getRecentContentPriority(articleId: string, options: ReadO
     scope = await loadScope(policy, { ...options, fresh: true });
     ranked = scope.rows.find(row => row.id === articleId);
   }
-  return ranked ? result("admitted", ranked) : result("outside-latest-2000");
+  return ranked ? result("admitted", ranked) : outside("outside-latest-2000");
 }
 
 /** This changes only the dedicated policy; selection, publication and paid-service budgets are untouched. */
@@ -153,6 +194,9 @@ export async function reprioritizeRecentContentJobs(db: Db = sql): Promise<{ eli
   const policy = await getRecentContentPolicy(db);
   const scope = policy.enabled ? await getRecentContentScope({ db, fresh: true }) : null;
   const priorities = (scope?.rows ?? []).map(row => ({ id: row.id, priority: row.priority }));
+  if (policy.enabled) for (const member of await getAdmittedRecoveryMembers(db)) {
+    if (!priorities.some(row => row.id === member.articleId)) priorities.push({ id: member.articleId, priority: RECOVERY_PRIORITY });
+  }
   const rows = await db<{ admitted: boolean; changed: boolean }[]>`
     WITH ranked AS (
       SELECT * FROM jsonb_to_recordset(${db.json(priorities)}) AS r(id text,priority integer)

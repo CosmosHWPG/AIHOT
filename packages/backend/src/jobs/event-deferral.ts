@@ -2,6 +2,7 @@
 import { sql, type Db } from "../db.ts";
 import { BudgetExceededError, ReceiptBusyError } from "../providers/receipts.ts";
 import { enqueue, QUEUES, shutdownSignal, type JobData } from "./queue.ts";
+import { getProcessingScopeTargets, getRecentContentPriority, isStoryInProcessingScope } from "./recent-content.ts";
 
 type EventQueue = typeof QUEUES.group | typeof QUEUES.digest;
 type EventData = JobData[EventQueue];
@@ -121,14 +122,26 @@ async function recoverLegacyCapacity(): Promise<number> {
 export async function sweepDeferredEventJobs(): Promise<{ recovered: number; enqueued: number }> {
   const recovered = await recoverLegacyCapacity();
   const enqueued = await sql.begin(async tx => {
+    const scope = await getProcessingScopeTargets(tx);
     const rows = await tx<Deferral[]>`SELECT d.queue,d.singleton_key,d.data,d.retry_at,d.remaining_retries,d.reason,d.generation
       FROM event_job_deferrals d WHERE d.retry_at<=now()
+        AND (NOT ${scope.enabled}
+          OR (d.queue='events.group' AND (d.data->>'articleId'=ANY(${scope.articleIds}::text[])
+            OR EXISTS(SELECT 1 FROM articles a JOIN sources s ON s.id=a.source_id
+              WHERE a.id=d.data->>'articleId' AND s.participation_mode='isolated')))
+          OR (d.queue='events.digest' AND d.data->>'storyId'=ANY(${scope.storyIds.map(String)}::text[])))
         AND NOT EXISTS (SELECT 1 FROM pgboss.job j WHERE j.name=d.queue AND j.state IN ('created','retry','active')
           AND CASE WHEN d.queue='events.group' THEN j.data->>'articleId'=d.data->>'articleId' ELSE j.data->>'storyId'=d.data->>'storyId' END)
       ORDER BY d.retry_at,d.created_at LIMIT 100 FOR UPDATE OF d SKIP LOCKED`;
     let count = 0;
     for (const row of rows) {
       if (!validData(row.queue, row.data)) continue;
+      // Keep durable evidence and its exact retry budget/date while a permission is stopped or
+      // the ordinary rolling scope excludes it. A later natural admission can resume it.
+      if (row.queue === QUEUES.group) {
+        const admission = await getRecentContentPriority((row.data as JobData[typeof QUEUES.group]).articleId, { db: tx });
+        if (!admission.allowed && admission.reason !== 'isolated') continue;
+      } else if (!(await isStoryInProcessingScope((row.data as JobData[typeof QUEUES.digest]).storyId, tx))) continue;
       const job = row.queue === QUEUES.group
         ? await enqueue(QUEUES.group,row.data as JobData[typeof QUEUES.group],{ singletonKey: row.singleton_key,retryLimit: row.remaining_retries },tx)
         : await enqueue(QUEUES.digest,row.data as JobData[typeof QUEUES.digest],{ singletonKey: row.singleton_key,retryLimit: row.remaining_retries },tx);

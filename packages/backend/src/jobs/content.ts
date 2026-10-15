@@ -13,7 +13,8 @@ import { publishArticle } from "../publication/publish.ts";
 import { BudgetExceededError, ProviderRejectedError, ReceiptBusyError, ReceiptUnknownError } from "../providers/receipts.ts";
 import { ModelOutputError } from "../providers/llm.ts";
 import { enqueue, QUEUES, shutdownSignal, work } from "./queue.ts";
-import { getRecentContentPolicy, getRecentContentPriority, getRecentContentScope, reprioritizeRecentContentJobs } from "./recent-content.ts";
+import { getRecentContentPolicy, getRecentContentPriority, getRecentContentScope, isStoryInProcessingScope, reprioritizeRecentContentJobs } from "./recent-content.ts";
+import { activeRecoveryBatchStatuses, getAdmittedRecoveryMembers, RECOVERY_PRIORITY } from "./processing-recovery.ts";
 
 /** Minutes to wait after the n-th failed attempt; one more failure after the last ends in "failed". */
 const RETRY_MINUTES = [5, 10, 20, 40, 60, 120, 240, 360];
@@ -281,6 +282,7 @@ export async function registerExtractionJobs(boss: PgBoss) {
  * a lost job, a retry that came due). Articles already queued or running are left alone.
  */
 export async function sweepUnprocessed(): Promise<{ enqueued: number }> {
+  const recovery = await sweepRecoveryBatches();
   const policy = await getRecentContentPolicy();
   if (policy.enabled) {
     await reprioritizeRecentContentJobs();
@@ -296,7 +298,7 @@ export async function sweepUnprocessed(): Promise<{ enqueued: number }> {
       ORDER BY a.published_at DESC,a.id DESC LIMIT 500`;
     let enqueued = 0;
     for (const row of rows) if (await queueProcessing(row.id)) enqueued++;
-    return { enqueued };
+    return { enqueued: enqueued + recovery.enqueued };
   }
   const rows = await sql<{ id: string }[]>`
     SELECT id FROM articles
@@ -305,7 +307,44 @@ export async function sweepUnprocessed(): Promise<{ enqueued: number }> {
       AND (processing_queued_at IS NULL OR processing_queued_at < now() - ${QUEUED_STALE}::interval)
     ORDER BY discovered_at DESC LIMIT 500`;
   for (const r of rows) await queueProcessing(r.id);
-  return { enqueued: rows.length };
+  return { enqueued: rows.length + recovery.enqueued };
+}
+
+/** The existing worker's safety net also advances the fixed exception after a restart/lost job. */
+export async function sweepRecoveryBatches(): Promise<{ enqueued: number }> {
+  const members = await getAdmittedRecoveryMembers();
+  if (!members.length) return { enqueued: 0 };
+  const rows = await sql<{ id: string }[]>`SELECT a.id FROM articles a
+    WHERE a.id=ANY(${members.map(m => m.articleId)}::text[]) AND a.processing_state='new'
+      AND (a.processing_retry_at IS NULL OR a.processing_retry_at<=now())
+      AND (a.processing_queued_at IS NULL OR a.processing_queued_at<now()-${QUEUED_STALE}::interval)
+      AND NOT EXISTS(SELECT 1 FROM pgboss.job j WHERE j.name IN('content.analyze','content.extract-body','events.group')
+        AND j.state IN('created','retry','active') AND j.data->>'articleId'=a.id)
+      AND NOT EXISTS(SELECT 1 FROM event_job_deferrals d WHERE d.queue='events.group' AND d.data->>'articleId'=a.id)
+    ORDER BY a.published_at DESC,a.id DESC LIMIT 118`;
+  let enqueued = 0;
+  for (const row of rows) if (await queueProcessing(row.id)) enqueued++;
+  // Settled analysis is not the end of the chain: recover only a missing handoff, never a terminal
+  // failed event job, an unknown receipt, a capacity deferral or an already running task.
+  const digestHandoffs = new Set<number>();
+  for (const status of await activeRecoveryBatchStatuses()) {
+    for (const member of status.members) {
+      if (member.admission === 'admitted') for (const story of member.stories) {
+        if (story.missingHandoff) digestHandoffs.add(story.storyId);
+      }
+      if (member.admission !== 'admitted' || !['analyzed','skipped','blocked'].includes(member.state)
+        || !member.needsEvent || member.groupingSettled || member.activeJobs || member.deferrals
+        || member.unknownReceipts || member.latestGroupState === 'failed') continue;
+      const admission = await getRecentContentPriority(member.articleId);
+      if (!admission.allowed) continue;
+      const data = member.mode === 'hot_signal' ? { articleId: member.articleId, signalOnly: true } : { articleId: member.articleId };
+      if (await enqueue(QUEUES.group, data, { singletonKey: member.articleId, priority: admission.priority ?? RECOVERY_PRIORITY })) enqueued++;
+    }
+  }
+  for (const storyId of digestHandoffs) if (await isStoryInProcessingScope(storyId)) {
+    if (await enqueue(QUEUES.digest, { storyId }, { singletonKey: `story:${storyId}`, priority: RECOVERY_PRIORITY })) enqueued++;
+  }
+  return { enqueued };
 }
 
 /** The receipts of an article's processing: an unknown outcome on any of them stops the article. */
