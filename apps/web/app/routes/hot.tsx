@@ -237,8 +237,8 @@ export default function HotPage() {
             </span>
             实时热度
           </div>
-          <h1 className="mt-1.5 text-[24px] font-bold leading-[1.3] tracking-[-0.01em] text-ink lg:text-[26px]">{withSubject("热点榜")}</h1>
-          <p className="mt-1.5 text-[13.5px] text-ink-3">过去 {hot.windowHours} 小时，{withSubject("圈")}讨论最多的 {hot.entries.length || 10} 件事</p>
+          <h1 className="mt-1.5 text-[24px] font-bold leading-[1.3] tracking-[-0.01em] text-ink lg:text-[26px]">事件热点榜</h1>
+          <p className="mt-1.5 text-[13.5px] text-ink-3">过去 {hot.windowHours} 小时，监测来源共同关注的核心网与 AI 事件</p>
         </div>
         {hot.computedAt && (
           <p className="text-[12px] text-ink-4">

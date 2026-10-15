@@ -9,19 +9,19 @@ import { markRead, useReadSet } from "../../lib/local-state";
 import { DayHeader, TimelineSlot } from "./Timeline";
 import { FeedItem } from "./FeedItem";
 
-export function DayList({ items, todayCount = null, showTags = true, animate = false }: { items: FeedItemSummary[]; todayCount?: number | null; showTags?: boolean; animate?: boolean }) {
+export function DayList({ items, todayCount = null, showTags = true, animate = false, timeBy = "timeline" }: { items: FeedItemSummary[]; todayCount?: number | null; showTags?: boolean; animate?: boolean; timeBy?: "timeline" | "published" }) {
   const readSet = useReadSet();
   const today = beijingDate(Date.now());
   const days = useMemo(() => {
     const out: Array<{ day: string; items: FeedItemSummary[] }> = [];
     for (const it of items) {
-      const d = beijingDate(it.timelineAt);
+      const d = beijingDate(timeBy === "published" ? it.publishedAt ?? it.timelineAt : it.timelineAt);
       const last = out[out.length - 1];
       if (last && last.day === d) last.items.push(it);
       else out.push({ day: d, items: [it] });
     }
     return out;
-  }, [items]);
+  }, [items, timeBy]);
   let order = 0;
   return (
     <div>
@@ -30,7 +30,7 @@ export function DayList({ items, todayCount = null, showTags = true, animate = f
           <DayHeader day={day} today={today} count={day === today ? todayCount : null} />
           <ol className="lg:pt-1">
             {list.map((it) => (
-              <TimelineSlot key={it.id} at={it.timelineAt} fresh={animate} delay={animate ? Math.min(order++, 12) * 25 : 0}>
+              <TimelineSlot key={it.id} at={timeBy === "published" ? it.publishedAt ?? it.timelineAt : it.timelineAt} fresh={animate} delay={animate ? Math.min(order++, 12) * 25 : 0}>
                 <FeedItem item={it} read={readSet.has(it.id)} onOpen={markRead} showTags={showTags} />
               </TimelineSlot>
             ))}

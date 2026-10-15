@@ -1,0 +1,830 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-12T11:03:30.923182+00:00",
+  "sources": [
+    {
+      "id": "corescope-mp-stepfun",
+      "name": "公众号：阶跃星辰",
+      "kind": "mp_account",
+      "config": {
+        "transport": "wx_cache",
+        "account": "gh_03a8689b9133",
+        "biz": "MzkyNTYxNzg5Mg==",
+        "cacheDirectoryEnv": "WX_CACHE_DIRECTORY",
+        "lookbackDays": 31,
+        "limit": 2,
+        "fetchPublicContent": false
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:stepfun",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-aiwarts",
+      "name": "公众号：卡尔的AI沃茨",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=Mzg3MTk3NzYzNw%3D%3D&mid=2247512289&idx=1&sn=0c7b6141051a21dd2c1eabe374fd0686",
+        "biz": "Mzg3MTk3NzYzNw==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:aiwarts",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-openbmb",
+      "name": "公众号：面壁智能",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=Mzg3Mzg2MTg2NQ%3D%3D&mid=2247499394&idx=1&sn=b318967c9876710d88d878b1c571da58",
+        "biz": "Mzg3Mzg2MTg2NQ==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:openbmb",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-kling",
+      "name": "公众号：可灵AI",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzU5NTkwNDU2OA%3D%3D&mid=2247497164&idx=1&sn=c0c05d3e0aab71762315517b29b31dbb",
+        "biz": "MzU5NTkwNDU2OA==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:kling",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-kunlun",
+      "name": "公众号：昆仑万维",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzI1MzE1NDc3Mg%3D%3D&mid=2247510479&idx=1&sn=f8aae9d05f100c568356428560773c3c",
+        "biz": "MzI1MzE1NDc3Mg==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:kunlun",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-baidu",
+      "name": "公众号：百度智能云",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzA5NTQ5MzE5OQ%3D%3D&mid=2653160731&idx=2&sn=6d5b9d0b28aeeb97488d6362c2e37cba",
+        "biz": "MzA5NTQ5MzE5OQ==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:baidu",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-xiaohongshu",
+      "name": "公众号：小红书技术",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=Mzg4OTc2MzczNg%3D%3D&mid=2247496567&idx=1&sn=707a1262ada97313ce809fadbed18c69",
+        "biz": "Mzg4OTc2MzczNg==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:xiaohongshu",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-tencent",
+      "name": "公众号：腾讯元宝",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=Mzk0NzY4MjM5MA%3D%3D&mid=2247526785&idx=1&sn=1554249f247544530c445666b9f4a4f6",
+        "biz": "Mzk0NzY4MjM5MA==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:tencent",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-shengshu",
+      "name": "公众号：生数科技",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkzMDQ5NTQwMQ%3D%3D&mid=2247489335&idx=1&sn=880949d2257914e1830aa6c46762d189",
+        "biz": "MzkzMDQ5NTQwMQ==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:shengshu",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-volcengine",
+      "name": "公众号：火山引擎",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzI0NzU1NzI5NQ%3D%3D&mid=2247544768&idx=1&sn=5ab489c85e0812a9131e1ac8f6701ab5",
+        "biz": "MzI0NzU1NzI5NQ==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:volcengine",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-deepseek",
+      "name": "公众号：DeepSeek",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=Mzk0OTYwNzc3NQ%3D%3D&mid=2247485745&idx=1&sn=ef3bc11042fc329e89bc66a8938e8b2c",
+        "biz": "Mzk0OTYwNzc3NQ==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:deepseek",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号",
+        "刷新核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-doubao",
+      "name": "公众号：豆包",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkzMTY2MzMzMQ%3D%3D&mid=2247486534&idx=1&sn=b8c333bd431a86419d3f79bce4ebf2f7",
+        "biz": "MzkzMTY2MzMzMQ==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:bytedance",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号",
+        "刷新核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-tencent-hunyuan",
+      "name": "公众号：腾讯混元",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkwODU2OTQyNQ%3D%3D&mid=2247498145&idx=1&sn=6968b330e01b1f306db418dc19ae4843",
+        "biz": "MzkwODU2OTQyNQ==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:tencent",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号",
+        "刷新核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-zhipu",
+      "name": "公众号：智谱",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkyMzI3NzQ0Mg%3D%3D&mid=2247493980&idx=1&sn=995ae194e71d723b6110fb8c621e618c",
+        "biz": "MzkyMzI3NzQ0Mg==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "mp-biz:MzkyMzI3NzQ0Mg==",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ]
+    },
+    {
+      "id": "corescope-mp-jd-joyai",
+      "name": "公众号：京东JoyAI",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzU0MjU0MDMzMw%3D%3D&mid=2247487258&idx=1&sn=744e8842e6bccdc2821e275bc80dda32",
+        "biz": "MzU0MjU0MDMzMw==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "mp-biz:MzU0MjU0MDMzMw==",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ]
+    },
+    {
+      "id": "corescope-mp-xiaomi-mimo",
+      "name": "公众号：小米 MiMo",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=Mzk3NTkxMTM2NA%3D%3D&mid=2247484810&idx=1&sn=d4107cecaf17c3e234daa2c3d782ee03",
+        "biz": "Mzk3NTkxMTM2NA==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "mp-biz:Mzk3NTkxMTM2NA==",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ]
+    },
+    {
+      "id": "corescope-mp-ant-ling",
+      "name": "公众号：蚂蚁百灵",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkyODk2MDQwNw%3D%3D&mid=2247488073&idx=1&sn=1deff0f84dce1931113975e212a91644",
+        "biz": "MzkyODk2MDQwNw==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "mp-biz:MzkyODk2MDQwNw==",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ]
+    },
+    {
+      "id": "corescope-mp-qwen-app",
+      "name": "公众号：千问APP",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzYzNDE5MDEwMQ%3D%3D&mid=2247489149&idx=1&sn=26d7fefe24bfb18efa4582467313b1eb",
+        "biz": "MzYzNDE5MDEwMQ==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "mp-biz:MzYzNDE5MDEwMQ==",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ]
+    }
+  ],
+  "verifications": {
+    "corescope-mp-stepfun": {
+      "status": "verified",
+      "scope": "exact biz and cache account verified read-only",
+      "checkedAt": "2026-10-12T10:09:43.546Z",
+      "biz": "MzkyNTYxNzg5Mg==",
+      "evidencePage": "https://aihot.news/item/bp9y9z4wadhjnjakqk678vx5y",
+      "publicArticleRead": "verification page; not body evidence",
+      "paidRuntimeAcceptance": "read-only cache passed; newest cached article remains 2026-09-20",
+      "cache": {
+        "account": "阶跃StepFun",
+        "accountUsername": "gh_03a8689b9133",
+        "bizSet": [
+          "MzkyNTYxNzg5Mg=="
+        ],
+        "sameAsOnlineStepFun": true,
+        "candidates": 2,
+        "cacheUpdatedAt": "2026-10-11T20:30:30.287Z",
+        "latestMessageAt": "2026-09-20T02:02:28.000Z",
+        "newestPublishedAt": "2026-09-20T02:00:00.000Z",
+        "stale": false
+      },
+      "runtime": {
+        "checkedAt": "2026-10-12T11:23:18.418Z",
+        "result": {
+          "sourceId": "corescope-mp-stepfun",
+          "status": "ok",
+          "found": 2,
+          "created": 0,
+          "revised": 0,
+          "stale": false
+        }
+      }
+    },
+    "corescope-mp-aiwarts": {
+      "status": "verified",
+      "scope": "public WeChat biz identity and stub-tested official url-selector contract; paid runtime pending local key",
+      "checkedAt": "2026-10-12T10:09:43.546Z",
+      "biz": "Mzg3MTk3NzYzNw==",
+      "evidencePage": "https://aihot.news/item/ihvcxpkpxmx88uanqtrout0z7",
+      "publicArticleRead": "verification page; not body evidence",
+      "paidRuntimeAcceptance": "actual Dajiala history/body collection passed",
+      "runtime": {
+        "checkedAt": "2026-10-12T11:23:18.418Z",
+        "result": {
+          "sourceId": "corescope-mp-aiwarts",
+          "status": "ok",
+          "found": 10,
+          "created": 2,
+          "reused": true
+        }
+      }
+    },
+    "corescope-mp-openbmb": {
+      "status": "verified",
+      "scope": "public WeChat biz identity and stub-tested official url-selector contract; paid runtime pending local key",
+      "checkedAt": "2026-10-12T10:09:43.546Z",
+      "biz": "Mzg3Mzg2MTg2NQ==",
+      "evidencePage": "https://aihot.news/item/ovyp5n28as6akb9fxl2s19vqn",
+      "publicArticleRead": "verification page; not body evidence",
+      "paidRuntimeAcceptance": "actual Dajiala history/body collection passed",
+      "runtime": {
+        "checkedAt": "2026-10-12T11:23:18.418Z",
+        "result": {
+          "sourceId": "corescope-mp-openbmb",
+          "status": "ok",
+          "found": 11,
+          "created": 2,
+          "reused": true
+        }
+      }
+    },
+    "corescope-mp-kling": {
+      "status": "verified",
+      "scope": "public WeChat biz identity and stub-tested official url-selector contract; paid runtime pending local key",
+      "checkedAt": "2026-10-12T10:09:43.546Z",
+      "biz": "MzU5NTkwNDU2OA==",
+      "evidencePage": "https://aihot.news/item/dnbkdug9n0e460z1bp8ltvsgx",
+      "publicArticleRead": "verification page; not body evidence",
+      "paidRuntimeAcceptance": "actual Dajiala history/body collection passed",
+      "runtime": {
+        "checkedAt": "2026-10-12T11:23:18.418Z",
+        "result": {
+          "sourceId": "corescope-mp-kling",
+          "status": "ok",
+          "found": 10,
+          "created": 2,
+          "reused": true
+        }
+      }
+    },
+    "corescope-mp-kunlun": {
+      "status": "verified",
+      "scope": "public WeChat biz identity and stub-tested official url-selector contract; paid runtime pending local key",
+      "checkedAt": "2026-10-12T10:09:43.546Z",
+      "biz": "MzI1MzE1NDc3Mg==",
+      "evidencePage": "https://aihot.news/item/yemcevpw8dc45i6v8dh5by0fm",
+      "publicArticleRead": "verification page; not body evidence",
+      "paidRuntimeAcceptance": "actual Dajiala history/body collection passed",
+      "runtime": {
+        "checkedAt": "2026-10-12T11:23:18.418Z",
+        "result": {
+          "sourceId": "corescope-mp-kunlun",
+          "status": "ok",
+          "found": 12,
+          "created": 1,
+          "reused": false
+        }
+      }
+    },
+    "corescope-mp-baidu": {
+      "status": "verified",
+      "scope": "public WeChat biz identity and stub-tested official url-selector contract; paid runtime pending local key",
+      "checkedAt": "2026-10-12T10:09:43.546Z",
+      "biz": "MzA5NTQ5MzE5OQ==",
+      "evidencePage": "https://aihot.news/item/g5lo11oqtmwi96x0fohc05pad",
+      "publicArticleRead": "verification page; not body evidence",
+      "paidRuntimeAcceptance": "actual Dajiala history/body collection passed",
+      "runtime": {
+        "checkedAt": "2026-10-12T11:23:18.418Z",
+        "result": {
+          "sourceId": "corescope-mp-baidu",
+          "status": "ok",
+          "found": 22,
+          "created": 2,
+          "reused": false
+        }
+      }
+    },
+    "corescope-mp-xiaohongshu": {
+      "status": "verified",
+      "scope": "public WeChat biz identity and stub-tested official url-selector contract; paid runtime pending local key",
+      "checkedAt": "2026-10-12T10:09:43.546Z",
+      "biz": "Mzg4OTc2MzczNg==",
+      "evidencePage": "https://aihot.news/item/zw0uyvsom43voc1dtcbjnky2x",
+      "publicArticleRead": "verification page; not body evidence",
+      "paidRuntimeAcceptance": "actual Dajiala history/body collection passed",
+      "runtime": {
+        "checkedAt": "2026-10-12T11:23:18.418Z",
+        "result": {
+          "sourceId": "corescope-mp-xiaohongshu",
+          "status": "ok",
+          "found": 10,
+          "created": 1,
+          "reused": false
+        }
+      }
+    },
+    "corescope-mp-tencent": {
+      "status": "verified",
+      "scope": "public WeChat biz identity and stub-tested official url-selector contract; paid runtime pending local key",
+      "checkedAt": "2026-10-12T10:09:43.546Z",
+      "biz": "Mzk0NzY4MjM5MA==",
+      "evidencePage": "https://aihot.news/item/lc7saixyhgtwx3nwll5nguh0l",
+      "publicArticleRead": "verification page; not body evidence",
+      "paidRuntimeAcceptance": "actual Dajiala history/body collection passed",
+      "runtime": {
+        "checkedAt": "2026-10-12T11:23:18.418Z",
+        "result": {
+          "sourceId": "corescope-mp-tencent",
+          "status": "ok",
+          "found": 10,
+          "created": 2,
+          "reused": false
+        }
+      }
+    },
+    "corescope-mp-shengshu": {
+      "status": "verified",
+      "scope": "public WeChat biz identity and stub-tested official url-selector contract; paid runtime pending local key",
+      "checkedAt": "2026-10-12T10:09:43.546Z",
+      "biz": "MzkzMDQ5NTQwMQ==",
+      "evidencePage": "https://aihot.news/item/vj98inkas7c7vvf9oy94n3hn4",
+      "publicArticleRead": "verification page; not body evidence",
+      "paidRuntimeAcceptance": "actual Dajiala history/body collection passed",
+      "runtime": {
+        "checkedAt": "2026-10-12T11:23:18.418Z",
+        "result": {
+          "sourceId": "corescope-mp-shengshu",
+          "status": "ok",
+          "found": 11,
+          "created": 1,
+          "reused": false
+        }
+      }
+    },
+    "corescope-mp-volcengine": {
+      "status": "verified",
+      "scope": "public WeChat biz identity and stub-tested official url-selector contract; paid runtime pending local key",
+      "checkedAt": "2026-10-12T10:09:43.546Z",
+      "biz": "MzI0NzU1NzI5NQ==",
+      "evidencePage": "https://aihot.news/item/eufdf6s0iryhs9qbt2hn1zicy",
+      "publicArticleRead": "verification page; not body evidence",
+      "paidRuntimeAcceptance": "actual Dajiala history/body collection passed",
+      "runtime": {
+        "checkedAt": "2026-10-12T11:23:18.418Z",
+        "result": {
+          "sourceId": "corescope-mp-volcengine",
+          "status": "ok",
+          "found": 10,
+          "created": 1,
+          "reused": false
+        }
+      }
+    },
+    "corescope-mp-deepseek": {
+      "status": "verified",
+      "checkedAt": "2026-10-13T11:49:40.1913621Z",
+      "scope": "The prior AIHOT public API item and current public item page attribute this exact WeChat biz URL to this named publisher account. This does not verify WeChat certification ownership or reveal the original AIHOT collector settings.",
+      "biz": "Mzk0OTYwNzc3NQ==",
+      "evidencePage": "https://aihot.news/items/cmsdu3h2d015drofzvgy69u7x",
+      "articleUrl": "https://mp.weixin.qq.com/s?__biz=Mzk0OTYwNzc3NQ%3D%3D&mid=2247485745&idx=1&sn=ef3bc11042fc329e89bc66a8938e8b2c",
+      "originalUrlConfirmed": true,
+      "certificationOwnershipConfirmed": false,
+      "paidRuntimeAcceptance": "separate bounded Dajiala check"
+    },
+    "corescope-mp-doubao": {
+      "status": "verified",
+      "checkedAt": "2026-10-13T11:49:40.1913621Z",
+      "scope": "The prior AIHOT public API item and current public item page attribute this exact WeChat biz URL to this named publisher account. This does not verify WeChat certification ownership or reveal the original AIHOT collector settings.",
+      "biz": "MzkzMTY2MzMzMQ==",
+      "evidencePage": "https://aihot.news/items/cmsdu3g1o014crofzfheavynk",
+      "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkzMTY2MzMzMQ%3D%3D&mid=2247486534&idx=1&sn=b8c333bd431a86419d3f79bce4ebf2f7",
+      "originalUrlConfirmed": true,
+      "certificationOwnershipConfirmed": false,
+      "paidRuntimeAcceptance": "separate bounded Dajiala check"
+    },
+    "corescope-mp-tencent-hunyuan": {
+      "status": "verified",
+      "checkedAt": "2026-10-13T11:49:40.1913621Z",
+      "scope": "The prior AIHOT public API item and current public item page attribute this exact WeChat biz URL to this named publisher account. This does not verify WeChat certification ownership or reveal the original AIHOT collector settings.",
+      "biz": "MzkwODU2OTQyNQ==",
+      "evidencePage": "https://aihot.news/items/cmsdu2uhb013jrofz7ggai8af",
+      "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkwODU2OTQyNQ%3D%3D&mid=2247498145&idx=1&sn=6968b330e01b1f306db418dc19ae4843",
+      "originalUrlConfirmed": true,
+      "certificationOwnershipConfirmed": false,
+      "paidRuntimeAcceptance": "separate bounded Dajiala check"
+    },
+    "corescope-mp-zhipu": {
+      "status": "verified",
+      "checkedAt": "2026-10-15T07:38:49.654812+00:00",
+      "scope": "public exact MP account identity and existing adapter contract; paid live collection is pending root execution",
+      "transport": "read-only public AIHOT /items/ source-link proof",
+      "httpStatus": 200,
+      "evidenceUrl": "https://aihot.news/items/cmsdu107700txrofzpix9er1c",
+      "originalArticleUrl": "https://mp.weixin.qq.com/s?__biz=MzkyMzI3NzQ0Mg%3D%3D&mid=2247493980&idx=1&sn=995ae194e71d723b6110fb8c621e618c",
+      "biz": "MzkyMzI3NzQ0Mg==",
+      "ghid": null,
+      "paidRequestsMade": 0,
+      "liveCollectionAccepted": false,
+      "reason": "Source-link __biz and full public article URL match; current catalogue and verified wx_cache public article samples contain no matching biz."
+    },
+    "corescope-mp-jd-joyai": {
+      "status": "verified",
+      "checkedAt": "2026-10-15T07:38:49.654812+00:00",
+      "scope": "public exact MP account identity and existing adapter contract; paid live collection is pending root execution",
+      "transport": "read-only public AIHOT /items/ source-link proof",
+      "httpStatus": 200,
+      "evidenceUrl": "https://aihot.news/items/cmsdu3i8x016nrofzdr8ow9k5",
+      "originalArticleUrl": "https://mp.weixin.qq.com/s?__biz=MzU0MjU0MDMzMw%3D%3D&mid=2247487258&idx=1&sn=744e8842e6bccdc2821e275bc80dda32",
+      "biz": "MzU0MjU0MDMzMw==",
+      "ghid": null,
+      "paidRequestsMade": 0,
+      "liveCollectionAccepted": false,
+      "reason": "Source-link __biz and full public article URL match; current catalogue and verified wx_cache public article samples contain no matching biz."
+    },
+    "corescope-mp-xiaomi-mimo": {
+      "status": "verified",
+      "checkedAt": "2026-10-15T07:38:49.654812+00:00",
+      "scope": "public exact MP account identity and existing adapter contract; paid live collection is pending root execution",
+      "transport": "read-only public AIHOT /items/ source-link proof",
+      "httpStatus": 200,
+      "evidenceUrl": "https://aihot.news/items/cmsdu2j0400yhrofzwh7kgjpj",
+      "originalArticleUrl": "https://mp.weixin.qq.com/s?__biz=Mzk3NTkxMTM2NA%3D%3D&mid=2247484810&idx=1&sn=d4107cecaf17c3e234daa2c3d782ee03",
+      "biz": "Mzk3NTkxMTM2NA==",
+      "ghid": null,
+      "paidRequestsMade": 0,
+      "liveCollectionAccepted": false,
+      "reason": "Source-link __biz and full public article URL match; current catalogue and verified wx_cache public article samples contain no matching biz."
+    },
+    "corescope-mp-ant-ling": {
+      "status": "verified",
+      "checkedAt": "2026-10-15T07:38:49.654812+00:00",
+      "scope": "public exact MP account identity and existing adapter contract; paid live collection is pending root execution",
+      "transport": "read-only public AIHOT /items/ source-link proof",
+      "httpStatus": 200,
+      "evidenceUrl": "https://aihot.news/items/hie2iw214agnrwu3mxy3t79af",
+      "originalArticleUrl": "https://mp.weixin.qq.com/s?__biz=MzkyODk2MDQwNw%3D%3D&mid=2247488073&idx=1&sn=1deff0f84dce1931113975e212a91644",
+      "biz": "MzkyODk2MDQwNw==",
+      "ghid": null,
+      "paidRequestsMade": 0,
+      "liveCollectionAccepted": false,
+      "reason": "Source-link __biz and full public article URL match; current catalogue and verified wx_cache public article samples contain no matching biz."
+    },
+    "corescope-mp-qwen-app": {
+      "status": "verified",
+      "checkedAt": "2026-10-15T07:38:49.654812+00:00",
+      "scope": "public exact MP account identity and existing adapter contract; paid live collection is pending root execution",
+      "transport": "read-only public AIHOT /items/ source-link proof",
+      "httpStatus": 200,
+      "evidenceUrl": "https://aihot.news/items/bnwd1psqg66c268n4i1mal2pi",
+      "originalArticleUrl": "https://mp.weixin.qq.com/s?__biz=MzYzNDE5MDEwMQ%3D%3D&mid=2247489149&idx=1&sn=26d7fefe24bfb18efa4582467313b1eb",
+      "biz": "MzYzNDE5MDEwMQ==",
+      "ghid": null,
+      "paidRequestsMade": 0,
+      "liveCollectionAccepted": false,
+      "reason": "Source-link __biz and full public article URL match; current catalogue and verified wx_cache public article samples contain no matching biz."
+    }
+  },
+  "aliases": [],
+  "pending": [],
+  "coverage": [
+    {
+      "observedIdentity": "公众号：阶跃星辰",
+      "sourceId": "corescope-mp-stepfun",
+      "status": "cache_connected"
+    },
+    {
+      "observedIdentity": "公众号：卡尔的AI沃茨",
+      "sourceId": "corescope-mp-aiwarts",
+      "status": "configured_awaiting_local_dajiala_key"
+    },
+    {
+      "observedIdentity": "公众号：面壁智能",
+      "sourceId": "corescope-mp-openbmb",
+      "status": "configured_awaiting_local_dajiala_key"
+    },
+    {
+      "observedIdentity": "公众号：可灵AI",
+      "sourceId": "corescope-mp-kling",
+      "status": "configured_awaiting_local_dajiala_key"
+    },
+    {
+      "observedIdentity": "公众号：昆仑万维",
+      "sourceId": "corescope-mp-kunlun",
+      "status": "configured_awaiting_local_dajiala_key"
+    },
+    {
+      "observedIdentity": "公众号：百度智能云",
+      "sourceId": "corescope-mp-baidu",
+      "status": "configured_awaiting_local_dajiala_key"
+    },
+    {
+      "observedIdentity": "公众号：小红书技术",
+      "sourceId": "corescope-mp-xiaohongshu",
+      "status": "configured_awaiting_local_dajiala_key"
+    },
+    {
+      "observedIdentity": "公众号：腾讯元宝",
+      "sourceId": "corescope-mp-tencent",
+      "status": "configured_awaiting_local_dajiala_key"
+    },
+    {
+      "observedIdentity": "公众号：生数科技",
+      "sourceId": "corescope-mp-shengshu",
+      "status": "configured_awaiting_local_dajiala_key"
+    },
+    {
+      "observedIdentity": "公众号：火山引擎",
+      "sourceId": "corescope-mp-volcengine",
+      "status": "configured_awaiting_local_dajiala_key"
+    }
+  ],
+  "refreshReviews": [
+    {
+      "observedAt": "2026-10-13T11:49:40.1913621Z",
+      "sourceIds": [
+        "corescope-mp-deepseek",
+        "corescope-mp-doubao",
+        "corescope-mp-tencent-hunyuan"
+      ],
+      "evidence": "docs/corescope-source-refresh-20261013.json"
+    },
+    {
+      "observedAt": "2026-10-15T06:56:19.356Z",
+      "implementedAt": "2026-10-15T07:43:17.013Z",
+      "sourceIds": [
+        "corescope-mp-zhipu",
+        "corescope-mp-jd-joyai",
+        "corescope-mp-xiaomi-mimo",
+        "corescope-mp-ant-ling",
+        "corescope-mp-qwen-app"
+      ],
+      "evidence": "docs/corescope-source-expansion-20261015.json"
+    }
+  ]
+}

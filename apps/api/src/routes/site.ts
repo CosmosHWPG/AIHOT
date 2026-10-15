@@ -16,6 +16,7 @@ import { loadContact, loadMakerAvatar } from "@aihot/backend/site/contact";
 import { loadSiteStats } from "@aihot/backend/site/stats";
 import { itemAvailability } from "@aihot/backend/publication/availability";
 import { loadTopicDirectory, loadTopicPage } from "@aihot/backend/publication/topics";
+import { loadResourceDirectory } from "@aihot/backend/publication/resources";
 import { registerFeedback } from "./feedback.ts";
 
 import { loadHot, loadStoryDetail, resolveStory } from "@aihot/backend/publication/stories";
@@ -80,6 +81,9 @@ export async function parseFilters(q: Record<string, string>): Promise<FilterPar
 }
 
 export function registerSite(app: FastifyInstance) {
+  app.get("/api/site/resources", siteHandler(async (req, reply) => {
+    return sendJsonWithEtag(req, reply, await loadResourceDirectory(), { etagPrefix: "resources", cacheControl: "public, max-age=60, s-maxage=60" });
+  }));
   app.get("/api/site/meta", siteHandler(async (req, reply) => {
     return sendJsonWithEtag(req, reply, siteMeta(), { etagPrefix: "meta", cacheControl: "public, max-age=60, s-maxage=60" });
   }));
