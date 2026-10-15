@@ -15816,6 +15816,1377 @@
       "site_fulltext": false,
       "syndicate_fulltext": false,
       "enabled": true
+    },
+    {
+      "id": "corescope-rss-chips-and-cheese",
+      "name": "Chips and Cheese",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://chipsandcheese.com/feed",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:chipsandcheese.com",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "芯片与计算架构",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-metr-evaluations-resources",
+      "name": "METR · 模型评测资料",
+      "kind": "web_list",
+      "config": {
+        "url": "https://metr.org/research/",
+        "itemSelector": ".card-post",
+        "linkSelector": "a[href]",
+        "titleSelector": ".card-title",
+        "publishedAtSelector": ".card-date",
+        "summarySelector": ".card-description",
+        "publishedAtUtcOffset": "+00:00",
+        "allowUrlPrefixes": [
+          "https://metr.org/evaluations/"
+        ],
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "denyUrlPrefixes": [
+          "https://metr.org/blog/"
+        ]
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:metr",
+      "participation_mode": "isolated",
+      "interval_minutes": 720,
+      "tags": [
+        "AI",
+        "模型评测资料",
+        "保留原始发布日期",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-transformer-circuits",
+      "name": "Anthropic：Transformer Circuits",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://transformer-circuits.pub/feed.xml",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "anthropic",
+      "signal_group_id": "publisher:anthropic",
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "AI",
+        "可解释性研究",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-humanlayer-blog",
+      "name": "HumanLayer Blog",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.humanlayer.dev/blog",
+        "itemSelector": "a.group[href^=\"/blog/\"]:has(h2)",
+        "titleSelector": "h2",
+        "summarySelector": "div[style] > p",
+        "publishedAtRegex": "([A-Za-z]+\\s+\\d{1,2},\\s+20\\d{2})",
+        "publishedAtUtcOffset": "+00:00",
+        "allowUrlPrefixes": [
+          "https://www.humanlayer.dev/blog/"
+        ],
+        "denyUrlPrefixes": [
+          "https://www.humanlayer.dev/blog/tags/"
+        ],
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:humanlayer",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "Agent工程",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-inception-blog",
+      "name": "Inception Labs：Blog",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.inceptionlabs.ai/blog",
+        "itemSelector": "a[href*=\"blog/\"]:has(time)",
+        "titleSelector": "h3,h6",
+        "publishedAtSelector": "time",
+        "publishedAtUtcOffset": "+00:00",
+        "allowUrlPrefixes": [
+          "https://www.inceptionlabs.ai/blog/"
+        ],
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:inceptionlabs",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "模型与推理",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-eugene-yan",
+      "name": "Eugene Yan：Writing",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://eugeneyan.com/rss/",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "author:eugeneyan",
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "AI",
+        "技术洞察",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-zhangxiaojun-podcast",
+      "name": "张小珺商业访谈录（播客 RSS）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://feed.xyzfm.space/dk4yh3pkpjp3",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "author:zhangxiaojun",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "商业与战略访谈",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-ideogram-blog",
+      "name": "Ideogram Blog",
+      "kind": "web_list",
+      "config": {
+        "url": "https://ideogram.ai/blog/",
+        "itemSelector": "a.blog-card",
+        "titleSelector": "h3.blog-card-title",
+        "publishedAtSelector": "time",
+        "summarySelector": ".blog-card-excerpt",
+        "allowUrlPrefixes": [
+          "https://ideogram.ai/blog/"
+        ],
+        "publishedAtUtcOffset": "+00:00",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:ideogram",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "生成模型与产品",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-ltx-product-updates",
+      "name": "LTX Product Updates",
+      "kind": "web_list",
+      "config": {
+        "url": "https://ltx.io/blog-category/product-updates",
+        "itemSelector": ".w-dyn-item:has(a.blog-title-wrap)",
+        "linkSelector": "a.blog-title-wrap",
+        "titleSelector": "h3",
+        "publishedAtSelector": ".author-date-wrap > .post-author-new:not(.cc-by)",
+        "summarySelector": ".text-description-wrap",
+        "allowUrlPrefixes": [
+          "https://ltx.io/blog/"
+        ],
+        "publishedAtUtcOffset": "+00:00",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:lightricks",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "视频生成产品更新",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-openai-developers-blog",
+      "name": "OpenAI Developers：Blog（网页）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://developers.openai.com/blog",
+        "itemSelector": "a.resource-item[href^=\"/blog/\"]",
+        "titleSelector": ".line-clamp-2",
+        "summarySelector": "p",
+        "allowUrlPrefixes": [
+          "https://developers.openai.com/blog/"
+        ],
+        "denyUrlPrefixes": [
+          "https://developers.openai.com/blog/topic/"
+        ],
+        "detail": {
+          "publishedAtRegex": "<span class=\"text-default font-medium\">([^<]+)</span>",
+          "publishedAtAuthoritative": true,
+          "publishedAtUtcOffset": "+00:00",
+          "maxFetches": 2
+        },
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "openai",
+      "signal_group_id": "publisher:openai",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "开发者技术博客",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-nielsrogge",
+      "name": "Niels Rogge · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:NielsRogge -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:nielsrogge",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-gneubig",
+      "name": "Graham Neubig · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:gneubig -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:gneubig",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-jeremyphoward",
+      "name": "Jeremy Howard · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:jeremyphoward -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:jeremyphoward",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-aiatmeta",
+      "name": "AI at Meta · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:AIatMeta -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:aiatmeta",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-kimi-moonshot",
+      "name": "Kimi.ai · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Kimi_Moonshot -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:kimi_moonshot",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-hendrycks",
+      "name": "Dan Hendrycks · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:hendrycks -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:hendrycks",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-janleike",
+      "name": "Jan Leike · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:janleike -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:janleike",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-omarsar0",
+      "name": "Elvis Saravia · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:omarsar0 -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:omarsar0",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-ch402",
+      "name": "Chris Olah · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ch402 -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:ch402",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-tri-dao",
+      "name": "Tri Dao · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:tri_dao -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:tri_dao",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-larsencc",
+      "name": "Larsen Cundric · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:larsencc -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:larsencc",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-mattyp",
+      "name": "matt palmer · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:mattyp -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:mattyp",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-muse",
+      "name": "Muse · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:Muse -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:muse",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-adocomplete",
+      "name": "Ado · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:adocomplete -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:adocomplete",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-dkundel",
+      "name": "dominik kundel · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:dkundel -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:dkundel",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-lydiahallie",
+      "name": "Lydia Hallie ✨ · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:lydiahallie -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:lydiahallie",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-embirico",
+      "name": "Alexander Embiricos · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:embirico -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:embirico",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-metanewsroom",
+      "name": "Meta Newsroom · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:MetaNewsroom -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:metanewsroom",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-ammaar",
+      "name": "Ammaar Reshi · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ammaar -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:ammaar",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-christinesed",
+      "name": "Christine Awad · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:christinesed -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:christinesed",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-dtrinh",
+      "name": "Danny Trinh · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:dtrinh -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:dtrinh",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-dps",
+      "name": "David Singleton · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:dps -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:dps",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-lingxi",
+      "name": "Lingxi Li · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:lingxi -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:lingxi",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-pengzheng-",
+      "name": "Peng Zheng · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:pengzheng_ -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:pengzheng_",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-roshan-s",
+      "name": "Roshan Sadanani · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:roshan_s -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:roshan_s",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-xiaomimimo",
+      "name": "Xiaomi MiMo · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:XiaomiMiMo -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:xiaomimimo",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-alexcornell",
+      "name": "Alex Cornell · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:alexcornell -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:alexcornell",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-baltaaazr",
+      "name": "Balta · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:baltaaazr -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:baltaaazr",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-x-bigt-sheesh",
+      "name": "Tarek Sheasha · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:bigT_sheesh -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "author:bigt_sheesh",
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "公开核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-mp-zhipu",
+      "name": "公众号：智谱",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkyMzI3NzQ0Mg%3D%3D&mid=2247493980&idx=1&sn=995ae194e71d723b6110fb8c621e618c",
+        "biz": "MzkyMzI3NzQ0Mg==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "mp-biz:MzkyMzI3NzQ0Mg==",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ]
+    },
+    {
+      "id": "corescope-mp-jd-joyai",
+      "name": "公众号：京东JoyAI",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzU0MjU0MDMzMw%3D%3D&mid=2247487258&idx=1&sn=744e8842e6bccdc2821e275bc80dda32",
+        "biz": "MzU0MjU0MDMzMw==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "mp-biz:MzU0MjU0MDMzMw==",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ]
+    },
+    {
+      "id": "corescope-mp-xiaomi-mimo",
+      "name": "公众号：小米 MiMo",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=Mzk3NTkxMTM2NA%3D%3D&mid=2247484810&idx=1&sn=d4107cecaf17c3e234daa2c3d782ee03",
+        "biz": "Mzk3NTkxMTM2NA==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "mp-biz:Mzk3NTkxMTM2NA==",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ]
+    },
+    {
+      "id": "corescope-mp-ant-ling",
+      "name": "公众号：蚂蚁百灵",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkyODk2MDQwNw%3D%3D&mid=2247488073&idx=1&sn=1deff0f84dce1931113975e212a91644",
+        "biz": "MzkyODk2MDQwNw==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "mp-biz:MzkyODk2MDQwNw==",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ]
+    },
+    {
+      "id": "corescope-mp-qwen-app",
+      "name": "公众号：千问APP",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzYzNDE5MDEwMQ%3D%3D&mid=2247489149&idx=1&sn=26d7fefe24bfb18efa4582467313b1eb",
+        "biz": "MzYzNDE5MDEwMQ==",
+        "limit": 2
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "mp-biz:MzYzNDE5MDEwMQ==",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "tags": [
+        "AI",
+        "公众号原始账号"
+      ]
     }
   ]
 }

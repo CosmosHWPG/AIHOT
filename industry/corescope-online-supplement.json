@@ -2367,6 +2367,329 @@
         }
       },
       "signal_group_id": "publisher:openai"
+    },
+    {
+      "id": "corescope-rss-chips-and-cheese",
+      "name": "Chips and Cheese",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://chipsandcheese.com/feed",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:chipsandcheese.com",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "芯片与计算架构",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-metr-evaluations-resources",
+      "name": "METR · 模型评测资料",
+      "kind": "web_list",
+      "config": {
+        "url": "https://metr.org/research/",
+        "itemSelector": ".card-post",
+        "linkSelector": "a[href]",
+        "titleSelector": ".card-title",
+        "publishedAtSelector": ".card-date",
+        "summarySelector": ".card-description",
+        "publishedAtUtcOffset": "+00:00",
+        "allowUrlPrefixes": [
+          "https://metr.org/evaluations/"
+        ],
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "denyUrlPrefixes": [
+          "https://metr.org/blog/"
+        ]
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:metr",
+      "participation_mode": "isolated",
+      "interval_minutes": 720,
+      "tags": [
+        "AI",
+        "模型评测资料",
+        "保留原始发布日期",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-transformer-circuits",
+      "name": "Anthropic：Transformer Circuits",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://transformer-circuits.pub/feed.xml",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "anthropic",
+      "signal_group_id": "publisher:anthropic",
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "AI",
+        "可解释性研究",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-humanlayer-blog",
+      "name": "HumanLayer Blog",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.humanlayer.dev/blog",
+        "itemSelector": "a.group[href^=\"/blog/\"]:has(h2)",
+        "titleSelector": "h2",
+        "summarySelector": "div[style] > p",
+        "publishedAtRegex": "([A-Za-z]+\\s+\\d{1,2},\\s+20\\d{2})",
+        "publishedAtUtcOffset": "+00:00",
+        "allowUrlPrefixes": [
+          "https://www.humanlayer.dev/blog/"
+        ],
+        "denyUrlPrefixes": [
+          "https://www.humanlayer.dev/blog/tags/"
+        ],
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:humanlayer",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "Agent工程",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-inception-blog",
+      "name": "Inception Labs：Blog",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.inceptionlabs.ai/blog",
+        "itemSelector": "a[href*=\"blog/\"]:has(time)",
+        "titleSelector": "h3,h6",
+        "publishedAtSelector": "time",
+        "publishedAtUtcOffset": "+00:00",
+        "allowUrlPrefixes": [
+          "https://www.inceptionlabs.ai/blog/"
+        ],
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:inceptionlabs",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "模型与推理",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-eugene-yan",
+      "name": "Eugene Yan：Writing",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://eugeneyan.com/rss/",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "author:eugeneyan",
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "AI",
+        "技术洞察",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-zhangxiaojun-podcast",
+      "name": "张小珺商业访谈录（播客 RSS）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://feed.xyzfm.space/dk4yh3pkpjp3",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T2",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "author:zhangxiaojun",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "商业与战略访谈",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-ideogram-blog",
+      "name": "Ideogram Blog",
+      "kind": "web_list",
+      "config": {
+        "url": "https://ideogram.ai/blog/",
+        "itemSelector": "a.blog-card",
+        "titleSelector": "h3.blog-card-title",
+        "publishedAtSelector": "time",
+        "summarySelector": ".blog-card-excerpt",
+        "allowUrlPrefixes": [
+          "https://ideogram.ai/blog/"
+        ],
+        "publishedAtUtcOffset": "+00:00",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:ideogram",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "生成模型与产品",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-ltx-product-updates",
+      "name": "LTX Product Updates",
+      "kind": "web_list",
+      "config": {
+        "url": "https://ltx.io/blog-category/product-updates",
+        "itemSelector": ".w-dyn-item:has(a.blog-title-wrap)",
+        "linkSelector": "a.blog-title-wrap",
+        "titleSelector": "h3",
+        "publishedAtSelector": ".author-date-wrap > .post-author-new:not(.cc-by)",
+        "summarySelector": ".text-description-wrap",
+        "allowUrlPrefixes": [
+          "https://ltx.io/blog/"
+        ],
+        "publishedAtUtcOffset": "+00:00",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:lightricks",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "视频生成产品更新",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-openai-developers-blog",
+      "name": "OpenAI Developers：Blog（网页）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://developers.openai.com/blog",
+        "itemSelector": "a.resource-item[href^=\"/blog/\"]",
+        "titleSelector": ".line-clamp-2",
+        "summarySelector": "p",
+        "allowUrlPrefixes": [
+          "https://developers.openai.com/blog/"
+        ],
+        "denyUrlPrefixes": [
+          "https://developers.openai.com/blog/topic/"
+        ],
+        "detail": {
+          "publishedAtRegex": "<span class=\"text-default font-medium\">([^<]+)</span>",
+          "publishedAtAuthoritative": true,
+          "publishedAtUtcOffset": "+00:00",
+          "maxFetches": 2
+        },
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "openai",
+      "signal_group_id": "publisher:openai",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "AI",
+        "开发者技术博客",
+        "20261015核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
     }
   ],
   "aliases": [
@@ -6714,6 +7037,371 @@
       "itemCount": 138,
       "latestPublishedAt": "2026-05-05T00:00:00Z",
       "aihotPrivateEntryConfirmed": false
+    },
+    "corescope-rss-chips-and-cheese": {
+      "status": "verified",
+      "checkedAt": "2026-10-15T07:04:09.899Z",
+      "transport": "guardedFetch:configured-egress-proxy; .cn/direct routing",
+      "url": "https://chipsandcheese.com/feed",
+      "scope": "Independent native parser preview of the official/public entry. Not an AIHOT production config export; not runtime ingestion acceptance.",
+      "items": 20,
+      "datedItems": 20,
+      "latestPublishedAt": "2026-10-05T22:49:26.000Z",
+      "dateValidationScope": {
+        "listingDated": 20,
+        "detailSamplesTested": 0,
+        "detailSamplesDated": 0,
+        "allDetailsValidated": false
+      },
+      "samples": [
+        {
+          "url": "https://chipsandcheese.com/p/nvidias-olympus-core-pushing-server",
+          "title": "NVIDIA’s Olympus Core: Pushing Server Single Threaded Performance Boundaries",
+          "publishedAt": "2026-10-05T22:49:26.000Z"
+        },
+        {
+          "url": "https://chipsandcheese.com/p/qualcomms-system-level-architecture",
+          "title": "Qualcomm’s System Level Architecture in the Snapdragon X2 Elite",
+          "publishedAt": "2026-09-29T16:07:30.000Z"
+        },
+        {
+          "url": "https://chipsandcheese.com/p/qualcomms-adreno-x2-gpu",
+          "title": "Qualcomm’s Adreno X2 GPU",
+          "publishedAt": "2026-09-19T18:03:20.000Z"
+        }
+      ],
+      "detailSamples": [],
+      "matchedObservedItems": 0
+    },
+    "corescope-web-metr-evaluations-resources": {
+      "status": "verified",
+      "checkedAt": "2026-10-15T07:04:13.924Z",
+      "transport": "guardedFetch:configured-egress-proxy; .cn/direct routing",
+      "url": "https://metr.org/research/",
+      "scope": "Independent native parser preview of the official/public entry. Not an AIHOT production config export; not runtime ingestion acceptance.",
+      "items": 9,
+      "datedItems": 9,
+      "latestPublishedAt": "2025-11-19T00:00:00.000Z",
+      "dateValidationScope": {
+        "listingDated": 9,
+        "detailSamplesTested": 0,
+        "detailSamplesDated": 0,
+        "allDetailsValidated": false
+      },
+      "samples": [
+        {
+          "url": "https://metr.org/evaluations/gpt-5-1-codex-max-report/",
+          "title": "GPT-5.1-Codex-Max Evaluation Results",
+          "publishedAt": "2025-11-19T00:00:00.000Z"
+        },
+        {
+          "url": "https://metr.org/evaluations/gpt-5-report/",
+          "title": "GPT-5 Evaluation Results",
+          "publishedAt": "2025-08-07T00:00:00.000Z"
+        },
+        {
+          "url": "https://metr.org/evaluations/deepseek-qwen-report/",
+          "title": "DeepSeek and Qwen Evaluation Results",
+          "publishedAt": "2025-06-27T00:00:00.000Z"
+        }
+      ],
+      "detailSamples": [],
+      "matchedObservedItems": 0
+    },
+    "corescope-rss-transformer-circuits": {
+      "status": "verified",
+      "checkedAt": "2026-10-15T07:04:09.966Z",
+      "transport": "guardedFetch:configured-egress-proxy; .cn/direct routing",
+      "url": "https://transformer-circuits.pub/feed.xml",
+      "scope": "Independent native parser preview of the official/public entry. Not an AIHOT production config export; not runtime ingestion acceptance.",
+      "items": 56,
+      "datedItems": 56,
+      "latestPublishedAt": "2026-08-21T00:00:00.000Z",
+      "dateValidationScope": {
+        "listingDated": 56,
+        "detailSamplesTested": 0,
+        "detailSamplesDated": 0,
+        "allDetailsValidated": false
+      },
+      "samples": [
+        {
+          "url": "https://transformer-circuits.pub/2026/interference_effectiveness_helpfulness/index.html",
+          "title": "Characterizing interference weights in a tiny language model",
+          "publishedAt": "2026-08-21T00:00:00.000Z"
+        },
+        {
+          "url": "https://transformer-circuits.pub/2026/workspace/index.html",
+          "title": "Verbalizable Representations Form a Global Workspace in Language Models",
+          "publishedAt": "2026-07-06T00:00:00.000Z"
+        },
+        {
+          "url": "https://transformer-circuits.pub/2026/june-update/index.html",
+          "title": "Circuits Updates — June 2026",
+          "publishedAt": "2026-06-30T00:00:00.000Z"
+        }
+      ],
+      "detailSamples": [],
+      "matchedObservedItems": 0
+    },
+    "corescope-web-humanlayer-blog": {
+      "status": "verified",
+      "checkedAt": "2026-10-15T07:04:11.601Z",
+      "transport": "guardedFetch:configured-egress-proxy; .cn/direct routing",
+      "url": "https://www.humanlayer.dev/blog",
+      "scope": "Independent native parser preview of the official/public entry. Not an AIHOT production config export; not runtime ingestion acceptance.",
+      "items": 11,
+      "datedItems": 11,
+      "latestPublishedAt": "2026-09-04T00:00:00.000Z",
+      "dateValidationScope": {
+        "listingDated": 11,
+        "detailSamplesTested": 0,
+        "detailSamplesDated": 0,
+        "allDetailsValidated": false
+      },
+      "samples": [
+        {
+          "url": "https://www.humanlayer.dev/blog/humanlayer-resources",
+          "title": "HumanLayer - All Resources",
+          "publishedAt": "2026-09-04T00:00:00.000Z"
+        },
+        {
+          "url": "https://www.humanlayer.dev/blog/show-me-skill",
+          "title": "show-me: a coding agent skill for compact visual representations",
+          "publishedAt": "2026-08-12T00:00:00.000Z"
+        },
+        {
+          "url": "https://www.humanlayer.dev/blog/context-forking-to-save-time-trouble-and-tokens",
+          "title": "Context Forking to Save Time, Tokens and Trouble",
+          "publishedAt": "2026-05-15T00:00:00.000Z"
+        }
+      ],
+      "detailSamples": [],
+      "matchedObservedItems": 0
+    },
+    "corescope-web-inception-blog": {
+      "status": "verified",
+      "checkedAt": "2026-10-15T07:07:16.982Z",
+      "transport": "guardedFetch:configured-egress-proxy; .cn/direct routing",
+      "url": "https://www.inceptionlabs.ai/blog",
+      "scope": "Independent native parser preview of the official/public entry. Not an AIHOT production config export; not runtime ingestion acceptance.",
+      "items": 13,
+      "datedItems": 13,
+      "latestPublishedAt": "2026-09-29T00:00:00.000Z",
+      "dateValidationScope": {
+        "listingDated": 13,
+        "detailSamplesTested": 0,
+        "detailSamplesDated": 0,
+        "allDetailsValidated": false
+      },
+      "samples": [
+        {
+          "url": "https://www.inceptionlabs.ai/blog/introducing-mercury-voice",
+          "title": "Introducing Mercury Voice",
+          "publishedAt": "2026-09-29T00:00:00.000Z"
+        },
+        {
+          "url": "https://www.inceptionlabs.ai/blog/introducing-mercury-2-5",
+          "title": "Introducing Mercury 2.5",
+          "publishedAt": "2026-09-08T00:00:00.000Z"
+        },
+        {
+          "url": "https://www.inceptionlabs.ai/blog/mercury-2-for-search",
+          "title": "Mercury 2 for Search: Fast enough to run a hundred times per query",
+          "publishedAt": "2026-08-11T00:00:00.000Z"
+        }
+      ],
+      "detailSamples": [],
+      "matchedObservedItems": 0
+    },
+    "corescope-rss-eugene-yan": {
+      "status": "verified",
+      "checkedAt": "2026-10-15T07:04:11.844Z",
+      "transport": "guardedFetch:configured-egress-proxy; .cn/direct routing",
+      "url": "https://eugeneyan.com/rss/",
+      "scope": "Independent native parser preview of the official/public entry. Not an AIHOT production config export; not runtime ingestion acceptance.",
+      "items": 212,
+      "datedItems": 212,
+      "latestPublishedAt": "2026-06-21T00:00:00.000Z",
+      "dateValidationScope": {
+        "listingDated": 212,
+        "detailSamplesTested": 0,
+        "detailSamplesDated": 0,
+        "allDetailsValidated": false
+      },
+      "samples": [
+        {
+          "url": "https://eugeneyan.com//writing/cybersecurity-evals/",
+          "title": "Patterns for Building Cybersecurity Evals",
+          "publishedAt": "2026-06-21T00:00:00.000Z"
+        },
+        {
+          "url": "https://eugeneyan.com//writing/secure-source-code/",
+          "title": "Using LLMs to Secure Source Code",
+          "publishedAt": "2026-05-27T00:00:00.000Z"
+        },
+        {
+          "url": "https://eugeneyan.com//writing/working-with-ai/",
+          "title": "How to Work and Compound with AI",
+          "publishedAt": "2026-05-03T00:00:00.000Z"
+        }
+      ],
+      "detailSamples": [],
+      "matchedObservedItems": 0
+    },
+    "corescope-rss-zhangxiaojun-podcast": {
+      "status": "verified",
+      "checkedAt": "2026-10-15T07:04:07.035Z",
+      "transport": "guardedFetch:configured-egress-proxy; .cn/direct routing",
+      "url": "https://feed.xyzfm.space/dk4yh3pkpjp3",
+      "scope": "Independent native parser preview of the official/public entry. Not an AIHOT production config export; not runtime ingestion acceptance.",
+      "items": 157,
+      "datedItems": 157,
+      "latestPublishedAt": "2026-10-15T00:00:00.000Z",
+      "dateValidationScope": {
+        "listingDated": 157,
+        "detailSamplesTested": 0,
+        "detailSamplesDated": 0,
+        "allDetailsValidated": false
+      },
+      "samples": [
+        {
+          "url": "https://www.xiaoyuzhoufm.com/episode/6acf81f0195d838e2af1e281?utm_source=rss",
+          "title": "154. 对Dyna创始人Lindon的3小时访谈：机器人世界的迷雾、分歧与抉择，修心、《沉思录》与王阳明",
+          "publishedAt": "2026-10-15T00:00:00.000Z"
+        },
+        {
+          "url": "https://www.xiaoyuzhoufm.com/episode/6a97f287f03e74ee6b03ea5b?utm_source=rss",
+          "title": "153. 和曾鸣聊产业史观：残酷的真相、会消亡的公司、优秀≠卓越、“OAI、Anth大概率不是原生时代大赢家”",
+          "publishedAt": "2026-09-03T00:00:00.000Z"
+        },
+        {
+          "url": "https://www.xiaoyuzhoufm.com/episode/6a8eadd61352af56ff3c6017?utm_source=rss",
+          "title": "152. 领读Kimi K3技术报告：从架构创新聊起，注意力美学、多教师蒸馏和开源MoE",
+          "publishedAt": "2026-08-26T09:33:46.000Z"
+        }
+      ],
+      "detailSamples": [],
+      "matchedObservedItems": 1
+    },
+    "corescope-web-ideogram-blog": {
+      "status": "verified",
+      "checkedAt": "2026-10-15T07:07:17.082Z",
+      "transport": "guardedFetch:configured-egress-proxy; .cn/direct routing",
+      "url": "https://ideogram.ai/blog/",
+      "scope": "Independent native parser preview of the official/public entry. Not an AIHOT production config export; not runtime ingestion acceptance.",
+      "items": 5,
+      "datedItems": 5,
+      "latestPublishedAt": "2026-10-14T00:00:00.000Z",
+      "dateValidationScope": {
+        "listingDated": 5,
+        "detailSamplesTested": 0,
+        "detailSamplesDated": 0,
+        "allDetailsValidated": false
+      },
+      "samples": [
+        {
+          "url": "https://ideogram.ai/blog/ideogram-4-5-product-photo-editing/",
+          "title": "How to edit product photos with Ideogram 4.5",
+          "publishedAt": "2026-10-14T00:00:00.000Z"
+        },
+        {
+          "url": "https://ideogram.ai/blog/ideogram-4-json-prompting/",
+          "title": "How to JSON prompt for Ideogram 4.0",
+          "publishedAt": "2026-06-18T00:00:00.000Z"
+        },
+        {
+          "url": "https://ideogram.ai/blog/claude-mcp/",
+          "title": "The Ideogram 4.0 Prompt Guide",
+          "publishedAt": "2026-06-12T00:00:00.000Z"
+        }
+      ],
+      "detailSamples": [],
+      "matchedObservedItems": 1
+    },
+    "corescope-web-ltx-product-updates": {
+      "status": "verified",
+      "checkedAt": "2026-10-15T07:08:10.837Z",
+      "transport": "guardedFetch:configured-egress-proxy; .cn/direct routing",
+      "url": "https://ltx.io/blog-category/product-updates",
+      "scope": "Independent native parser preview of the official/public entry. Not an AIHOT production config export; not runtime ingestion acceptance.",
+      "items": 42,
+      "datedItems": 42,
+      "latestPublishedAt": "2026-10-13T00:00:00.000Z",
+      "dateValidationScope": {
+        "listingDated": 42,
+        "detailSamplesTested": 0,
+        "detailSamplesDated": 0,
+        "allDetailsValidated": false
+      },
+      "samples": [
+        {
+          "url": "https://ltx.io/blog/an-easier-way-to-use-ltx-trainer-is-here",
+          "title": "An Easier Way to Use LTX Trainer Is Here",
+          "publishedAt": "2026-10-13T00:00:00.000Z"
+        },
+        {
+          "url": "https://ltx.io/blog/the-foundation-film-is-made-on",
+          "title": "LTX-2.5: The Foundation Film Is Made On",
+          "publishedAt": "2026-08-11T00:00:00.000Z"
+        },
+        {
+          "url": "https://ltx.io/blog/sdr-to-hdr",
+          "title": "SDR to HDR: Automatic HDR Video Conversion with LTX-2.5",
+          "publishedAt": "2026-08-09T00:00:00.000Z"
+        }
+      ],
+      "detailSamples": [],
+      "matchedObservedItems": 1
+    },
+    "corescope-web-openai-developers-blog": {
+      "status": "verified",
+      "checkedAt": "2026-10-15T07:07:18.694Z",
+      "transport": "guardedFetch:configured-egress-proxy; .cn/direct routing",
+      "url": "https://developers.openai.com/blog",
+      "scope": "Independent native parser preview of the official/public entry. Not an AIHOT production config export; not runtime ingestion acceptance.",
+      "items": 31,
+      "datedItems": 0,
+      "latestPublishedAt": null,
+      "dateValidationScope": {
+        "listingDated": 0,
+        "detailSamplesTested": 2,
+        "detailSamplesDated": 2,
+        "allDetailsValidated": false
+      },
+      "samples": [
+        {
+          "url": "https://developers.openai.com/blog/maintaining-software-with-the-gpt-6-family",
+          "title": "Maintaining software with the GPT-6 family",
+          "publishedAt": null
+        },
+        {
+          "url": "https://developers.openai.com/blog/bringing-my-led-display-to-life",
+          "title": "Bringing my LED display to life with GPT-Live-1 and Codex",
+          "publishedAt": null
+        },
+        {
+          "url": "https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra",
+          "title": "Rethinking skills and prompts for GPT-6 Astra",
+          "publishedAt": null
+        }
+      ],
+      "detailSamples": [
+        {
+          "url": "https://developers.openai.com/blog/maintaining-software-with-the-gpt-6-family",
+          "publishedAt": "2026-10-14T00:00:00.000Z",
+          "title": null,
+          "summary": null,
+          "body": null
+        },
+        {
+          "url": "https://developers.openai.com/blog/bringing-my-led-display-to-life",
+          "publishedAt": "2026-09-23T00:00:00.000Z",
+          "title": null,
+          "summary": null,
+          "body": null
+        }
+      ],
+      "matchedObservedItems": 1
     }
   },
   "coverage": [
@@ -7180,6 +7868,23 @@
         "corescope-rss-openai-developers-learning"
       ],
       "evidence": "docs/corescope-source-refresh-20261013.json"
+    },
+    {
+      "observedAt": "2026-10-15T06:56:19.356Z",
+      "implementedAt": "2026-10-15T07:43:17.005Z",
+      "sourceIds": [
+        "corescope-rss-chips-and-cheese",
+        "corescope-web-metr-evaluations-resources",
+        "corescope-rss-transformer-circuits",
+        "corescope-web-humanlayer-blog",
+        "corescope-web-inception-blog",
+        "corescope-rss-eugene-yan",
+        "corescope-rss-zhangxiaojun-podcast",
+        "corescope-web-ideogram-blog",
+        "corescope-web-ltx-product-updates",
+        "corescope-web-openai-developers-blog"
+      ],
+      "evidence": "docs/corescope-source-expansion-20261015.json"
     }
   ]
 }

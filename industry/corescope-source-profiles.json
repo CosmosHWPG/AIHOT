@@ -15643,6 +15643,80 @@
           }
         ]
       }
+    },
+    "corescope-web-metr-evaluations-resources": {
+      "policy": "native",
+      "nonArticle": true,
+      "participationMode": "isolated",
+      "intervalMinutes": 720,
+      "signalGroupId": "publisher:metr",
+      "adapter": {
+        "kind": "web_list",
+        "config": {
+          "url": "https://metr.org/research/",
+          "itemSelector": ".card-post",
+          "linkSelector": "a[href]",
+          "titleSelector": ".card-title",
+          "publishedAtSelector": ".card-date",
+          "summarySelector": ".card-description",
+          "publishedAtUtcOffset": "+00:00",
+          "allowUrlPrefixes": [
+            "https://metr.org/evaluations/"
+          ],
+          "sortByPublishedAt": true,
+          "_aihot": {
+            "initialBackfillLimit": 2
+          },
+          "denyUrlPrefixes": [
+            "https://metr.org/blog/"
+          ]
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "checkedAt": "2026-10-15T07:04:13.924Z",
+        "transport": "guardedFetch:configured-egress-proxy; .cn/direct routing",
+        "url": "https://metr.org/research/",
+        "scope": "Independent native parser preview of the official/public entry. Not an AIHOT production config export; not runtime ingestion acceptance.",
+        "items": 9,
+        "datedItems": 9,
+        "latestPublishedAt": "2025-11-19T00:00:00.000Z",
+        "dateValidationScope": {
+          "listingDated": 9,
+          "detailSamplesTested": 0,
+          "detailSamplesDated": 0,
+          "allDetailsValidated": false
+        },
+        "samples": [
+          {
+            "url": "https://metr.org/evaluations/gpt-5-1-codex-max-report/",
+            "title": "GPT-5.1-Codex-Max Evaluation Results",
+            "publishedAt": "2025-11-19T00:00:00.000Z"
+          },
+          {
+            "url": "https://metr.org/evaluations/gpt-5-report/",
+            "title": "GPT-5 Evaluation Results",
+            "publishedAt": "2025-08-07T00:00:00.000Z"
+          },
+          {
+            "url": "https://metr.org/evaluations/deepseek-qwen-report/",
+            "title": "DeepSeek and Qwen Evaluation Results",
+            "publishedAt": "2025-06-27T00:00:00.000Z"
+          }
+        ],
+        "detailSamples": [],
+        "matchedObservedItems": 0
+      },
+      "catalogPlan": {
+        "type": "model_evaluation_reports",
+        "title": "METR · 模型能力与风险评测资料",
+        "publicUrl": "https://metr.org/research/",
+        "category": "模型能力与安全评测",
+        "status": "connected",
+        "newsParticipation": "isolated",
+        "scope": "Only original /evaluations/ report URLs from the research listing; exclude /blog/.",
+        "description": "监测 METR 公开模型能力与风险评测报告，保留原始日期。作为研究资料单独浏览，不参与新闻精选与热点热度。"
+      }
     }
   }
 }
