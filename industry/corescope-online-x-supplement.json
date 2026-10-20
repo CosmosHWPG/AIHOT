@@ -4052,6 +4052,468 @@
       "site_fulltext": false,
       "syndicate_fulltext": false,
       "enabled": true
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-petermccrory",
+      "name": "Peter McCrory · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:petermccrory -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:petermccrory",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-deepseek-ai",
+      "name": "DeepSeek · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:deepseek_ai -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:deepseek_ai",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-theworldlabs",
+      "name": "World Labs · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:theworldlabs -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:theworldlabs",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-thinkymachines",
+      "name": "Thinking Machines · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:thinkymachines -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:thinkymachines",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "公开参与模式核实"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-decohack",
+      "name": "viggo · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:decohack -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:decohack",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-finkd",
+      "name": "Mark Zuckerberg · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:finkd -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:finkd",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-merettm",
+      "name": "Jakub Pachocki · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:merettm -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:merettm",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-miramurati",
+      "name": "Mira Murati · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:miramurati -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:miramurati",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-mntruell",
+      "name": "Michael Truell · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:mntruell -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:mntruell",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-sainingxie",
+      "name": "谢赛宁 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:sainingxie -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:sainingxie",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-shaoruu",
+      "name": "shaoruu · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:shaoruu -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:shaoruu",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-siliconflowai",
+      "name": "硅基流动 SiliconFlow · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:siliconflowai -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:siliconflowai",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "公开参与模式核实"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-unitreerobotics",
+      "name": "宇树 Unitree · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:unitreerobotics -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:unitreerobotics",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-xsquarerobot",
+      "name": "自变量 X Square · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:xsquarerobot -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:xsquarerobot",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
     }
   ],
   "aliases": [
@@ -7615,6 +8077,678 @@
       "providerAccountStatus": "not checked by this draft; retain existing authenticated Bird account gate",
       "budgetPolicy": "retain existing request limits and cooldowns; one initial page of at most 20 posts; no provider calls in this draft",
       "additionalPrimaryPostLinks": []
+    },
+    "corescope-x-petermccrory": {
+      "id": "corescope-x-petermccrory",
+      "handle": "petermccrory",
+      "confirmedAccount": true,
+      "sourceLabels": [
+        "X：Peter McCrory（Anthropic 首席经济学家，@PeterMcCrory）"
+      ],
+      "sourceCardName": "Peter McCrory",
+      "primaryAuthor": {
+        "handle": "PeterMcCrory",
+        "authorName": "Peter McCrory"
+      },
+      "checks": {
+        "publicArticleMetadata200": true,
+        "channelIsX": true,
+        "primaryAuthorHandleMatches": true,
+        "primaryOriginalUrlHandleMatches": true,
+        "explicitV1SourceLabelHandleMatches": true,
+        "sameOriginalPostAsPublicV1": true,
+        "sourceCardNameNotQuotedAuthor": true
+      },
+      "quotedActorExcluded": true,
+      "evidence": {
+        "itemId": "f3cft5o6v92xieugrikmp3wsm",
+        "pageUrl": "https://aihot.news/items/f3cft5o6v92xieugrikmp3wsm",
+        "sourceCardMetadataUrl": "https://aihot.news/api/site/items/f3cft5o6v92xieugrikmp3wsm",
+        "originalUrl": "https://x.com/PeterMcCrory/status/2111920461600940033",
+        "observedAt": "2026-10-20T11:02:17.267Z",
+        "publishedAt": "2026-10-18T20:40:50.000Z",
+        "discoveredAt": "2026-10-18T21:06:14.440Z"
+      },
+      "sourceCardMetadata": {
+        "status": 200,
+        "observedAt": "2026-10-20T11:02:17.267Z",
+        "bodySha256": "9087c44f5640394473966a3720a93c3efd24244f99144fe3167078934a77d238"
+      },
+      "currentWindowObservedItems": 10,
+      "upstreamHeatOnly": null,
+      "participationMode": "editorial",
+      "participationModeBasis": "Upstream heatOnly unknown; independently chosen editorial, not a claim about original private settings.",
+      "configurationProvenance": "Independently rebuilt Bird user_tweets config; original AIHOT provider/query/cursor configuration is not public.",
+      "providerCollectionExecuted": false,
+      "status": "verified",
+      "scope": "exact_public_account_identity_and_supported_existing_collector_configuration",
+      "checkedAt": "2026-10-20T11:02:17.267Z",
+      "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
+      "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
+    },
+    "corescope-x-deepseek-ai": {
+      "id": "corescope-x-deepseek-ai",
+      "handle": "deepseek_ai",
+      "confirmedAccount": true,
+      "sourceLabels": [
+        "X：DeepSeek (@deepseek_ai)"
+      ],
+      "sourceCardName": "DeepSeek",
+      "primaryAuthor": {
+        "handle": "deepseek_ai",
+        "authorName": "DeepSeek"
+      },
+      "checks": {
+        "publicArticleMetadata200": true,
+        "channelIsX": true,
+        "primaryAuthorHandleMatches": true,
+        "primaryOriginalUrlHandleMatches": true,
+        "explicitV1SourceLabelHandleMatches": true,
+        "sameOriginalPostAsPublicV1": true,
+        "sourceCardNameNotQuotedAuthor": true
+      },
+      "quotedActorExcluded": true,
+      "evidence": {
+        "itemId": "h19b1bl3zmaku5eydci69hg7v",
+        "pageUrl": "https://aihot.news/items/h19b1bl3zmaku5eydci69hg7v",
+        "sourceCardMetadataUrl": "https://aihot.news/api/site/items/h19b1bl3zmaku5eydci69hg7v",
+        "originalUrl": "https://x.com/deepseek_ai/status/2112476496283775135",
+        "observedAt": "2026-10-20T11:02:20.271Z",
+        "publishedAt": "2026-10-20T09:30:19.000Z",
+        "discoveredAt": "2026-10-20T09:43:14.526Z"
+      },
+      "sourceCardMetadata": {
+        "status": 200,
+        "observedAt": "2026-10-20T11:02:20.271Z",
+        "bodySha256": "f6d9796257a1f5581c842b6d48ab1d454123d56a3846cc31f4004c2bc18c9f68"
+      },
+      "currentWindowObservedItems": 2,
+      "upstreamHeatOnly": null,
+      "participationMode": "editorial",
+      "participationModeBasis": "Upstream heatOnly unknown; independently chosen editorial, not a claim about original private settings.",
+      "configurationProvenance": "Independently rebuilt Bird user_tweets config; original AIHOT provider/query/cursor configuration is not public.",
+      "providerCollectionExecuted": false,
+      "status": "verified",
+      "scope": "exact_public_account_identity_and_supported_existing_collector_configuration",
+      "checkedAt": "2026-10-20T11:02:20.271Z",
+      "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
+      "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
+    },
+    "corescope-x-theworldlabs": {
+      "id": "corescope-x-theworldlabs",
+      "handle": "theworldlabs",
+      "confirmedAccount": true,
+      "sourceLabels": [
+        "X：World Labs (@theworldlabs)"
+      ],
+      "sourceCardName": "World Labs",
+      "primaryAuthor": {
+        "handle": "theworldlabs",
+        "authorName": "World Labs"
+      },
+      "checks": {
+        "publicArticleMetadata200": true,
+        "channelIsX": true,
+        "primaryAuthorHandleMatches": true,
+        "primaryOriginalUrlHandleMatches": true,
+        "explicitV1SourceLabelHandleMatches": true,
+        "sameOriginalPostAsPublicV1": true,
+        "sourceCardNameNotQuotedAuthor": true
+      },
+      "quotedActorExcluded": true,
+      "evidence": {
+        "itemId": "tgst04llkuw8k6ve3vhk0ogy3",
+        "pageUrl": "https://aihot.news/items/tgst04llkuw8k6ve3vhk0ogy3",
+        "sourceCardMetadataUrl": "https://aihot.news/api/site/items/tgst04llkuw8k6ve3vhk0ogy3",
+        "originalUrl": "https://x.com/theworldlabs/status/2110782427803341251",
+        "observedAt": "2026-10-20T11:02:23.284Z",
+        "publishedAt": "2026-10-15T17:18:41.000Z",
+        "discoveredAt": "2026-10-15T17:25:33.901Z"
+      },
+      "sourceCardMetadata": {
+        "status": 200,
+        "observedAt": "2026-10-20T11:02:23.284Z",
+        "bodySha256": "2af60a90a968333fa7280e070f95ae1f835652867856f7188cb183c5bb6fb042"
+      },
+      "currentWindowObservedItems": 2,
+      "upstreamHeatOnly": null,
+      "participationMode": "editorial",
+      "participationModeBasis": "Upstream heatOnly unknown; independently chosen editorial, not a claim about original private settings.",
+      "configurationProvenance": "Independently rebuilt Bird user_tweets config; original AIHOT provider/query/cursor configuration is not public.",
+      "providerCollectionExecuted": false,
+      "status": "verified",
+      "scope": "exact_public_account_identity_and_supported_existing_collector_configuration",
+      "checkedAt": "2026-10-20T11:02:23.284Z",
+      "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
+      "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
+    },
+    "corescope-x-thinkymachines": {
+      "id": "corescope-x-thinkymachines",
+      "handle": "thinkymachines",
+      "confirmedAccount": true,
+      "sourceLabels": [
+        "X：Thinking Machines (@thinkymachines)"
+      ],
+      "sourceCardName": "Thinking Machines",
+      "primaryAuthor": {
+        "handle": "thinkymachines",
+        "authorName": "Thinking Machines"
+      },
+      "checks": {
+        "publicArticleMetadata200": true,
+        "channelIsX": true,
+        "primaryAuthorHandleMatches": true,
+        "primaryOriginalUrlHandleMatches": true,
+        "explicitV1SourceLabelHandleMatches": true,
+        "sameOriginalPostAsPublicV1": true,
+        "sourceCardNameNotQuotedAuthor": true
+      },
+      "quotedActorExcluded": true,
+      "evidence": {
+        "itemId": "rej6nrz0j2358i4yott08nfbe",
+        "pageUrl": "https://aihot.news/items/rej6nrz0j2358i4yott08nfbe",
+        "sourceCardMetadataUrl": "https://aihot.news/api/site/items/rej6nrz0j2358i4yott08nfbe",
+        "originalUrl": "https://x.com/thinkymachines/status/2110851669915570685",
+        "observedAt": "2026-10-20T11:02:26.291Z",
+        "publishedAt": "2026-10-15T21:53:50.000Z",
+        "discoveredAt": "2026-10-15T22:03:44.768Z"
+      },
+      "sourceCardMetadata": {
+        "status": 200,
+        "observedAt": "2026-10-20T11:02:26.291Z",
+        "bodySha256": "94911aaf85859aef296068508002845527bfce4c2d938ffab4b2a8e586318ce8"
+      },
+      "currentWindowObservedItems": 2,
+      "upstreamHeatOnly": false,
+      "participationMode": "editorial",
+      "participationModeBasis": "Public source sample explicitly heatOnly=false.",
+      "configurationProvenance": "Independently rebuilt Bird user_tweets config; original AIHOT provider/query/cursor configuration is not public.",
+      "providerCollectionExecuted": false,
+      "status": "verified",
+      "scope": "exact_public_account_identity_and_supported_existing_collector_configuration",
+      "checkedAt": "2026-10-20T11:02:26.291Z",
+      "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
+      "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
+    },
+    "corescope-x-decohack": {
+      "id": "corescope-x-decohack",
+      "handle": "decohack",
+      "confirmedAccount": true,
+      "sourceLabels": [
+        "X：viggo (@decohack)"
+      ],
+      "sourceCardName": "viggo",
+      "primaryAuthor": {
+        "handle": "decohack",
+        "authorName": "viggo"
+      },
+      "checks": {
+        "publicArticleMetadata200": true,
+        "channelIsX": true,
+        "primaryAuthorHandleMatches": true,
+        "primaryOriginalUrlHandleMatches": true,
+        "explicitV1SourceLabelHandleMatches": true,
+        "sameOriginalPostAsPublicV1": true,
+        "sourceCardNameNotQuotedAuthor": true
+      },
+      "quotedActorExcluded": true,
+      "evidence": {
+        "itemId": "wr9yiys6vsr89068pwsuep83i",
+        "pageUrl": "https://aihot.news/items/wr9yiys6vsr89068pwsuep83i",
+        "sourceCardMetadataUrl": "https://aihot.news/api/site/items/wr9yiys6vsr89068pwsuep83i",
+        "originalUrl": "https://x.com/decohack/status/2111361128832061801",
+        "observedAt": "2026-10-20T11:02:29.296Z",
+        "publishedAt": "2026-10-17T07:38:14.000Z",
+        "discoveredAt": "2026-10-17T07:53:37.384Z"
+      },
+      "sourceCardMetadata": {
+        "status": 200,
+        "observedAt": "2026-10-20T11:02:29.296Z",
+        "bodySha256": "4278c107486617408956dd0a40a4fc82a7cc3507145ba39b1021d8eb745c4dec"
+      },
+      "currentWindowObservedItems": 1,
+      "upstreamHeatOnly": null,
+      "participationMode": "editorial",
+      "participationModeBasis": "Upstream heatOnly unknown; independently chosen editorial, not a claim about original private settings.",
+      "configurationProvenance": "Independently rebuilt Bird user_tweets config; original AIHOT provider/query/cursor configuration is not public.",
+      "providerCollectionExecuted": false,
+      "status": "verified",
+      "scope": "exact_public_account_identity_and_supported_existing_collector_configuration",
+      "checkedAt": "2026-10-20T11:02:29.296Z",
+      "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
+      "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
+    },
+    "corescope-x-finkd": {
+      "id": "corescope-x-finkd",
+      "handle": "finkd",
+      "confirmedAccount": true,
+      "sourceLabels": [
+        "X：Mark Zuckerberg (@finkd)"
+      ],
+      "sourceCardName": "Mark Zuckerberg",
+      "primaryAuthor": {
+        "handle": "finkd",
+        "authorName": "Mark Zuckerberg"
+      },
+      "checks": {
+        "publicArticleMetadata200": true,
+        "channelIsX": true,
+        "primaryAuthorHandleMatches": true,
+        "primaryOriginalUrlHandleMatches": true,
+        "explicitV1SourceLabelHandleMatches": true,
+        "sameOriginalPostAsPublicV1": true,
+        "sourceCardNameNotQuotedAuthor": true
+      },
+      "quotedActorExcluded": true,
+      "evidence": {
+        "itemId": "w5mulr54f0zp59eznfqju09xe",
+        "pageUrl": "https://aihot.news/items/w5mulr54f0zp59eznfqju09xe",
+        "sourceCardMetadataUrl": "https://aihot.news/api/site/items/w5mulr54f0zp59eznfqju09xe",
+        "originalUrl": "https://x.com/finkd/status/2110778025629347999",
+        "observedAt": "2026-10-20T11:02:32.299Z",
+        "publishedAt": "2026-10-15T17:01:12.000Z",
+        "discoveredAt": "2026-10-15T17:19:39.001Z"
+      },
+      "sourceCardMetadata": {
+        "status": 200,
+        "observedAt": "2026-10-20T11:02:32.299Z",
+        "bodySha256": "6114a9a2a554e8a50c1ba07f2335519ca2be81642cad5f606b9449092c9a33a1"
+      },
+      "currentWindowObservedItems": 1,
+      "upstreamHeatOnly": null,
+      "participationMode": "editorial",
+      "participationModeBasis": "Upstream heatOnly unknown; independently chosen editorial, not a claim about original private settings.",
+      "configurationProvenance": "Independently rebuilt Bird user_tweets config; original AIHOT provider/query/cursor configuration is not public.",
+      "providerCollectionExecuted": false,
+      "status": "verified",
+      "scope": "exact_public_account_identity_and_supported_existing_collector_configuration",
+      "checkedAt": "2026-10-20T11:02:32.299Z",
+      "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
+      "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
+    },
+    "corescope-x-merettm": {
+      "id": "corescope-x-merettm",
+      "handle": "merettm",
+      "confirmedAccount": true,
+      "sourceLabels": [
+        "X：Jakub Pachocki（OpenAI 首席科学家，@merettm）"
+      ],
+      "sourceCardName": "Jakub Pachocki",
+      "primaryAuthor": {
+        "handle": "merettm",
+        "authorName": "Jakub Pachocki"
+      },
+      "checks": {
+        "publicArticleMetadata200": true,
+        "channelIsX": true,
+        "primaryAuthorHandleMatches": true,
+        "primaryOriginalUrlHandleMatches": true,
+        "explicitV1SourceLabelHandleMatches": true,
+        "sameOriginalPostAsPublicV1": true,
+        "sourceCardNameNotQuotedAuthor": true
+      },
+      "quotedActorExcluded": true,
+      "evidence": {
+        "itemId": "u9qfiq5ilpk1wpqy4b18ka9l5",
+        "pageUrl": "https://aihot.news/items/u9qfiq5ilpk1wpqy4b18ka9l5",
+        "sourceCardMetadataUrl": "https://aihot.news/api/site/items/u9qfiq5ilpk1wpqy4b18ka9l5",
+        "originalUrl": "https://x.com/merettm/status/2112231743734579542",
+        "observedAt": "2026-10-20T11:02:35.301Z",
+        "publishedAt": "2026-10-19T17:17:45.000Z",
+        "discoveredAt": "2026-10-19T17:40:34.257Z"
+      },
+      "sourceCardMetadata": {
+        "status": 200,
+        "observedAt": "2026-10-20T11:02:35.301Z",
+        "bodySha256": "85db63db2909341eeb0b9fe13346864370251389f98d36dfa6808c545b0af00e"
+      },
+      "currentWindowObservedItems": 1,
+      "upstreamHeatOnly": null,
+      "participationMode": "editorial",
+      "participationModeBasis": "Upstream heatOnly unknown; independently chosen editorial, not a claim about original private settings.",
+      "configurationProvenance": "Independently rebuilt Bird user_tweets config; original AIHOT provider/query/cursor configuration is not public.",
+      "providerCollectionExecuted": false,
+      "status": "verified",
+      "scope": "exact_public_account_identity_and_supported_existing_collector_configuration",
+      "checkedAt": "2026-10-20T11:02:35.301Z",
+      "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
+      "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
+    },
+    "corescope-x-miramurati": {
+      "id": "corescope-x-miramurati",
+      "handle": "miramurati",
+      "confirmedAccount": true,
+      "sourceLabels": [
+        "X：Mira Murati（@miramurati）"
+      ],
+      "sourceCardName": "Mira Murati",
+      "primaryAuthor": {
+        "handle": "miramurati",
+        "authorName": "Mira Murati"
+      },
+      "checks": {
+        "publicArticleMetadata200": true,
+        "channelIsX": true,
+        "primaryAuthorHandleMatches": true,
+        "primaryOriginalUrlHandleMatches": true,
+        "explicitV1SourceLabelHandleMatches": true,
+        "sameOriginalPostAsPublicV1": true,
+        "sourceCardNameNotQuotedAuthor": true
+      },
+      "quotedActorExcluded": true,
+      "evidence": {
+        "itemId": "ua58ox8hlmf80te8uakxs86aj",
+        "pageUrl": "https://aihot.news/items/ua58ox8hlmf80te8uakxs86aj",
+        "sourceCardMetadataUrl": "https://aihot.news/api/site/items/ua58ox8hlmf80te8uakxs86aj",
+        "originalUrl": "https://x.com/miramurati/status/2110870483214213496",
+        "observedAt": "2026-10-20T11:02:38.313Z",
+        "publishedAt": "2026-10-15T23:08:35.000Z",
+        "discoveredAt": "2026-10-15T23:11:45.065Z"
+      },
+      "sourceCardMetadata": {
+        "status": 200,
+        "observedAt": "2026-10-20T11:02:38.313Z",
+        "bodySha256": "9594781ee01afc929815d49a44a7f70bbc77997baca879bbc63d0516bd2f94c5"
+      },
+      "currentWindowObservedItems": 1,
+      "upstreamHeatOnly": null,
+      "participationMode": "editorial",
+      "participationModeBasis": "Upstream heatOnly unknown; independently chosen editorial, not a claim about original private settings.",
+      "configurationProvenance": "Independently rebuilt Bird user_tweets config; original AIHOT provider/query/cursor configuration is not public.",
+      "providerCollectionExecuted": false,
+      "status": "verified",
+      "scope": "exact_public_account_identity_and_supported_existing_collector_configuration",
+      "checkedAt": "2026-10-20T11:02:38.313Z",
+      "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
+      "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
+    },
+    "corescope-x-mntruell": {
+      "id": "corescope-x-mntruell",
+      "handle": "mntruell",
+      "confirmedAccount": true,
+      "sourceLabels": [
+        "X：Michael Truell (@mntruell)"
+      ],
+      "sourceCardName": "Michael Truell",
+      "primaryAuthor": {
+        "handle": "mntruell",
+        "authorName": "Michael Truell"
+      },
+      "checks": {
+        "publicArticleMetadata200": true,
+        "channelIsX": true,
+        "primaryAuthorHandleMatches": true,
+        "primaryOriginalUrlHandleMatches": true,
+        "explicitV1SourceLabelHandleMatches": true,
+        "sameOriginalPostAsPublicV1": true,
+        "sourceCardNameNotQuotedAuthor": true
+      },
+      "quotedActorExcluded": true,
+      "evidence": {
+        "itemId": "vecuqq4knwr9t37a0gwwotj3r",
+        "pageUrl": "https://aihot.news/items/vecuqq4knwr9t37a0gwwotj3r",
+        "sourceCardMetadataUrl": "https://aihot.news/api/site/items/vecuqq4knwr9t37a0gwwotj3r",
+        "originalUrl": "https://x.com/mntruell/status/2111218918362861958",
+        "observedAt": "2026-10-20T11:02:41.315Z",
+        "publishedAt": "2026-10-16T22:13:09.000Z",
+        "discoveredAt": "2026-10-16T22:27:31.834Z"
+      },
+      "sourceCardMetadata": {
+        "status": 200,
+        "observedAt": "2026-10-20T11:02:41.315Z",
+        "bodySha256": "a82d9312b1f93700d7fb08820a4a4c9cb3529982b1ea85abd1692cc8a4779c22"
+      },
+      "currentWindowObservedItems": 1,
+      "upstreamHeatOnly": null,
+      "participationMode": "editorial",
+      "participationModeBasis": "Upstream heatOnly unknown; independently chosen editorial, not a claim about original private settings.",
+      "configurationProvenance": "Independently rebuilt Bird user_tweets config; original AIHOT provider/query/cursor configuration is not public.",
+      "providerCollectionExecuted": false,
+      "status": "verified",
+      "scope": "exact_public_account_identity_and_supported_existing_collector_configuration",
+      "checkedAt": "2026-10-20T11:02:41.315Z",
+      "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
+      "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
+    },
+    "corescope-x-sainingxie": {
+      "id": "corescope-x-sainingxie",
+      "handle": "sainingxie",
+      "confirmedAccount": true,
+      "sourceLabels": [
+        "X：谢赛宁 (@sainingxie)"
+      ],
+      "sourceCardName": "谢赛宁",
+      "primaryAuthor": {
+        "handle": "sainingxie",
+        "authorName": "Saining Xie"
+      },
+      "checks": {
+        "publicArticleMetadata200": true,
+        "channelIsX": true,
+        "primaryAuthorHandleMatches": true,
+        "primaryOriginalUrlHandleMatches": true,
+        "explicitV1SourceLabelHandleMatches": true,
+        "sameOriginalPostAsPublicV1": true,
+        "sourceCardNameNotQuotedAuthor": true
+      },
+      "quotedActorExcluded": true,
+      "evidence": {
+        "itemId": "fn2abijlu6px0oh0vyoe1eo5p",
+        "pageUrl": "https://aihot.news/items/fn2abijlu6px0oh0vyoe1eo5p",
+        "sourceCardMetadataUrl": "https://aihot.news/api/site/items/fn2abijlu6px0oh0vyoe1eo5p",
+        "originalUrl": "https://x.com/sainingxie/status/2112239537271476251",
+        "observedAt": "2026-10-20T11:02:44.321Z",
+        "publishedAt": "2026-10-19T17:48:43.000Z",
+        "discoveredAt": "2026-10-19T18:14:34.542Z"
+      },
+      "sourceCardMetadata": {
+        "status": 200,
+        "observedAt": "2026-10-20T11:02:44.321Z",
+        "bodySha256": "856e5788326da09f3c2b61f7670e67c1c252745b307d6c28ddf4699215012e75"
+      },
+      "currentWindowObservedItems": 1,
+      "upstreamHeatOnly": null,
+      "participationMode": "editorial",
+      "participationModeBasis": "Upstream heatOnly unknown; independently chosen editorial, not a claim about original private settings.",
+      "configurationProvenance": "Independently rebuilt Bird user_tweets config; original AIHOT provider/query/cursor configuration is not public.",
+      "providerCollectionExecuted": false,
+      "status": "verified",
+      "scope": "exact_public_account_identity_and_supported_existing_collector_configuration",
+      "checkedAt": "2026-10-20T11:02:44.321Z",
+      "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
+      "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
+    },
+    "corescope-x-shaoruu": {
+      "id": "corescope-x-shaoruu",
+      "handle": "shaoruu",
+      "confirmedAccount": true,
+      "sourceLabels": [
+        "X：shaoruu（SpaceXSI，Grok Bot 初版作者之一） (@shaoruu)"
+      ],
+      "sourceCardName": "shaoruu",
+      "primaryAuthor": {
+        "handle": "shaoruu",
+        "authorName": "ian"
+      },
+      "checks": {
+        "publicArticleMetadata200": true,
+        "channelIsX": true,
+        "primaryAuthorHandleMatches": true,
+        "primaryOriginalUrlHandleMatches": true,
+        "explicitV1SourceLabelHandleMatches": true,
+        "sameOriginalPostAsPublicV1": true,
+        "sourceCardNameNotQuotedAuthor": true
+      },
+      "quotedActorExcluded": true,
+      "evidence": {
+        "itemId": "uip2nz9nruk9hwbbxgnt6xhmf",
+        "pageUrl": "https://aihot.news/items/uip2nz9nruk9hwbbxgnt6xhmf",
+        "sourceCardMetadataUrl": "https://aihot.news/api/site/items/uip2nz9nruk9hwbbxgnt6xhmf",
+        "originalUrl": "https://x.com/shaoruu/status/2112254276802404841",
+        "observedAt": "2026-10-20T11:02:47.335Z",
+        "publishedAt": "2026-10-19T18:47:18.000Z",
+        "discoveredAt": "2026-10-19T19:16:34.728Z"
+      },
+      "sourceCardMetadata": {
+        "status": 200,
+        "observedAt": "2026-10-20T11:02:47.335Z",
+        "bodySha256": "5d47cf981eea66d98d8f1d616f97414554b46b2f14d9853b6583bb413114c76b"
+      },
+      "currentWindowObservedItems": 1,
+      "upstreamHeatOnly": null,
+      "participationMode": "editorial",
+      "participationModeBasis": "Upstream heatOnly unknown; independently chosen editorial, not a claim about original private settings.",
+      "configurationProvenance": "Independently rebuilt Bird user_tweets config; original AIHOT provider/query/cursor configuration is not public.",
+      "providerCollectionExecuted": false,
+      "status": "verified",
+      "scope": "exact_public_account_identity_and_supported_existing_collector_configuration",
+      "checkedAt": "2026-10-20T11:02:47.335Z",
+      "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
+      "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
+    },
+    "corescope-x-siliconflowai": {
+      "id": "corescope-x-siliconflowai",
+      "handle": "siliconflowai",
+      "confirmedAccount": true,
+      "sourceLabels": [
+        "X：硅基流动 SiliconFlow (@SiliconFlowAI)"
+      ],
+      "sourceCardName": "硅基流动 SiliconFlow",
+      "primaryAuthor": {
+        "handle": "SiliconFlowAI",
+        "authorName": "SiliconFlow"
+      },
+      "checks": {
+        "publicArticleMetadata200": true,
+        "channelIsX": true,
+        "primaryAuthorHandleMatches": true,
+        "primaryOriginalUrlHandleMatches": true,
+        "explicitV1SourceLabelHandleMatches": true,
+        "sameOriginalPostAsPublicV1": true,
+        "sourceCardNameNotQuotedAuthor": true
+      },
+      "quotedActorExcluded": true,
+      "evidence": {
+        "itemId": "keozax8pv30p50qbxgwff3kkb",
+        "pageUrl": "https://aihot.news/items/keozax8pv30p50qbxgwff3kkb",
+        "sourceCardMetadataUrl": "https://aihot.news/api/site/items/keozax8pv30p50qbxgwff3kkb",
+        "originalUrl": "https://x.com/SiliconFlowAI/status/2112190772791705750",
+        "observedAt": "2026-10-20T11:02:50.337Z",
+        "publishedAt": "2026-10-19T14:34:57.000Z",
+        "discoveredAt": "2026-10-19T14:37:38.944Z"
+      },
+      "sourceCardMetadata": {
+        "status": 200,
+        "observedAt": "2026-10-20T11:02:50.337Z",
+        "bodySha256": "8bad51422844c290b6c1854cd0ac3d3fd2f6f68b1ada3ec1de3f536da4ed99b3"
+      },
+      "currentWindowObservedItems": 1,
+      "upstreamHeatOnly": false,
+      "participationMode": "editorial",
+      "participationModeBasis": "Public source sample explicitly heatOnly=false.",
+      "configurationProvenance": "Independently rebuilt Bird user_tweets config; original AIHOT provider/query/cursor configuration is not public.",
+      "providerCollectionExecuted": false,
+      "status": "verified",
+      "scope": "exact_public_account_identity_and_supported_existing_collector_configuration",
+      "checkedAt": "2026-10-20T11:02:50.337Z",
+      "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
+      "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
+    },
+    "corescope-x-unitreerobotics": {
+      "id": "corescope-x-unitreerobotics",
+      "handle": "unitreerobotics",
+      "confirmedAccount": true,
+      "sourceLabels": [
+        "X：宇树 Unitree (@UnitreeRobotics)"
+      ],
+      "sourceCardName": "宇树 Unitree",
+      "primaryAuthor": {
+        "handle": "UnitreeRobotics",
+        "authorName": "Unitree"
+      },
+      "checks": {
+        "publicArticleMetadata200": true,
+        "channelIsX": true,
+        "primaryAuthorHandleMatches": true,
+        "primaryOriginalUrlHandleMatches": true,
+        "explicitV1SourceLabelHandleMatches": true,
+        "sameOriginalPostAsPublicV1": true,
+        "sourceCardNameNotQuotedAuthor": true
+      },
+      "quotedActorExcluded": true,
+      "evidence": {
+        "itemId": "k9y2tp8c3n0p0ec9kxpyz9cyl",
+        "pageUrl": "https://aihot.news/items/k9y2tp8c3n0p0ec9kxpyz9cyl",
+        "sourceCardMetadataUrl": "https://aihot.news/api/site/items/k9y2tp8c3n0p0ec9kxpyz9cyl",
+        "originalUrl": "https://x.com/UnitreeRobotics/status/2111015545869107471",
+        "observedAt": "2026-10-20T11:02:53.353Z",
+        "publishedAt": "2026-10-16T08:45:01.000Z",
+        "discoveredAt": "2026-10-16T08:53:15.796Z"
+      },
+      "sourceCardMetadata": {
+        "status": 200,
+        "observedAt": "2026-10-20T11:02:53.353Z",
+        "bodySha256": "84c0fd64cea770f58ef35215e01f9f2633e22db18ee8660bd34b2f26c97cfea8"
+      },
+      "currentWindowObservedItems": 1,
+      "upstreamHeatOnly": null,
+      "participationMode": "editorial",
+      "participationModeBasis": "Upstream heatOnly unknown; independently chosen editorial, not a claim about original private settings.",
+      "configurationProvenance": "Independently rebuilt Bird user_tweets config; original AIHOT provider/query/cursor configuration is not public.",
+      "providerCollectionExecuted": false,
+      "status": "verified",
+      "scope": "exact_public_account_identity_and_supported_existing_collector_configuration",
+      "checkedAt": "2026-10-20T11:02:53.353Z",
+      "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
+      "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
+    },
+    "corescope-x-xsquarerobot": {
+      "id": "corescope-x-xsquarerobot",
+      "handle": "xsquarerobot",
+      "confirmedAccount": true,
+      "sourceLabels": [
+        "X：自变量 X Square (@XSquareRobot)"
+      ],
+      "sourceCardName": "自变量 X Square",
+      "primaryAuthor": {
+        "handle": "XSquareRobot",
+        "authorName": "X Square Robot"
+      },
+      "checks": {
+        "publicArticleMetadata200": true,
+        "channelIsX": true,
+        "primaryAuthorHandleMatches": true,
+        "primaryOriginalUrlHandleMatches": true,
+        "explicitV1SourceLabelHandleMatches": true,
+        "sameOriginalPostAsPublicV1": true,
+        "sourceCardNameNotQuotedAuthor": true
+      },
+      "quotedActorExcluded": true,
+      "evidence": {
+        "itemId": "dibe0w5ojzwuaur5u12kkktcn",
+        "pageUrl": "https://aihot.news/items/dibe0w5ojzwuaur5u12kkktcn",
+        "sourceCardMetadataUrl": "https://aihot.news/api/site/items/dibe0w5ojzwuaur5u12kkktcn",
+        "originalUrl": "https://x.com/XSquareRobot/status/2112112528495108269",
+        "observedAt": "2026-10-20T11:02:56.363Z",
+        "publishedAt": "2026-10-19T09:24:02.000Z",
+        "discoveredAt": "2026-10-19T09:28:36.733Z"
+      },
+      "sourceCardMetadata": {
+        "status": 200,
+        "observedAt": "2026-10-20T11:02:56.363Z",
+        "bodySha256": "f6088c2f03d3676f8b9297cafbf2864ebd5bfa19e60c468094babcee7f7487e7"
+      },
+      "currentWindowObservedItems": 1,
+      "upstreamHeatOnly": null,
+      "participationMode": "editorial",
+      "participationModeBasis": "Upstream heatOnly unknown; independently chosen editorial, not a claim about original private settings.",
+      "configurationProvenance": "Independently rebuilt Bird user_tweets config; original AIHOT provider/query/cursor configuration is not public.",
+      "providerCollectionExecuted": false,
+      "status": "verified",
+      "scope": "exact_public_account_identity_and_supported_existing_collector_configuration",
+      "checkedAt": "2026-10-20T11:02:56.363Z",
+      "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
+      "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
     }
   },
   "coverage": [
@@ -8271,6 +9405,90 @@
       "sourceId": "corescope-x-googledeepmind",
       "status": "configured_exact_account",
       "evidencePage": "https://aihot.news/item/fqn3blsf244tabuehydo5fw0q"
+    },
+    {
+      "sourceId": "corescope-x-petermccrory",
+      "observedIdentity": "x:petermccrory",
+      "status": "reviewed_configuration_added_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261020.json"
+    },
+    {
+      "sourceId": "corescope-x-deepseek-ai",
+      "observedIdentity": "x:deepseek_ai",
+      "status": "reviewed_configuration_added_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261020.json"
+    },
+    {
+      "sourceId": "corescope-x-theworldlabs",
+      "observedIdentity": "x:theworldlabs",
+      "status": "reviewed_configuration_added_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261020.json"
+    },
+    {
+      "sourceId": "corescope-x-thinkymachines",
+      "observedIdentity": "x:thinkymachines",
+      "status": "reviewed_configuration_added_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261020.json"
+    },
+    {
+      "sourceId": "corescope-x-decohack",
+      "observedIdentity": "x:decohack",
+      "status": "reviewed_configuration_added_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261020.json"
+    },
+    {
+      "sourceId": "corescope-x-finkd",
+      "observedIdentity": "x:finkd",
+      "status": "reviewed_configuration_added_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261020.json"
+    },
+    {
+      "sourceId": "corescope-x-merettm",
+      "observedIdentity": "x:merettm",
+      "status": "reviewed_configuration_added_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261020.json"
+    },
+    {
+      "sourceId": "corescope-x-miramurati",
+      "observedIdentity": "x:miramurati",
+      "status": "reviewed_configuration_added_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261020.json"
+    },
+    {
+      "sourceId": "corescope-x-mntruell",
+      "observedIdentity": "x:mntruell",
+      "status": "reviewed_configuration_added_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261020.json"
+    },
+    {
+      "sourceId": "corescope-x-sainingxie",
+      "observedIdentity": "x:sainingxie",
+      "status": "reviewed_configuration_added_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261020.json"
+    },
+    {
+      "sourceId": "corescope-x-shaoruu",
+      "observedIdentity": "x:shaoruu",
+      "status": "reviewed_configuration_added_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261020.json"
+    },
+    {
+      "sourceId": "corescope-x-siliconflowai",
+      "observedIdentity": "x:siliconflowai",
+      "status": "reviewed_configuration_added_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261020.json"
+    },
+    {
+      "sourceId": "corescope-x-unitreerobotics",
+      "observedIdentity": "x:unitreerobotics",
+      "status": "reviewed_configuration_added_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261020.json"
+    },
+    {
+      "sourceId": "corescope-x-xsquarerobot",
+      "observedIdentity": "x:xsquarerobot",
+      "status": "reviewed_configuration_added_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261020.json"
     }
   ],
   "refreshReviews": [
@@ -8325,6 +9543,28 @@
         "corescope-x-bigt-sheesh"
       ],
       "evidence": "docs/corescope-source-expansion-20261015.json"
+    },
+    {
+      "observedAt": "2026-10-20T10:55:16.811Z",
+      "preparedAt": "2026-10-20T11:28:47.916Z",
+      "sourceIds": [
+        "corescope-x-petermccrory",
+        "corescope-x-deepseek-ai",
+        "corescope-x-theworldlabs",
+        "corescope-x-thinkymachines",
+        "corescope-x-decohack",
+        "corescope-x-finkd",
+        "corescope-x-merettm",
+        "corescope-x-miramurati",
+        "corescope-x-mntruell",
+        "corescope-x-sainingxie",
+        "corescope-x-shaoruu",
+        "corescope-x-siliconflowai",
+        "corescope-x-unitreerobotics",
+        "corescope-x-xsquarerobot"
+      ],
+      "evidence": "docs/corescope-source-expansion-20261020.json",
+      "scope": "Independent public entry/account reconstruction; runtime acceptance is separate."
     }
   ]
 }

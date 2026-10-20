@@ -17187,6 +17187,1253 @@
         "AI",
         "公众号原始账号"
       ]
+    },
+    {
+      "id": "corescope-web-browserbase-blog",
+      "name": "Browserbase / Stagehand 工程博客",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.browserbase.com/blog",
+        "itemSelector": ".cardPost:has(a[href^=\"/blog/\"])",
+        "linkSelector": "a[href^=\"/blog/\"]",
+        "titleSelector": "h3",
+        "publishedAtSelector": ".cardPost__publishedOn dd",
+        "publishedAtUtcOffset": "+00:00",
+        "allowUrlPrefixes": [
+          "https://www.browserbase.com/blog/"
+        ],
+        "denyUrlPrefixes": [
+          "https://www.browserbase.com/blog/page/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true,
+        "parseMode": "html"
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:browserbase",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-cerebras-blog",
+      "name": "Cerebras：Blog（网页）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.cerebras.ai/blog",
+        "itemSelector": "a[href^=\"/blog/\"]:has(h3)",
+        "titleSelector": "h3",
+        "publishedAtRegex": "([A-Z][a-z]+\\s+\\d{1,2},\\s+20\\d{2})",
+        "publishedAtUtcOffset": "+00:00",
+        "allowUrlPrefixes": [
+          "https://www.cerebras.ai/blog/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true,
+        "parseMode": "html"
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:cerebras",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-conductor-changelog",
+      "name": "Conductor 官方更新",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.conductor.build/changelog/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:conductor",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "AI应用与产品化场景",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-hamel-blog",
+      "name": "Hamel Husain 长文（RSS）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://hamel.dev/index.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true,
+        "allowUrlPrefixes": [
+          "https://hamel.dev/blog/"
+        ]
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:hamel.dev",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "AI",
+        "研究分析/观点",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-qoder-blog",
+      "name": "Qoder 产品与技术博客",
+      "kind": "web_list",
+      "config": {
+        "url": "https://qoder.com/zh/blog",
+        "itemSelector": "a[href^=\"/zh/blog/\"][class*=\"Content_cardBox\"]",
+        "titleSelector": "[class*=\"Card_card-title\"]",
+        "summarySelector": "[class*=\"Card_card-description\"]",
+        "allowUrlPrefixes": [
+          "https://qoder.com/zh/blog/"
+        ],
+        "detail": {
+          "maxFetches": 2,
+          "publishedAtRegex": "<meta[^>]*property=[\"']article:published_time[\"'][^>]*content=[\"']([^\"']+)",
+          "publishedAtUtcOffset": "+00:00",
+          "publishedAtAuthoritative": true,
+          "requirePublishedAt": true,
+          "titleSelector": "h1"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true,
+        "parseMode": "html"
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:qoder",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-anthropic-alignment-science",
+      "name": "Anthropic：Alignment Science Blog（网页）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://alignment.anthropic.com/",
+        "itemSelector": ".toc a.paper, .toc a.note",
+        "titleSelector": "h3",
+        "summarySelector": ".description",
+        "allowUrlPrefixes": [
+          "https://alignment.anthropic.com/20"
+        ],
+        "detail": {
+          "publishedAtRegex": "<div[^>]*style=\"[^\"]*float:\\s*right[^\"]*\"[^>]*>\\s*([A-Za-z]+\\s+\\d{1,2},\\s+20\\d{2})",
+          "publishedAtUtcOffset": "+00:00",
+          "maxFetches": 2,
+          "publishedAtAuthoritative": true,
+          "requirePublishedAt": true,
+          "titleSelector": "h1"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true,
+        "parseMode": "html"
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "anthropic",
+      "signal_group_id": "publisher:anthropic",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-lovable-blog",
+      "name": "Lovable Blog",
+      "kind": "web_list",
+      "config": {
+        "url": "https://lovable.dev/blog",
+        "itemSelector": "a[href^=\"/blog/\"]:has(time)",
+        "titleSelector": "h2,h3,h4",
+        "publishedAtSelector": "time",
+        "allowUrlPrefixes": [
+          "https://lovable.dev/blog/"
+        ],
+        "publishedAtUtcOffset": "+00:00",
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true,
+        "parseMode": "html"
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:lovable",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-microsoft-official-blog",
+      "name": "Microsoft：Official Blog（RSS）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://blogs.microsoft.com/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "microsoft",
+      "signal_group_id": "publisher:microsoft",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-ollama-blog",
+      "name": "Ollama：Blog（RSS）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://ollama.com/blog/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:ollama",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-ai-as-normal-technology",
+      "name": "AI as Normal Technology（RSS）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.normaltech.ai/feed",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:normaltech.ai",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "AI",
+        "研究分析/观点",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-big-technology",
+      "name": "Big Technology（热点 RSS）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.bigtechnology.com/feed",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:bigtechnology.com",
+      "participation_mode": "hot_signal",
+      "interval_minutes": 360,
+      "tags": [
+        "AI",
+        "研究分析/观点",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-black-forest-labs-blog",
+      "name": "Black Forest Labs：Blog（网页）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://bfl.ai/blog",
+        "itemSelector": "a[href^=\"/blog/\"]:has(time)",
+        "titleSelector": "h2,h3,h4",
+        "publishedAtSelector": "time",
+        "allowUrlPrefixes": [
+          "https://bfl.ai/blog/"
+        ],
+        "publishedAtUtcOffset": "+00:00",
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true,
+        "parseMode": "html"
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:blackforestlabs",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-cognition-blog",
+      "name": "Cognition 模型 / Devin 博客（网页）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://cognition.com/blog",
+        "itemSelector": "a[href^=\"/blog/\"]:has(time)",
+        "titleSelector": "h2,h3,h4",
+        "publishedAtSelector": "time",
+        "allowUrlPrefixes": [
+          "https://cognition.com/blog/"
+        ],
+        "publishedAtUtcOffset": "+00:00",
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true,
+        "parseMode": "html"
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:cognition",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-meta-research-blog",
+      "name": "Meta AI：Research Blog（网页）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://research.meta.ai/",
+        "itemSelector": "a[href^=\"/blog/\"]:has(time)",
+        "titleSelector": "h2,h3,h4",
+        "publishedAtSelector": "time",
+        "allowUrlPrefixes": [
+          "https://research.meta.ai/blog/"
+        ],
+        "publishedAtUtcOffset": "+00:00",
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true,
+        "parseMode": "html"
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "meta",
+      "signal_group_id": "publisher:meta",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-microsoft-ai-blog",
+      "name": "Microsoft AI：官方博客（网页）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://microsoft.ai/blog/",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/(?:news|blog)/[^/?#]+/?$",
+        "allowUrlPrefixes": [
+          "https://microsoft.ai/blog/",
+          "https://microsoft.ai/news/"
+        ],
+        "publishedAtUtcOffset": "+00:00",
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1",
+          "publishedAtRegex": "\"datePublished\"\\s*:\\s*\"([^\"]+)\"",
+          "publishedAtUtcOffset": "+00:00",
+          "publishedAtAuthoritative": true,
+          "requirePublishedAt": true
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true,
+        "parseMode": "html"
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "microsoft",
+      "signal_group_id": "publisher:microsoft",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-minimax-blog",
+      "name": "MiniMax：Blog（网页）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.minimax.io/blog",
+        "itemSelector": "a[href^=\"/blog/\"]:has(h2),a[href^=\"/blog/\"]:has(h3)",
+        "titleSelector": "h2,h3",
+        "publishedAtRegex": ">(20\\d{2}-\\d{2}-\\d{2})<",
+        "allowUrlPrefixes": [
+          "https://www.minimax.io/blog/"
+        ],
+        "publishedAtUtcOffset": "+00:00",
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true,
+        "parseMode": "html"
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:minimax",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-openhands-blog",
+      "name": "OpenHands 官方博客",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.openhands.dev/blog",
+        "itemSelector": "a.blog-grid-card",
+        "publishedAtRegex": "([A-Z][a-z]+\\s+\\d{1,2},\\s+20\\d{2})",
+        "allowUrlPrefixes": [
+          "https://www.openhands.dev/blog/"
+        ],
+        "publishedAtUtcOffset": "+00:00",
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true,
+        "parseMode": "html",
+        "titleSelector": "p[data-wf-el=\"paragraph-lg\"]",
+        "summarySelector": ".blog-card-excerpt",
+        "publishedAtSelector": ".blog-card-copy > p.font-mono",
+        "adapter": "article_links",
+        "itemUrlPattern": "^/blog/[^/?#]+/?$",
+        "requirePublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:openhands",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-replit-blog",
+      "name": "Replit：Blog（网页）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://replit.com/blog",
+        "itemSelector": ".PostCard",
+        "linkSelector": "a[href^=\"/blog/\"]",
+        "titleSelector": "h2,h3,h4",
+        "publishedAtRegex": "([A-Z][a-z]{2} \\d{1,2}, 20\\d{2})",
+        "allowUrlPrefixes": [
+          "https://replit.com/blog/"
+        ],
+        "publishedAtUtcOffset": "+00:00",
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true,
+        "parseMode": "html"
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:replit",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-thinking-machines-news",
+      "name": "Thinking Machines Lab：News（网页）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://thinkingmachines.ai/news/",
+        "itemSelector": "a.post-item-link",
+        "titleSelector": "h2,h3,h4",
+        "publishedAtSelector": "time",
+        "allowUrlPrefixes": [
+          "https://thinkingmachines.ai/news/"
+        ],
+        "publishedAtUtcOffset": "+00:00",
+        "detail": {
+          "maxFetches": 2,
+          "titleSelector": "h1"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true,
+        "parseMode": "html"
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:thinkingmachines",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-modal-blog",
+      "name": "Modal Blog",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://modal.com/blog/atom.xml",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "participation_mode": "editorial",
+      "enabled": true,
+      "interval_minutes": 120,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:modal",
+      "tags": [
+        "AI",
+        "AI基础设施",
+        "技术博客/工程博客",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "corescope-web-ant-ling-developer-blog",
+      "name": "蚂蚁百灵 Developer Blog",
+      "kind": "web_list",
+      "config": {
+        "url": "https://developer.ant-ling.com/zh-CN/blogs",
+        "adapter": "article_links",
+        "parseMode": "html",
+        "itemSelector": "div.group:has(> a[aria-label][href^=\"/zh-CN/blogs/\"])",
+        "linkSelector": "a[aria-label][href^=\"/zh-CN/blogs/\"]",
+        "titleSelector": "h2",
+        "summarySelector": "p",
+        "publishedAtSelector": ".tabular-nums",
+        "publishedAtUtcOffset": "+08:00",
+        "itemUrlPattern": "^/zh-CN/blogs/[^/?#]+/?$",
+        "allowUrlPrefixes": [
+          "https://developer.ant-ling.com/zh-CN/blogs/"
+        ],
+        "minTitleLength": 8,
+        "requirePublishedAt": true,
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "tier": "T1",
+      "participation_mode": "editorial",
+      "first_party": true,
+      "interval_minutes": 240,
+      "enabled": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:ant-ling",
+      "tags": [
+        "AI",
+        "基础模型",
+        "技术博客/工程博客",
+        "20261020核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-petermccrory",
+      "name": "Peter McCrory · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:petermccrory -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:petermccrory",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-deepseek-ai",
+      "name": "DeepSeek · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:deepseek_ai -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:deepseek_ai",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-theworldlabs",
+      "name": "World Labs · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:theworldlabs -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:theworldlabs",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-thinkymachines",
+      "name": "Thinking Machines · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:thinkymachines -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:thinkymachines",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "公开参与模式核实"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-decohack",
+      "name": "viggo · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:decohack -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:decohack",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-finkd",
+      "name": "Mark Zuckerberg · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:finkd -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:finkd",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-merettm",
+      "name": "Jakub Pachocki · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:merettm -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:merettm",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-miramurati",
+      "name": "Mira Murati · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:miramurati -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:miramurati",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-mntruell",
+      "name": "Michael Truell · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:mntruell -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:mntruell",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-sainingxie",
+      "name": "谢赛宁 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:sainingxie -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:sainingxie",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-shaoruu",
+      "name": "shaoruu · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:shaoruu -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:shaoruu",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-siliconflowai",
+      "name": "硅基流动 SiliconFlow · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:siliconflowai -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:siliconflowai",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "公开参与模式核实"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-unitreerobotics",
+      "name": "宇树 Unitree · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:unitreerobotics -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:unitreerobotics",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-xsquarerobot",
+      "name": "自变量 X Square · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:xsquarerobot -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:xsquarerobot",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261020核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-mp-kimi-moonshot",
+      "name": "公众号：月之暗面",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkzMTY4NTIyNA%3D%3D&mid=2247484360&idx=1&sn=35df5c42fb318a8f93f32ca36e12ebe6",
+        "biz": "MzkzMTY4NTIyNA==",
+        "limit": 2
+      },
+      "signal_group_id": "mp-biz:MzkzMTY4NTIyNA==",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号",
+        "20261020核查补齐",
+        "本轮新窗口有原文"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-mp-tongyi-lab",
+      "name": "公众号：通义实验室",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkxMTYyMTAzNA%3D%3D&mid=2247501476&idx=1&sn=a9caef85456da041a0bfa3c0d40d0843",
+        "biz": "MzkxMTYyMTAzNA==",
+        "limit": 2
+      },
+      "signal_group_id": "mp-biz:MzkxMTYyMTAzNA==",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号",
+        "20261020核查补齐",
+        "历史身份确认待后续新文"
+      ]
     }
   ]
 }

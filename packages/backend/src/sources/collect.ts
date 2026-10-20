@@ -1,7 +1,7 @@
 // Collection run for one source: fetch listing → filter → store material → enqueue processing.
 // A failed fetch never advances the success cursor; the source's health reflects consecutive failures.
 import { sql, type Db } from "../db.ts";
-import { identityKeyFor, upsertMaterial } from "../content/materials.ts";
+import { decideTimeline, identityKeyFor, upsertMaterial } from "../content/materials.ts";
 import { identityKeyForUrl } from "../lib/url.ts";
 import { stableJson } from "../lib/ids.ts";
 import { enqueue, QUEUES, shutdownSignal } from "../jobs/queue.ts";
@@ -54,10 +54,12 @@ async function loadSource(id: string): Promise<SourceRow | null> {
   return s ?? null;
 }
 
-async function storedTitles(identities: string[]): Promise<Map<string, string>> {
+type StoredDetail = { title: string; published_at: Date | null };
+
+async function storedDetails(identities: string[]): Promise<Map<string, StoredDetail>> {
   if (identities.length === 0) return new Map();
-  const rows = await sql<{ identity_key: string; title: string }[]>`SELECT identity_key, title FROM articles WHERE identity_key = ANY(${identities}::text[])`;
-  return new Map(rows.map((r) => [r.identity_key, r.title]));
+  const rows = await sql<Array<StoredDetail & { identity_key: string }>>`SELECT identity_key, title, published_at FROM articles WHERE identity_key = ANY(${identities}::text[])`;
+  return new Map(rows.map((r) => [r.identity_key, r]));
 }
 
 const DAY_MS = 86_400_000;
@@ -158,17 +160,26 @@ export async function collectSource(sourceId: string, opts: { force?: boolean; e
 
     // Detail pages only for material we have not seen (bounded per run), and only for what the listing lacks.
     const d = source.config.detail;
-    const known = d ? await storedTitles(candidates.map((c) => c.identityKey!)) : new Map<string, string>();
+    const requireDate = d?.requirePublishedAt === true;
+    const known = d ? await storedDetails(candidates.map((c) => c.identityKey!)) : new Map<string, StoredDetail>();
     const detailBudget = Number(d?.maxFetches ?? 0);
     let detailUsed = 0;
-    for (const c of candidates) {
+    // A permanently undated or failing page must not spend the whole budget on every run.
+    // Rotate only the detail reads; storage keeps the listing's original order. A changed listing
+    // that no longer contains the previous position starts at its head and never drops new links.
+    const after = requireDate ? candidates.findIndex((c) => c.identityKey === source.cursor?.detailDateAfterIdentity) : -1;
+    const detailCandidates = after < 0 ? candidates : [...candidates.slice(after + 1), ...candidates.slice(0, after + 1)];
+    for (const c of detailCandidates) {
       // Listing dates the source marks unreliable are dropped; the detail page's rule decides.
       if (d?.publishedAtAuthoritative === true) c.publishedAt = null;
       const stored = known.get(c.identityKey!);
       if (stored !== undefined) {
         // The title came from the detail page: the listing's own rendering must not revise it back.
-        if (d?.titleSelector || d?.titleRegex) c.title = stored;
-        continue;
+        if (d?.titleSelector || d?.titleRegex) c.title = stored.title;
+        // An authoritative detail date must survive the next undated listing. Previously seen
+        // material without a date can still use this round's detail budget to establish one.
+        if (requireDate && stored.published_at && Number.isFinite(stored.published_at.getTime())) c.publishedAt = stored.published_at;
+        if (!requireDate || c.publishedAt && Number.isFinite(c.publishedAt.getTime())) continue;
       }
       if (!d || detailUsed >= detailBudget) continue;
       const need: DetailNeed = {
@@ -179,6 +190,7 @@ export async function collectSource(sourceId: string, opts: { force?: boolean; e
       };
       if (!need.date && !need.title && !need.summary) continue;
       detailUsed += 1;
+      if (requireDate) nextCursor.detailDateAfterIdentity = c.identityKey!;
       try {
         const got = await fetchDetail(c.url, source, need);
         if (got.title) c.title = got.title;
@@ -196,6 +208,12 @@ export async function collectSource(sourceId: string, opts: { force?: boolean; e
       } catch {
         // detail is best effort
       }
+    }
+    // Some sites date articles only on detail pages. Leave unchecked or still-undated links out
+    // of storage so later rounds can enrich them, rather than publishing them at discovery time.
+    if (requireDate) {
+      const discoveredAt = new Date();
+      candidates = candidates.filter((c) => decideTimeline(c.publishedAt, discoveredAt).publishedAt !== null);
     }
 
     // A Jina listing round that was pending when this run started has been received by now.

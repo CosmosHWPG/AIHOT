@@ -439,6 +439,58 @@
         "AI",
         "公众号原始账号"
       ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-mp-kimi-moonshot",
+      "name": "公众号：月之暗面",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkzMTY4NTIyNA%3D%3D&mid=2247484360&idx=1&sn=35df5c42fb318a8f93f32ca36e12ebe6",
+        "biz": "MzkzMTY4NTIyNA==",
+        "limit": 2
+      },
+      "signal_group_id": "mp-biz:MzkzMTY4NTIyNA==",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号",
+        "20261020核查补齐",
+        "本轮新窗口有原文"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-mp-tongyi-lab",
+      "name": "公众号：通义实验室",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzkxMTYyMTAzNA%3D%3D&mid=2247501476&idx=1&sn=a9caef85456da041a0bfa3c0d40d0843",
+        "biz": "MzkxMTYyMTAzNA==",
+        "limit": 2
+      },
+      "signal_group_id": "mp-biz:MzkxMTYyMTAzNA==",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号",
+        "20261020核查补齐",
+        "历史身份确认待后续新文"
+      ]
     }
   ],
   "verifications": {
@@ -748,6 +800,78 @@
       "paidRequestsMade": 0,
       "liveCollectionAccepted": false,
       "reason": "Source-link __biz and full public article URL match; current catalogue and verified wx_cache public article samples contain no matching biz."
+    },
+    "corescope-mp-kimi-moonshot": {
+      "id": "corescope-mp-kimi-moonshot",
+      "biz": "MzkzMTY4NTIyNA==",
+      "identityProof": {
+        "biz": "MzkzMTY4NTIyNA==",
+        "page": "https://aihot.news/items/lgp93nw3uoemsywz8tldtfxbq",
+        "itemId": "lgp93nw3uoemsywz8tldtfxbq",
+        "originalArticleUrl": "https://mp.weixin.qq.com/s?__biz=MzkzMTY4NTIyNA%3D%3D&mid=2247484360&idx=1&sn=35df5c42fb318a8f93f32ca36e12ebe6",
+        "sourceLinkLabel": "公众号：月之暗面",
+        "observedAt": "2026-10-20T10:57:28.522903+00:00"
+      },
+      "currentWindowObservedItems": 1,
+      "windowClassification": "existing_online_account_with_new_window_material",
+      "historicallyObserved": true,
+      "notEquivalentChannels": [
+        "corescope-x-kimi-moonshot"
+      ],
+      "upstreamHeatOnly": null,
+      "configurationProvenance": "Independently rebuilt Dajiala exact-biz+public-article selector; legal certification owner is not asserted.",
+      "historyHandling": {
+        "forceHistoricalSampleImport": false,
+        "firstCheckWindowDays": 7,
+        "firstCheckBackfill": "first-import",
+        "firstCheckMaxNew": 2,
+        "existingImplementationEvidence": "packages/backend/src/sources/mp.ts FIRST_CHECK_WINDOW_MS and firstCheck check; config.limit=2",
+        "continuousLookbackGuarantee": false,
+        "note": "The existing Dajiala path limits age only on its first check; lookbackDays does not implement a continuous Dajiala age filter. Old observed sample is identity evidence, never current collection acceptance. Preserve actual publication dates and standard downstream freshness checks."
+      },
+      "providerCollectionExecuted": false,
+      "status": "verified",
+      "scope": "exact_public_account_identity_and_supported_existing_collector_configuration",
+      "checkedAt": "2026-10-20T11:28:47.916Z",
+      "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
+      "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
+    },
+    "corescope-mp-tongyi-lab": {
+      "id": "corescope-mp-tongyi-lab",
+      "biz": "MzkxMTYyMTAzNA==",
+      "identityProof": {
+        "biz": "MzkxMTYyMTAzNA==",
+        "page": "https://aihot.news/items/cmsdu3gxy0151rofz26y1o8vi",
+        "itemId": "cmsdu3gxy0151rofz26y1o8vi",
+        "originalArticleUrl": "https://mp.weixin.qq.com/s?__biz=MzkxMTYyMTAzNA%3D%3D&mid=2247501476&idx=1&sn=a9caef85456da041a0bfa3c0d40d0843",
+        "sourceLinkLabel": "公众号：通义实验室",
+        "observedAt": "2026-10-20T10:57:31.474130+00:00"
+      },
+      "currentWindowObservedItems": 0,
+      "windowClassification": "historically_observed_account_currently_sampled_without_new_window_material",
+      "historicallyObserved": true,
+      "notEquivalentChannels": [
+        "v2-source-183",
+        "corescope-x-alibaba-qwen",
+        "corescope-mp-qwen-app"
+      ],
+      "upstreamHeatOnly": false,
+      "configurationProvenance": "Independently rebuilt Dajiala exact-biz+public-article selector; legal certification owner is not asserted.",
+      "historyHandling": {
+        "forceHistoricalSampleImport": false,
+        "firstCheckWindowDays": 7,
+        "firstCheckBackfill": "first-import",
+        "firstCheckMaxNew": 2,
+        "existingImplementationEvidence": "packages/backend/src/sources/mp.ts FIRST_CHECK_WINDOW_MS and firstCheck check; config.limit=2",
+        "continuousLookbackGuarantee": false,
+        "note": "The existing Dajiala path limits age only on its first check; lookbackDays does not implement a continuous Dajiala age filter. Old observed sample is identity evidence, never current collection acceptance. Preserve actual publication dates and standard downstream freshness checks."
+      },
+      "providerCollectionExecuted": false,
+      "status": "verified",
+      "scope": "exact_public_account_identity_and_supported_existing_collector_configuration",
+      "checkedAt": "2026-10-20T11:28:47.916Z",
+      "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
+      "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
     }
   },
   "aliases": [],
@@ -802,6 +926,18 @@
       "observedIdentity": "公众号：火山引擎",
       "sourceId": "corescope-mp-volcengine",
       "status": "configured_awaiting_local_dajiala_key"
+    },
+    {
+      "sourceId": "corescope-mp-kimi-moonshot",
+      "observedIdentity": "mp:MzkzMTY4NTIyNA==",
+      "status": "reviewed_configuration_added_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261020.json"
+    },
+    {
+      "sourceId": "corescope-mp-tongyi-lab",
+      "observedIdentity": "mp:MzkxMTYyMTAzNA==",
+      "status": "reviewed_configuration_added_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261020.json"
     }
   ],
   "refreshReviews": [
@@ -825,6 +961,16 @@
         "corescope-mp-qwen-app"
       ],
       "evidence": "docs/corescope-source-expansion-20261015.json"
+    },
+    {
+      "observedAt": "2026-10-20T10:55:16.811Z",
+      "preparedAt": "2026-10-20T11:28:47.916Z",
+      "sourceIds": [
+        "corescope-mp-kimi-moonshot",
+        "corescope-mp-tongyi-lab"
+      ],
+      "evidence": "docs/corescope-source-expansion-20261020.json",
+      "scope": "Independent public entry/account reconstruction; runtime acceptance is separate."
     }
   ]
 }

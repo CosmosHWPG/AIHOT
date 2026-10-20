@@ -33,7 +33,7 @@ const NESTED: Record<string, string[]> = {
   requireBoolean: ["path", "equals"],
   minNumeric: ["path", "min"],
   detail: [
-    "maxFetches", "publishedAtSelector", "publishedAtRegex", "publishedAtUtcOffset", "publishedAtAuthoritative", "upgradeDatePrecision",
+    "maxFetches", "publishedAtSelector", "publishedAtRegex", "publishedAtUtcOffset", "publishedAtAuthoritative", "requirePublishedAt", "upgradeDatePrecision",
     "titleSelector", "titleRegex", "titleAuthoritative", "summarySelector",
   ],
 };
@@ -56,6 +56,8 @@ export function unsupportedConfig(kind: SourceRow["kind"], config: Record<string
       for (const sub of Object.keys(value)) if (!NESTED[key]!.includes(sub)) out.push(`${key}.${sub}`);
     }
   }
+  const detail = config.detail as Record<string, unknown> | undefined;
+  if (detail?.requirePublishedAt !== undefined && typeof detail.requirePublishedAt !== "boolean") out.push("detail.requirePublishedAt");
   if (kind === "x_search" && config.provider === "bird") {
     const bird = config.bird as Record<string, unknown> | undefined;
     if (bird !== undefined && (!bird || typeof bird !== "object" || Array.isArray(bird))) out.push("bird");

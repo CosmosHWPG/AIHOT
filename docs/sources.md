@@ -69,6 +69,7 @@
 - 日期在条目内查找 `publishedAtSelector`，依次读取 `datetime` 属性、`title` 属性、文字。没有时区的日期时间可用 `publishedAtUtcOffset`（默认 `+08:00`）；自带时区的时间保留原时区语义，纯 `YYYY-MM-DD` 按 UTC 零点读。
 - `parseMode`：普通网页默认 `html`；`markdown` 按 Markdown 链接读；`docusaurus_changelog` 读更新日志标题。需要 Jina 时，显式把 `url` 写成 `https://r.jina.ai/https://目标站/路径` 并配置 `JINA_API_KEY`，不是抓不到就自动切换。Jina 默认返回 Markdown；要继续使用 CSS 选择器，显式设 `parseMode: "html"`。
 - `detail`：列表缺日期、标题或摘要时抓详情页补齐（`publishedAtSelector`、`titleSelector`、`summarySelector` 等）。
+- `detail.requirePublishedAt: true`：适用于日期只在详情页的来源，详情补齐后才接纳有有效原文日期的条目。配合 `detail.maxFetches` 限制每轮详情请求；从上轮最后尝试的位置轮转，避免持续失败的详情挡住后续条目。未取得日期的链接留待后续采集，已存日期不会被下一轮无日期列表清空。此选项默认关闭，列表预览不执行详情补齐，需通过正式采集验收。
 - `allowUrlPrefixes` / `denyUrlPrefixes`：只收某些路径下的文章。
 
 ### json_list
