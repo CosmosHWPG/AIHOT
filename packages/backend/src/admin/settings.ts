@@ -1,15 +1,18 @@
 // Operator settings: about-page QR codes (replaced without a release), notification targets
 // (switching a group on records enabled_at so older content is never back-filled) and per-service
 // request budgets (the circuit breaker paid calls check before sending).
-import type { AdminBudget, AdminNotifyTarget, AdminSettings, BeforeJson } from "@aihot/contracts/admin";
+import type { AdminBudget, AdminBudgetUpdate, AdminNotifyTarget, AdminSettings, BeforeJson } from "@aihot/contracts/admin";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
+import { z } from "zod";
 import { config } from "../config.ts";
 import { sql } from "../db.ts";
 import { sha256 } from "../lib/ids.ts";
 import { loadContact, type ContactSettings } from "../site/contact.ts";
-import { audit } from "../audit.ts";
+import { audit, Conflict } from "../audit.ts";
+import { cancelTemporaryLlmBudget } from "../providers/temporary-budget.ts";
+import { wakeLlmBudgetWaits } from "../jobs/budget-capacity.ts";
 
 const MAX_QR_BYTES = 2 * 1024 * 1024;
 
@@ -59,20 +62,50 @@ export async function setTargetEnabled(key: string, enabled: boolean, reason: st
 
 export async function listBudgets(): Promise<BeforeJson<AdminBudget>[]> {
   return sql<BeforeJson<AdminBudget>[]>`
-    SELECT b.service, b.per_minute, b.per_hour, b.per_day, b.note, b.updated_at,
+    SELECT b.service, b.enabled, b.per_minute, b.per_hour, b.per_day, b.note, b.updated_at,
            (SELECT count(*)::int FROM receipt_attempts a WHERE a.service = b.service AND a.origin = 'live' AND a.started_at > now() - interval '1 day') AS used_day,
            (SELECT count(*)::int FROM receipt_attempts a WHERE a.service = b.service AND a.origin = 'live' AND a.started_at > now() - interval '1 hour') AS used_hour
     FROM budgets b ORDER BY b.service`;
 }
 
-export async function updateBudget(service: string, input: { perMinute: number; perHour: number; perDay: number; reason: string }, actor: string) {
-  if (!input.reason?.trim()) throw new Error("reason is required");
-  for (const v of [input.perMinute, input.perHour, input.perDay]) if (!Number.isInteger(v) || v < 0) throw new Error("budgets are non-negative integers (0 stops the service)");
-  const [before] = await sql`SELECT per_minute, per_hour, per_day FROM budgets WHERE service = ${service}`;
-  const [after] = await sql`
-    INSERT INTO budgets (service, per_minute, per_hour, per_day, note) VALUES (${service}, ${input.perMinute}, ${input.perHour}, ${input.perDay}, ${input.reason})
-    ON CONFLICT (service) DO UPDATE SET per_minute = EXCLUDED.per_minute, per_hour = EXCLUDED.per_hour, per_day = EXCLUDED.per_day, note = EXCLUDED.note, updated_at = now()
-    RETURNING service, per_minute, per_hour, per_day`;
-  await audit(actor, "budget.update", `budget:${service}`, input.reason, before ?? null, after);
-  return after;
+const LIMIT = z.number().int().min(0).max(2_147_483_647);
+const BUDGET_UPDATE = z.object({
+  enabled: z.boolean().optional(),
+  perMinute: LIMIT.optional(),
+  perHour: LIMIT.optional(),
+  perDay: LIMIT.optional(),
+  reason: z.string().trim().min(1),
+  version: z.string().optional(),
+}).strict().refine(value => value.enabled !== undefined || value.perMinute !== undefined || value.perHour !== undefined || value.perDay !== undefined,
+  { message: "a budget switch or limit is required" });
+
+export async function updateBudget(service: string, input: AdminBudgetUpdate, actor: string) {
+  const patch = BUDGET_UPDATE.parse(input);
+  return sql.begin(async tx => {
+    // Share the paid-request/lease lock, so a claim cannot race a disabled/enabled transition.
+    await tx`SELECT pg_advisory_xact_lock(hashtext(${`budget:${service}`}))`;
+    const [before] = await tx<{ service: string; enabled: boolean; per_minute: number; per_hour: number; per_day: number; note: string | null; updated_at: Date }[]>`
+      SELECT service,enabled,per_minute,per_hour,per_day,note,updated_at FROM budgets WHERE service=${service} FOR UPDATE`;
+    if (patch.version !== undefined && (!before || before.updated_at.toISOString() !== patch.version)) {
+      throw new Conflict("预算已被其他操作修改，请刷新后再改");
+    }
+    if (!before && (patch.perMinute === undefined || patch.perHour === undefined || patch.perDay === undefined)) {
+      throw Object.assign(new Error("new budgets require perMinute, perHour and perDay"),{ statusCode: 400 });
+    }
+    // Validate the browser version before cancellation changes the budget's fingerprint. Only an
+    // explicit LLM switch-off ends its temporary lease; omitted limits inherit the restored values.
+    if (service === "llm" && patch.enabled === false) await cancelTemporaryLlmBudget(actor,patch.reason,tx);
+    const [current] = await tx<{ enabled: boolean; per_minute: number; per_hour: number; per_day: number }[]>`
+      SELECT enabled,per_minute,per_hour,per_day FROM budgets WHERE service=${service}`;
+    const [after] = await tx`
+      INSERT INTO budgets (service,enabled,per_minute,per_hour,per_day,note)
+      VALUES (${service},${patch.enabled ?? current?.enabled ?? true},${patch.perMinute ?? current!.per_minute},
+        ${patch.perHour ?? current!.per_hour},${patch.perDay ?? current!.per_day},${patch.reason})
+      ON CONFLICT (service) DO UPDATE SET enabled=EXCLUDED.enabled,per_minute=EXCLUDED.per_minute,
+        per_hour=EXCLUDED.per_hour,per_day=EXCLUDED.per_day,note=EXCLUDED.note,updated_at=clock_timestamp()
+      RETURNING service,enabled,per_minute,per_hour,per_day,note,updated_at`;
+    await audit(actor,"budget.update",`budget:${service}`,patch.reason,before ?? null,after,{ db: tx });
+    if (service === "llm") await wakeLlmBudgetWaits(tx);
+    return after;
+  });
 }

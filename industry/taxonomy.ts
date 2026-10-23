@@ -9,11 +9,11 @@
  */
 export const CATEGORIES = [
   { key: "ai-models", label: "模型", section: "模型发布/更新", guide: "新模型、模型版本、权重开放、模型能力与价格变化的发布与评测结果" },
-  { key: "ai-products", label: "产品", section: "产品发布/更新", guide: "AI 产品、功能、应用、工具、API 与平台的发布和更新" },
-  { key: "industry", label: "行业", section: "行业动态", guide: "公司经营、融资并购、人事、合作、诉讼、监管与政策、市场与基础设施" },
-  { key: "paper", label: "论文", section: "论文研究", guide: "研究论文、技术报告、基准与数据集" },
-  { key: "tip", label: "教程", section: "技巧与观点", guide: "教程、实践经验、使用技巧、提示词与工具用法、深度技术讲解" },
-  { key: "opinion", label: "观点", section: "技巧与观点", guide: "人物观点、评论、分析、访谈、现象与趋势讨论" },
+  { key: "ai-products", label: "产品", section: "产品与网络演进", guide: "核心网网元、通信平台与网络能力，以及 AI 产品、工具、API、平台的正式发布和更新；架构落地、部署工程与商用试点的具体能力变化" },
+  { key: "industry", label: "产业", section: "产业与标准进展", guide: "核心网与 AI 的标准发布、工作项目及版本阶段，政策监管、安全通报、市场竞争、公司经营、融资并购、合作与商业基础设施；标准提案与冻结要区分阶段" },
+  { key: "paper", label: "研究", section: "研究与评测", guide: "核心网、6G 与 AI 的研究论文、技术报告、基准、测量方法和数据集；研究结论须保留实验范围" },
+  { key: "tip", label: "工程", section: "工程与技术洞察", guide: "核心网或 AI 的架构设计、部署实践、性能与成本优化、协议分析、故障复盘、安全防御、可复用方法和深度技术讲解" },
+  { key: "opinion", label: "洞察", section: "工程与技术洞察", guide: "技术与商业判断、标准路线分析、架构取舍、战略规划、竞争格局、深度访谈与趋势讨论" },
 ] as const;
 
 /**
@@ -33,10 +33,17 @@ export const CATEGORY_TAGS = [
 /** 可选的主题标签。 */
 export const TOPIC_TAGS = [
   "Agent", "编码", "推理", "多模态", "语音", "视频", "图像生成", "RAG", "端侧", "数据/训练", "搜索", "部署/工程", "开源生态", "具身智能", "MCP/工具调用",
+  "核心网", "AI", "5GC/核心网", "6G", "标准/协议", "云原生网络", "网络安全", "网络智能化", "网络开放/API", "专网/边缘", "网络韧性", "AI记忆", "AI评测", "AI安全", "AI基础设施", "商业/战略", "AI商业",
 ] as const;
 
+/** Only domain-specific labels imply a reading perspective; generic tags and companies do not. */
+export const DOMAIN_TAG_RULES: Readonly<Record<string, readonly string[]>> = {
+  "AI": ["模型发布", "RAG", "AI记忆", "AI评测", "AI安全", "AI基础设施", "AI商业", "MCP/工具调用"],
+  "核心网": ["5GC/核心网", "6G", "网络智能化", "网络开放/API", "专网/边缘", "网络韧性"],
+};
+
 /** 可选的实体标签（公司、机构、平台）。 */
-export const ENTITY_TAGS = ["OpenAI", "Anthropic", "DeepSeek", "DeepMind", "Google", "Meta", "Microsoft", "xAI", "Hugging Face", "GitHub", "arXiv"] as const;
+export const ENTITY_TAGS = ["OpenAI", "Anthropic", "DeepSeek", "DeepMind", "Google", "Meta", "Microsoft", "xAI", "Hugging Face", "GitHub", "arXiv", "NVIDIA", "Ericsson", "Nokia", "华为", "中兴", "Samsung", "Cisco", "Oracle", "Red Hat", "3GPP", "ETSI", "IETF", "GSMA", "TM Forum", "O-RAN Alliance", "CNCF", "NGMN", "ITU"] as const;
 
 /** 模型常写的近义词，统一成词表里的写法。 */
 export const TAG_SYNONYMS: Readonly<Record<string, string>> = {
@@ -49,6 +56,11 @@ export const TAG_SYNONYMS: Readonly<Record<string, string>> = {
   产品: "产品更新", 更新: "产品更新", 发布: "模型发布", 模型: "模型发布", 趋势: "现象/趋势", 现象: "现象/趋势", 观点: "大佬观点",
   视频生成: "视频", 非ai: "非AI/通用工具", "non-ai": "非AI/通用工具", 通用工具: "非AI/通用工具", 工程工具: "非AI/通用工具",
   安全扫描: "非AI/通用工具", devops: "非AI/通用工具", 行业: "行业动态", 动态: "行业动态",
+  "5GC": "5GC/核心网", "5G Core": "5GC/核心网", "5G核心网": "5GC/核心网", "移动核心网": "5GC/核心网", "EPC": "5GC/核心网",
+  "通信标准": "标准/协议", "标准": "标准/协议", "协议": "标准/协议", "CNF": "云原生网络", "云原生核心网": "云原生网络",
+  "NWDAF": "网络智能化", "自治网络": "网络智能化", "Network API": "网络开放/API", "CAMARA": "网络开放/API",
+  "AI记忆系统": "AI记忆", "Memory": "AI记忆", "AI安全治理": "AI安全", "评测": "评测/基准",
+  "爱立信": "Ericsson", "诺基亚": "Nokia", "Huawei": "华为", "ZTE": "中兴", "三星": "Samsung",
 };
 
 /** 模型漏了分类标签时，按内容类型补一个。 */
@@ -76,6 +88,23 @@ export const ENTITIES: Record<string, { name: string; displayTag: string | null;
   "hugging-face": { name: "Hugging Face", displayTag: "Hugging Face", aliases: ["Hugging Face"] },
   cursor: { name: "Cursor", displayTag: null, aliases: ["Cursor", "Anysphere"] },
   openrouter: { name: "OpenRouter", displayTag: null, aliases: ["OpenRouter"] },
+  ericsson: { name: "Ericsson 爱立信", displayTag: "Ericsson", aliases: ["Ericsson", "爱立信"] },
+  nokia: { name: "Nokia 诺基亚", displayTag: "Nokia", aliases: ["Nokia", "诺基亚"] },
+  huawei: { name: "华为 Huawei", displayTag: "华为", aliases: ["Huawei", "华为"] },
+  zte: { name: "中兴 ZTE", displayTag: "中兴", aliases: ["ZTE", "中兴通讯"] },
+  samsung: { name: "Samsung 三星", displayTag: "Samsung", aliases: ["Samsung", "三星"] },
+  cisco: { name: "Cisco 思科", displayTag: "Cisco", aliases: ["Cisco", "思科"] },
+  oracle: { name: "Oracle", displayTag: "Oracle", aliases: ["Oracle", "甲骨文"] },
+  "red-hat": { name: "Red Hat", displayTag: "Red Hat", aliases: ["Red Hat", "红帽"] },
+  "3gpp": { name: "3GPP", displayTag: "3GPP", aliases: ["3GPP", "第三代合作伙伴计划"] },
+  etsi: { name: "ETSI", displayTag: "ETSI", aliases: ["ETSI", "欧洲电信标准化协会"] },
+  ietf: { name: "IETF", displayTag: "IETF", aliases: ["IETF", "互联网工程任务组"] },
+  gsma: { name: "GSMA", displayTag: "GSMA", aliases: ["GSMA", "GSM Association"] },
+  "tm-forum": { name: "TM Forum", displayTag: "TM Forum", aliases: ["TM Forum", "TMForum", "电信管理论坛"] },
+  "o-ran": { name: "O-RAN Alliance", displayTag: "O-RAN Alliance", aliases: ["O-RAN Alliance", "O-RAN联盟"] },
+  cncf: { name: "CNCF", displayTag: "CNCF", aliases: ["CNCF", "Cloud Native Computing Foundation"] },
+  ngmn: { name: "NGMN", displayTag: "NGMN", aliases: ["NGMN", "Next Generation Mobile Networks"] },
+  itu: { name: "ITU", displayTag: "ITU", aliases: ["ITU", "国际电信联盟"] },
 };
 
 /**
@@ -115,6 +144,23 @@ export const IDENTITY_LEXICON: ReadonlyArray<{ id: string; name: string; pattern
   { id: "apple", name: "Apple AI", patterns: [/\bapple\s?(intelligence|silicon|ai)\b|苹果(智能|\s?AI)/i] },
   { id: "amazon", name: "Amazon / AWS", patterns: [/amazon|\baws\b|亚马逊/i] },
   { id: "baidu", name: "百度文心", patterns: [/百度|baidu|文心|\bernie\s?bot\b/i] },
+  { id: "ericsson", name: "Ericsson", patterns: [/\bericsson\b|爱立信/i] },
+  { id: "nokia", name: "Nokia", patterns: [/\bnokia\b|诺基亚/i] },
+  { id: "huawei", name: "华为", patterns: [/\bhuawei\b|华为/i] },
+  { id: "zte", name: "中兴", patterns: [/\bzte\b|中兴通讯|中兴/i] },
+  { id: "samsung", name: "Samsung", patterns: [/\bsamsung\b|三星/i] },
+  { id: "cisco", name: "Cisco", patterns: [/\bcisco\b|思科/i] },
+  { id: "oracle", name: "Oracle", patterns: [/\boracle\b|甲骨文/i] },
+  { id: "red-hat", name: "Red Hat", patterns: [/\bred\s+hat\b|红帽/i] },
+  { id: "3gpp", name: "3GPP", patterns: [/\b3gpp\b|第三代合作伙伴计划/i] },
+  { id: "etsi", name: "ETSI", patterns: [/\betsi\b|欧洲电信标准化协会/i] },
+  { id: "ietf", name: "IETF", patterns: [/\bietf\b|互联网工程任务组/i] },
+  { id: "gsma", name: "GSMA", patterns: [/\bgsma\b|\bgsm\s+association\b/i] },
+  { id: "tm-forum", name: "TM Forum", patterns: [/\btm\s*forum\b|电信管理论坛/i] },
+  { id: "o-ran", name: "O-RAN Alliance", patterns: [/\bo-ran\s+alliance\b|O-RAN联盟/i] },
+  { id: "cncf", name: "CNCF", patterns: [/\bcncf\b|cloud native computing foundation/i] },
+  { id: "ngmn", name: "NGMN", patterns: [/\bngmn\b|next generation mobile networks/i] },
+  { id: "itu", name: "ITU", patterns: [/\bitu(?:-t|-r)?\b|国际电信联盟/i] },
 ];
 
 /** 这些域名上的文章，发布方就是对应的公司（托管平台如 GitHub、arXiv 不算）。 */
@@ -130,6 +176,23 @@ export const PUBLISHER_DOMAINS: ReadonlyArray<{ entityId: string; domains: reado
   { entityId: "qwen", domains: ["qwen.ai"] },
   { entityId: "cursor", domains: ["cursor.com"] },
   { entityId: "openrouter", domains: ["openrouter.ai"] },
+  { entityId: "ericsson", domains: ["ericsson.com"] },
+  { entityId: "nokia", domains: ["nokia.com"] },
+  { entityId: "huawei", domains: ["huawei.com"] },
+  { entityId: "zte", domains: ["zte.com.cn"] },
+  { entityId: "samsung", domains: ["samsung.com"] },
+  { entityId: "cisco", domains: ["cisco.com"] },
+  { entityId: "oracle", domains: ["oracle.com"] },
+  { entityId: "red-hat", domains: ["redhat.com"] },
+  { entityId: "3gpp", domains: ["3gpp.org"] },
+  { entityId: "etsi", domains: ["etsi.org"] },
+  { entityId: "ietf", domains: ["ietf.org", "rfc-editor.org"] },
+  { entityId: "gsma", domains: ["gsma.com"] },
+  { entityId: "tm-forum", domains: ["tmforum.org"] },
+  { entityId: "o-ran", domains: ["o-ran.org"] },
+  { entityId: "cncf", domains: ["cncf.io"] },
+  { entityId: "ngmn", domains: ["ngmn.org"] },
+  { entityId: "itu", domains: ["itu.int"] },
 ];
 
 /** 原文里的这些写法也算提到了对应公司。 */

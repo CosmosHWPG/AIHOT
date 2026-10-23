@@ -179,6 +179,10 @@ export function fromHtml(html: string, base: string, source: SourceRow): Candida
   const listing = String(c.url ?? base).replace(JINA_PREFIX, "");
   // Sections of the listing page are posts only for sources that keep fragments as identity.
   const sectionsArePosts = c.preserveUrlFragment === true;
+  const articleProfile = c.adapter === "article_links";
+  if (articleProfile && !c.itemUrlPattern) throw new FetchError("article_links: itemUrlPattern missing");
+  const pattern = articleProfile ? new RegExp(String(c.itemUrlPattern), "i") : null;
+  const minimum = Math.max(2, Math.min(200, Number(c.minTitleLength) || 8));
   const itemSel: string | undefined = c.itemSelector;
   const nodes = itemSel ? $(itemSel).toArray() : $("a[href]").toArray();
   for (const node of nodes) {
@@ -187,9 +191,15 @@ export function fromHtml(html: string, base: string, source: SourceRow): Candida
     const url = absolute(linkEl.attr("href"), base);
     if (!url || seen.has(url) || !allowed(url, source)) continue;
     if (!sectionsArePosts && listingItself(url, listing)) continue;
+    if (articleProfile) {
+      const parsed = new URL(url);
+      if (c.sameOrigin !== false && parsed.origin !== new URL(base).origin) continue;
+      if (navigationLink(url, listing) || !pattern!.test(`${parsed.pathname}${parsed.search}`)) continue;
+    }
     const titleEl = c.titleSelector ? (el.is(c.titleSelector) ? el : el.find(c.titleSelector).first()) : linkEl;
     const title = collapseWhitespace(titleEl.text() || linkEl.attr("title") || "");
     if (!title) continue;
+    if (articleProfile && (title.length < minimum || /^(?:read more|learn more|continue reading|more|home|news|blog|about|contact|sign in|log in|view all|阅读全文|阅读更多|查看详情|了解更多|首页|新闻|博客|关于我们)$/i.test(title))) continue;
     let publishedAt: Date | null = null;
     if (c.publishedAtSelector) {
       const dateEl = el.find(c.publishedAtSelector).first();
@@ -199,10 +209,17 @@ export function fromHtml(html: string, base: string, source: SourceRow): Candida
       const m = new RegExp(c.publishedAtRegex).exec($.html(el));
       publishedAt = parseLooseDate(m?.[1], c.publishedAtUtcOffset);
     }
+    if (articleProfile && c.requirePublishedAt === true && !publishedAt) continue;
+    const excerpt = c.summarySelector ? collapseWhitespace(el.find(c.summarySelector).first().text()).slice(0, 2000) : "";
     seen.add(url);
-    out.push({ url, title, publishedAt });
+    out.push({ url, title, publishedAt, ...(excerpt ? { excerpt } : {}) });
   }
   return out;
+}
+
+/** Explicit article-link profiles keep menus and resource directories out of the material stream. */
+export function fromArticleLinks(html: string, base: string, source: SourceRow): Candidate[] {
+  return fromHtml(html, base, { ...source, config: { ...source.config, adapter: "article_links" } });
 }
 
 /** A changelog heading that is only a date, bare or after a short label: "时间: 2026-09-10", "时间：2024-05-17". */
@@ -250,6 +267,50 @@ function fromDocusaurusChangelog(html: string, base: string, source: SourceRow):
       bodyStatus: "ok",
     });
   });
+  return out;
+}
+
+/** A dated update section is one material, even when all updates share the same page URL. */
+export function fromDatedSections(html: string, base: string, source: SourceRow): Candidate[] {
+  const $ = cheerio.load(html);
+  const out: Candidate[] = [];
+  const seen = new Set<string>();
+  const selector = source.config.itemSelector ?? "article h2[id], article h3[id]";
+  const daily = /^(?:\d{4}\s*[-/.年]\s*\d{1,2}\s*[-/.月]\s*\d{1,2}\s*日?|(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})$/i;
+  for (const node of $(selector).toArray()) {
+    const head = $(node);
+    const id = head.attr("id");
+    const heading = collapseWhitespace(head.clone().find("a").remove().end().text()).replace(/[\u200b\ue09a#]+$/g, "").trim();
+    if (!id || !/^h[1-6]$/i.test(node.tagName) || !daily.test(heading)) continue;
+    const compact = heading.replace(/\s*(年|月|日)\s*/g, "$1");
+    const publishedAt = parseLooseDate(compact, source.config.publishedAtUtcOffset ?? "+00:00");
+    if (!publishedAt) continue;
+    const level = Number(node.tagName.slice(1));
+    const parts: string[] = [];
+    // Intercom help pages wrap each heading in its own block beside the paragraph blocks.
+    const flowHead = !head.next().length && head.parent().children().length === 1 ? head.parent() : head;
+    let next = flowHead.next();
+    while (next.length) {
+      const boundary = next.is("h1,h2,h3,h4,h5,h6") ? next : next.find("h1,h2,h3,h4,h5,h6").first();
+      const boundaryTag = boundary[0]?.type === "tag" ? boundary[0].name : "";
+      if (boundaryTag && Number(boundaryTag.slice(1)) <= level) break;
+      parts.push($.html(next));
+      next = next.next();
+    }
+    const bodyHtml = sanitizeBody(parts.join(""), base);
+    const bodyText = collapseWhitespace(stripTags(bodyHtml));
+    if (bodyText.length < 20) continue;
+    const url = new URL(base);
+    url.hash = id;
+    if (seen.has(url.toString()) || !allowed(url.toString(), source)) continue;
+    const section = cheerio.load(bodyHtml);
+    const label = collapseWhitespace(section("h3,h4,strong,b").first().text()) || bodyText.slice(0, 120);
+    seen.add(url.toString());
+    out.push({
+      url: url.toString(), identityKey: `url:${url.toString()}`, title: `${label} (${heading})`, publishedAt,
+      excerpt: bodyText.slice(0, 2000), bodyHtml, bodyText, bodyStatus: "ok",
+    });
+  }
   return out;
 }
 
@@ -325,12 +386,14 @@ async function fromMimoHome(html: string, base: string, source: SourceRow): Prom
 
 export async function fetchWebList(source: SourceRow, opts: { preview?: boolean } = {}): Promise<Candidate[]> {
   const { text, viaJina, base, round } = await fetchListingText(source);
-  const mode = source.config.adapter === "mimo_home" ? "mimo_home" : source.config.parseMode ?? (viaJina ? "markdown" : "html");
+  const mode = source.config.adapter ?? source.config.parseMode ?? (viaJina ? "markdown" : "html");
   try {
     let out: Candidate[];
     if (mode === "mimo_home") out = await fromMimoHome(text, base, source);
+    else if (mode === "article_links") out = fromArticleLinks(text, base, source);
     else if (mode === "markdown") out = fromMarkdown(text, base, source);
     else if (mode === "docusaurus_changelog") out = fromDocusaurusChangelog(text, base, source);
+    else if (mode === "dated_sections") out = fromDatedSections(text, base, source);
     else out = fromHtml(text, base, source);
     if (out.length === 0) throw new FetchError(`no items matched (${mode})`);
     // A preview has no material commit; a successfully parsed page finishes its round here.

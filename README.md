@@ -1,188 +1,89 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-dark.png">
-    <img src="docs/assets/banner-light.png" alt="AIHOT：每个行业，都可以有自己的 AIHOT。很多条信源流进中间的精选，再分给法律、人力资源、金融等各个行业" width="100%">
-  </picture>
-</p>
+# CoreScope · 核心网与 AI 洞察
 
-<p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-176b75?style=flat-square" alt="MIT License"></a>
-  <img src="https://img.shields.io/badge/Node.js-24-176b75?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js 24">
-  <img src="https://img.shields.io/badge/PostgreSQL-17-176b75?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL 17">
-  <img src="https://img.shields.io/badge/Docker-Compose-176b75?style=flat-square&logo=docker&logoColor=white" alt="Docker Compose">
-  <a href="https://aihot.news"><img src="https://img.shields.io/badge/demo-aihot.news-202a30?style=flat-square" alt="aihot.news"></a>
-</p>
+面向移动核心网设备供应商及 AI 领域的技术、架构、标准、安全、商业和战略规划人员。基于 [AIHOT 开源框架](https://github.com/KKKKhazix/AIHOT)，保留其精选时间线、热点事件、主题目录、日报/周报/月报、模型榜和管理后台，采用独立品牌与适合两个领域的内容判断规则。
 
-<p align="center">
-  <b>一个自己找热点、自己写日报的网站框架。</b><br>
-  把信源换成你的，把精选标准换成你的 KnowHow，它就是你的行业热点站。
-</p>
+## 本机运行
 
-<p align="center">
-  <a href="#跑起来">跑起来</a> ·
-  <a href="docs/customize.md">改成你的行业</a> ·
-  <a href="#它是怎么工作的">它是怎么工作的</a> ·
-  <a href="#文档">文档</a> ·
-  <a href="https://github.com/KKKKhazix/AIHOT/discussions">社区交流</a>
-</p>
+Windows 11、Node.js 24.11+、Python 3.12+。第一次启动需要网络下载 PostgreSQL 17 官方便携版并安装 npm 依赖；之后数据库、日志和构建均保存在本项目内，无需安装系统数据库服务。
 
-<br>
+1. 配置私有 `.env`，见 [本机运行说明](docs/CORESCOPE_LOCAL.md)。若本人授权复用已有 V2 服务，可以运行：
+   ```powershell
+   python scripts/corescope-configure-v2.py --v2-root "你的 V2 checkout 绝对路径"
+   ```
+   此操作仅只读 V2 配置与密钥，生成独立数据库/后台密码，不输出密钥。
+2. 确认模型配置后，在 `.env` 中将 `MODEL_CALLS_ENABLED` 和 `COLLECT_ENABLED` 设为 `true`。首次启动使用保守请求熔断，后台“设置”可以调整；请求次数限制不是金额上限。
+3. 双击 **Start-CoreScope.cmd**，等待最后的 **[READY]**。浏览器打开 [http://127.0.0.1:8780](http://127.0.0.1:8780)。Windows 任务计划程序持续托管后台，关闭启动窗口或退出 Codex 后继续运行。双击 **Status-CoreScope.cmd** 检查运行状态；停止请双击 **Stop-CoreScope.cmd**，等待分析任务正常退出。
 
-## 这是什么
+管理员入口 `/admin/login`，密码保存在本机 `.env` 的 `ADMIN_PASSWORD`。API 使用 8781，独立 PostgreSQL 使用 5448，均绑定本机。V2 和其他现有系统不需要停止。
 
-[AIHOT](https://aihot.news) 是我做的一个 AI 热点网站。它每天从一批信源里收资料，用大模型先筛一遍、再独立打两次分，挑出真正值得看的，写成中文标题和摘要；把不同来源说的同一件事聚成一个事件，按有多少人在说排出热点；每天早上出一份日报。
-
-这个仓库是它的完整框架：网站、后台、精选流程、聚簇和热度算法，**所有提示词的原文和入选门槛**，都在这里。
-
-## 为什么开源
-
-这半年，很多做法律、做 HR、做金融、做贵金属的朋友问我，能不能也给他们的行业做一个。
-
-我做不了。我不懂你们的行业，不知道哪些信源有用，也不知道什么样的消息，对你们来说才叫热点。
-
-但你们懂。
-
-既然我没办法满足所有人，那就把火种交到大家自己手上。
-
-## 说在前面
-
-- **我不是专业的开发者。** 我是设计师出身，半年前还看不太懂代码。这套代码是我和 AI 一起重写的，比以前干净了很多，但一定还有写得不好的地方。发现问题欢迎提 Issue，我不一定能很快回复，先说声抱歉。
-- **这是一份快照。** 它来自 AIHOT 正在线上跑的代码，不是精心打磨的通用框架。以后 AIHOT 的更新，我会尽量同步过来，但没法保证每一次都同步。
-- **里面没有 AIHOT 的信源名单和运营数据。** 仓库带了 18 个公开的海外 AI 资讯源做示范，够你跑起来看效果；真正的信源，要换成你自己行业的。
-- **请不要用 AIHOT 的名字和 Logo。** 换上你自己的名字，它就是你的站。
-
-## 它是怎么工作的
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/how-dark.png">
-  <img src="docs/assets/how-light.png" alt="六步：采集、预筛、两次评分、写作、聚簇、热点与成刊" width="100%">
-</picture>
-
-一条资料从信源进来，先判重，再预筛；可能重要的独立打两次分，过了门槛才进精选；然后写中文标题和摘要，和别的报道聚成事件，算进热度，最后进日报。每一步的提示词都在 [`industry/prompts/`](industry/prompts/)，改标准不用改代码。详见 [精选与校准](docs/selection.md)。
-
-### 聚簇与热点
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/cluster-dark.png">
-  <img src="docs/assets/cluster-light.png" alt="五个来源的报道聚成一个事件，事件进入当前热点榜" width="100%">
-</picture>
-
-同一件事，官网发一篇、媒体转十篇、X 上吵一天，读者只需要看到一次。AIHOT 把它们聚成一个**事件**：先用标题摘要的向量在最近两周里找候选，再让模型判断是同一件事、后续进展，还是两件事；拿不准的合并，换一家模型再确认一遍。
-
-**热度**按事件算，不按文章算：48 小时内，每个独立来源只算一次，24 小时减半。重复抓取不会多算，一家媒体发十篇也只算一次，所以排在前面的，是真正有很多人在说的事。
-
-### 速度
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/perf-dark.png">
-  <img src="docs/assets/perf-light.png" alt="AIHOT 线上实测：页面中位数 10 毫秒，95% 在 50 毫秒内；接口中位数 6 毫秒，95% 在 12 毫秒内；文章页 95% 在 14 毫秒内" width="100%">
-</picture>
-
-## 你会得到什么
-
-| | |
-|---|---|
-| **六种信源** | RSS、网页列表、JSON 接口、X 账号、微信公众号，以及你自己脚本推送进来的内容。信源分级（官方一手 / 媒体个人），抓取频率按产出自动调整 |
-| **精选** | 预筛，同一份评分标准独立打两次分，再按信源分级的门槛决定入选。提示词和门槛全部公开，全部可以改；用你自己标注的样本在 SelectBench 里校准 |
-| **写作** | 中文标题、答案先行的摘要、推荐理由、标签，外文全文翻译；防止模型把原文没提到的公司写进标题 |
-| **聚簇** | 不同来源报道的同一件事聚成一个事件，后续进展挂在同一个事件下，事件页有综述；进展和报道时间线可一起切换“最新在前”或“最早在前”；人工改过的归属不会被覆盖 |
-| **热点** | 按事件算热度：独立来源越多越靠前，X 上的讨论也算进来；和 6 小时前比，涨得快的标上升，新出现的标“新” |
-| **日报、周报、月报** | 每天 08:00 出日报，每周一出周报，每月 1 日出月报，按分类分节，带导语 |
-| **主题与搜索** | 公司、方向、内容形态三类主题页；标题摘要搜索和全文相关搜索 |
-| **给 Agent 用** | RSS（精选、全部、全文、日报）、公开 API、MCP、Agent Markdown、`llms.txt`，同一份内容给人看也给 Agent 用 |
-| **后台** | 信源管理与试抓、内容诊断、精选评测、每一步单独换模型、付费服务的预算熔断、运行记录与告警 |
-| **AI 专属模块** | 模型榜（汇总多家公开评测，方法公开）和 Codex 重置监控。别的行业一个开关关掉 |
-
-## 看一眼
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/shots-dark.png">
-  <img src="docs/assets/shots-light.png" alt="首页的当前热点与精选，关于页的信源河" width="100%">
-</picture>
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/board-dark.png">
-  <img src="docs/assets/board-light.png" alt="模型榜" width="100%">
-</picture>
-
-<p align="center"><sub>截图来自用示范信源跑起来的本地站，站名是默认的 MyHOT。</sub></p>
-
-## 跑起来
-
-想创建自己的独立站点，可以先点 [Use this template](https://github.com/KKKKhazix/AIHOT/generate)，再克隆你生成的仓库。想持续合并上游更新或贡献代码，建议先 Fork。下面的命令适合直接试用。
-
-需要 [Docker](https://docs.docker.com/get-docker/)，和一个 OpenAI 兼容的模型 API Key（DeepSeek、千问、智谱都可以）。
-
-```bash
-git clone https://github.com/KKKKhazix/AIHOT.git myhot
-cd myhot
-node scripts/init-env.ts --llm-key <你的模型 API Key>
-docker compose up -d --build
+```powershell
+npm run corescope:status
+npm run corescope:verify
+# 两个真实模型连接检查，经过正式回执及请求熔断，可能产生费用：
+node --env-file=.env scripts/corescope-operations.ts verify-models
 ```
 
-打开 <http://localhost:3000>。后台在 `/admin`，管理员密码在 `.env` 的 `ADMIN_PASSWORD` 里。一两分钟后开始有内容，第一次导入的资料大约半小时处理完。
+## 信息链路
 
-机器上没有 Node、服务器在中国大陆、要配域名和 HTTPS，见 [部署](docs/deploy.md)。
-
-## 把它改成你的行业
-
-部署后打开 `/agent`，可以复制 MCP、RSS、API 或 Markdown 的接入方式。只支持网页读取的 Agent 可从 `/api/v1/agent` 查看发现说明，再读取精选、搜索、热点、事件和日报的 Markdown；周报与月报的结构化 JSON 分别从 `/api/v1/weeklies`、`/api/v1/monthlies` 发现，追加 `/latest` 或一期的 ISO 周/月键即可读取。结构化数据用 `/api/v1/`，接口契约在 `/openapi-v1.json`。这些出口共同遵循文章撤回与全文许可，站名、链接和分类取自你的行业配置。
-
-最省事的办法：打开你的 Agent（Claude Code、Codex 都可以），把这个仓库交给它，然后说：
-
-```text
-请读 AGENTS.md 和 docs/customize.md，把这个站改成「法律」行业的热点站。
-我关心的是：……（你想盯哪些信源，你觉得什么消息重要、什么不重要，越具体越好）。
+```mermaid
+flowchart LR
+  V[V2 SQLite 只读增量] --> B[保留来源身份与原始正文证据]
+  R[公开 RSS 网页列表 JSON] --> I[去重入库]
+  W[本机公众号缓存只读] --> I
+  M[Dajiala 公众号原文] --> I
+  X[Xquik 原始 X 账号] --> I
+  XB[Bird 独立 X 账号采集] --> I
+  B --> I
+  I --> P[领域预筛与两次独立评分]
+  P --> C[中文标题 摘要 标签 主体]
+  C --> T[精选与主题列表]
+  C --> E[事实与事件归组]
+  E --> H[独立发布方热度与新闻时间线]
+  T --> D[日报 周报 月报]
 ```
 
-要改的东西几乎都在 [`industry/`](industry/) 这一个文件夹里，代码基本不用动：
+V2 的已有摘要与分数不是新站原始正文或新站精选结果。桥接保留原始标题、URL、发表时间、采集时间及正文证据，由新站规则重新分析。正文未经来源确认时明确标为 `unconfirmed`，不会因篇幅较长就宣称完整全文。
 
-| 文件 | 改什么 |
-|---|---|
-| `site.ts` | 站名、行业词、首页文案、关于页 |
-| `taxonomy.ts`、`topics.json` | 分类、标签、主题 |
-| `sources.json` | 首次启动时导入的信源 |
-| `prompts/` | 精选标准和写作要求。**你的行业 KnowHow，就写在这里** |
-| `selection.ts` | 入选门槛 |
-| `features.ts` | 模型榜、Codex 重置监控的开关 |
-| `brand/`、`pages/` | 图标、使用规则和隐私说明 |
+2026-10-12 在原425个 canonical 来源上补齐191个入口，该批接入后为 **616个来源、600个启用**：480条原生、120条只读桥接、16条关闭路线。原生包括245 RSS、40网页列表、20 JSON、114 X、61公众号（52缓存、9 API）。所有原ID和暂停保留；原有5个可接入X账号改用Xquik，不再重复桥接。72个新增公开入口和10个新增公众号均完成正式库采集；X完成有预算的三账号批次验收，继续逐批采集。完整差异、重复清单、191个入口和证据见 [本次补齐验收](docs/CORESCOPE_ONLINE_EXPANSION.md)。桥接仍依赖V2产生新材料。
 
-最值得花时间的是评分标准（`prompts/selection-score.md`）和门槛：拿一两百条你自己标注过的资料，用 `scripts/eval-selection.ts` 跑一遍，看它选得准不准，再回去改。怎么做写在 [精选与校准](docs/selection.md) 里。
+2026-10-13 将最新 AIHOT 公开观察中的20个已核查独立入口补入配置与正式库，该批后为 **636个来源、620个启用**，其中123个X运行路由为Bird。8个新增RSS/网页入口真实采集入库16条；3个公众号Dajiala实际列表请求成功，旧文章超出首轮7天范围未入库；9个新增X在当时受小时额度限制等待首轮成功。OpenAI Developers RSS作为独立学习资料，保留旧日期。原616个配置及V2只读边界保持；该批差异与当时验收见 [2026-10-13来源补充](docs/CORESCOPE_SOURCE_REFRESH_20261013.md)。
 
-## 文档
+2026-10-15 再补齐44个已确认独立入口，该批后为 **680个来源、664个启用、16个停用**，含152个X、69个公众号。新增10个RSS/网页和29个X均已通过实际采集检查；其中27个来源已有材料、12个X成功但暂无可入库材料，累计关联280个去重文章ID。5个新增公众号已实际请求Dajiala，因余额不足（20001）等待充值后复验。METR的9份历史评测作为独立资料，保留原日期，不进入新闻池、精选或热点；原636项配置与V2只读边界保持。逐项清单、复用去重与验收限制见 [本次44项补齐验收](docs/CORESCOPE_SOURCE_EXPANSION_20261015.md)。
 
-| 文档 | 内容 |
-|---|---|
-| [把它改成你的行业](docs/customize.md) | 站名、分类、信源、提示词、门槛、品牌，一步一步来 |
-| [信源](docs/sources.md) | 六种信源怎么配，分级和全文，外部推送接口 |
-| [精选与校准](docs/selection.md) | 一条资料怎么变成精选，怎么用自己的样本校准 |
-| [事件归组与关系评测](docs/grouping.md) | 事件关系怎么判断，怎么用自己的 pairwise gold set 评测 |
-| [部署](docs/deploy.md) | Docker、域名和 HTTPS、中国大陆、更新、备份、花多少钱 |
-| [架构](docs/architecture.md) | 三个进程、几条不变的规则、目录、对外出口 |
-| [模型榜与 Codex 重置监控](docs/leaderboard.md) | 两个 AI 专属模块 |
+2026-10-20 补齐本轮确认的37个独立入口，当前 **717个来源、701个启用、16个停用**，含166个X、71个公众号。新增21个公开网站全部实际采集成功；14个X首轮全部请求成功，其中7个有可入库内容、7个暂无，部分X的窗口覆盖仍按分页继续补采。新增月之暗面、通义实验室公众号已实际请求Dajiala，均因余额不足（20001）等待复验。原680项运行配置、暂停和预算开关保持；V2只读再生成能重现全部717项配置。官网详情日期校验避免把未确认日期的文章按发现时间入库；采集成功与分析、发布分别验收。逐项入口、去重及回执结果见 [本次37项补齐验收](docs/CORESCOPE_SOURCE_EXPANSION_20261020.md)。
 
-技术栈：Node.js 24 · TypeScript · React Router（服务端渲染）· Fastify · PostgreSQL · pg-boss · Tailwind CSS · Docker Compose。
+10 个非文章页独立处理：8 个监测明确的资源条目，2 个保留入口并说明接入限制；材料使用 `isolated` 模式，不进入新闻精选和热点。前端“更多 → 研究与开发资源”展示目录、关注范围和监测状态。缓存公众号依赖已授权缓存更新；新增9个公众号使用Dajiala官方url-selector，按公开biz核验账号身份，不管理共享采集程序。
 
-## 交流与贡献
+来源配置和接入路线不代表每次抓取成功。逐源访问结果、日期证据及限制见 [接入审计](docs/corescope-source-admission-audit.json)，原 ID 映射及去重理由见 [来源映射](docs/corescope-v2-sources.json)。Qwen、AutoGPT、腾讯云等错配入口已改为各自公开入口；旧新智元中继缺少原文链接，暂时拒绝桥接新材料，其准确公众号来源另由缓存路线覆盖。
 
-部署和使用问题到 [问答区](https://github.com/KKKKhazix/AIHOT/discussions/categories/q-a)，新想法到 [想法交流区](https://github.com/KKKKhazix/AIHOT/discussions/categories/ideas)，欢迎在 [作品展示区](https://github.com/KKKKhazix/AIHOT/discussions/categories/show-and-tell) 分享你做出的行业热点站。
+桥的事务游标是 `(updated_at,id)`，提交成功才前进；ledger 保证重复导入不重复建文章。默认从启动时水位开始持续同步，历史资料必须显式 `--bootstrap` 导入，防止一次重跑大量历史模型请求。
 
-发现 Bug 或有明确的功能建议，可以 [提交 Issue](https://github.com/KKKKhazix/AIHOT/issues/new/choose)。准备改代码前，先看 [贡献说明](CONTRIBUTING.md)；安全漏洞请走 [私密报告入口](SECURITY.md)。
+## 页面与内容规则
 
-## 最后
+2026-10-13 接入独立 Bird provider：复用本机已有登录凭据和代理，五账号首批真实采集成功、新增14条，五篇按原规则在“全部动态”展示。该阶段114个X来源转Bird，后台按当时1 CLI/分钟、10/小时、120/滚动24小时逐个推进；全量逐源成功与历史完整覆盖仍需看运行状态。最新补充后共152个X；本次核对既有Bird数量预算开关已关闭，本次没有改变开关或额度。原来源ID、暂停、V2/BirdClaw和模型门槛保留。配置及阶段验收见 [Bird运行与验收](docs/CORESCOPE_BIRD_OPERATIONS.md)，当前新增项见上方44项验收。
 
-AIHOT 曾经只是我无数个深夜里，一个很小、很小的念头。
+- 精选保持当前上游的时间线与卡片布局，按领域、分类、来源与时间查看；单篇展示推荐理由、内容摘要和原文链接。
+- 热点是事件排名。近 48 小时同一发布方只贡献一次热度，24 小时半衰期；至少两个独立参与方且包含有效报道才能入榜。稀疏资料不会硬造热点。
+- 主题是配置目录与模型标签/主体过滤，允许一篇资料出现在多个主题；它不自动生成新主题，也不把公司提及当成事件主体。
+- 核心网主题覆盖 5GC、6G/标准、云原生网络、网络安全和网络 AI；AI 主题覆盖 Agent、RAG/记忆、评测、安全、基础设施及产业商业。
+- 保留上游五维评分、双评分结构和原有信源分级门槛，调整领域 KnowHow 与噪声案例。门槛尚须用你的标注样本进一步校准。
+- 日报按北京时间每天 08:00 截止，周报/月报按日历周期。来源发布时间、入站时间和报告生成时间分别保留。
 
-我不知道它会被改成什么样子，会走到多远的地方。但这可能就是开源最浪漫的地方。
+默认公开摘要与原文链接，不再发布未获授权的来源全文。页面读取不触发模型调用；付费分析集中在 worker，保留请求回执和熔断记录。密钥、数据库、日志、安装包均不提交 Git。
 
-剩下的路，就交给你们了。
+## 验证与文档
 
-<p align="right">—— 数字生命卡兹克</p>
+```powershell
+npm run typecheck
+python tests/corescope-v2-export.test.py
+npm run corescope:test
+npm run build -w @aihot/web
+node --test apps/web/tests/*.test.ts
+node scripts/smoke.ts --base http://127.0.0.1:8780
+```
 
-## 许可
+`corescope:test` 每次重建独立的临时 `corescope_test` 数据库，再迁移并移除真实模型密钥，只使用测试 HTTP stub。它拒绝重建仍有活动连接的测试库，不修改正式库。
 
-代码使用 [MIT 许可证](LICENSE)。AIHOT 的名字和 Logo 不在许可范围内。字体、模型厂商和评测来源的标志各有自己的许可和商标归属，见 [NOTICE](NOTICE)。
+[设计说明](docs/CORESCOPE_DESIGN.md) · [本机运行](docs/CORESCOPE_LOCAL.md) · [桥接说明](docs/CORESCOPE_V2_BRIDGE.md) · [信息源补齐验收](docs/CORESCOPE_ONLINE_EXPANSION.md) · [交付验收](docs/CORESCOPE_ACCEPTANCE.md) · [热点与主题机制](docs/CORESCOPE_MECHANISM.md) · [行业定制](docs/customize.md) · [部署](docs/deploy.md)
 
----
-
-<sub>**In English:** AIHOT ([aihot.news](https://aihot.news)) is an AI news site that collects from many sources, lets a language model filter and score every item twice, writes Chinese headlines and summaries, clusters reports of the same story into one event, ranks events by how many independent sources discuss them, and publishes a daily briefing. This repository is its complete framework, including every prompt and threshold. Hand it to your coding agent with `AGENTS.md` and `docs/customize.md` to turn it into a news site for your own field. The documentation is in Chinese.</sub>
+本版本首先交付本机完整系统。外网部署需要配置域名、访问策略及运维，不属于本机启动脚本。保留上游 MIT 许可证与版权声明，品牌和行业定制不代表上游作者认可。

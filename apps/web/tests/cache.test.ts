@@ -8,6 +8,8 @@ import { after, before, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { CATEGORY_KEYS } from "@aihot/contracts/taxonomy";
 import { releaseBoundCache } from "../app/lib/api.server.ts";
+import { readFileSync } from "node:fs";
+import { isCrossPerspective, perspectiveFilters } from "../../../industry/perspectives.ts";
 
 let web: ChildProcess;
 let origin: string;
@@ -16,8 +18,10 @@ let deadline: number;
 let refreshAt: string;
 let metaDelayMs = 0;
 const apiCookies: Array<string | undefined> = [];
+const apiRequests: URL[] = [];
 const api = createServer((req, res) => {
   const url = new URL(req.url!, "http://api.local");
+  apiRequests.push(url);
   apiCookies.push(req.headers.cookie);
   res.setHeader("Content-Type", "application/json");
   if (url.pathname === "/api/site/meta") {
@@ -25,10 +29,14 @@ const api = createServer((req, res) => {
     return metaDelayMs ? setTimeout(respond, metaDelayMs) : respond();
   }
   if (url.pathname === "/api/site/timeline") {
-    const filters = { channel: "all", category: url.searchParams.get("category"), tag: null, topic: null };
+    const filters = { channel: "all", category: url.searchParams.get("category"), tag: url.searchParams.get("tag"), topic: url.searchParams.get("topic") };
     res.setHeader("X-Accel-Expires", `@${deadline}`);
     res.setHeader("Cache-Control", "public, max-age=30, s-maxage=30");
     return res.end(JSON.stringify({ filters, cards: [], nextCursor: null, refreshAt, dayCounts: [], hot: null, generatedAt: "2026-09-28T00:00:00Z" }));
+  }
+  if (url.pathname === "/api/site/pool") {
+    const filters = { channel: "all", category: url.searchParams.get("category"), tag: url.searchParams.get("tag"), topic: url.searchParams.get("topic"), q: url.searchParams.get("q"), tab: "time" };
+    return res.end(JSON.stringify({ filters, items: [], page: 1, pageCount: 1, total: 0, todayCount: 0, freshness: "2026-09-28T00:00:00Z", generatedAt: "2026-09-28T00:00:00Z" }));
   }
   if (url.pathname === "/api/site/topics" || url.pathname === "/api/site/topics/test-topic") {
     res.setHeader("X-Accel-Expires", `@${deadline}`);
@@ -81,6 +89,37 @@ after(async () => {
   }
   api.closeAllConnections();
   await new Promise<void>((resolve) => api.close(() => resolve()));
+});
+
+test("cross-domain reading forwards both AND conditions and preserves them in search", async () => {
+  const catalog = JSON.parse(readFileSync(new URL("../../../industry/topics.json", import.meta.url), "utf8"));
+  assert.deepEqual(catalog.topics.find((t: { slug: string }) => t.slug === "ai").tags, ["AI"], "the AI topic must remain singleton because topic tags use OR");
+  assert.deepEqual(perspectiveFilters("cross"), { tag: "核心网", topic: "ai" });
+  assert.deepEqual(perspectiveFilters("all"), { tag: null, topic: null });
+  assert.equal(isCrossPerspective("核心网", null), false);
+  assert.equal(isCrossPerspective("核心网", "ai"), true);
+
+  const params = new URLSearchParams({ tag: "核心网", topic: "ai" });
+  const home = await fetch(`${origin}/?${params}`);
+  assert.equal(home.status, 200);
+  const html = await home.text();
+  assert.match(html, /核心网 × AI 精选/);
+  assert.match(html, /name="topic" value="ai"/);
+  assert.match(html, /name="tag" value="核心网"/);
+  const timeline = apiRequests.findLast((u) => u.pathname === "/api/site/timeline");
+  assert.equal(timeline?.searchParams.get("tag"), "核心网");
+  assert.equal(timeline?.searchParams.get("topic"), "ai");
+
+  params.set("q", "架构");
+  const search = await fetch(`${origin}/all?${params}`);
+  assert.equal(search.status, 200);
+  const searchHtml = await search.text();
+  assert.match(searchHtml, /name="topic" value="ai"/);
+  assert.match(searchHtml, /name="tag" value="核心网"/);
+  const pool = apiRequests.findLast((u) => u.pathname === "/api/site/pool");
+  assert.equal(pool?.searchParams.get("tag"), "核心网");
+  assert.equal(pool?.searchParams.get("topic"), "ai");
+  assert.equal(pool?.searchParams.get("q"), "架构");
 });
 
 test("public route subsets produce the same complete navigation data; filters still differ", async () => {

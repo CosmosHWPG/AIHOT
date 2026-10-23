@@ -10,7 +10,7 @@
 | `web_list` | 没有 RSS 的网页列表（新闻页、博客列表、更新日志） | 写选择器；按需配置 Jina Reader 渲染（按次计费） |
 | `json_list` | 返回 JSON 的接口（GitHub Releases 等） | 写字段路径 |
 | `x_search` | X（推特）账号 | SocialData 的 key，按请求计费 |
-| `mp_account` | 微信公众号 | 极致了（Dajiala）的 key，按请求计费 |
+| `mp_account` | 微信公众号 | `wx_cache` 读取已授权且持续更新的本地缓存；`dajiala` 使用极致了 API key，按请求计费 |
 | `external` | 你自己的脚本推送进来的内容 | `INGEST_TOKEN`，见下文 |
 
 `json_list` 的地址或配置可能携带凭据，只跟随同源重定向（协议、主机和端口都相同）。若接口搬到另一个来源，请直接更新信源地址；不要依赖跨源跳转传递认证信息。
@@ -24,7 +24,7 @@
 
 `rss`、`web_list`、`json_list`、`x_search` 可以点“预览抓取”：显示条目总数和前 20 条的标题、原文链接、发布时间、摘要，不把条目存入文章库。检查抓到的是文章而不是导航，日期与原文一致，再点“创建”。预览不等于完成生产采集，也不经过后续详情补齐、精选和公开发布流程。
 
-预览仍会发出抓取请求；X 和 Jina 预览也可能产生费用，经过付费回执和预算。`COLLECT_ENABLED=false` 只关闭后台自动采集，不能用它来保证手动预览不访问外部服务。下面的本地 HTML/JSON 示例不需要任何 API key。
+网络信源的预览仍会发出抓取请求；X 和 Jina 预览也可能产生费用，经过付费回执和预算。下文的 `wx_cache` 预览只读本地缓存。`COLLECT_ENABLED=false` 只关闭后台自动采集，不能用它来保证其他手动预览不访问外部服务。下面的本地 HTML/JSON 示例不需要任何 API key。
 ### rss
 
 ```json
@@ -69,6 +69,7 @@
 - 日期在条目内查找 `publishedAtSelector`，依次读取 `datetime` 属性、`title` 属性、文字。没有时区的日期时间可用 `publishedAtUtcOffset`（默认 `+08:00`）；自带时区的时间保留原时区语义，纯 `YYYY-MM-DD` 按 UTC 零点读。
 - `parseMode`：普通网页默认 `html`；`markdown` 按 Markdown 链接读；`docusaurus_changelog` 读更新日志标题。需要 Jina 时，显式把 `url` 写成 `https://r.jina.ai/https://目标站/路径` 并配置 `JINA_API_KEY`，不是抓不到就自动切换。Jina 默认返回 Markdown；要继续使用 CSS 选择器，显式设 `parseMode: "html"`。
 - `detail`：列表缺日期、标题或摘要时抓详情页补齐（`publishedAtSelector`、`titleSelector`、`summarySelector` 等）。
+- `detail.requirePublishedAt: true`：适用于日期只在详情页的来源，详情补齐后才接纳有有效原文日期的条目。配合 `detail.maxFetches` 限制每轮详情请求；从上轮最后尝试的位置轮转，避免持续失败的详情挡住后续条目。未取得日期的链接留待后续采集，已存日期不会被下一轮无日期列表清空。此选项默认关闭，列表预览不执行详情补齐，需通过正式采集验收。
 - `allowUrlPrefixes` / `denyUrlPrefixes`：只收某些路径下的文章。
 
 ### json_list
@@ -188,13 +189,44 @@ http.createServer((req, res) => {
 
 ### mp_account
 
+公众号有两种采集方式，在新建页选择 `mp_account` 后选对应模板。CoreScope 当前接入的公众号使用 `wx_cache`；原版 AIHOT 的公众号采集使用 `dajiala` 付费 API。采集配置里不要写 `biz` / `name`，也不要写 API key。
+
+**读取本地公众号缓存：**
+
 ```json
-{ "ghid": "gh_xxxxxxxx", "nickname": "公众号名称" }
+{
+  "transport": "wx_cache",
+  "account": "公众号名称",
+  "cacheDirectoryEnv": "WX_CACHE_DIRECTORY",
+  "limit": 8,
+  "lookbackDays": 7,
+  "fetchPublicContent": true
+}
 ```
 
-每个公众号按它的抓取间隔检查一次（查列表按次计费），新文章的正文一并取回。
+把 `account` 换成缓存中公众号的准确名称或原始 ID（`gh_xxxxxxxx`）；同名账号有歧义时填写精确的原始 ID。在后端 `.env` 设置 `WX_CACHE_DIRECTORY`，指向你已经授权、已解密且由既有采集程序持续更新的缓存目录。JSON 的 `cacheDirectoryEnv` 填环境变量名，目录路径留在本机配置中。
 
-需要在后端 `.env` 配置 `DAJIALA_KEY`，`ghid` 换成公众号原始 ID。配置字段用上面的 `ghid` / `nickname`，不要写成 `biz` / `name`。当前 `mp_account` 不支持“预览抓取”；`external` 也不支持主动试抓，按下方推送接口接入。
+CoreScope 只读取该缓存，不刷新缓存、不启动 `wx` 或登录微信，也不写入缓存或 V2。缓存里没有最新消息时，CoreScope 无法补出新文章；先检查原有缓存更新程序和后台抓取记录中的缓存更新时间。默认只查近 7 天，每轮最多导入 8 条新增或修订材料；已入库的相同文章不会占用新增上限。可以在保存前点“预览抓取”，检查本地缓存中的标题、原文链接、日期和摘要，预览不入库、不调用模型。
+
+`fetchPublicContent: true` 允许后续从公开原文链接补取正文；若提取失败，会保留摘要或未确认正文状态，不把摘要当作完整正文。它不等于开启站内全文展示，全文许可仍按下文的 `site_fulltext` / `syndicate_fulltext` 配置。
+
+**使用原版 Dajiala 公众号 API：**
+
+```json
+{
+  "transport": "dajiala",
+  "ghid": "gh_xxxxxxxx",
+  "nickname": "公众号名称"
+}
+```
+
+把 `ghid` 换成公众号的原始 ID，在后端 `.env` 设置 `DAJIALA_KEY`；旧配置省略 `transport` 时仍默认走 Dajiala。列表与正文请求都可能收费，需要同时检查 Dajiala 账户余额和后台“设置 → 预算”中的 `dajiala` 服务预算。余额不足、服务拒绝或预算熔断时，查看后台错误原因与抓取记录；后续模型分析另受模型预算约束。
+
+Dajiala 不支持“预览抓取”，先保存信源，再点后台的手动抓取按钮，由 worker 执行。第一次检查只取近 7 天的文章，每次最多处理 8 条需要抓取的新文或正文重试。正文接口暂时失败时先保留标题和摘要，按现有重试规则尝试补正文，不把未取到的正文标成全文成功。
+
+两种方式自动采集都需要信源启用、worker 运行以及 `COLLECT_ENABLED=true`。修改 `.env` 中的缓存目录或 key 后重启 API 和 worker，使预览与后台采集使用新配置。公众号调度器每 15 分钟检查到期来源，实际抓取尊重各信源的 `interval_minutes` 和失败冷却时间，并非所有公众号每 15 分钟都调用一次。
+
+`external` 不支持主动试抓，按下方推送接口接入。
 
 ## 分级、参与方式与全文
 
