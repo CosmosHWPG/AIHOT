@@ -17,7 +17,11 @@ CoreScope 使用独立 PostgreSQL、API、网页、worker 和 V2 只读桥。它
 
 启动窗口依次显示配置检查、数据库认证、迁移、种子同步、预算检查、网页构建和应用健康检查的进度。只有最后出现 `[READY] CoreScope is ready` 或 `[READY] CoreScope is already running` 才表示完整系统可用；中途的 PostgreSQL ready 只表示数据库准备完成。
 
-后台由 Windows 任务计划程序托管，使用当前登录用户、普通权限和免密码的交互登录令牌。任务只在点击启动时运行，没有开机或登录触发器；项目专属 `System` 长期任务持有数据库和应用监督进程。维护时单独使用 `Database` 长期任务启动数据库，随后完整启动可以安全复用该数据库。关闭启动窗口、退出或崩溃的 Codex 不再承担服务生命周期。任务不设置运行时长上限，切换到电池不会停止。运行边界是当前 Windows 登录会话；注销或重启电脑后重新运行 `Start-CoreScope.cmd`。
+后台由 Windows 任务计划程序托管，使用当前登录用户、普通权限和免密码的交互登录令牌。项目专属 `System` 长期任务持有数据库和应用监督进程；维护时可单独使用 `Database` 任务。关闭启动窗口、退出或崩溃的 Codex 不再承担服务生命周期。任务不设置运行时长上限，切换到电池不会停止。两种任务发生失败时每隔一分钟重试，最多三次；`System` 另设当前用户登录后延迟30秒恢复的触发器。
+
+启动和停止意图保存在本项目 `.data/runtime/desired-state.json`。点击启动设为 running，点击停止为两种模式持久保存 stopped；停止后不会被任务重试或下次登录重新拉起。电脑重启或注销会中断服务，在当前用户再次登录后，仅恢复此前仍为 running 的完整系统。此方案不是在无人登录时运行的全机服务。
+
+宿主持续监控采用原生进程句柄、创建时间和执行文件身份。暂时无法查询时保留运行资源并重试，不能把查询失败当作进程消失。确认数据库或监督进程已退出后，先等待应用排空，再按5/15/45秒退避恢复；每10分钟最多三次，历史跨宿主重启保留，冷却后再尝试。监督进程异常消失时，应用子进程经IPC断连自行排空；某个角色五分钟内第六次失败时，监督进程排空其余角色并退出，由外层接续恢复。
 
 双击 `Status-CoreScope.cmd` 可以检查任务宿主、数据库 PID、API/网页数据库健康及各应用进程。完整 `[READY]` 出现后可以关闭启动窗口；需要停止系统时运行 `Stop-CoreScope.cmd`，让正在处理的请求和数据库正常收尾。任务启动请求已送达后，准备过程也由后台宿主执行；若启动窗口过早关闭，再点击启动会等待同一实例。没有合法任务宿主的旧版后台实例不会被当作新机制的健康实例复用，升级时先运行停止脚本。
 
@@ -33,6 +37,8 @@ CoreScope 使用独立 PostgreSQL、API、网页、worker 和 V2 只读桥。它
 | API / web / worker / bridge / PostgreSQL 日志 | `.data/logs/` |
 | 启动步骤、子脚本输出 / 启动失败详情 | `.data/logs/startup.log` / `.data/logs/startup.error.log` |
 | 监督进程与子进程 PID、入口、启动时间 | `.data/runtime/processes.json` |
+| 启动/停止意图、两种宿主回执、恢复次数窗口 | `.data/runtime/desired-state.json`、`host-*.json`、`recovery-*.json` |
+| 关闭请求、故障清理及恢复审计（不含密钥） | `.data/logs/lifecycle-control.jsonl` |
 
 控制脚本可在 PowerShell 中单独执行：
 
@@ -43,6 +49,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/corescope-runtime.ps
 ```
 
 `-Action Database` 只准备并启动独立数据库，适合迁移和测试。停止应用时，启动器先核验 PID、创建时间和项目入口，通过项目专属命名管道及 IPC 请求正常退出，等待 worker 已开始的付费请求和回执收尾，最后正常停止 PostgreSQL。收尾最多等待约 205 秒。监督进程异常丢失且仍有已确认归属的子进程时，脚本报错并要求先排查日志，避免直接关数据库。
+
+支持的持久停止入口是 `Stop-CoreScope.cmd` / `-Action Stop`。内部Node `stop --reason recovery|failure_cleanup|explicit_stop`只控制一次应用排空，并不修改宿主意图；不要将它代替停止脚本。审计记录关闭原因、目标PID、调用进程与父PID、关联请求ID；Node控制消息中的调用者声明另标为 `declared_unverified`，不冒充操作系统认证的对端身份。详见[2026-10-23停止事故与修复记录](CORESCOPE_RUNTIME_INCIDENT_20261023.md)。
 
 ## 必要配置
 

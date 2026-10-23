@@ -31,6 +31,111 @@ $script:HostReceipt = $null
 $script:HostedErrorLog = $StartupErrorLog
 $script:HostCreatedPostgres = $false
 $script:HostCreatedSupervisor = $false
+$script:HostReceiptPublished = $false
+
+function Get-LifecycleCaller {
+    $parentPid = $null
+    $parentName = $null
+    try {
+        $self = Get-CimInstance Win32_Process -Filter "ProcessId = $PID" -ErrorAction Stop
+        $parentPid = [int]$self.ParentProcessId
+        $parent = Get-CimInstance Win32_Process -Filter "ProcessId = $parentPid" -ErrorAction Stop
+        if ($parent) { $parentName = [IO.Path]::GetFileName($parent.ExecutablePath) }
+    } catch { } # Audit enrichment must never stop a healthy application under memory pressure.
+    return @{ pid = $PID; parentPid = $parentPid; parentName = $parentName }
+}
+
+function Write-LifecycleAudit([string]$Operation, [string]$Reason, [int]$TargetPid = 0, [string]$RequestId = '') {
+    if (-not $RequestId) { $RequestId = [Guid]::NewGuid().ToString('N') }
+    $row = @{ at = [DateTimeOffset]::Now.ToString('o'); root = $ProjectRoot; operation = $Operation; reason = $Reason
+        requestId = $RequestId; actor = (Get-LifecycleCaller); targetPid = $TargetPid; mode = $HostMode }
+    [IO.File]::AppendAllText((Join-Path $LogDir 'lifecycle-control.jsonl'), (($row | ConvertTo-Json -Depth 5 -Compress) + [Environment]::NewLine), (New-Object Text.UTF8Encoding($false)))
+    return $RequestId
+}
+
+function Get-CoreScopeDesiredState([string]$Mode) {
+    $file = Join-Path $RuntimeDir 'desired-state.json'
+    if (-not (Test-Path -LiteralPath $file)) { return $null }
+    $stream = [IO.File]::Open($file, [IO.FileMode]::Open, [IO.FileAccess]::Read, ([IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete))
+    $reader = New-Object IO.StreamReader($stream, [Text.Encoding]::UTF8)
+    try { $saved = $reader.ReadToEnd() | ConvertFrom-Json } finally { $reader.Dispose() }
+    if ($saved.schemaVersion -ne 1 -or $saved.root -ne $ProjectRoot -or $saved.userSid -ne $CurrentUserSid) {
+        throw 'The desired runtime state does not belong to this checkout and user.'
+    }
+    $entry = $saved.modes.$Mode
+    if ($entry -and ($entry.state -notin @('running', 'stopped') -or -not $entry.generation)) { throw 'Invalid desired runtime state.' }
+    return $entry
+}
+
+function Set-CoreScopeDesiredState([ValidateSet('running','stopped')][string]$State, [ValidateSet('System','Database')][string]$Mode) {
+    $spec = Get-CoreScopeTaskSpec 'System' # Both modes update one file under the same lock.
+    $mutex = New-Object Threading.Mutex($false, ("Local\{0}-Intent" -f $spec.TaskName))
+    $acquired = $false
+    try {
+        try { $acquired = $mutex.WaitOne(10000) } catch [Threading.AbandonedMutexException] { $acquired = $true }
+        if (-not $acquired) { throw 'Runtime intent is being updated by another caller.' }
+        $current = Get-CoreScopeDesiredState $Mode
+        if ($current -and $current.state -eq $State) { return $current }
+        $file = Join-Path $RuntimeDir 'desired-state.json'
+        $modes = @{}
+        foreach ($name in @('System','Database')) { $entry = Get-CoreScopeDesiredState $name; if ($entry) { $modes[$name] = $entry } }
+        $requestId = Write-LifecycleAudit 'desired-state' $State
+        $entry = @{ state = $State; generation = [Guid]::NewGuid().ToString('N'); requestId = $requestId
+            at = [DateTimeOffset]::Now.ToString('o'); actorPid = $PID; actorParentPid = (Get-LifecycleCaller).parentPid }
+        $modes[$Mode] = $entry
+        $saved = @{ schemaVersion = 1; root = $ProjectRoot; userSid = $CurrentUserSid; modes = $modes }
+        $temporary = $file + '.' + $requestId + '.tmp'
+        [IO.File]::WriteAllText($temporary, ($saved | ConvertTo-Json -Depth 7), (New-Object Text.UTF8Encoding($false)))
+        if (Test-Path -LiteralPath $file) { [IO.File]::Replace($temporary, $file, [NullString]::Value) }
+        else { [IO.File]::Move($temporary, $file) }
+        return [pscustomobject]$entry
+    } finally {
+        if ($acquired) { $mutex.ReleaseMutex() }
+        $mutex.Dispose()
+    }
+}
+
+# Long-running monitoring uses native process handles, never WMI/CIM. A failed probe is
+# explicitly unknown; it must not turn memory pressure into a destructive false death.
+function Get-NativeProcessSnapshot([int]$ProcessId) {
+    $process = $null
+    try {
+        try { $process = [Diagnostics.Process]::GetProcessById($ProcessId) }
+        catch [ArgumentException] { return @{ status = 'exited'; pid = $ProcessId; reason = 'not_found' } }
+        if ($process.HasExited) { return @{ status = 'exited'; pid = $ProcessId; reason = 'has_exited' } }
+        return @{ status = 'alive'; pid = $ProcessId; startedAt = $process.StartTime.ToUniversalTime().ToString('o'); executable = $process.MainModule.FileName }
+    } catch {
+        return @{ status = 'unknown'; pid = $ProcessId; reason = 'native_probe_failed' }
+    } finally { if ($process) { $process.Dispose() } }
+}
+
+function Get-OwnedProcessProbe($Record, [string]$ExpectedEntry) {
+    if (-not $Record -or -not $Record.pid -or -not $Record.startedAt -or $Record.entry -ne $ExpectedEntry) {
+        return @{ status = 'unknown'; pid = 0; reason = 'incomplete_identity' }
+    }
+    $snapshot = Get-NativeProcessSnapshot ([int]$Record.pid)
+    if ($snapshot.status -ne 'alive') { return $snapshot }
+    try {
+        $expectedExe = if ($ExpectedEntry -eq $PgData) { Join-Path $PgRoot 'bin\postgres.exe' } elseif ($ExpectedEntry -eq $RuntimeScript) { Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe' } elseif ($Record.executable) { $Record.executable } else { $Node }
+        $delta = [Math]::Abs(([DateTimeOffset]::Parse($snapshot.startedAt) - [DateTimeOffset]::Parse($Record.startedAt)).TotalSeconds)
+        if ($delta -gt 5 -or [IO.Path]::GetFullPath($snapshot.executable) -ne [IO.Path]::GetFullPath($expectedExe)) {
+            return @{ status = 'mismatch'; pid = [int]$Record.pid; reason = 'process_identity_changed' }
+        }
+        return @{ status = 'alive'; pid = [int]$Record.pid; reason = 'verified_native_identity' }
+    } catch { return @{ status = 'unknown'; pid = [int]$Record.pid; reason = 'identity_probe_failed' } }
+}
+
+function Get-HostedLiveness($Receipt, [string]$Mode) {
+    $resources = @(@{ name = 'postgres'; record = $Receipt.pg; entry = $PgData })
+    if ($Mode -eq 'System') { $resources += @{ name = 'supervisor'; record = $Receipt.supervisor; entry = $SupervisorEntry } }
+    foreach ($resource in $resources) {
+        $probe = Get-OwnedProcessProbe $resource.record $resource.entry
+        if ($probe.status -ne 'alive') {
+            return @{ status = $(if ($probe.status -eq 'exited') { 'missing' } else { $probe.status }); resource = $resource.name; reason = $probe.reason }
+        }
+    }
+    return @{ status = 'healthy'; resource = $null; reason = 'verified_native_identities' }
+}
 
 function Protect-LogText([string]$Text) {
     if ($script:Config) {
@@ -75,8 +180,17 @@ function Write-Stage([string]$Phase, [string]$Message) {
     if ($Action -eq 'Hosted' -and $script:HostReceipt) {
         $script:HostReceipt.phase = $Phase
         Save-HostReceipt
-        if ($script:HostReceipt.status -eq 'starting' -and (Test-HostedStopRequest $script:HostReceipt)) { throw 'Windows host startup was cancelled by Stop.' }
+        if ($script:HostReceipt.status -in @('starting','recovering') -and (Test-HostedStopRequest $script:HostReceipt)) { throw 'Windows host startup was cancelled by Stop.' }
     }
+}
+
+function Assert-HostedStartAllowed {
+    if ($Action -ne 'Hosted' -or -not $script:HostReceipt) { return }
+    # Starting new resources requires a positive, current intent read. A failed
+    # read can preserve a running process, but cannot authorize a replacement.
+    $desired = Get-CoreScopeDesiredState $HostMode
+    if (-not $desired -or $desired.state -ne 'running' -or $desired.generation -ne $script:HostReceipt.intentGeneration -or
+        (Test-HostedStopRequest $script:HostReceipt)) { throw 'Windows host startup was cancelled by Stop.' }
 }
 
 function Assert-ProjectPath([string]$Target) {
@@ -200,6 +314,8 @@ function Get-CoreScopeTaskSpec([string]$Mode) {
         Arguments = ('-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "{0}" -Action Hosted -HostMode {1} -NodeExecutable "{2}" -NoBrowser' -f $RuntimeScript, $Mode, $Node)
         WorkingDirectory = $ProjectRoot
         Description = "CoreScope current-user runtime host ($Mode): $ProjectRoot"
+        RecoveryPolicy = $true
+        Mode = $Mode
     }
 }
 
@@ -219,6 +335,16 @@ function New-CoreScopeTaskDefinition($Service, $Spec) {
     $definition.Settings.StopIfGoingOnBatteries = $false
     $definition.Settings.RunOnlyIfIdle = $false
     $definition.Settings.Hidden = $true
+    if ($Spec.RecoveryPolicy) {
+        $definition.Settings.RestartCount = 3
+        $definition.Settings.RestartInterval = 'PT1M'
+        if ($Spec.Mode -eq 'System') {
+            $trigger = $definition.Triggers.Create(9) # TASK_TRIGGER_LOGON, this user only.
+            $trigger.UserId = $Spec.UserSid
+            $trigger.Enabled = $true
+            $trigger.Delay = 'PT30S'
+        }
+    }
     $action = $definition.Actions.Create(0)
     $action.Path = $Spec.Executable
     $action.Arguments = $Spec.Arguments
@@ -226,17 +352,35 @@ function New-CoreScopeTaskDefinition($Service, $Spec) {
     return $definition
 }
 
-function Assert-CoreScopeTaskDefinition($Definition, $Spec) {
+function Assert-CoreScopeTaskDefinition($Definition, $Spec, [switch]$AllowLegacyRecovery) {
     # Task Scheduler COM may expose a local account name even when its XML stores SID.
     $principalSid = ''
     try {
         if ($Definition.Principal.UserId -match '^S-1-') { $principalSid = (New-Object Security.Principal.SecurityIdentifier($Definition.Principal.UserId)).Value }
         else { $principalSid = (New-Object Security.Principal.NTAccount($Definition.Principal.UserId)).Translate([Security.Principal.SecurityIdentifier]).Value }
     } catch {}
+    $legacyPolicy = $Definition.Triggers.Count -eq 0 -and $Definition.Settings.RestartCount -eq 0
+    $policyValid = $legacyPolicy
+    if ($Spec.RecoveryPolicy) {
+        $policyValid = $Definition.Settings.RestartCount -eq 3 -and $Definition.Settings.RestartInterval -eq 'PT1M'
+        if ($Spec.Mode -eq 'System') {
+            $policyValid = $policyValid -and $Definition.Triggers.Count -eq 1
+            if ($policyValid) {
+                $trigger = $Definition.Triggers.Item(1)
+                $triggerSid = ''
+                try {
+                    if ($trigger.UserId -match '^S-1-') { $triggerSid = (New-Object Security.Principal.SecurityIdentifier($trigger.UserId)).Value }
+                    else { $triggerSid = (New-Object Security.Principal.NTAccount($trigger.UserId)).Translate([Security.Principal.SecurityIdentifier]).Value }
+                } catch {}
+                $policyValid = $trigger.Type -eq 9 -and $trigger.Enabled -and $triggerSid -eq $Spec.UserSid -and $trigger.Delay -eq 'PT30S'
+            }
+        } else { $policyValid = $policyValid -and $Definition.Triggers.Count -eq 0 }
+        if ($AllowLegacyRecovery -and $legacyPolicy) { $policyValid = $true }
+    }
     $valid = $Definition.RegistrationInfo.Description -eq $Spec.Description -and
         $principalSid -eq $Spec.UserSid -and
         $Definition.Principal.LogonType -eq 3 -and $Definition.Principal.RunLevel -eq 0 -and
-        $Definition.Triggers.Count -eq 0 -and $Definition.Actions.Count -eq 1 -and
+        $policyValid -and $Definition.Actions.Count -eq 1 -and
         $Definition.Settings.Enabled -and $Definition.Settings.AllowDemandStart -and
         $Definition.Settings.ExecutionTimeLimit -eq 'PT0S' -and $Definition.Settings.MultipleInstances -eq 2 -and
         -not $Definition.Settings.DisallowStartIfOnBatteries -and -not $Definition.Settings.StopIfGoingOnBatteries -and
@@ -259,6 +403,12 @@ function Register-CoreScopeTask($Service, $Spec) {
         if ($exception.HResult -ne -2147024894) { throw }
     }
     if ($task) {
+        # Upgrade only the exact legacy safe definition; never overwrite a foreign or edited task.
+        Assert-CoreScopeTaskDefinition $task.Definition $Spec -AllowLegacyRecovery
+        if ($Spec.RecoveryPolicy -and $task.Definition.Settings.RestartCount -eq 0) {
+            $definition = New-CoreScopeTaskDefinition $Service $Spec
+            $task = $folder.RegisterTaskDefinition($Spec.TaskName, $definition, 6, $Spec.UserSid, $null, 3, $null)
+        }
         Assert-CoreScopeTaskDefinition $task.Definition $Spec
         return $task
     }
@@ -318,7 +468,8 @@ function Save-HostReceipt {
     $file = Get-HostReceiptPath $HostMode
     $temporary = $file + '.' + $script:HostReceipt.nonce + '.tmp'
     [IO.File]::WriteAllText($temporary, ($script:HostReceipt | ConvertTo-Json -Depth 6), (New-Object Text.UTF8Encoding($false)))
-    Move-Item -LiteralPath $temporary -Destination $file -Force
+    if (Test-Path -LiteralPath $file) { [IO.File]::Replace($temporary, $file, [NullString]::Value) }
+    else { [IO.File]::Move($temporary, $file) }
 }
 
 function Get-HostReceipt([string]$Mode, [switch]$RequireAlive) {
@@ -343,12 +494,12 @@ function Get-ManagedPostgresHost([int]$PgPid) {
     if (-not $PgPid) { return $null }
     foreach ($mode in @('System', 'Database')) {
         $receipt = Get-HostReceipt $mode -RequireAlive
-        if ($receipt -and $receipt.status -in @('starting', 'ready') -and -not (Test-HostedStopRequest $receipt) -and
+        if ($receipt -and $receipt.status -in @('starting', 'ready', 'recovering', 'degraded') -and -not (Test-HostedStopRequest $receipt) -and
             $receipt.pg -and $receipt.pg.pid -eq $PgPid -and (Test-OwnedProcess $receipt.pg $PgData)) {
             $service = Connect-CoreScopeScheduler
             $spec = Get-CoreScopeTaskSpec $mode
             $task = $service.GetFolder('\').GetTask($spec.TaskName)
-            Assert-CoreScopeTaskDefinition $task.Definition $spec
+            Assert-CoreScopeTaskDefinition $task.Definition $spec -AllowLegacyRecovery
             $instances = @(Get-CoreScopeTaskInstances $task)
             if ($task.State -eq 4 -and $instances.instanceId -contains $receipt.instanceId) { return $receipt }
         }
@@ -370,6 +521,15 @@ function Assert-DatabaseAuthentication {
 }
 
 function Test-HostedStopRequest($Receipt) {
+    # A failed read is unknown, never an instruction to tear down a healthy system.
+    # Only the supported Stop action persists intent; failure cleanup cannot clear it.
+    if ($Receipt.mode) {
+        try {
+            $desired = Get-CoreScopeDesiredState $Receipt.mode
+            if ($desired -and ($desired.state -eq 'stopped' -or
+                ($Receipt.intentGeneration -and $desired.generation -ne $Receipt.intentGeneration))) { return $true }
+        } catch { }
+    }
     try {
         $request = Get-Content -LiteralPath (Join-Path $RuntimeDir 'host-stop.json') -Raw -Encoding UTF8 | ConvertFrom-Json
         return $request.root -eq $ProjectRoot -and $request.userSid -eq $CurrentUserSid -and
@@ -387,7 +547,7 @@ function Write-HostedStopRequest {
         try {
             $spec = Get-CoreScopeTaskSpec $mode
             $task = $service.GetFolder('\').GetTask($spec.TaskName)
-            Assert-CoreScopeTaskDefinition $task.Definition $spec
+            Assert-CoreScopeTaskDefinition $task.Definition $spec -AllowLegacyRecovery
             $running = @(Get-CoreScopeTaskInstances $task)
             $instances += @($running | ForEach-Object { $_.instanceId })
         } catch {}
@@ -515,6 +675,7 @@ function Start-DatabaseUnlocked {
     }
     if (-not $ownedPg) {
         Write-Stage 'database-start' 'Starting PostgreSQL on 127.0.0.1:5448.'
+        Assert-HostedStartAllowed
         $launchStarted = [DateTimeOffset]::Now
         try { Invoke-NodeScript 'scripts/corescope-runtime.ts' @('launch-postgres') }
         finally {
@@ -577,7 +738,7 @@ function Assert-ApplicationProcesses($Saved) {
     }
 }
 
-function Start-System {
+function Start-System([switch]$Recovery) {
     Write-Stage 'existing-processes' 'Checking for an already running CoreScope supervisor.'
     $existing = Get-SupervisorState
     if ($existing) {
@@ -592,6 +753,7 @@ function Start-System {
     Assert-PortFree $WebPort
     Assert-PortFree $ApiPort
     Start-Database
+    if (-not $Recovery) {
     Push-Location $ProjectRoot
     try {
         if (-not (Test-Path -LiteralPath (Join-Path $ProjectRoot 'node_modules'))) {
@@ -624,7 +786,9 @@ function Start-System {
             if ($LASTEXITCODE -ne 0) { throw 'Web build failed.' }
         }
     } finally { Pop-Location }
+    }
     Write-Stage 'supervisor-start' 'Starting the API, website, worker and configured V2 bridge.'
+    Assert-HostedStartAllowed
     if ($Action -eq 'Hosted') { $script:HostCreatedSupervisor = $true }
     Invoke-NodeScript 'scripts/corescope-runtime.ts' @('launch-supervisor')
     if ($Action -eq 'Hosted') {
@@ -656,11 +820,15 @@ function Start-System {
 }
 
 function Stop-System {
+    # Persist even when already offline, so logon/task retries cannot undo Stop.
+    $systemIntent = Set-CoreScopeDesiredState 'stopped' 'System'
+    $null = Set-CoreScopeDesiredState 'stopped' 'Database'
     Write-HostedStopRequest
     $saved = Get-SupervisorState
     if ($saved) {
         Write-Host 'Stopping owned CoreScope processes gracefully; an in-flight model call may take up to 205 seconds...'
-        Invoke-NodeScript 'scripts/corescope-runtime.ts' @('stop')
+        $requestId = Write-LifecycleAudit 'supervisor-stop' 'explicit_stop' ([int]$saved.supervisor.pid) $systemIntent.requestId
+        Invoke-NodeScript 'scripts/corescope-runtime.ts' @('stop', '--reason', 'explicit_stop', '--request-id', $requestId)
     } elseif (Test-Path -LiteralPath $StateFile) {
         $stale = Get-Content -LiteralPath $StateFile -Raw -Encoding UTF8 | ConvertFrom-Json
         foreach ($property in $stale.children.PSObject.Properties) {
@@ -670,6 +838,7 @@ function Stop-System {
     }
     $ownedPg = Get-OwnedPostgresPid
     if ($ownedPg) {
+        $null = Write-LifecycleAudit 'postgres-stop' 'explicit_stop' $ownedPg $systemIntent.requestId
         & (Join-Path $PgRoot 'bin\pg_ctl.exe') stop -D $PgData -m fast -w -t 60
         if ($LASTEXITCODE -ne 0) { throw 'PostgreSQL graceful stop failed; it was not force-killed.' }
     }
@@ -706,13 +875,21 @@ function Assert-HostedReady($Receipt, [string]$Mode) {
         Wait-Health "http://127.0.0.1:$ApiPort/api/health"
         Wait-Health "http://127.0.0.1:$WebPort/api/health"
     }
+    $intent = Get-CoreScopeDesiredState $Mode
+    if (-not $intent -or $intent.state -ne 'running' -or $Receipt.intentGeneration -ne $intent.generation -or (Test-HostedStopRequest $Receipt)) {
+        throw 'Runtime intent changed during readiness checks; this host is not the requested running generation.'
+    }
 }
 
 function Start-HostedRuntime([string]$Mode) {
-    Write-Stage 'windows-host' "Checking the current-user Windows $Mode host task (no automatic trigger)."
+    Write-Stage 'windows-host' "Checking the current-user Windows $Mode host task and bounded failure recovery."
     $service = Connect-CoreScopeScheduler
     $spec = Get-CoreScopeTaskSpec $Mode
     $task = Register-CoreScopeTask $service $spec
+    foreach ($peerMode in @('System','Database')) {
+        if ($peerMode -ne $Mode) { $null = Register-CoreScopeTask $service (Get-CoreScopeTaskSpec $peerMode) }
+    }
+    $intent = Set-CoreScopeDesiredState 'running' $Mode
     $existingPg = Get-OwnedPostgresPid
     if ($existingPg -and -not (Get-ManagedPostgresHost $existingPg)) {
         # A peer host can be waiting for pg_ctl to return before publishing its PID.
@@ -767,8 +944,15 @@ function Start-HostedRuntime([string]$Mode) {
     $deadline = (Get-Date).AddMinutes(15)
     $lastPhase = ''
     do {
+        $currentIntent = Get-CoreScopeDesiredState $Mode
+        if (-not $currentIntent -or $currentIntent.state -ne 'running' -or $currentIntent.generation -ne $intent.generation) {
+            throw 'Start was superseded by another runtime intent; no replacement was started.'
+        }
+        # A Start racing Stop cannot accept the draining old generation as READY.
+        # Once that task exits, request the still-current generation explicitly.
+        if ($task.State -ne 4) { Start-CoreScopeTask $task }
         $receipt = Get-HostReceipt $Mode
-        $current = $receipt -and (($knownNonce -and $receipt.nonce -eq $knownNonce) -or
+        $current = $receipt -and $receipt.intentGeneration -eq $intent.generation -and (($knownNonce -and $receipt.nonce -eq $knownNonce) -or
             ($receipt.instanceId -and $knownInstances -contains $receipt.instanceId) -or [DateTimeOffset]::Parse($receipt.startedAt) -ge $since)
         if ($current) {
             if ($receipt.status -eq 'failed') { throw "Windows $Mode host failed during '$($receipt.phase)': $(Protect-LogText $receipt.error)" }
@@ -795,6 +979,134 @@ function Start-HostedRuntime([string]$Mode) {
     throw "Windows $Mode host did not reach complete readiness within 15 minutes. Inspect .data/logs/host-$($Mode.ToLowerInvariant()).log and startup.error.log; no process was killed."
 }
 
+function Wait-HostedRecoveryDelay([int]$Seconds) {
+    $deadline = [DateTimeOffset]::Now.AddSeconds($Seconds)
+    do {
+        if (Test-HostedStopRequest $script:HostReceipt) { return $false }
+        Start-Sleep -Milliseconds 1500
+    } while ([DateTimeOffset]::Now -lt $deadline)
+    return -not (Test-HostedStopRequest $script:HostReceipt)
+}
+
+function Get-HostedRecoveryPermit {
+    # Persist the sliding window across Task Scheduler retries. A sick component
+    # must not cause an unbounded process/restart storm during memory exhaustion.
+    $file = Join-Path $RuntimeDir ("recovery-{0}.json" -f $HostMode.ToLowerInvariant())
+    $now = [DateTimeOffset]::Now
+    $attempts = @()
+    if (Test-Path -LiteralPath $file) {
+        $saved = Get-Content -LiteralPath $file -Raw -Encoding UTF8 | ConvertFrom-Json
+        if ($saved.root -ne $ProjectRoot -or $saved.userSid -ne $CurrentUserSid -or $saved.mode -ne $HostMode) {
+            throw 'Recovery history does not belong to this checkout and user.'
+        }
+        if ($saved.generation -eq $script:HostReceipt.intentGeneration) {
+            $attempts = @($saved.attempts | Where-Object { [DateTimeOffset]::Parse($_) -gt $now.AddMinutes(-10) })
+        }
+    }
+    if ($attempts.Count -ge 3) {
+        return @{ allowed = $false; delaySeconds = [Math]::Max(2, [Math]::Ceiling(([DateTimeOffset]::Parse($attempts[0]).AddMinutes(10) - $now).TotalSeconds)) }
+    }
+    $attempts += $now.ToString('o')
+    $saved = @{ root = $ProjectRoot; userSid = $CurrentUserSid; mode = $HostMode
+        generation = $script:HostReceipt.intentGeneration; attempts = $attempts }
+    $temporary = $file + '.' + $script:HostReceipt.nonce + '.tmp'
+    [IO.File]::WriteAllText($temporary, ($saved | ConvertTo-Json -Depth 5), (New-Object Text.UTF8Encoding($false)))
+    if (Test-Path -LiteralPath $file) { [IO.File]::Replace($temporary, $file, [NullString]::Value) }
+    else { [IO.File]::Move($temporary, $file) }
+    return @{ allowed = $true; delaySeconds = @(5,15,45)[$attempts.Count - 1] }
+}
+
+function Wait-OwnedApplicationsDrained {
+    $deadline = [DateTimeOffset]::Now.AddSeconds(215)
+    do {
+        if (Test-HostedStopRequest $script:HostReceipt) { return $false }
+        $remaining = $false
+        if (Test-Path -LiteralPath $StateFile) {
+            $saved = Get-Content -LiteralPath $StateFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($saved.root -ne $ProjectRoot) { throw 'Application receipt belongs to another checkout; no process was changed.' }
+            foreach ($property in $saved.children.PSObject.Properties) {
+                $record = $property.Value
+                if ($record) {
+                    $probe = Get-OwnedProcessProbe $record $record.entry
+                    if ($probe.status -eq 'unknown') { throw 'Application identity is temporarily unknown; recovery will retry without killing it.' }
+                    if ($probe.status -eq 'alive') { $remaining = $true }
+                }
+            }
+        }
+        if (-not $remaining) {
+            Assert-PortFree $WebPort
+            Assert-PortFree $ApiPort
+            return $true
+        }
+        Start-Sleep -Milliseconds 1500
+    } while ([DateTimeOffset]::Now -lt $deadline)
+    throw 'Owned applications have not drained within 215 seconds; no process was force-killed.'
+}
+
+function Repair-HostedResources($Liveness) {
+    if ($Liveness.status -ne 'missing' -or (Test-HostedStopRequest $script:HostReceipt)) { return }
+    $permit = Get-HostedRecoveryPermit
+    $script:HostReceipt.status = 'degraded'
+    $script:HostReceipt.error = "Confirmed $($Liveness.resource) exit; waiting for bounded recovery."
+    Save-HostReceipt
+    if (-not $permit.allowed) {
+        Write-RuntimeLog 'warn' "Recovery limit reached (3 per 10 minutes); retrying after cooldown, preserving running resources."
+        $null = Wait-HostedRecoveryDelay ([Math]::Min(60, $permit.delaySeconds))
+        return
+    }
+    Write-Stage 'recovery-backoff' "Confirmed $($Liveness.resource) exit; recovery will retry in $($permit.delaySeconds) seconds."
+    if (-not (Wait-HostedRecoveryDelay $permit.delaySeconds)) { return }
+    $script:HostReceipt.status = 'recovering'
+    Save-HostReceipt
+    $requestId = Write-LifecycleAudit 'recovery-start' $Liveness.resource
+    if ($HostMode -eq 'System') {
+        $saved = Get-SupervisorState
+        if ($saved) {
+            # A dead DB requires draining the still-running apps first. When the
+            # supervisor itself died, child IPC disconnect drains its own apps.
+            $null = Write-LifecycleAudit 'supervisor-stop' 'recovery' ([int]$saved.supervisor.pid) $requestId
+            Invoke-NodeScript 'scripts/corescope-runtime.ts' @('stop', '--reason', 'recovery', '--request-id', $requestId)
+        }
+        if (-not (Wait-OwnedApplicationsDrained)) { return }
+    }
+    if (Test-HostedStopRequest $script:HostReceipt) { return }
+    Write-Stage 'recovery-start' 'Restarting verified CoreScope components; existing data and provider budgets are retained.'
+    if ($HostMode -eq 'System') { Start-System -Recovery }
+    else { Start-Database }
+    $script:HostReceipt.status = 'ready'
+    $script:HostReceipt.error = $null
+    Save-HostReceipt
+    $null = Write-LifecycleAudit 'recovery-ready' $Liveness.resource 0 $requestId
+    Write-Stage 'host-running' 'CoreScope recovered and passed its database-backed readiness checks.'
+}
+
+function Adopt-PreviousHostedResources($Previous) {
+    if (-not $Previous) { return }
+    $hostProbe = Get-OwnedProcessProbe $Previous.host $RuntimeScript
+    if ($hostProbe.status -eq 'alive') { throw 'The previous host is still alive; a second host will not take its resources.' }
+    if ($hostProbe.status -eq 'unknown') { throw 'Previous host identity is unknown; no process was changed.' }
+    $verified = @{}
+    foreach ($resource in @(@{name='pg';entry=$PgData}, @{name='supervisor';entry=$SupervisorEntry})) {
+        $record = $Previous.($resource.name)
+        if (-not $record) { continue }
+        $probe = Get-OwnedProcessProbe $record $resource.entry
+        if ($probe.status -eq 'unknown') { throw 'Previous resource identity is unknown; no process was changed.' }
+        if ($probe.status -eq 'alive') {
+            if (-not (Test-OwnedProcess $record $resource.entry)) { throw 'Previous resource command identity cannot be verified; no process was changed.' }
+            if ($resource.name -eq 'pg' -and (Get-OwnedPostgresPid) -ne $record.pid) { throw 'Previous database identity does not match its PID file.' }
+            if ($resource.name -eq 'supervisor' -and (-not (Get-SupervisorState) -or (Get-SupervisorState).supervisor.pid -ne $record.pid)) {
+                throw 'Previous supervisor does not match its application receipt.'
+            }
+            $verified[$resource.name] = $record
+        }
+    }
+    foreach ($name in $verified.Keys) {
+        $script:HostReceipt[$name] = $verified[$name]
+        $null = Write-LifecycleAudit 'resource-adopted' 'host-restart' ([int]$verified[$name].pid)
+    }
+    Save-HostReceipt
+}
+
 function Run-HostedRuntime {
     # Keep the task action alive for the complete process lifetime, including PG shutdown.
     $script:NoBrowser = $true
@@ -803,8 +1115,14 @@ function Run-HostedRuntime {
     $task = $service.GetFolder('\').GetTask($spec.TaskName)
     Assert-CoreScopeTaskDefinition $task.Definition $spec
     if ($task.State -ne 4) { throw 'Hosted is an internal Windows task entry. Use Start-CoreScope.cmd or -Action Database.' }
+    $desired = Get-CoreScopeDesiredState $HostMode
+    if (-not $desired -or $desired.state -ne 'running') {
+        Write-RuntimeLog 'info' 'Persistent intent is stopped or unset; automatic task activation will not start resources.'
+        return
+    }
     $previous = Get-HostReceipt $HostMode -RequireAlive
     if ($previous -and $previous.host.pid -ne $PID) { throw 'Another verified Windows host is already running; no process was changed.' }
+    $previous = Get-HostReceipt $HostMode
     $process = Get-CimInstance Win32_Process -Filter "ProcessId = $PID" -ErrorAction Stop
     if (-not $process.ExecutablePath -or [IO.Path]::GetFullPath($process.ExecutablePath) -ne $spec.Executable -or
         -not $process.CommandLine -or -not $process.CommandLine.Contains($spec.Arguments)) {
@@ -823,10 +1141,20 @@ function Run-HostedRuntime {
         root = $ProjectRoot; userSid = $CurrentUserSid; mode = $HostMode; nonce = [Guid]::NewGuid().ToString('N')
         host = @{ pid = $PID; startedAt = $process.CreationDate.ToUniversalTime().ToString('o'); entry = $RuntimeScript }
         startedAt = [DateTimeOffset]::Now.ToString('o'); updatedAt = ''; status = 'starting'; phase = $script:StartupPhase; instanceId = $instances[0].instanceId
-        pg = $null; supervisor = $null; error = $null
+        pg = $null; supervisor = $null; error = $null; intentGeneration = $desired.generation
     }
+    Adopt-PreviousHostedResources $previous
+    $script:HostReceiptPublished = $true
     Save-HostReceipt
     if (Test-HostedStopRequest $script:HostReceipt) { throw 'Windows host startup was cancelled by Stop.' }
+    if ($HostMode -eq 'System' -and $previous) {
+        if ($script:HostReceipt.supervisor -and -not $script:HostReceipt.pg) {
+            $requestId = Write-LifecycleAudit 'supervisor-stop' 'recovery' ([int]$script:HostReceipt.supervisor.pid)
+            Invoke-NodeScript 'scripts/corescope-runtime.ts' @('stop', '--reason', 'recovery', '--request-id', $requestId)
+            $script:HostReceipt.supervisor = $null
+        }
+        if (-not $script:HostReceipt.supervisor -and -not (Wait-OwnedApplicationsDrained)) { throw 'Windows host startup was cancelled by Stop.' }
+    }
     if ($HostMode -eq 'Database') { Start-Database }
     else {
         Start-System
@@ -835,18 +1163,36 @@ function Run-HostedRuntime {
     $script:HostReceipt.status = 'ready'
     Save-HostReceipt
     Write-Stage 'host-running' "Windows $HostMode host is holding its verified process lifetime."
+    $lastProbeWarning = [DateTimeOffset]::MinValue
     do {
         if (Test-HostedStopRequest $script:HostReceipt) {
             # The independent Stop caller drains applications, then pg_ctl stops PG.
-            if (-not (Get-OwnedPostgresPid)) { break }
-        } elseif (-not (Test-OwnedProcess $script:HostReceipt.pg $PgData)) {
-            throw 'Owned PostgreSQL exited unexpectedly; inspect postgres.log.'
+            $pgProbe = Get-OwnedProcessProbe $script:HostReceipt.pg $PgData
+            if ($pgProbe.status -in @('exited','mismatch') -or -not $script:HostReceipt.pg) { break }
+        } else {
+            try {
+                $liveness = Get-HostedLiveness $script:HostReceipt $HostMode
+                if ($liveness.status -eq 'missing') { Repair-HostedResources $liveness }
+                elseif ($liveness.status -in @('unknown','mismatch')) {
+                    if ([DateTimeOffset]::Now -gt $lastProbeWarning.AddMinutes(1)) {
+                        Write-RuntimeLog 'warn' "Liveness is $($liveness.status) for $($liveness.resource); preserving running resources and retrying the probe."
+                        $lastProbeWarning = [DateTimeOffset]::Now
+                    }
+                }
+            } catch {
+                # Monitoring/recovery errors never enter destructive startup cleanup.
+                $script:HostReceipt.status = 'degraded'
+                $script:HostReceipt.error = Protect-LogText $_.Exception.Message
+                try { Save-HostReceipt; Write-RuntimeLog 'warn' $script:HostReceipt.error } catch { }
+                if (Test-HostedStopRequest $script:HostReceipt) {
+                    # Stop may race a replacement launch. Reap only this host's
+                    # creations so an offline Stop cannot miss a just-started PG.
+                    try { Stop-HostedOwnedResources -Reason 'explicit_stop' } catch { }
+                }
+                $null = Wait-HostedRecoveryDelay 15
+            }
         }
-        if ($HostMode -eq 'System' -and -not (Test-OwnedProcess $script:HostReceipt.supervisor $SupervisorEntry)) {
-            if (-not (Test-HostedStopRequest $script:HostReceipt)) { throw 'Owned supervisor exited unexpectedly; inspect supervisor.error.log.' }
-            if (-not (Get-OwnedPostgresPid)) { break }
-        }
-        Start-Sleep -Milliseconds 750
+        Start-Sleep -Milliseconds 1500
     } while ($true)
     $script:HostReceipt.status = 'stopped'
     Write-Stage 'host-stopped' 'Owned processes stopped normally; the Windows task host is exiting.'
@@ -862,7 +1208,7 @@ function Wait-HostedShutdown {
             try {
                 $spec = Get-CoreScopeTaskSpec $mode
                 $task = $service.GetFolder('\').GetTask($spec.TaskName)
-                Assert-CoreScopeTaskDefinition $task.Definition $spec
+                Assert-CoreScopeTaskDefinition $task.Definition $spec -AllowLegacyRecovery
                 if (@(Get-CoreScopeTaskInstances $task).Count -gt 0) { $remaining += $mode }
             } catch {}
         }
@@ -872,18 +1218,20 @@ function Wait-HostedShutdown {
     throw 'Processes stopped, but a Windows host has not exited normally. Inspect host logs; no task was force-ended.'
 }
 
-function Stop-HostedOwnedResources {
+function Stop-HostedOwnedResources([ValidateSet('failure_cleanup','explicit_stop')][string]$Reason = 'failure_cleanup') {
     # Failure cleanup is scoped to resources created by this particular host.
     # A System startup failure must leave a previously healthy Database host intact.
     if ($script:HostCreatedSupervisor) {
         $saved = Get-SupervisorState
         if ($saved -and [DateTimeOffset]::Parse($saved.supervisor.startedAt) -ge [DateTimeOffset]::Parse($script:HostReceipt.startedAt)) {
             if ($script:HostReceipt.supervisor -and $script:HostReceipt.supervisor.pid -ne $saved.supervisor.pid) { throw 'Failure cleanup found a different supervisor; no process was stopped.' }
-            Invoke-NodeScript 'scripts/corescope-runtime.ts' @('stop')
+            $requestId = Write-LifecycleAudit 'supervisor-stop' $Reason ([int]$saved.supervisor.pid)
+            Invoke-NodeScript 'scripts/corescope-runtime.ts' @('stop', '--reason', $Reason, '--request-id', $requestId)
         }
     }
     if ($script:HostCreatedPostgres -and $script:HostReceipt.pg -and (Get-OwnedPostgresPid) -eq $script:HostReceipt.pg.pid -and
         (Test-OwnedProcess $script:HostReceipt.pg $PgData)) {
+        $null = Write-LifecycleAudit 'postgres-stop' $Reason ([int]$script:HostReceipt.pg.pid)
         Write-HostedStopRequest
         & (Join-Path $PgRoot 'bin\pg_ctl.exe') stop -D $PgData -m fast -w -t 60
         if ($LASTEXITCODE -ne 0) { throw 'Owned PostgreSQL normal failure cleanup did not complete; it was not force-killed.' }
@@ -896,8 +1244,8 @@ function Show-RuntimeStatus {
         $spec = Get-CoreScopeTaskSpec $mode
         try {
             $task = $service.GetFolder('\').GetTask($spec.TaskName)
-            Assert-CoreScopeTaskDefinition $task.Definition $spec
-            Write-Host "Windows $mode task: state=$($task.State), lastResult=$($task.LastTaskResult), no automatic trigger."
+            Assert-CoreScopeTaskDefinition $task.Definition $spec -AllowLegacyRecovery
+            Write-Host "Windows $mode task: state=$($task.State), lastResult=$($task.LastTaskResult), retries=$($task.Definition.Settings.RestartCount), triggers=$($task.Definition.Triggers.Count)."
         } catch { Write-Host "Windows $mode task: not registered or definition could not be verified." }
         $receipt = Get-HostReceipt $mode -RequireAlive
         if ($receipt) { Write-Host "Owned $mode host PID: $($receipt.host.pid), status=$($receipt.status), phase=$($receipt.phase)." }
@@ -951,7 +1299,9 @@ try {
     }
 } catch {
     $failure = Protect-LogText $_.Exception.Message
-    if ($Action -eq 'Hosted' -and $script:HostReceipt) {
+    # Record the initiating failure before cleanup, so logs preserve causal order.
+    try { Write-RuntimeLog 'error' $failure -Failure } catch { }
+    if ($Action -eq 'Hosted' -and $script:HostReceipt -and $script:HostReceiptPublished) {
         $cancelled = Test-HostedStopRequest $script:HostReceipt
         $script:HostReceipt.status = if ($cancelled) { 'stopped' } else { 'failed' }
         $script:HostReceipt.error = $failure

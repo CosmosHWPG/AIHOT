@@ -54,11 +54,17 @@ test("the Windows cmd launcher preserves its failure exit and shows a durable re
     const failure = await pending.then(() => assert.fail("the sandboxed launch must fail"), (error: Error & { code: number; stdout: string; stderr: string }) => error);
     assert.equal(failure.code, 1);
     const raw = await readFile(path.join(instance.root, ".data", "logs", "startup.error.log"), "utf8");
-    const record = JSON.parse(raw.trim());
-    assert.equal(record.action, "Start");
-    assert.equal(record.phase, "configuration");
-    assert.equal(record.level, "error");
-    assert.ok(Number.isFinite(Date.parse(record.at)));
+    // Startup errors are append-only JSONL: retain the original failure before cleanup,
+    // then the final outcome. Validate every record instead of assuming one JSON object.
+    const records = raw.trim().split(/\r?\n/).map(line => JSON.parse(line));
+    assert.ok(records.length > 0);
+    for (const record of records) {
+      assert.equal(record.action, "Start");
+      assert.equal(record.phase, "configuration");
+      assert.equal(record.level, "error");
+      assert.ok(Number.isFinite(Date.parse(record.at)));
+    }
+    const record = records.at(-1)!;
     assert.match(record.message, /Invalid URI|URI is not valid|无法转换|无效/i);
     assert.match(failure.stdout, /\[FAILED\].*configuration/);
     assert.match(failure.stdout, /startup\.error\.log/);

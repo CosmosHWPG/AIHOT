@@ -53,13 +53,29 @@ setInterval(tick, 75);
 }
 
 async function cleanup(directory: string, stop: string, childPid?: number, parent?: ChildProcess) {
+  const resolved = path.resolve(directory);
+  assert.equal(path.dirname(resolved), path.resolve(os.tmpdir()));
+  assert.match(path.basename(resolved), /^corescope-detach-test-[A-Za-z0-9]{6}$/);
+  assert.equal(path.dirname(path.resolve(stop)), resolved);
   await writeFile(stop, "self-exit isolated fake child");
   if (parent && parent.exitCode === null && parent.signalCode === null) parent.kill();
   if (childPid !== undefined) await eventually(async () => !alive(childPid) ? true : undefined, 14_000);
   if (parent) await eventually(async () => parent.exitCode !== null || parent.signalCode !== null ? true : undefined);
+  const removalDeadline = Date.now() + 3_000;
+  async function removeWhenReleased(remove: () => Promise<void>) {
+    for (;;) {
+      try { await remove(); return; }
+      catch (error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        // Windows may retain a process cwd or file handle briefly after exit.
+        if (process.platform !== "win32" || !["EBUSY", "EPERM"].includes(code ?? "") || Date.now() >= removalDeadline) throw error;
+        await pause(50);
+      }
+    }
+  }
   // Only unlink files in the fresh temporary fixture; never recurse through a checkout.
-  for (const name of await readdir(directory)) await unlink(path.join(directory, name));
-  await rmdir(directory);
+  for (const name of await readdir(directory)) await removeWhenReleased(() => unlink(path.join(directory, name)));
+  await removeWhenReleased(() => rmdir(directory));
 }
 
 // These exercise parent lifetime and file stdio. Closing a Windows console window
