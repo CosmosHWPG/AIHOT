@@ -12,7 +12,7 @@ import { sha256 } from "../lib/ids.ts";
 import { loadContact, type ContactSettings } from "../site/contact.ts";
 import { audit, Conflict } from "../audit.ts";
 import { cancelTemporaryLlmBudget } from "../providers/temporary-budget.ts";
-import { wakeLlmBudgetWaits } from "../jobs/budget-capacity.ts";
+import { wakeJinaBudgetWaits, wakeLlmBudgetWaits } from "../jobs/budget-capacity.ts";
 
 const MAX_QR_BYTES = 2 * 1024 * 1024;
 
@@ -106,6 +106,7 @@ export async function updateBudget(service: string, input: AdminBudgetUpdate, ac
       RETURNING service,enabled,per_minute,per_hour,per_day,note,updated_at`;
     await audit(actor,"budget.update",`budget:${service}`,patch.reason,before ?? null,after,{ db: tx });
     if (service === "llm") await wakeLlmBudgetWaits(tx);
+    if (service === "jina") await wakeJinaBudgetWaits(tx);
     return after;
   });
 }

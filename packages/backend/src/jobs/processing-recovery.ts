@@ -1,17 +1,22 @@
 // A fixed, audited exception to the rolling scope. It grants no provider budget or publication rights.
 import { createHash } from "node:crypto";
+import { isIP } from "node:net";
 import { z } from "zod";
 import { audit } from "../audit.ts";
 import { sql, type Db } from "../db.ts";
 import { digestInputsHash, type DigestReport } from "../events/derived-content.ts";
 import { storyReportCondition, listedCondition, evidenceCondition } from "../publication/scope.ts";
+import { isBlockedAddress } from "../lib/url.ts";
 
 export const RECOVERY_BATCH_PREFIX = "content.processing-recovery.";
 export const RECOVERY_PRIORITY = 9000; // Ordinary recent news always stays ahead (> 10,000).
 const memberSchema = z.object({ articleId: z.string().min(1), revision: z.number().int().positive(),
-  sourceId: z.string().min(1), sourceKind: z.string().min(1), mode: z.enum(["editorial", "hot_signal"]) }).strict();
+  sourceId: z.string().min(1), sourceKind: z.string().min(1), mode: z.enum(["editorial", "hot_signal"]),
+  url: z.string().min(1).optional(), sourceConfigMd5: z.string().regex(/^[a-f0-9]{32}$/).optional(),
+  publishedAt: z.string().datetime().optional(), initialBodyStatus: z.literal("unconfirmed").optional(),
+  initialProcessingState: z.enum(["new", "analyzed", "failed"]).optional() }).strict();
 const planSchema = z.object({ version: z.literal(1), id: z.string().regex(/^[a-zA-Z0-9_-]{8,80}$/),
-  kind: z.enum(["bird-pending", "model-failure"]), createdAt: z.string(),
+  kind: z.enum(["bird-pending", "model-failure", "web-body-recovery"]), createdAt: z.string(), windowAt: z.string().datetime().optional(),
   evidence: z.string().min(1), members: z.array(memberSchema).min(1).max(118), digest: z.string() }).strict();
 export type RecoveryMember = z.infer<typeof memberSchema>;
 export type RecoveryPlan = z.infer<typeof planSchema>;
@@ -25,6 +30,7 @@ interface Article {
   id: string; revision: number; source_id: string; participation_mode: string; enabled: boolean;
   kind: string; bird: boolean; processing_state: string; processing_attempts: number;
   published_at: Date | null; future: boolean; historical: boolean; grouped_at: Date | null; relevance_pass: boolean;
+  url: string; source_config_md5: string; published_at_key: string | null; body_status: string; initial_window: boolean;
 }
 export interface RecoveryStoryStatus {
   storyId: number; needsDigest: boolean; digestCurrent: boolean; latestDigestState: string | null;
@@ -32,25 +38,58 @@ export interface RecoveryStoryStatus {
 }
 export interface RecoveryMemberStatus extends RecoveryMember {
   currentRevision: number; admission: string; state: string; attempts: number;
+  /** Only web body recovery reports extraction state; legacy batch outputs stay unchanged. */
+  bodyStatus?: string;
   needsEvent: boolean; groupingSettled: boolean; latestGroupState: string | null;
   activeJobs: number; deferrals: number; unknownReceipts: number; settled: boolean;
   stories: RecoveryStoryStatus[];
 }
 
-export function recoveryPlanDigest(plan: Pick<RecoveryPlan, "id" | "kind" | "evidence" | "members">): string {
+export function recoveryPlanDigest(plan: Pick<RecoveryPlan, "id" | "kind" | "evidence" | "members"> & { createdAt?: string; windowAt?: string }): string {
   return createHash("sha256").update(JSON.stringify({ id: plan.id, kind: plan.kind, evidence: plan.evidence,
+    ...(plan.kind === "web-body-recovery" ? { createdAt: plan.createdAt, windowAt: plan.windowAt } : {}),
     members: [...plan.members].sort((a, b) => a.articleId.localeCompare(b.articleId)) })).digest("hex");
+}
+const WEB_RECOVERY_SOURCE_KINDS = ["rss", "web_list", "json_list", "external"];
+/** Structural candidate check only. The ordinary fetch path still checks DNS and every connection. */
+function publicWebCandidate(value: string): boolean {
+  try {
+    const u = new URL(value);
+    if (!["http:", "https:"].includes(u.protocol) || u.username || u.password) return false;
+    if ([...u.searchParams.keys()].some(key => /^(?:(?:access|api|oauth|session)[_-]?token|api[_-]?key|client[_-]?secret|auth(?:orization)?|password|passwd|secret|signature|sig|token|key|credential|jwt|x-(?:amz|goog)-(?:signature|credential))$/i.test(key))) return false;
+    const host = u.hostname.replace(/^\[|\]$/g, "").replace(/\.+$/, "").toLowerCase();
+    if (["x.com", "twitter.com", "mp.weixin.qq.com"].some(domain => host === domain || host.endsWith("." + domain))) return false;
+    if (isIP(host)) return !isBlockedAddress(host);
+    return host.includes(".") && !/(?:^|\.)(?:localhost|local|internal|test|invalid|example|onion)$/.test(host);
+  } catch { return false; }
 }
 export function parseRecoveryPlan(value: unknown): RecoveryPlan {
   const plan = planSchema.parse(value);
   if (new Set(plan.members.map(m => m.articleId)).size !== plan.members.length) throw new Error("Duplicate recovery article ID");
   if (plan.kind === "model-failure" && plan.members.length > 3) throw new Error("Model failure recovery is limited to three fixed IDs");
+  if (plan.kind === "web-body-recovery") {
+    z.string().datetime().parse(plan.createdAt);
+    const anchorAge = Date.parse(plan.createdAt) - Date.parse(plan.windowAt ?? "");
+    if (!Number.isFinite(anchorAge) || anchorAge < 0 || anchorAge > 30 * 60_000) {
+      throw new Error("Web body recovery window anchor must be at most 30 minutes before creation");
+    }
+    for (const member of plan.members) {
+      if (member.mode !== "editorial" || !WEB_RECOVERY_SOURCE_KINDS.includes(member.sourceKind)
+        || !member.url || !publicWebCandidate(member.url) || !member.sourceConfigMd5 || !member.publishedAt
+        || member.initialBodyStatus !== "unconfirmed" || !member.initialProcessingState) {
+        throw new Error("Web body recovery requires fixed public editorial identity and initial unconfirmed state");
+      }
+    }
+  }
   if (plan.digest !== recoveryPlanDigest(plan)) throw new Error("Recovery manifest digest mismatch");
   return plan;
 }
-async function readArticles(ids: string[], db: Db): Promise<Article[]> {
+async function readArticles(ids: string[], db: Db, windowAt?: string): Promise<Article[]> {
   return db<Article[]>`SELECT a.id,a.revision,a.source_id,s.participation_mode,s.enabled,s.kind,
     coalesce(a.x_post->>'provider','')='bird' AS bird,a.processing_state,a.processing_attempts,a.published_at,
+    a.url,a.body_status,md5(s.config::text) AS source_config_md5,
+    to_char(a.published_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS published_at_key,
+    coalesce(a.published_at BETWEEN ${windowAt ?? null}::timestamptz-interval '48 hours' AND ${windowAt ?? null}::timestamptz,false) AS initial_window,
     coalesce(a.published_at>now(),false) AS future,a.grouped_at,
     EXISTS(SELECT 1 FROM analyses n WHERE n.article_id=a.id AND n.input_revision=a.revision AND n.relevance='pass') AS relevance_pass,
     (a.backfill AND (a.published_at IS NULL OR a.discovered_at-a.published_at>interval '48 hours')) AS historical
@@ -64,6 +103,9 @@ function match(member: RecoveryMember, revision: number, article?: Article): str
   if (article.kind !== member.sourceKind) return "source-kind-changed";
   if (article.participation_mode !== member.mode) return "mode-changed";
   if (article.revision !== revision) return "revision-changed";
+  if (member.url !== undefined && article.url !== member.url) return "url-changed";
+  if (member.sourceConfigMd5 !== undefined && article.source_config_md5 !== member.sourceConfigMd5) return "source-config-changed";
+  if (member.publishedAt !== undefined && article.published_at_key !== member.publishedAt) return "publication-changed";
   if (!article.published_at) return "unknown-publication";
   if (article.future) return "future-publication";
   return "admitted";
@@ -89,13 +131,30 @@ async function save(batch: RecoveryBatch, actor: string, db: Db) {
     ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_by=EXCLUDED.updated_by,updated_at=clock_timestamp()`;
 }
 /** Plan captures primary source and revision, never body text, responses or credentials. */
-export async function planRecoveryBatch(input: { id: string; kind: RecoveryPlan["kind"]; articleIds: string[]; evidence: string }, db: Db = sql): Promise<RecoveryPlan> {
+export async function planRecoveryBatch(input: { id: string; kind: RecoveryPlan["kind"]; articleIds: string[]; evidence: string; windowAt?: string }, db: Db = sql): Promise<RecoveryPlan> {
   if (new Set(input.articleIds).size !== input.articleIds.length) throw new Error("Duplicate recovery article ID");
-  const rows = await readArticles(input.articleIds, db);
+  let createdAt = new Date().toISOString();
+  if (input.kind === "web-body-recovery") {
+    const [clock] = await db<{ at: string }[]>`SELECT to_char(clock_timestamp() AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS at`;
+    createdAt = clock!.at;
+  }
+  const windowAt = input.kind === "web-body-recovery" ? input.windowAt ?? createdAt : undefined;
+  if (windowAt !== undefined) {
+    z.string().datetime().parse(windowAt);
+    const [anchor] = await db<{ valid: boolean }[]>`SELECT ${windowAt}::timestamptz BETWEEN ${createdAt}::timestamptz-interval '30 minutes' AND ${createdAt}::timestamptz AS valid`;
+    if (!anchor?.valid) throw new Error("Web body recovery window anchor must be at most 30 minutes before creation");
+  }
+  const rows = await readArticles(input.articleIds, db, windowAt);
   const members = input.articleIds.map(articleId => {
     const row = rows.find(r => r.id === articleId);
     if (!row) throw new Error(`Recovery article missing: ${articleId}`);
-    const member = memberSchema.parse({ articleId, revision: row.revision, sourceId: row.source_id, sourceKind: row.kind, mode: row.participation_mode });
+    if (input.kind === "web-body-recovery" && (row.body_status !== "unconfirmed" || !["new", "analyzed", "failed"].includes(row.processing_state)
+      || row.participation_mode !== "editorial" || !WEB_RECOVERY_SOURCE_KINDS.includes(row.kind) || !row.initial_window || !publicWebCandidate(row.url))) {
+      throw new Error(`Recovery article ${articleId} is not an initial recent unconfirmed public editorial webpage`);
+    }
+    const member = memberSchema.parse({ articleId, revision: row.revision, sourceId: row.source_id, sourceKind: row.kind, mode: row.participation_mode,
+      ...(input.kind === "web-body-recovery" ? { url: row.url, sourceConfigMd5: row.source_config_md5, publishedAt: row.published_at_key,
+        initialBodyStatus: row.body_status, initialProcessingState: row.processing_state } : {}) });
     const admission = match(member, member.revision, row);
     if (admission !== "admitted") throw new Error(`Recovery article ${articleId}: ${admission}`);
     if (input.kind === "bird-pending" && (!row.bird || row.kind !== "x_search" || row.processing_state !== "new")) {
@@ -106,7 +165,7 @@ export async function planRecoveryBatch(input: { id: string; kind: RecoveryPlan[
     }
     return member;
   });
-  const plan = { version: 1 as const, id: input.id, kind: input.kind, createdAt: new Date().toISOString(), evidence: input.evidence, members };
+  const plan = { version: 1 as const, id: input.id, kind: input.kind, createdAt, ...(windowAt !== undefined ? { windowAt } : {}), evidence: input.evidence, members };
   return parseRecoveryPlan({ ...plan, digest: recoveryPlanDigest(plan) });
 }
 /** Same id+digest is idempotent; a revoked/completed ID cannot be revived or silently expanded. */
@@ -125,13 +184,21 @@ export async function applyRecoveryBatch(value: unknown, actor: string, reason: 
     if (policy?.value.enabled !== true) throw new Error("The global 48h/2000 policy must remain enabled");
     await tx`SELECT id FROM sources WHERE id=ANY(${[...new Set(plan.members.map(m => m.sourceId))].sort()}::text[]) ORDER BY id FOR SHARE`;
     await tx`SELECT id FROM articles WHERE id=ANY(${plan.members.map(m => m.articleId).sort()}::text[]) ORDER BY id FOR UPDATE`;
-    const rows = await readArticles(plan.members.map(m => m.articleId), tx);
+    if (plan.kind === "web-body-recovery") {
+      const [clock] = await tx<{ valid: boolean; anchor_valid: boolean }[]>`SELECT clock_timestamp() BETWEEN ${plan.createdAt}::timestamptz AND ${plan.createdAt}::timestamptz+interval '30 minutes' AS valid,
+        ${plan.windowAt!}::timestamptz BETWEEN ${plan.createdAt}::timestamptz-interval '30 minutes' AND ${plan.createdAt}::timestamptz AS anchor_valid`;
+      if (!clock?.valid) throw new Error("Web body recovery plan activation expired or is in the future (30 minutes)");
+      if (!clock.anchor_valid) throw new Error("Web body recovery window anchor must be at most 30 minutes before creation");
+    }
+    const rows = await readArticles(plan.members.map(m => m.articleId), tx, plan.kind === "web-body-recovery" ? plan.windowAt : undefined);
     for (const member of plan.members) {
       const row = rows.find(r => r.id === member.articleId);
       const admission = match(member, member.revision, row);
       if (admission !== "admitted") throw new Error(`Recovery article ${member.articleId}: ${admission}`);
       if (plan.kind === "bird-pending" && (!row!.bird || row!.kind !== "x_search")) throw new Error("Bird provider evidence changed");
       if (plan.kind === "model-failure" && (!["rss", "external"].includes(row!.kind) || member.mode !== "editorial")) throw new Error("Failed editorial source changed");
+      if (plan.kind === "web-body-recovery" && (!row!.initial_window || row!.processing_state !== member.initialProcessingState
+        || row!.body_status !== member.initialBodyStatus)) throw new Error("Web body recovery initial state or creation window changed");
     }
     const batch: RecoveryBatch = { ...plan, status: "active", activatedAt: new Date().toISOString(), currentRevisions: {}, retriedFailures: [] };
     await save(batch, actor, tx);
@@ -244,8 +311,10 @@ async function statuses(batches: RecoveryBatch[], db: Db) {
       const needsEvent = !!article && !article.historical && (member.mode === 'hot_signal' || article.relevance_pass);
       const groupingSettled = !needsEvent || !!article?.grouped_at || (group?.state === 'completed' && !!group.verdict);
       const settled = admission === 'admitted' && !!article && ['analyzed','skipped','blocked'].includes(article.processing_state)
+        && (batch.kind !== 'web-body-recovery' || article.body_status !== 'pending')
         && groupingSettled && !activeJobs && !deferred && !unknownReceipts && group?.state !== 'failed' && memberStories.every(s => s.settled);
       return { ...member, currentRevision, admission, state: article?.processing_state ?? 'missing', attempts: article?.processing_attempts ?? 0,
+        ...(batch.kind === 'web-body-recovery' ? { bodyStatus: article?.body_status ?? 'missing' } : {}),
         needsEvent, groupingSettled, latestGroupState: group?.state ?? null, activeJobs, deferrals: deferred, unknownReceipts, stories: memberStories, settled };
     });
     const memberIds = new Set(members.map(m => m.articleId));

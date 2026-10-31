@@ -2,7 +2,55 @@
 import { sql, type Db } from "../db.ts";
 import { audit } from "../audit.ts";
 import { restoreExpiredLlmBudget, temporaryLlmAllowance } from "../providers/temporary-budget.ts";
-import { getRecentContentPolicy, getRecentContentScope } from "./recent-content.ts";
+import { getProcessingScopeTargets, getRecentContentPolicy, getRecentContentScope } from "./recent-content.ts";
+
+const JINA_NUMERIC_WAIT = "^extract: Budget for jina exhausted [(](minute|hour|day|stopped)[)]$";
+
+/** Only an explicitly disabled local quota invalidates these waits; the normal worker does the work. */
+export async function wakeJinaBudgetWaits(db: Db = sql): Promise<{ articles: number }> {
+  const run = async (tx: Db) => {
+    await tx`SELECT pg_advisory_xact_lock(hashtext('budget:jina'))`;
+    const [budget] = await tx<{ enabled: boolean }[]>`SELECT enabled FROM budgets WHERE service='jina'`;
+    if (budget?.enabled !== false) return { articles: 0 };
+    const scope = await getProcessingScopeTargets(tx);
+    if (!scope.enabled) return { articles: 0 };
+    const candidates = await tx<{ id: string; source_id: string }[]>`SELECT a.id,a.source_id FROM articles a JOIN sources s ON s.id=a.source_id
+      WHERE a.id=ANY(${scope.articleIds}::text[]) AND s.enabled AND s.participation_mode='editorial'
+        AND a.processing_state='new' AND a.body_status='pending' AND a.processing_retry_at>now()
+        AND a.processing_error ~ ${JINA_NUMERIC_WAIT}`;
+    if (!candidates.length) return { articles: 0 };
+    // Source/revision/config changes must settle before recomputing fixed-batch admission.
+    await tx`SELECT id FROM sources WHERE id=ANY(${[...new Set(candidates.map(a => a.source_id))].sort()}::text[]) ORDER BY id FOR SHARE`;
+    const locked = await tx<{ id: string }[]>`SELECT id FROM articles WHERE id=ANY(${candidates.map(a => a.id).sort()}::text[])
+      ORDER BY id FOR UPDATE SKIP LOCKED`;
+    const currentScope = await getProcessingScopeTargets(tx);
+    if (!currentScope.enabled) return { articles: 0 };
+    const allowed = new Set(currentScope.articleIds);
+    const ids = locked.filter(a => allowed.has(a.id)).map(a => a.id);
+    const rows = await tx<{ id: string; previous_retry_at: Date; retry_at: Date }[]>`
+      WITH active_articles AS MATERIALIZED (
+        SELECT DISTINCT j.data->>'articleId' AS id FROM pgboss.job j
+        WHERE j.data->>'articleId'=ANY(${ids}::text[])
+          AND j.name IN ('content.extract-body','content.analyze','events.group') AND j.state IN ('created','retry','active')
+      ), unresolved AS MATERIALIZED (
+        SELECT subject,request->>'url' AS url FROM receipts WHERE service='jina' AND status IN ('pending','unknown')
+      ), waiting AS (
+        SELECT a.id,a.processing_retry_at AS previous_retry_at FROM articles a JOIN sources s ON s.id=a.source_id
+        WHERE a.id=ANY(${ids}::text[]) AND s.enabled AND s.participation_mode='editorial'
+          AND a.processing_state='new' AND a.body_status='pending' AND a.processing_retry_at>now()
+          AND a.processing_error ~ ${JINA_NUMERIC_WAIT}
+          AND NOT EXISTS (SELECT 1 FROM active_articles j WHERE j.id=a.id)
+          AND NOT EXISTS (SELECT 1 FROM unresolved r WHERE r.subject='article:'||a.id OR r.url=a.url)
+      ) UPDATE articles a SET processing_retry_at=now() FROM waiting w WHERE a.id=w.id
+        RETURNING a.id,w.previous_retry_at,a.processing_retry_at AS retry_at`;
+    if (rows.length) await audit("system:budget-capacity","content.capacity-wake","budget:jina",
+      "Administrator disabled Jina count limits; resume only local numeric waits",
+      { waits: rows.map(a => ({ articleId: a.id,retryAt: a.previous_retry_at })) },
+      { articles: rows.length,articleIds: rows.map(a => a.id),retryAt: rows[0].retry_at,enabled: false },{ db: tx });
+    return { articles: rows.length };
+  };
+  return "begin" in db ? (db as typeof sql).begin(run) : run(db);
+}
 
 export async function wakeLlmBudgetWaits(db: Db = sql): Promise<{ articles: number; events: number }> {
   const run = async (tx: Db) => {

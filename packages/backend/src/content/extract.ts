@@ -3,8 +3,10 @@
 import { Readability } from "@mozilla/readability";
 import { parseHTML } from "linkedom";
 import { sql, type Db } from "../db.ts";
+import { audit } from "../audit.ts";
 import { guardedFetch } from "../lib/http-fetch.ts";
 import { collapseWhitespace, stripTags } from "../lib/text.ts";
+import { sha256 } from "../lib/ids.ts";
 import { jinaRead } from "../providers/jina.ts";
 import { completeReceipt } from "../providers/receipts.ts";
 import { getArticle } from "../providers/socialdata.ts";
@@ -28,6 +30,9 @@ interface UrlExtraction {
   body: ExtractedBody | null;
   /** Settle the paid answer with the material decision, including an empty or obsolete answer. */
   receiptId?: number;
+  /** Exact cleaned text, only for removing this same rejected answer from an older material. */
+  rejectedText?: string;
+  reason?: string;
 }
 
 const MIN_BODY_CHARS = 200;
@@ -72,6 +77,26 @@ export async function extractFromUrl(url: string, opts: { allowJina: boolean; su
   const page = await jinaRead(url, { purpose: "body_fallback", subject: opts.subject });
   const html = markdownBody(page.markdown, url);
   const text = stripTags(html);
+  // Reader can return HTTP 200 while explicitly reporting the target's error in its metadata.
+  // Inspect only that section: a real article may discuss CAPTCHA or quote an HTTP error.
+  const metadataEnd = /\r?\nMarkdown Content:\r?\n/.exec(page.raw)?.index;
+  const metadata = metadataEnd === undefined ? "" : page.raw.slice(0, metadataEnd);
+  const targetError = /^Warning:\s*Target URL returned error\s+([45]\d{2})\b/im.exec(metadata);
+  if (targetError) return { body: null, receiptId: page.receiptId, rejectedText: text,
+    reason: `Jina Reader explicitly reported target HTTP ${targetError[1]}` };
+  const verificationTitle = /^Just a moment(?:\.{3}|…)$/i.test(page.title?.trim() ?? "");
+  const beginning = collapseWhitespace(text).slice(0, 1500);
+  const verificationBody = /enable javascript and cookies to continue|performing security verification|verify (?:that )?you are human|verifying you are human|needs to review the security of your connection before proceeding/i.test(beginning);
+  const redditVerificationTitle = /^Reddit - Prove your humanity$/i.test(page.title?.trim() ?? "");
+  const redditVerificationBody = /\bprove your humanity\b/i.test(beginning) && /\bcomplete the challenge\b/i.test(beginning);
+  if ((verificationTitle && verificationBody) || (redditVerificationTitle && redditVerificationBody)) return { body: null, receiptId: page.receiptId, rejectedText: text,
+    reason: "Jina Reader returned a security verification interstitial" };
+  const youtubeTarget = /(^|\.)youtube\.com$|^youtu\.be$/i.test(new URL(url).hostname);
+  const youtubeConsentTitle = /^Before you continue to YouTube$/i.test(page.title?.trim() ?? "");
+  const consentBeginning = collapseWhitespace(text).slice(0, 5000);
+  if (youtubeTarget && youtubeConsentTitle && /\bcookies\b/i.test(consentBeginning)
+    && /\bAccept all\b/i.test(consentBeginning) && /\bReject all\b/i.test(consentBeginning)) return { body: null, receiptId: page.receiptId, rejectedText: text,
+    reason: "Jina Reader returned a YouTube cookie consent interstitial" };
   return { receiptId: page.receiptId,
     body: text.length < MIN_BODY_CHARS ? null : { html, text, images: [], via: "jina" } };
 }
@@ -94,9 +119,17 @@ export async function extractArticleBody(articleId: string, allowJina = process.
   if (!a || a.body_status === "ok") return "skipped";
   // An older material's route is evidence of its acquisition, never today's source setting.
   if (a.x_post?.tweetId) return extractXArticle(a.id, a.x_post.tweetId, a.revision, a.x_post);
-  const { body: got, receiptId } = await extractFromUrl(a.url, { allowJina, subject: `article:${a.id}` });
+  const { body: got, receiptId, rejectedText, reason } = await extractFromUrl(a.url, { allowJina, subject: `article:${a.id}` });
   if (!got) {
-    return markUnconfirmed(articleId, a.revision, receiptId);
+    return markUnconfirmed(articleId, a.revision, receiptId,
+      rejectedText !== undefined && reason ? { text: rejectedText, reason } : undefined);
+  }
+  if (got.via === "jina" && receiptId !== undefined) {
+    const [rejection] = await sql<{ id: number }[]>`SELECT id FROM audit_log
+      WHERE subject=${`content:${articleId}`} AND action='content.body-rejection-authorized'
+        AND after->>'url'=${a.url} AND after->>'bodySha256'=${sha256(got.text)} ORDER BY id DESC LIMIT 1`;
+    if (rejection) return markUnconfirmed(articleId, a.revision, receiptId,
+      { text: got.text, reason: `Jina body rejection authorized by audit ${rejection.id}`, url: a.url });
   }
   // The body is new content: a new revision, so an analysis of the body-less input counts as stale.
   return sql.begin(async (tx) => {
@@ -126,14 +159,38 @@ export async function extractArticleBody(articleId: string, allowJina = process.
   });
 }
 
-async function markUnconfirmed(articleId: string, revision: number, receiptId?: number): Promise<"unconfirmed" | "skipped"> {
+async function markUnconfirmed(articleId: string, revision: number, receiptId?: number,
+  rejected?: { text: string; reason: string; url?: string }): Promise<"unconfirmed" | "skipped"> {
   const mark = async (db: Db) => {
+    if (rejected) {
+      const [row] = await db<{ title: string; excerpt: string | null; body_text: string | null; body_status: string }[]>`
+        SELECT title,excerpt,body_text,body_status FROM articles
+        WHERE id=${articleId} AND revision=${revision} AND body_status<>'ok'
+          AND (${rejected.url ?? null}::text IS NULL OR url=${rejected.url ?? null}) FOR UPDATE`;
+      if (row && row.body_text === rejected.text) {
+        // A prior extractor may have confirmed this exact error page. Preserve every other
+        // partial body/summary, and retain the removed answer in the existing revision history.
+        const hash = contentHash({ title: row.title, bodyText: null, excerpt: row.excerpt });
+        const [next] = await db<{ revision: number }[]>`
+          UPDATE articles SET body_html=NULL,body_text=NULL,body_status='unconfirmed',revision=revision+1,
+            content_hash=${hash},processing_state='new',updated_at=now() WHERE id=${articleId} RETURNING revision`;
+        await db`INSERT INTO article_revisions(article_id,revision,content_hash,title,body_text)
+          VALUES(${articleId},${next!.revision},${hash},${row.title},NULL)`;
+        await advanceRecoveryExtractionRevision(articleId, revision, next!.revision, db);
+        await audit("content-extraction", "content.body-rejected", `content:${articleId}`, rejected.reason,
+          { revision, bodyStatus: row.body_status, bodyChars: rejected.text.length, receiptId: receiptId ?? null },
+          { revision: next!.revision, bodyStatus: "unconfirmed", bodyChars: 0, receiptId: receiptId ?? null }, { db });
+        if (receiptId !== undefined) await completeReceipt(db, receiptId);
+        return "unconfirmed" as const;
+      }
+    }
     const rows = await db`UPDATE articles SET body_status = 'unconfirmed', updated_at = now()
-      WHERE id = ${articleId} AND revision = ${revision} AND body_status <> 'ok' RETURNING id`;
+      WHERE id = ${articleId} AND revision = ${revision} AND body_status <> 'ok'
+        AND (${rejected?.url ?? null}::text IS NULL OR url=${rejected?.url ?? null}) RETURNING id`;
     if (receiptId !== undefined) await completeReceipt(db, receiptId);
     return rows.length ? "unconfirmed" as const : "skipped" as const;
   };
-  return receiptId === undefined ? mark(sql) : sql.begin(mark);
+  return receiptId === undefined && !rejected ? mark(sql) : sql.begin(mark);
 }
 
 /**

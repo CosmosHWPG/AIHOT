@@ -6,6 +6,7 @@
 import type { PgBoss } from "pg-boss";
 import { CAPABILITIES } from "../editorial/models.ts";
 import { sql, type Db } from "../db.ts";
+import { audit } from "../audit.ts";
 import { extractArticleBody, pageFetchable } from "../content/extract.ts";
 import { analyzeArticle, AnalysisInterruptedError } from "../editorial/analyze.ts";
 import { isHistorical } from "../content/materials.ts";
@@ -15,6 +16,7 @@ import { ModelOutputError } from "../providers/llm.ts";
 import { enqueue, QUEUES, shutdownSignal, work } from "./queue.ts";
 import { getRecentContentPolicy, getRecentContentPriority, getRecentContentScope, isStoryInProcessingScope, reprioritizeRecentContentJobs } from "./recent-content.ts";
 import { activeRecoveryBatchStatuses, getAdmittedRecoveryMembers, RECOVERY_PRIORITY } from "./processing-recovery.ts";
+import { wakeJinaBudgetWaits } from "./budget-capacity.ts";
 
 /** Minutes to wait after the n-th failed attempt; one more failure after the last ends in "failed". */
 const RETRY_MINUTES = [5, 10, 20, 40, 60, 120, 240, 360];
@@ -282,6 +284,7 @@ export async function registerExtractionJobs(boss: PgBoss) {
  * a lost job, a retry that came due). Articles already queued or running are left alone.
  */
 export async function sweepUnprocessed(): Promise<{ enqueued: number }> {
+  await wakeJinaBudgetWaits();
   const recovery = await sweepRecoveryBatches();
   const policy = await getRecentContentPolicy();
   if (policy.enabled) {
@@ -329,6 +332,14 @@ export async function sweepRecoveryBatches(): Promise<{ enqueued: number }> {
   const digestHandoffs = new Set<number>();
   for (const status of await activeRecoveryBatchStatuses()) {
     for (const member of status.members) {
+      if (status.batch.kind === 'web-body-recovery' && member.bodyStatus === 'pending') {
+        if (member.admission === 'admitted' && member.state === 'analyzed' && !member.activeJobs && !member.deferrals && !member.unknownReceipts) {
+          const resumed = await sql.begin(tx => queueBodyHandoff(member.articleId,tx,
+            { kind: 'web-recovery',batchId: status.batch.id,storyIds: member.stories.map(s => s.storyId) }));
+          if (resumed) enqueued++;
+        }
+        continue; // The missing body must settle before recovering an event/digest handoff.
+      }
       if (member.admission === 'admitted') for (const story of member.stories) {
         if (story.missingHandoff) digestHandoffs.add(story.storyId);
       }
@@ -353,13 +364,64 @@ const ARTICLE_STEPS = new Set([
   "body_fallback", "x_article",
 ]);
 
+type BodyHandoff = { kind: 'release'; hasUrl: boolean; url: unknown; respectRetry?: boolean }
+  | { kind: 'web-recovery'; batchId: string; storyIds: number[] };
+
+/** Both durable entry points use the normal extraction queue after source/article/scope checks. */
+async function queueBodyHandoff(article: string,db: Db,context: BodyHandoff): Promise<boolean> {
+  const [source] = await db<{ id: string }[]>`SELECT s.id FROM sources s JOIN articles a ON a.source_id=s.id
+    WHERE a.id=${article} FOR SHARE OF s`;
+  if (!source) return false;
+  const [a] = await db<{ url: string; kind: string; enabled: boolean; participation_mode: string; body_status: string;
+    processing_state: string; revision: number; retry_due: boolean; has_tweet: boolean }[]>`
+    SELECT a.url,s.kind,s.enabled,s.participation_mode,a.body_status,a.processing_state,a.revision,
+      coalesce(a.processing_retry_at<=now(),true) AS retry_due,a.x_post->>'tweetId' IS NOT NULL AS has_tweet
+    FROM articles a JOIN sources s ON s.id=a.source_id WHERE a.id=${article} AND a.source_id=${source.id} FOR UPDATE OF a`;
+  if (!a || !a.enabled || a.participation_mode !== 'editorial' || !pageFetchable(a.url,a.kind) || a.has_tweet) return false;
+  if (context.kind === 'release') {
+    if (!['pending','unconfirmed'].includes(a.body_status) || !['new','failed','analyzed'].includes(a.processing_state)
+      || (context.hasUrl && context.url !== a.url) || (context.respectRetry && !a.retry_due)) return false;
+  } else {
+    if (a.body_status !== 'pending' || a.processing_state !== 'analyzed' || !a.retry_due
+      || !(await getAdmittedRecoveryMembers(db)).some(m => m.articleId === article && m.batchId === context.batchId)) return false;
+  }
+  if (!(await getRecentContentPriority(article,{ db })).allowed) return false;
+  const stories = context.kind === 'web-recovery' ? context.storyIds.map(String) : [];
+  const [blocked] = await db`SELECT 1 WHERE EXISTS(SELECT 1 FROM pgboss.job
+    WHERE (data->>'articleId'=${article} OR data->>'storyId'=ANY(${stories}::text[])) AND state IN ('created','retry','active'))
+    OR EXISTS(SELECT 1 FROM receipts WHERE status IN ('pending','unknown') AND
+      (substring(subject from '^article:([^@:#]+)')=${article} OR (service='jina' AND request->>'url'=${a.url})
+        OR substring(subject from '^story:([0-9]+)')=ANY(${stories}::text[])))
+    OR EXISTS(SELECT 1 FROM event_job_deferrals WHERE data->>'articleId'=${article} OR data->>'storyId'=ANY(${stories}::text[]))`;
+  if (blocked) return false;
+  if (context.kind === 'release') {
+    await db`UPDATE articles SET processing_state='new',body_status='pending',processing_retry_at=NULL,processing_error=NULL WHERE id=${article}`;
+  } else {
+    await db`UPDATE articles SET processing_state='new' WHERE id=${article}`;
+  }
+  const job = await queueProcessing(article,{ step: 'extract',db });
+  if (!job) throw new Error("Body extraction could not be queued; roll back its handoff");
+  if (context.kind === 'web-recovery') await audit('system:processing-recovery','content.body-handoff',`content:${article}`,
+    'Finish the pending body of this fixed web recovery member before its event handoff',
+    { revision: a.revision,state: 'analyzed',bodyStatus: 'pending' },
+    { revision: a.revision,state: 'new',bodyStatus: 'pending',batchId: context.batchId,jobId: job },{ db });
+  return true;
+}
+
 /**
  * After a receipt is released (operations/recover.ts), the article that stopped on it goes straight
  * back to processing: one action, not two. Returns whether it was queued.
  */
-export async function resumeAfterRelease(receipt: { purpose: string; subject: string | null }, db: Db): Promise<boolean> {
+export async function resumeAfterRelease(receipt: { purpose: string; subject: string | null; receiptId?: number; respectRetry?: boolean }, db: Db): Promise<boolean> {
   const article = ARTICLE_STEPS.has(receipt.purpose) ? /^article:([^@:#]+)/.exec(receipt.subject ?? "")?.[1] : undefined;
   if (!article) return false;
+  if (receipt.purpose === "body_fallback") {
+    if (receipt.receiptId === undefined) return false;
+    const [released] = await db<{ url: unknown; has_url: boolean }[]>`SELECT request->'url' AS url,request?'url' AS has_url
+      FROM receipts WHERE id=${receipt.receiptId} AND status='failed' AND purpose='body_fallback' AND subject=${receipt.subject}`;
+    if (!released) return false;
+    return queueBodyHandoff(article,db,{ kind: 'release',hasUrl: released.has_url,url: released.url,respectRetry: receipt.respectRetry });
+  }
   const [a] = await db`UPDATE articles SET processing_state = 'new', processing_attempts = 0, processing_retry_at = NULL, processing_error = NULL
                         WHERE id = ${article} AND processing_state = 'failed' RETURNING id`;
   return !!a && !!(await queueProcessing(article, { db }));

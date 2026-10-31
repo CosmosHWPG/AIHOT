@@ -7,6 +7,8 @@ import { audit, Conflict } from "../audit.ts";
 import { sql } from "../db.ts";
 import { resumeAfterRelease } from "../jobs/content.ts";
 import { retryReleasedReceiptJobs } from "../jobs/queue.ts";
+import { getProcessingScopeTargets } from "../jobs/recent-content.ts";
+import { pageFetchable } from "../content/extract.ts";
 import { markStaleDeliveries } from "../notify/deliver.ts";
 import { markStalePendingReceipts, releaseUnknownReceipt } from "../providers/receipts.ts";
 
@@ -17,7 +19,7 @@ async function release(id: number, error: string, actor: string, note: string, b
   return sql.begin(async (tx) => {
     const receipt = await releaseUnknownReceipt(tx, id, error);
     if (!receipt) return null;
-    const requeued = await resumeAfterRelease(receipt, tx);
+    const requeued = await resumeAfterRelease({ ...receipt,receiptId: id }, tx);
     await audit(actor, "receipt.release", `receipt:${id}`, note, { status: "unknown" }, { status: "failed", billed, requeued }, { db: tx });
     return { id, status: "failed", subject: receipt.subject, purpose: receipt.purpose, requeued };
   });
@@ -53,7 +55,69 @@ export async function autoReleaseUnknownReceipts(now = Date.now()) {
   return { released, requeued };
 }
 
+/** Finish a recorded release's missing body handoff once; this never releases a receipt again. */
+export async function resumeReleasedBodyHandoffs(): Promise<{ resumed: number }> {
+  const scope = await getProcessingScopeTargets();
+  if (!scope.enabled) return { resumed: 0 }; // This repair stays within the existing bounded scope.
+  const rows = await sql<{ receipt_id: number; release_audit_id: number; url: string; kind: string }[]>`
+    WITH active_articles AS MATERIALIZED (
+      SELECT DISTINCT data->>'articleId' AS id FROM pgboss.job WHERE state IN ('created','retry','active')
+    ), unresolved AS MATERIALIZED (
+      SELECT substring(subject from '^article:([^@:#]+)') AS article_id,service,request->>'url' AS url
+      FROM receipts WHERE status IN ('pending','unknown')
+    ) SELECT DISTINCT ON(a.id) r.id AS receipt_id,e.id AS release_audit_id,a.url,s.kind
+    FROM audit_log e JOIN receipts r ON e.subject='receipt:'||r.id
+      JOIN articles a ON substring(r.subject from '^article:([^@:#]+)')=a.id JOIN sources s ON s.id=a.source_id
+    WHERE e.action='receipt.release' AND e.after->>'requeued'='false'
+      AND r.service='jina' AND r.purpose='body_fallback' AND r.status='failed'
+      AND a.processing_state IN ('new','failed','analyzed') AND a.body_status IN ('pending','unconfirmed')
+      AND (a.processing_retry_at IS NULL OR a.processing_retry_at<=now())
+      AND s.enabled AND s.participation_mode='editorial' AND s.kind NOT IN ('x_search','mp_account')
+      AND a.x_post->>'tweetId' IS NULL
+      AND (coalesce(NOT(r.request?'url'),true) OR (jsonb_typeof(r.request->'url')='string' AND r.request->>'url'=a.url))
+      AND a.id=ANY(${scope.articleIds}::text[])
+      AND NOT EXISTS(SELECT 1 FROM active_articles j WHERE j.id=a.id)
+      AND NOT EXISTS(SELECT 1 FROM unresolved u WHERE u.article_id=a.id OR (u.service='jina' AND u.url=a.url))
+      AND NOT EXISTS(SELECT 1 FROM event_job_deferrals d WHERE d.data->>'articleId'=a.id)
+      AND NOT EXISTS(SELECT 1 FROM audit_log later WHERE later.subject=e.subject AND later.action='receipt.release' AND later.id>e.id)
+      AND NOT EXISTS(SELECT 1 FROM audit_log done WHERE done.subject=e.subject AND done.action='receipt.body-resumed'
+        AND done.after->>'releaseAuditId'=e.id::text)
+      AND NOT EXISTS(SELECT 1 FROM receipt_attempts t JOIN receipts used ON used.id=t.receipt_id
+        WHERE used.service='jina' AND used.purpose='body_fallback'
+          AND (substring(used.subject from '^article:([^@:#]+)')=a.id OR used.request->>'url'=a.url)
+          AND (t.started_at>=e.created_at OR t.finished_at>=e.created_at))
+    ORDER BY a.id,e.id DESC`;
+  // At most one candidate per admitted article; exact URL parsing precedes the handoff limit.
+  const candidates = rows.filter(row => pageFetchable(row.url,row.kind)).sort((a,b) => a.release_audit_id-b.release_audit_id).slice(0,200);
+  let resumed = 0;
+  for (const row of candidates) {
+    const done = await sql.begin(async tx => {
+      const [r] = await tx<{ purpose: string; subject: string | null }[]>`SELECT purpose,subject FROM receipts
+        WHERE id=${row.receipt_id} AND service='jina' AND purpose='body_fallback' AND status='failed' FOR UPDATE`;
+      if (!r) return false;
+      const [eligible] = await tx`SELECT 1 FROM audit_log e JOIN articles a ON a.id=substring(${r.subject}::text from '^article:([^@:#]+)')
+        WHERE e.id=${row.release_audit_id} AND e.action='receipt.release'
+        AND e.subject=${'receipt:' + row.receipt_id} AND e.after->>'requeued'='false'
+        AND (a.processing_retry_at IS NULL OR a.processing_retry_at<=now())
+        AND NOT EXISTS(SELECT 1 FROM audit_log later WHERE later.subject=e.subject AND later.action='receipt.release' AND later.id>e.id)
+        AND NOT EXISTS(SELECT 1 FROM audit_log done WHERE done.subject=e.subject AND done.action='receipt.body-resumed'
+          AND done.after->>'releaseAuditId'=e.id::text)
+        AND NOT EXISTS(SELECT 1 FROM receipt_attempts t JOIN receipts used ON used.id=t.receipt_id
+          WHERE used.service='jina' AND used.purpose='body_fallback'
+            AND (substring(used.subject from '^article:([^@:#]+)')=a.id OR used.request->>'url'=a.url)
+            AND (t.started_at>=e.created_at OR t.finished_at>=e.created_at))`;
+      if (!eligible || !(await resumeAfterRelease({ ...r,receiptId: row.receipt_id,respectRetry: true },tx))) return false;
+      await audit("ops.recover","receipt.body-resumed",'receipt:' + row.receipt_id,
+        "Complete the existing released receipt's missing body extraction handoff",null,
+        { releaseAuditId: row.release_audit_id,requeued: true },{ db: tx });
+      return true;
+    });
+    if (done) resumed++;
+  }
+  return { resumed };
+}
+
 /** ops.recover, every 10 minutes and before the alerts look. */
 export async function recoverStaleWork() {
-  return { receipts: await markStalePendingReceipts(), released: await autoReleaseUnknownReceipts(), jobs: await retryReleasedReceiptJobs(), deliveries: await markStaleDeliveries() };
+  return { receipts: await markStalePendingReceipts(), released: await autoReleaseUnknownReceipts(), bodies: await resumeReleasedBodyHandoffs(), jobs: await retryReleasedReceiptJobs(), deliveries: await markStaleDeliveries() };
 }
