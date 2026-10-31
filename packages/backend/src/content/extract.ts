@@ -6,7 +6,7 @@ import { sql, type Db } from "../db.ts";
 import { guardedFetch } from "../lib/http-fetch.ts";
 import { collapseWhitespace, stripTags } from "../lib/text.ts";
 import { jinaRead } from "../providers/jina.ts";
-import { BudgetExceededError, completeReceipt } from "../providers/receipts.ts";
+import { completeReceipt } from "../providers/receipts.ts";
 import { getArticle } from "../providers/socialdata.ts";
 import { getXquikArticle } from "../providers/xquik.ts";
 import { getBirdArticleReceipt } from "../providers/bird.ts";
@@ -22,6 +22,12 @@ export interface ExtractedBody {
   text: string;
   images: Array<{ kind: "image"; url: string; width: number | null; height: number | null }>;
   via: "readability" | "jina";
+}
+
+interface UrlExtraction {
+  body: ExtractedBody | null;
+  /** Settle the paid answer with the material decision, including an empty or obsolete answer. */
+  receiptId?: number;
 }
 
 const MIN_BODY_CHARS = 200;
@@ -50,28 +56,24 @@ export function readable(html: string, url: string): ExtractedBody | null {
   return { html: clean, text, images, via: "readability" };
 }
 
-export async function extractFromUrl(url: string, opts: { allowJina: boolean; subject: string }): Promise<ExtractedBody | null> {
+export async function extractFromUrl(url: string, opts: { allowJina: boolean; subject: string }): Promise<UrlExtraction> {
   try {
     const res = await guardedFetch(url, { timeoutMs: 20_000, maxBytes: 6 * 1024 * 1024 });
     const type = res.headers.get("content-type") ?? "";
     if (res.status === 200 && /html/.test(type)) {
       const got = readable(res.text(), res.url);
-      if (got) return got;
+      if (got) return { body: got };
     }
   } catch {
     // fall through to Jina
   }
-  if (!opts.allowJina) return null;
-  try {
-    const page = await jinaRead(url, { purpose: "body_fallback", subject: opts.subject });
-    const html = markdownBody(page.markdown, url);
-    const text = stripTags(html);
-    if (text.length < MIN_BODY_CHARS) return null;
-    return { html, text, images: [], via: "jina" };
-  } catch (error) {
-    if (error instanceof BudgetExceededError) return null;
-    throw error;
-  }
+  if (!opts.allowJina) return { body: null };
+  // Capacity and unknown outcomes are not an empty body; let the caller retain retryable evidence.
+  const page = await jinaRead(url, { purpose: "body_fallback", subject: opts.subject });
+  const html = markdownBody(page.markdown, url);
+  const text = stripTags(html);
+  return { receiptId: page.receiptId,
+    body: text.length < MIN_BODY_CHARS ? null : { html, text, images: [], via: "jina" } };
 }
 
 /** Pages extraction can fetch: ordinary web pages (X posts and WeChat articles arrive whole or not at all). */
@@ -92,19 +94,23 @@ export async function extractArticleBody(articleId: string, allowJina = process.
   if (!a || a.body_status === "ok") return "skipped";
   // An older material's route is evidence of its acquisition, never today's source setting.
   if (a.x_post?.tweetId) return extractXArticle(a.id, a.x_post.tweetId, a.revision, a.x_post);
-  const got = await extractFromUrl(a.url, { allowJina, subject: `article:${a.id}` });
+  const { body: got, receiptId } = await extractFromUrl(a.url, { allowJina, subject: `article:${a.id}` });
   if (!got) {
-    return markUnconfirmed(articleId, a.revision);
+    return markUnconfirmed(articleId, a.revision, receiptId);
   }
   // The body is new content: a new revision, so an analysis of the body-less input counts as stale.
   return sql.begin(async (tx) => {
     const [row] = await tx<{ title: string; excerpt: string | null; content_hash: string | null }[]>`
       SELECT title, excerpt, content_hash FROM articles
       WHERE id = ${articleId} AND revision = ${a.revision} AND body_status <> 'ok' FOR UPDATE`;
-    if (!row) return "skipped";
+    if (!row) {
+      if (receiptId !== undefined) await completeReceipt(tx, receiptId);
+      return "skipped";
+    }
     const hash = contentHash({ title: row.title, bodyText: got.text, excerpt: row.excerpt });
     if (hash === row.content_hash) {
       await tx`UPDATE articles SET body_status = 'ok', updated_at = now() WHERE id = ${articleId}`;
+      if (receiptId !== undefined) await completeReceipt(tx, receiptId);
       return "ok";
     }
     const [r] = await tx<{ revision: number }[]>`
@@ -115,6 +121,7 @@ export async function extractArticleBody(articleId: string, allowJina = process.
     await tx`INSERT INTO article_revisions (article_id, revision, content_hash, title, body_text)
              VALUES (${articleId}, ${r!.revision}, ${hash}, ${row.title}, ${got.text})`;
     await advanceRecoveryExtractionRevision(articleId, a.revision, r!.revision, tx);
+    if (receiptId !== undefined) await completeReceipt(tx, receiptId);
     return "ok";
   });
 }
