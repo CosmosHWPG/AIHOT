@@ -17,15 +17,16 @@ import { onlyXArticleLink, xArticleText } from "../sources/x.ts";
 import { sanitizeBody, trimTrailingChrome } from "./sanitize.ts";
 import { contentHash, type XPostData } from "./materials.ts";
 import { markdownBody } from "./markdown.ts";
-import { advanceRecoveryExtractionRevision, getRecoveryRssBodyPolicy, RECOVERY_BATCH_PREFIX } from "../jobs/processing-recovery.ts";
+import { advanceRecoveryExtractionRevision, getRecoveryBodyPolicy, RECOVERY_BATCH_PREFIX } from "../jobs/processing-recovery.ts";
 import { extractFeedBody, type FeedBodyResult } from "./feed-body.ts";
+import { extractNativeBody, type NativeBodyResult } from "./native-body.ts";
 import { classifyJinaBodyFailure, getBodyFailure, recordBodyFailure, resolveBodyFailure, type BodyFailureReason } from "./body-failure-cache.ts";
 
 export interface ExtractedBody {
   html: string;
   text: string;
   images: Array<{ kind: "image"; url: string; width: number | null; height: number | null }>;
-  via: "readability" | "jina" | "rss";
+  via: "readability" | "jina" | "rss" | "structured";
 }
 
 interface UrlExtraction {
@@ -84,7 +85,7 @@ export async function extractFromUrl(url: string, opts: { allowJina: boolean; su
         rejectedText: current?.body_text && sha256(current.body_text) === cached.bodyHash ? current.body_text : undefined,
         reason: `Cached Jina body failure ${cached.id}: ${cached.reason}` };
     }
-    if ((await getRecoveryRssBodyPolicy(articleId)).denyJina) return { body: null, reason: "Audited article policy prohibits Jina" };
+    if ((await getRecoveryBodyPolicy(articleId)).denyJina) return { body: null, reason: "Audited article policy prohibits Jina" };
   }
   if (!opts.allowJina) return { body: null };
   // Capacity and unknown outcomes are not an empty body; let the caller retain retryable evidence.
@@ -135,20 +136,24 @@ export async function extractArticleBody(articleId: string, allowJina = process.
   if (!a || a.body_status === "ok") return "skipped";
   // An older material's route is evidence of its acquisition, never today's source setting.
   if (a.x_post?.tweetId) return extractXArticle(a.id, a.x_post.tweetId, a.revision, a.x_post);
-  const rssPolicy = await getRecoveryRssBodyPolicy(articleId);
+  const policy = await getRecoveryBodyPolicy(articleId);
   let rss: FeedBodyResult | null = null;
-  if (rssPolicy.strategy) {
+  let native: NativeBodyResult | null = null;
+  const strategy = policy.rssStrategy ?? policy.nativeStrategy;
+  if (strategy) {
     // Seed the existing failed paid answer without another provider request; the RSS result may resolve it.
     await getBodyFailure(articleId, a.url);
-    rss = await extractFeedBody({ originalUrl: a.url, title: a.title, ...rssPolicy.strategy, requireProof: true });
+    if (policy.rssStrategy) rss = await extractFeedBody({ originalUrl: a.url, title: a.title, ...policy.rssStrategy, requireProof: true });
+    if (policy.nativeStrategy) native = await extractNativeBody({ originalUrl: a.url, title: a.title, ...policy.nativeStrategy });
   }
   const extraction: UrlExtraction = rss ? { body: { ...rss.body, via: "rss" } }
-    : rssPolicy.strategy ? { body: null, reason: "The fixed feed item no longer matches its reviewed proof" }
-    : await extractFromUrl(a.url, { allowJina: allowJina && !rssPolicy.denyJina, subject: `article:${a.id}` });
+    : native ? { body: { ...native.body, via: "structured" } }
+    : strategy ? { body: null, reason: "The fixed publisher body no longer matches its reviewed proof" }
+    : await extractFromUrl(a.url, { allowJina: allowJina && !policy.denyJina, subject: `article:${a.id}` });
   const { body: got, receiptId, rejectedText, reason, failure } = extraction;
   if (!got) {
     return markUnconfirmed(articleId, a.revision, receiptId,
-      rejectedText !== undefined && reason ? { text: rejectedText, reason, url: a.url } : undefined, failure);
+      rejectedText !== undefined && reason ? { text: rejectedText, reason, url: a.url } : undefined, failure, a.url);
   }
   if (got.via === "jina" && receiptId !== undefined) {
     const [rejection] = await sql<{ id: number }[]>`SELECT id FROM audit_log
@@ -160,7 +165,7 @@ export async function extractArticleBody(articleId: string, allowJina = process.
   }
   // The body is new content: a new revision, so an analysis of the body-less input counts as stale.
   return sql.begin(async (tx) => {
-    if (rss) await tx`SELECT s.id FROM sources s JOIN articles a ON a.source_id=s.id WHERE a.id=${articleId} FOR SHARE OF s`;
+    if (strategy) await tx`SELECT s.id FROM sources s JOIN articles a ON a.source_id=s.id WHERE a.id=${articleId} FOR SHARE OF s`;
     const [row] = await tx<{ title: string; excerpt: string | null; content_hash: string | null }[]>`
       SELECT title, excerpt, content_hash FROM articles
       WHERE id = ${articleId} AND revision = ${a.revision} AND url=${a.url} AND body_status <> 'ok' FOR UPDATE`;
@@ -168,10 +173,11 @@ export async function extractArticleBody(articleId: string, allowJina = process.
       if (receiptId !== undefined) await completeReceipt(tx, receiptId);
       return "skipped";
     }
-    if (rss) {
-      await tx`SELECT key FROM settings WHERE key=${RECOVERY_BATCH_PREFIX + rssPolicy.strategy!.batchId} FOR UPDATE`;
-      const current = await getRecoveryRssBodyPolicy(articleId, tx);
-      if (!current.strategy || current.strategy.batchDigest !== rssPolicy.strategy!.batchDigest) return "skipped";
+    if (strategy) {
+      await tx`SELECT key FROM settings WHERE key=${RECOVERY_BATCH_PREFIX + strategy.batchId} FOR UPDATE`;
+      const current = await getRecoveryBodyPolicy(articleId, tx);
+      const currentStrategy = rss ? current.rssStrategy : current.nativeStrategy;
+      if (!currentStrategy || currentStrategy.batchId !== strategy.batchId || currentStrategy.batchDigest !== strategy.batchDigest) return "skipped";
     }
     const hash = contentHash({ title: row.title, bodyText: got.text, excerpt: row.excerpt });
     if (hash === row.content_hash) {
@@ -189,16 +195,16 @@ export async function extractArticleBody(articleId: string, allowJina = process.
              VALUES (${articleId}, ${r!.revision}, ${hash}, ${row.title}, ${got.text})`;
     await advanceRecoveryExtractionRevision(articleId, a.revision, r!.revision, tx);
     await resolveBodyFailure({ articleId, url: a.url, revision: r!.revision, bodyHash: sha256(got.text), via: got.via }, tx);
-    if (rss) await audit('content-extraction', 'content.body-restored', `content:${articleId}`,
-      'Verified exact feed item restored the body without Jina', { revision: a.revision },
-      { revision: r!.revision, via: 'rss', batchId: rssPolicy.strategy!.batchId, allowJina: false, ...rss.evidence }, { db: tx });
+    if (rss || native) await audit('content-extraction', 'content.body-restored', `content:${articleId}`,
+      'Verified exact publisher body restored without Jina', { revision: a.revision },
+      { revision: r!.revision, via: got.via, batchId: strategy!.batchId, allowJina: false, ...(rss ?? native)!.evidence }, { db: tx });
     if (receiptId !== undefined) await completeReceipt(tx, receiptId);
     return "ok";
   });
 }
 
 async function markUnconfirmed(articleId: string, revision: number, receiptId?: number,
-  rejected?: { text: string; reason: string; url?: string }, failure?: { reason: BodyFailureReason; bodyHash: string; url: string }): Promise<"unconfirmed" | "skipped"> {
+  rejected?: { text: string; reason: string; url?: string }, failure?: { reason: BodyFailureReason; bodyHash: string; url: string }, expectedUrl?: string): Promise<"unconfirmed" | "skipped"> {
   const mark = async (db: Db) => {
     if (failure && receiptId !== undefined) {
       const [current] = await db`SELECT id FROM articles WHERE id=${articleId} AND revision=${revision} AND url=${failure.url} AND body_status<>'ok' FOR UPDATE`;
@@ -228,7 +234,7 @@ async function markUnconfirmed(articleId: string, revision: number, receiptId?: 
     }
     const rows = await db`UPDATE articles SET body_status = 'unconfirmed', updated_at = now()
       WHERE id = ${articleId} AND revision = ${revision} AND body_status <> 'ok'
-        AND (${rejected?.url ?? null}::text IS NULL OR url=${rejected?.url ?? null}) RETURNING id`;
+        AND (${rejected?.url ?? failure?.url ?? expectedUrl ?? null}::text IS NULL OR url=${rejected?.url ?? failure?.url ?? expectedUrl ?? null}) RETURNING id`;
     if (receiptId !== undefined) await completeReceipt(db, receiptId);
     return rows.length ? "unconfirmed" as const : "skipped" as const;
   };

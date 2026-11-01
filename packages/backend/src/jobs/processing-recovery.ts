@@ -10,19 +10,22 @@ import { isBlockedAddress } from "../lib/url.ts";
 
 export const RECOVERY_BATCH_PREFIX = "content.processing-recovery.";
 export const RECOVERY_PRIORITY = 9000; // Ordinary recent news always stays ahead (> 10,000).
+const bodyProofSchema = z.object({ bodySha256: z.string().regex(/^[a-f0-9]{64}$/), tailSha256: z.string().regex(/^[a-f0-9]{64}$/), requiredTerms: z.array(z.string().min(2).max(100)).min(1).max(12) }).strict();
 const memberSchema = z.object({ articleId: z.string().min(1), revision: z.number().int().positive(),
   sourceId: z.string().min(1), sourceKind: z.string().min(1), mode: z.enum(["editorial", "hot_signal"]),
   url: z.string().min(1).optional(), sourceConfigMd5: z.string().regex(/^[a-f0-9]{32}$/).optional(),
   publishedAt: z.string().datetime().optional(), initialBodyStatus: z.literal("unconfirmed").optional(),
   initialProcessingState: z.enum(["new", "analyzed", "failed"]).optional(),
+  nativeBody: z.object({ adapter: z.enum(["mittrchina", "speechhome"]), allowJina: z.literal(false), bodyProof: bodyProofSchema }).strict().optional(),
   rssBody: z.object({ feedUrl: z.string().min(1), allowJina: z.literal(false),
-    bodyProof: z.object({ bodySha256: z.string().regex(/^[a-f0-9]{64}$/), tailSha256: z.string().regex(/^[a-f0-9]{64}$/), requiredTerms: z.array(z.string().min(2).max(100)).min(1).max(12) }).strict().optional(),
-    descriptionProof: z.object({ bodySha256: z.string().regex(/^[a-f0-9]{64}$/), tailSha256: z.string().regex(/^[a-f0-9]{64}$/), requiredTerms: z.array(z.string().min(2).max(100)).min(1).max(12) }).strict().optional() }).strict().optional() }).strict();
+    bodyProof: bodyProofSchema.optional(), descriptionProof: bodyProofSchema.optional() }).strict().optional() }).strict();
 const planSchema = z.object({ version: z.literal(1), id: z.string().regex(/^[a-zA-Z0-9_-]{8,80}$/),
   kind: z.enum(["bird-pending", "model-failure", "web-body-recovery"]), createdAt: z.string(), windowAt: z.string().datetime().optional(),
+  parentBatchId: z.string().regex(/^[a-zA-Z0-9_-]{8,80}$/).optional(), parentBatchDigest: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   evidence: z.string().min(1), members: z.array(memberSchema).min(1).max(118), digest: z.string() }).strict();
 export type RecoveryMember = z.infer<typeof memberSchema>;
 export type RssBodyPolicy = NonNullable<RecoveryMember["rssBody"]>;
+export type NativeBodyPolicy = NonNullable<RecoveryMember["nativeBody"]>;
 export type RecoveryPlan = z.infer<typeof planSchema>;
 export interface RecoveryBatch extends RecoveryPlan {
   status: "active" | "revoked" | "complete";
@@ -49,9 +52,10 @@ export interface RecoveryMemberStatus extends RecoveryMember {
   stories: RecoveryStoryStatus[];
 }
 
-export function recoveryPlanDigest(plan: Pick<RecoveryPlan, "id" | "kind" | "evidence" | "members"> & { createdAt?: string; windowAt?: string }): string {
+export function recoveryPlanDigest(plan: Pick<RecoveryPlan, "id" | "kind" | "evidence" | "members"> & { createdAt?: string; windowAt?: string; parentBatchId?: string; parentBatchDigest?: string }): string {
   return createHash("sha256").update(JSON.stringify({ id: plan.id, kind: plan.kind, evidence: plan.evidence,
     ...(plan.kind === "web-body-recovery" ? { createdAt: plan.createdAt, windowAt: plan.windowAt } : {}),
+    ...(plan.parentBatchId ? { parentBatchId: plan.parentBatchId, parentBatchDigest: plan.parentBatchDigest } : {}),
     members: [...plan.members].sort((a, b) => a.articleId.localeCompare(b.articleId)) })).digest("hex");
 }
 const WEB_RECOVERY_SOURCE_KINDS = ["rss", "web_list", "json_list", "external"];
@@ -72,6 +76,20 @@ export function parseRecoveryPlan(value: unknown): RecoveryPlan {
   if (new Set(plan.members.map(m => m.articleId)).size !== plan.members.length) throw new Error("Duplicate recovery article ID");
   if (plan.kind === "model-failure" && plan.members.length > 3) throw new Error("Model failure recovery is limited to three fixed IDs");
   const rssMembers = plan.members.filter(m => m.rssBody);
+  const nativeMembers = plan.members.filter(m => m.nativeBody);
+  if (plan.members.some(m => m.rssBody && m.nativeBody)) throw new Error("An article cannot have both RSS and native body strategies");
+  if (nativeMembers.length && (plan.kind !== "web-body-recovery" || nativeMembers.length > 3)) throw new Error("Native body recovery requires at most three fixed web members");
+  if (rssMembers.length + nativeMembers.length > 3) throw new Error("Body strategies require at most three fixed web members");
+  for (const member of nativeMembers) {
+    const url = new URL(member.url ?? "https://invalid.invalid");
+    const mit = member.nativeBody!.adapter === "mittrchina" && /^(?:www\.)?mittrchina\.com$/.test(url.hostname) && /^\/news\/detail\/[1-9]\d{0,9}$/.test(url.pathname);
+    const speech = member.nativeBody!.adapter === "speechhome" && url.hostname === "speechhome.com" && /^\/post\/[1-9]\d{0,24}$/.test(url.pathname);
+    if (url.protocol !== "https:" || url.port || url.username || url.password || url.search || url.hash || (!mit && !speech)) throw new Error("Native body adapter must match its public publisher article URL");
+  }
+  if (!!plan.parentBatchId !== !!plan.parentBatchDigest || (plan.parentBatchId && (plan.parentBatchId === plan.id
+    || plan.kind !== "web-body-recovery" || plan.members.length > 3 || nativeMembers.length !== plan.members.length))) {
+    throw new Error("Inherited recovery requires a distinct completed parent fingerprint and at most three native members");
+  }
   if (rssMembers.length && (plan.kind !== "web-body-recovery" || rssMembers.length > 3)) throw new Error("RSS body recovery requires at most three fixed web members");
   for (const member of rssMembers) {
     if (!publicWebCandidate(member.rssBody!.feedUrl) || (!member.rssBody!.bodyProof && !member.rssBody!.descriptionProof)) {
@@ -81,7 +99,7 @@ export function parseRecoveryPlan(value: unknown): RecoveryPlan {
   if (plan.kind === "web-body-recovery") {
     z.string().datetime().parse(plan.createdAt);
     const anchorAge = Date.parse(plan.createdAt) - Date.parse(plan.windowAt ?? "");
-    if (!Number.isFinite(anchorAge) || anchorAge < 0 || anchorAge > 30 * 60_000) {
+    if (!Number.isFinite(anchorAge) || anchorAge < 0 || (!plan.parentBatchId && anchorAge > 30 * 60_000)) {
       throw new Error("Web body recovery window anchor must be at most 30 minutes before creation");
     }
     for (const member of plan.members) {
@@ -141,20 +159,55 @@ async function save(batch: RecoveryBatch, actor: string, db: Db) {
   await db`INSERT INTO settings(key,value,updated_by) VALUES(${RECOVERY_BATCH_PREFIX + batch.id},${db.json(batch as never)},${actor})
     ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_by=EXCLUDED.updated_by,updated_at=clock_timestamp()`;
 }
+/** Reuse only an audited, completed original scope, never revive it or widen its membership. */
+async function verifyRecoveryParent(plan: RecoveryPlan, db: Db): Promise<void> {
+  if (!plan.parentBatchId) return;
+  const parent = await getRecoveryBatch(plan.parentBatchId, db);
+  if (!parent || parent.status !== "complete" || parent.kind !== "web-body-recovery" || parent.parentBatchId
+    || parent.digest !== plan.parentBatchDigest || parent.windowAt !== plan.windowAt) {
+    throw new Error("Recovery parent must remain the same completed original web-body batch");
+  }
+  const { status: _status, activatedAt: _activatedAt, currentRevisions: _currentRevisions, retriedFailures: _retriedFailures, ...original } = parent;
+  parseRecoveryPlan(original);
+  const [audited] = await db<{ applied: boolean; completed: boolean }[]>`SELECT
+    EXISTS(SELECT 1 FROM audit_log WHERE action='content.processing-recovery.apply' AND subject=${'recovery:' + parent.id}
+      AND after->>'digest'=${parent.digest}) AS applied,
+    EXISTS(SELECT 1 FROM audit_log WHERE action='content.processing-recovery.complete' AND subject=${'recovery:' + parent.id}
+      AND after->>'digest'=${parent.digest} AND after->>'status'='complete') AS completed`;
+  if (!audited?.applied || !audited.completed) throw new Error("Recovery parent needs matching activation and completion audits");
+  const anchor = Date.parse(parent.windowAt!);
+  for (const member of plan.members) {
+    const old = parent.members.find(m => m.articleId === member.articleId);
+    const published = Date.parse(member.publishedAt!);
+    if (!old || old.sourceId !== member.sourceId || old.sourceKind !== member.sourceKind || old.mode !== member.mode
+      || old.url !== member.url || old.sourceConfigMd5 !== member.sourceConfigMd5 || old.publishedAt !== member.publishedAt
+      || (parent.currentRevisions[member.articleId] ?? old.revision) !== member.revision
+      || !Number.isFinite(anchor) || !Number.isFinite(published) || published > anchor || anchor - published > 48 * 60 * 60_000) {
+      throw new Error(`Recovery parent identity, current revision or original 48-hour scope changed: ${member.articleId}`);
+    }
+  }
+}
 /** Plan captures primary source and revision, never body text, responses or credentials. */
-export async function planRecoveryBatch(input: { id: string; kind: RecoveryPlan["kind"]; articleIds: string[]; evidence: string; windowAt?: string; rssBodies?: Record<string, RssBodyPolicy> }, db: Db = sql): Promise<RecoveryPlan> {
+export async function planRecoveryBatch(input: { id: string; kind: RecoveryPlan["kind"]; articleIds: string[]; evidence: string; windowAt?: string;
+  rssBodies?: Record<string, RssBodyPolicy>; nativeBodies?: Record<string, NativeBodyPolicy>; parentBatchId?: string }, db: Db = sql): Promise<RecoveryPlan> {
   if (new Set(input.articleIds).size !== input.articleIds.length) throw new Error("Duplicate recovery article ID");
   if (Object.keys(input.rssBodies ?? {}).some(id => !input.articleIds.includes(id))) throw new Error("RSS strategy outside fixed recovery IDs");
+  if (Object.keys(input.nativeBodies ?? {}).some(id => !input.articleIds.includes(id))) throw new Error("Native strategy outside fixed recovery IDs");
+  const parent = input.parentBatchId ? await getRecoveryBatch(input.parentBatchId, db) : null;
+  if (input.parentBatchId && (!parent || parent.kind !== "web-body-recovery" || parent.status !== "complete" || parent.parentBatchId)) {
+    throw new Error("Recovery parent must be a completed original web-body batch");
+  }
   let createdAt = new Date().toISOString();
   if (input.kind === "web-body-recovery") {
     const [clock] = await db<{ at: string }[]>`SELECT to_char(clock_timestamp() AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS at`;
     createdAt = clock!.at;
   }
-  const windowAt = input.kind === "web-body-recovery" ? input.windowAt ?? createdAt : undefined;
+  const windowAt = input.kind === "web-body-recovery" ? input.windowAt ?? parent?.windowAt ?? createdAt : undefined;
+  if (parent && windowAt !== parent.windowAt) throw new Error("Inherited recovery must keep the original parent window");
   if (windowAt !== undefined) {
     z.string().datetime().parse(windowAt);
     const [anchor] = await db<{ valid: boolean }[]>`SELECT ${windowAt}::timestamptz BETWEEN ${createdAt}::timestamptz-interval '30 minutes' AND ${createdAt}::timestamptz AS valid`;
-    if (!anchor?.valid) throw new Error("Web body recovery window anchor must be at most 30 minutes before creation");
+    if (!anchor?.valid && !parent) throw new Error("Web body recovery window anchor must be at most 30 minutes before creation");
   }
   const rows = await readArticles(input.articleIds, db, windowAt);
   const members = input.articleIds.map(articleId => {
@@ -167,7 +220,8 @@ export async function planRecoveryBatch(input: { id: string; kind: RecoveryPlan[
     const member = memberSchema.parse({ articleId, revision: row.revision, sourceId: row.source_id, sourceKind: row.kind, mode: row.participation_mode,
       ...(input.kind === "web-body-recovery" ? { url: row.url, sourceConfigMd5: row.source_config_md5, publishedAt: row.published_at_key,
         initialBodyStatus: row.body_status, initialProcessingState: row.processing_state } : {}),
-      ...(input.rssBodies?.[articleId] ? { rssBody: input.rssBodies[articleId] } : {}) });
+      ...(input.rssBodies?.[articleId] ? { rssBody: input.rssBodies[articleId] } : {}),
+      ...(input.nativeBodies?.[articleId] ? { nativeBody: input.nativeBodies[articleId] } : {}) });
     const admission = match(member, member.revision, row);
     if (admission !== "admitted") throw new Error(`Recovery article ${articleId}: ${admission}`);
     if (input.kind === "bird-pending" && (!row.bird || row.kind !== "x_search" || row.processing_state !== "new")) {
@@ -178,8 +232,11 @@ export async function planRecoveryBatch(input: { id: string; kind: RecoveryPlan[
     }
     return member;
   });
-  const plan = { version: 1 as const, id: input.id, kind: input.kind, createdAt, ...(windowAt !== undefined ? { windowAt } : {}), evidence: input.evidence, members };
-  return parseRecoveryPlan({ ...plan, digest: recoveryPlanDigest(plan) });
+  const plan = { version: 1 as const, id: input.id, kind: input.kind, createdAt, ...(windowAt !== undefined ? { windowAt } : {}),
+    ...(parent ? { parentBatchId: parent.id, parentBatchDigest: parent.digest } : {}), evidence: input.evidence, members };
+  const parsed = parseRecoveryPlan({ ...plan, digest: recoveryPlanDigest(plan) });
+  await verifyRecoveryParent(parsed, db);
+  return parsed;
 }
 /** Same id+digest is idempotent; a revoked/completed ID cannot be revived or silently expanded. */
 export async function applyRecoveryBatch(value: unknown, actor: string, reason: string, db: Db = sql): Promise<RecoveryBatch> {
@@ -191,17 +248,25 @@ export async function applyRecoveryBatch(value: unknown, actor: string, reason: 
     if (prior) {
       if (prior.digest !== plan.digest) throw new Error("Fixed recovery batch cannot be changed or expanded");
       if (prior.status !== "active") throw new Error("A stopped recovery batch cannot be reactivated");
+      if (plan.parentBatchId) {
+        await tx`SELECT key FROM settings WHERE key=${RECOVERY_BATCH_PREFIX + plan.parentBatchId} FOR SHARE`;
+        await verifyRecoveryParent(plan, tx);
+      }
       return prior;
     }
     const [policy] = await tx<{ value: { enabled?: boolean } }[]>`SELECT value FROM settings WHERE key='content.recent-processing'`;
     if (policy?.value.enabled !== true) throw new Error("The global 48h/2000 policy must remain enabled");
     await tx`SELECT id FROM sources WHERE id=ANY(${[...new Set(plan.members.map(m => m.sourceId))].sort()}::text[]) ORDER BY id FOR SHARE`;
     await tx`SELECT id FROM articles WHERE id=ANY(${plan.members.map(m => m.articleId).sort()}::text[]) ORDER BY id FOR UPDATE`;
+    if (plan.parentBatchId) {
+      await tx`SELECT key FROM settings WHERE key=${RECOVERY_BATCH_PREFIX + plan.parentBatchId} FOR SHARE`;
+      await verifyRecoveryParent(plan, tx);
+    }
     if (plan.kind === "web-body-recovery") {
       const [clock] = await tx<{ valid: boolean; anchor_valid: boolean }[]>`SELECT clock_timestamp() BETWEEN ${plan.createdAt}::timestamptz AND ${plan.createdAt}::timestamptz+interval '30 minutes' AS valid,
         ${plan.windowAt!}::timestamptz BETWEEN ${plan.createdAt}::timestamptz-interval '30 minutes' AND ${plan.createdAt}::timestamptz AS anchor_valid`;
       if (!clock?.valid) throw new Error("Web body recovery plan activation expired or is in the future (30 minutes)");
-      if (!clock.anchor_valid) throw new Error("Web body recovery window anchor must be at most 30 minutes before creation");
+      if (!clock.anchor_valid && !plan.parentBatchId) throw new Error("Web body recovery window anchor must be at most 30 minutes before creation");
     }
     const rows = await readArticles(plan.members.map(m => m.articleId), tx, plan.kind === "web-body-recovery" ? plan.windowAt : undefined);
     for (const member of plan.members) {
@@ -239,20 +304,30 @@ export async function getRecoveryAdmission(articleId: string, db: Db = sql): Pro
   });
   return batch ? { batchId: batch.id, priority: RECOVERY_PRIORITY } : null;
 }
-/** The audited no-Jina instruction survives completion/revoke; only active exact members may use the feed. */
-export async function getRecoveryRssBodyPolicy(articleId: string, db: Db = sql): Promise<{
-  denyJina: boolean; strategy: (RssBodyPolicy & { batchId: string; batchDigest: string }) | null;
+/** The audited no-Jina instruction survives completion/revoke; only active exact members may fetch their body. */
+export async function getRecoveryBodyPolicy(articleId: string, db: Db = sql): Promise<{
+  denyJina: boolean; rssStrategy: (RssBodyPolicy & { batchId: string; batchDigest: string }) | null;
+  nativeStrategy: (NativeBodyPolicy & { batchId: string; batchDigest: string }) | null;
 }> {
   const [article] = await readArticles([articleId], db);
-  if (!article) return { denyJina: false, strategy: null };
-  const batches = (await readBatches(db)).filter(batch => batch.members.some(m => m.articleId === articleId && m.url === article.url && m.rssBody));
+  if (!article) return { denyJina: false, rssStrategy: null, nativeStrategy: null };
+  const batches = (await readBatches(db)).filter(batch => batch.members.some(m => m.articleId === articleId && m.url === article.url && (m.rssBody || m.nativeBody)));
   for (const batch of batches.sort((a,b) => b.activatedAt.localeCompare(a.activatedAt))) {
     const member = batch.members.find(m => m.articleId === articleId)!;
     if (batch.status === 'active' && match(member,batch.currentRevisions[articleId] ?? member.revision,article) === 'admitted') {
-      return { denyJina: true, strategy: { ...member.rssBody!,batchId: batch.id,batchDigest: batch.digest } };
+      const binding = { batchId: batch.id, batchDigest: batch.digest };
+      return { denyJina: true, rssStrategy: member.rssBody ? { ...member.rssBody, ...binding } : null,
+        nativeStrategy: member.nativeBody ? { ...member.nativeBody, ...binding } : null };
     }
   }
-  return { denyJina: batches.length > 0, strategy: null };
+  return { denyJina: batches.length > 0, rssStrategy: null, nativeStrategy: null };
+}
+/** Compatibility for the existing RSS operator; native instructions also prohibit Jina. */
+export async function getRecoveryRssBodyPolicy(articleId: string, db: Db = sql): Promise<{
+  denyJina: boolean; strategy: (RssBodyPolicy & { batchId: string; batchDigest: string }) | null;
+}> {
+  const policy = await getRecoveryBodyPolicy(articleId, db);
+  return { denyJina: policy.denyJina, strategy: policy.rssStrategy };
 }
 /** Only official extraction calls this inside the transaction which created the exact next revision. */
 export async function advanceRecoveryExtractionRevision(articleId: string, from: number, to: number, db: Db): Promise<void> {
