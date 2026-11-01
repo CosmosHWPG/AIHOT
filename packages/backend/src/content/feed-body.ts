@@ -19,6 +19,8 @@ export interface FeedBodyRequest {
   feedUrl: string;
   /** Fixed recovery callers must bind whichever field the publisher actually supplies. */
   requireProof?: boolean;
+  /** Daily workers retain their existing bounded extraction retries for temporary public HTTP trouble. */
+  retryTransient?: boolean;
   /** Optional exact reviewed body binding for content:encoded. */
   bodyProof?: FeedBodyProof;
   /** description is never a body unless this single-article proof is supplied. */
@@ -100,16 +102,18 @@ function proofMatches(text: string, proof: FeedBodyProof): boolean {
     && proof.requiredTerms.every(term => lower.includes(term.trim().normalize("NFKC").toLowerCase()));
 }
 
-async function loadFeed(feedUrl: string): Promise<FeedItem[] | null> {
+async function loadFeed(feedUrl: string, retryTransient = false): Promise<FeedItem[] | null> {
   const now = Date.now();
   for (const [key, entry] of cache) if (entry.expires <= now) cache.delete(key);
-  const cached = cache.get(feedUrl);
+  const cacheKey = (retryTransient ? 'routine:' : '') + feedUrl;
+  const cached = cache.get(cacheKey);
   if (cached) return cached.result;
   while (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value!);
   const result = (async () => {
     try {
       const response = await guardedFetch(feedUrl, { headers: { accept: "application/rss+xml, application/xml;q=0.9" },
         redirectPolicy: "same-origin", timeoutMs: 20_000, maxBytes: 2 * 1024 * 1024 });
+      if (retryTransient && (response.status === 408 || response.status === 429 || response.status >= 500)) throw new Error(`Public body feed temporarily unavailable: HTTP ${response.status}`);
       if (response.status !== 200 || !plainUrl(response.url) || new URL(response.url).origin !== new URL(feedUrl).origin) return null;
       const raw = response.text();
       // No custom entities, HTML challenge document or permissive fallback parser.
@@ -125,9 +129,9 @@ async function loadFeed(feedUrl: string): Promise<FeedItem[] | null> {
         const url = scalar(item.link);
         return url ? [{ url, title: scalar(item.title), encoded: scalar(item["content:encoded"]), description: scalar(item.description) }] : [];
       });
-    } catch { return null; }
+    } catch (error) { if (retryTransient) throw error; return null; }
   })();
-  cache.set(feedUrl, { expires: now + CACHE_TTL_MS, result });
+  cache.set(cacheKey, { expires: now + CACHE_TTL_MS, result });
   return result;
 }
 
@@ -135,7 +139,7 @@ export async function extractFeedBody(input: FeedBodyRequest): Promise<FeedBodyR
   const original = plainUrl(input.originalUrl), feed = plainUrl(input.feedUrl);
   const wanted = canonical(input.originalUrl);
   if (!original || !feed || !wanted || !input.title.trim()) return null;
-  const items = await loadFeed(feed.href);
+  const items = await loadFeed(feed.href, input.retryTransient);
   if (!items) return null;
   const matches = items.filter(item => canonical(item.url) === wanted);
   if (matches.length !== 1) return null;

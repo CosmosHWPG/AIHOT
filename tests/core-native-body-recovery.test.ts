@@ -117,8 +117,14 @@ for (const terminal of ['complete', 'revoked'] as const) test(`${terminal} remov
   assert.equal(policy.denyJina, true); assert.equal(policy.nativeStrategy, null); assert.equal(policy.rssStrategy, null);
   assert.deepEqual(await getRecoveryRssBodyPolicy(f.id), { denyJina: true, strategy: null });
   assert.equal(await getRecoveryAdmission(f.id), null);
-  const u = new URL(f.url); mock.get(u.origin).intercept({ path: u.pathname }).reply(200, '<div id="app"></div>', { headers: { 'content-type': 'text/html' } });
-  assert.equal(await extractArticleBody(f.id, true), 'unconfirmed');
+  // The later operator-approved daily route is independent of this closed fixed permission.
+  // It may read the free endpoint, while the old batch stays closed and cannot grant scope.
+  reply(f);
+  assert.equal(await extractArticleBody(f.id, true), 'ok');
+  assert.equal((await getRecoveryBatch(manifest.id))!.status, terminal);
+  assert.equal(await getRecoveryAdmission(f.id), null);
+  const [audit] = await sql`SELECT after FROM audit_log WHERE action='content.body-restored' AND subject=${'content:' + f.id} ORDER BY id DESC LIMIT 1`;
+  assert.equal(audit!.after.scope, 'routine'); assert.equal(audit!.after.batchId, undefined);
 });
 test('a rejected native response cannot mark a changed URL unconfirmed', async () => {
   const f = await fixture(), manifest = await plan(f); await applyRecoveryBatch(manifest, 'offline-test', 'Fixed native identity');

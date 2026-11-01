@@ -3,6 +3,15 @@
 import { credential } from "../config.ts";
 import { guardedFetch } from "../lib/http-fetch.ts";
 import { paidRequest, ProviderRejectedError } from "./receipts.ts";
+import { jinaDeniedPublisher } from "../content/body-route.ts";
+
+/** Operator policy is checked before credentials, receipt lookup, budget or HTTP dispatch. */
+export class JinaPublisherPolicyError extends ProviderRejectedError {
+  constructor() {
+    super("Jina is disabled for this publisher; use its approved public body route", null, false);
+    this.name = "JinaPublisherPolicyError";
+  }
+}
 
 export interface JinaPage {
   title: string | null;
@@ -28,6 +37,7 @@ export async function jinaRead(
   targetUrl: string,
   opts: { purpose: string; subject: string; format?: "markdown" | "html"; cacheToleranceSeconds?: number; round?: string },
 ): Promise<JinaPage & { receiptId: number; raw: string }> {
+  if (jinaDeniedPublisher(targetUrl)) throw new JinaPublisherPolicyError();
   const key = credential("collectors", "JINA_API_KEY");
   if (!key) throw new Error("JINA_API_KEY is not configured");
   const base = (credential("collectors", "JINA_BASE_URL") ?? "https://r.jina.ai").replace(/\/$/, "");

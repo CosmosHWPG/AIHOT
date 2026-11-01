@@ -8,6 +8,7 @@ import { CAPABILITIES } from "../editorial/models.ts";
 import { sql, type Db } from "../db.ts";
 import { audit } from "../audit.ts";
 import { extractArticleBody, pageFetchable } from "../content/extract.ts";
+import { routineBodyRoute } from "../content/body-route.ts";
 import { analyzeArticle, AnalysisInterruptedError } from "../editorial/analyze.ts";
 import { isHistorical } from "../content/materials.ts";
 import { publishArticle } from "../publication/publish.ts";
@@ -51,7 +52,7 @@ async function route(articleId: string, db: Db): Promise<Route | null> {
   const historical = isHistorical(row);
   const signal = row.participation_mode !== "editorial";
   const pending = row.body_status === "pending";
-  const wantsBody = row.config.fetchPublicContent === true || !!row.config.detail || row.kind === "web_list";
+  const wantsBody = !!routineBodyRoute(row.url) || row.config.fetchPublicContent === true || !!row.config.detail || row.kind === "web_list";
   const needsPage = !signal && (wantsBody || (row.bare && pageFetchable(row.url, row.kind)));
   const needsXArticle = row.kind === "x_search" && (!signal || (row.participation_mode === "hot_signal" && !historical));
   return { step: pending && (needsPage || needsXArticle) ? "extract" : "analyze", signal, historical };

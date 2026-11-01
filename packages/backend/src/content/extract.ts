@@ -20,6 +20,8 @@ import { markdownBody } from "./markdown.ts";
 import { advanceRecoveryExtractionRevision, getRecoveryBodyPolicy, RECOVERY_BATCH_PREFIX } from "../jobs/processing-recovery.ts";
 import { extractFeedBody, type FeedBodyResult } from "./feed-body.ts";
 import { extractNativeBody, type NativeBodyResult } from "./native-body.ts";
+import { routineBodyRoute, jinaDeniedPublisher } from "./body-route.ts";
+import { extractRoutineBody, type RoutineBodyResult } from "./routine-body.ts";
 import { classifyJinaBodyFailure, getBodyFailure, recordBodyFailure, resolveBodyFailure, type BodyFailureReason } from "./body-failure-cache.ts";
 
 export interface ExtractedBody {
@@ -65,7 +67,13 @@ export function readable(html: string, url: string): ExtractedBody | null {
   return { html: clean, text, images, via: "readability" };
 }
 
-export async function extractFromUrl(url: string, opts: { allowJina: boolean; subject: string }): Promise<UrlExtraction> {
+export async function extractFromUrl(url: string, opts: { allowJina: boolean; subject: string; title?: string }): Promise<UrlExtraction> {
+  // This also covers callers with a source subject, before generic readability can accept a site shell.
+  if (jinaDeniedPublisher(url)) {
+    const result = opts.title && routineBodyRoute(url) ? await extractRoutineBody({ originalUrl: url, title: opts.title }) : null;
+    return result ? { body: { ...result.body, via: result.via } }
+      : { body: null, reason: "Publisher body route unavailable; Jina is prohibited" };
+  }
   try {
     const res = await guardedFetch(url, { timeoutMs: 20_000, maxBytes: 6 * 1024 * 1024 });
     const type = res.headers.get("content-type") ?? "";
@@ -131,27 +139,47 @@ export function pageFetchable(url: string, sourceKind: string): boolean {
 
 /** Fetches and stores the body of one article. Unconfirmed bodies are recorded as such. */
 export async function extractArticleBody(articleId: string, allowJina = process.env.JINA_BODY_FALLBACK !== "false"): Promise<"ok" | "unconfirmed" | "skipped"> {
-  const [a] = await sql<{ id: string; url: string; title: string; body_status: string; revision: number; config: Record<string, any>; x_post: XPostData | null }[]>`
-    SELECT a.id, a.url, a.title, a.body_status, a.revision, a.x_post, s.config FROM articles a JOIN sources s ON s.id = a.source_id WHERE a.id = ${articleId}`;
+  const [a] = await sql<{ id: string; url: string; title: string; body_status: string; revision: number; config: Record<string, any>; x_post: XPostData | null;
+    source_id: string; enabled: boolean; participation_mode: string; source_config_md5: string }[]>`
+    SELECT a.id, a.url, a.title, a.body_status, a.revision, a.x_post, a.source_id, s.config,s.enabled,s.participation_mode,
+      md5(s.config::text) AS source_config_md5 FROM articles a JOIN sources s ON s.id = a.source_id WHERE a.id = ${articleId}`;
   if (!a || a.body_status === "ok") return "skipped";
   // An older material's route is evidence of its acquisition, never today's source setting.
   if (a.x_post?.tweetId) return extractXArticle(a.id, a.x_post.tweetId, a.revision, a.x_post);
   const policy = await getRecoveryBodyPolicy(articleId);
   let rss: FeedBodyResult | null = null;
   let native: NativeBodyResult | null = null;
+  let routine: RoutineBodyResult | null = null;
   const strategy = policy.rssStrategy ?? policy.nativeStrategy;
+  const dailyRoute = !strategy ? routineBodyRoute(a.url) : null;
+  if (dailyRoute && (!a.enabled || a.participation_mode !== 'editorial')) return 'skipped';
   if (strategy) {
     // Seed the existing failed paid answer without another provider request; the RSS result may resolve it.
     await getBodyFailure(articleId, a.url);
     if (policy.rssStrategy) rss = await extractFeedBody({ originalUrl: a.url, title: a.title, ...policy.rssStrategy, requireProof: true });
     if (policy.nativeStrategy) native = await extractNativeBody({ originalUrl: a.url, title: a.title, ...policy.nativeStrategy });
   }
+  if (dailyRoute) routine = await extractRoutineBody({ originalUrl: a.url, title: a.title });
   const extraction: UrlExtraction = rss ? { body: { ...rss.body, via: "rss" } }
     : native ? { body: { ...native.body, via: "structured" } }
+    : routine ? { body: { ...routine.body, via: routine.via } }
+    : dailyRoute ? { body: null, reason: "Publisher body route unavailable; Jina is prohibited" }
     : strategy ? { body: null, reason: "The fixed publisher body no longer matches its reviewed proof" }
-    : await extractFromUrl(a.url, { allowJina: allowJina && !policy.denyJina, subject: `article:${a.id}` });
+    : await extractFromUrl(a.url, { allowJina: allowJina && !policy.denyJina, subject: `article:${a.id}`, title: a.title });
   const { body: got, receiptId, rejectedText, reason, failure } = extraction;
   if (!got) {
+    if (dailyRoute) return sql.begin(async tx => {
+      await tx`SELECT id FROM sources WHERE id=${a.source_id} FOR SHARE`;
+      const [current] = await tx`UPDATE articles a SET body_status='unconfirmed',updated_at=now() FROM sources s
+        WHERE a.id=${articleId} AND a.revision=${a.revision} AND a.url=${a.url} AND a.title=${a.title} AND a.source_id=${a.source_id}
+          AND a.body_status<>'ok' AND s.id=a.source_id AND s.enabled AND s.participation_mode='editorial'
+          AND md5(s.config::text)=${a.source_config_md5} RETURNING a.id`;
+      if (!current) return 'skipped';
+      await audit('content-extraction', 'content.body-route-unconfirmed', `content:${articleId}`,
+        'The approved public field was unavailable or did not match; no Jina fallback', { revision: a.revision },
+        { revision: a.revision, routeId: dailyRoute.id, url: a.url, bodyStatus: 'unconfirmed', allowJina: false }, { db: tx });
+      return 'unconfirmed';
+    });
     return markUnconfirmed(articleId, a.revision, receiptId,
       rejectedText !== undefined && reason ? { text: rejectedText, reason, url: a.url } : undefined, failure, a.url);
   }
@@ -165,13 +193,18 @@ export async function extractArticleBody(articleId: string, allowJina = process.
   }
   // The body is new content: a new revision, so an analysis of the body-less input counts as stale.
   return sql.begin(async (tx) => {
-    if (strategy) await tx`SELECT s.id FROM sources s JOIN articles a ON a.source_id=s.id WHERE a.id=${articleId} FOR SHARE OF s`;
-    const [row] = await tx<{ title: string; excerpt: string | null; content_hash: string | null }[]>`
-      SELECT title, excerpt, content_hash FROM articles
+    if (strategy || dailyRoute) await tx`SELECT id FROM sources WHERE id=${a.source_id} FOR SHARE`;
+    const [row] = await tx<{ title: string; excerpt: string | null; content_hash: string | null; source_id: string }[]>`
+      SELECT title, excerpt, content_hash,source_id FROM articles
       WHERE id = ${articleId} AND revision = ${a.revision} AND url=${a.url} AND body_status <> 'ok' FOR UPDATE`;
     if (!row) {
       if (receiptId !== undefined) await completeReceipt(tx, receiptId);
       return "skipped";
+    }
+    if (dailyRoute) {
+      const [source] = await tx`SELECT enabled,participation_mode,md5(config::text) AS config_md5 FROM sources WHERE id=${a.source_id}`;
+      if (row.source_id !== a.source_id || row.title !== a.title || !source?.enabled || source.participation_mode !== 'editorial'
+        || source.config_md5 !== a.source_config_md5 || routineBodyRoute(a.url)?.id !== dailyRoute.id) return 'skipped';
     }
     if (strategy) {
       await tx`SELECT key FROM settings WHERE key=${RECOVERY_BATCH_PREFIX + strategy.batchId} FOR UPDATE`;
@@ -198,6 +231,9 @@ export async function extractArticleBody(articleId: string, allowJina = process.
     if (rss || native) await audit('content-extraction', 'content.body-restored', `content:${articleId}`,
       'Verified exact publisher body restored without Jina', { revision: a.revision },
       { revision: r!.revision, via: got.via, batchId: strategy!.batchId, allowJina: false, ...(rss ?? native)!.evidence }, { db: tx });
+    if (routine) await audit('content-extraction', 'content.body-restored', `content:${articleId}`,
+      'Daily publisher body route restored the body without Jina', { revision: a.revision },
+      { revision: r!.revision, via: got.via, scope: 'routine', allowJina: false, ...routine.evidence }, { db: tx });
     if (receiptId !== undefined) await completeReceipt(tx, receiptId);
     return "ok";
   });

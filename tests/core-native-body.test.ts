@@ -2,9 +2,11 @@
 import "./setup.ts";
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { parseNativeBody, extractNativeBody, type NativeBodyAdapter } from "@aihot/backend/content/native-body";
+import { parseNativeBody, extractNativeBody, parseRoutineNativeBody, extractRoutineNativeBody, type NativeBodyAdapter } from "@aihot/backend/content/native-body";
 import { sanitizeFeedBody, type FeedBodyProof } from "@aihot/backend/content/feed-body";
 import { sha256 } from "@aihot/backend/lib/ids";
+import { config } from "@aihot/backend/config";
+import { MockAgent, getGlobalDispatcher, setGlobalDispatcher } from "undici";
 
 const mitUrl = "https://www.mittrchina.com/news/detail/17164";
 const speechUrl = "https://speechhome.com/post/2116116444335968256";
@@ -157,4 +159,93 @@ test("URLs remain bound to the reviewed HTTPS origin, article route, selector an
 test("responses larger than the native body read cap are refused before JSON parsing", () => {
   const oversized = " ".repeat(6 * 1024 * 1024 + 1);
   for (const adapter of adapters) assert.equal(parseNativeBody(adapter, oversized, urlFor(adapter), title, proof()), null);
+});
+
+test("routine extraction accepts unseen article IDs and bodies without a precomputed recovery proof", () => {
+  const laterTitle = "New public research on acoustic model deployment";
+  const laterBody = `<h2>New model deployment</h2><p>${"A newly published experiment reports measured model deployment results and limitations. ".repeat(8)}</p>`;
+  const cases: Array<[NativeBodyAdapter, string, string]> = [
+    ["mittrchina", "https://www.mittrchina.com/news/detail/19521", response("mittrchina", laterBody, { id: 19521, name: laterTitle })],
+    ["speechhome", "https://speechhome.com/post/2216116444335968257", response("speechhome", laterBody, { id: "2216116444335968257", title: laterTitle })],
+  ];
+  for (const [adapter, url, raw] of cases) {
+    const got = parseRoutineNativeBody(adapter, raw, url, laterTitle);
+    assert.ok(got); assert.equal(got.body.text, sanitizeFeedBody(laterBody, url).text);
+    assert.equal(got.evidence.bodySha256, sha256(got.body.text));
+    assert.equal(parseNativeBody(adapter, raw, url, laterTitle, undefined as unknown as FeedBodyProof), null,
+      "daily extraction must not weaken the fixed recovery proof contract");
+  }
+});
+
+test("Speechhome routine and reviewed parsing support only the verified post and blogs/all detail paths", () => {
+  const dynamic = speechUrl.replace("/post/", "/blogs/all/");
+  for (const url of [speechUrl, dynamic]) {
+    const got = parseRoutineNativeBody("speechhome", response("speechhome"), url, title);
+    assert.ok(got); assert.equal(got.evidence.itemId, "2116116444335968256");
+    assert.equal(got.evidence.endpoint, "https://speechhome.com/api/api/post/detail/2116116444335968256");
+    assert.ok(parseNativeBody("speechhome", response("speechhome"), url, title, proof(body, url)));
+  }
+  for (const path of ["/blogs", "/blogs/all", "/blogs/2116116444335968256", "/blogs/acoustic", "/blogs/all/2116116444335968256/extra"]) {
+    assert.equal(parseRoutineNativeBody("speechhome", response("speechhome"), "https://speechhome.com" + path, title), null);
+  }
+});
+
+test("routine public fields retain exact ID, title, successful publication and free access requirements", () => {
+  for (const item of [{ id: 17163 }, { id: "17164" }, { name: "Other title" }, { is_vip: 1 }, { is_vip: 0 }, { status: 0 }]) {
+    assert.equal(parseRoutineNativeBody("mittrchina", response("mittrchina", body, item), mitUrl, title), null);
+  }
+  for (const item of [{ id: 2116116444335968256 }, { id: "2116116444335968257" }, { title: "Other title" }, { statusCode: 1 }, { statusCode: null }]) {
+    assert.equal(parseRoutineNativeBody("speechhome", response("speechhome", body, item), speechUrl, title), null);
+  }
+  assert.equal(parseRoutineNativeBody("mittrchina", response("mittrchina", body, {}, { code: 401 }), mitUrl, title), null);
+  assert.equal(parseRoutineNativeBody("speechhome", response("speechhome", body, {}, { data: { isSucceed: false, result: {} } }), speechUrl, title), null);
+});
+
+test("routine parsing never promotes summary or count-only shells, short content, teasers or verification pages", () => {
+  for (const adapter of adapters) {
+    assert.equal(parseRoutineNativeBody(adapter, response(adapter, body, { content: undefined, summary: body, readingCount: 4000 }), urlFor(adapter), title), null);
+    for (const content of ["x".repeat(199), `<p>${"Preview of an acoustic experiment. ".repeat(12)}Continue reading</p>`,
+      `<p>Verify you are human</p>${body}`, `<p>登录后阅读全文</p>${body}`, `<p>付费后查看正文</p>${body}`]) {
+      assert.equal(parseRoutineNativeBody(adapter, response(adapter, content), urlFor(adapter), title), null);
+    }
+    assert.equal(parseRoutineNativeBody(adapter, "<html><body>Site navigation</body></html>", urlFor(adapter), title), null);
+  }
+});
+
+test("routine parsing keeps the original 200-character minimum and guarded publisher URLs", async () => {
+  const exact = "a".repeat(200);
+  for (const adapter of adapters) {
+    assert.ok(parseRoutineNativeBody(adapter, response(adapter, exact), urlFor(adapter), title));
+    for (const url of [urlFor(adapter).replace("https:", "http:"), urlFor(adapter) + "?token=private", urlFor(adapter) + "#other",
+      urlFor(adapter).replace("https://", "https://user:password@"), urlFor(adapter).replace(".com/", ".com:8443/"), "https://other.example/news/detail/17164"]) {
+      assert.equal(parseRoutineNativeBody(adapter, response(adapter), url, title), null);
+      assert.equal(await extractRoutineNativeBody({ adapter, originalUrl: url, title }), null);
+    }
+  }
+});
+
+test("routine network extraction calls the exact anonymous endpoint and refuses HTTP errors or non-JSON shells", async () => {
+  const oldDispatcher = getGlobalDispatcher(), oldProxy = config.egressProxyUrl, oldPrivate = config.allowPrivateNetworkFetch;
+  const mock = new MockAgent(); mock.disableNetConnect();
+  config.egressProxyUrl = null; config.allowPrivateNetworkFetch = true; setGlobalDispatcher(mock);
+  try {
+    for (const adapter of adapters) {
+      const endpoint = new URL(adapter === "mittrchina" ? "https://apii.web.mittrchina.com/information/details?id=17164"
+        : "https://speechhome.com/api/api/post/detail/2116116444335968256");
+      const input = { adapter, originalUrl: urlFor(adapter), title };
+      mock.get(endpoint.origin).intercept({ path: endpoint.pathname + endpoint.search, method: "GET" })
+        .reply(200, response(adapter), { headers: { "content-type": "application/json" } });
+      assert.ok(await extractRoutineNativeBody(input));
+      for (const status of [401, 403, 429, 500]) {
+        mock.get(endpoint.origin).intercept({ path: endpoint.pathname + endpoint.search }).reply(status, response(adapter), { headers: { "content-type": "application/json" } });
+        if (status === 429 || status >= 500) await assert.rejects(extractRoutineNativeBody(input), /temporarily unavailable/);
+        else assert.equal(await extractRoutineNativeBody(input), null);
+      }
+      mock.get(endpoint.origin).intercept({ path: endpoint.pathname + endpoint.search }).reply(200, response(adapter), { headers: { "content-type": "text/html" } });
+      assert.equal(await extractRoutineNativeBody(input), null);
+    }
+    mock.assertNoPendingInterceptors();
+  } finally {
+    setGlobalDispatcher(oldDispatcher); config.egressProxyUrl = oldProxy; config.allowPrivateNetworkFetch = oldPrivate; await mock.close();
+  }
 });
