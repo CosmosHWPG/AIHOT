@@ -14,11 +14,15 @@ const memberSchema = z.object({ articleId: z.string().min(1), revision: z.number
   sourceId: z.string().min(1), sourceKind: z.string().min(1), mode: z.enum(["editorial", "hot_signal"]),
   url: z.string().min(1).optional(), sourceConfigMd5: z.string().regex(/^[a-f0-9]{32}$/).optional(),
   publishedAt: z.string().datetime().optional(), initialBodyStatus: z.literal("unconfirmed").optional(),
-  initialProcessingState: z.enum(["new", "analyzed", "failed"]).optional() }).strict();
+  initialProcessingState: z.enum(["new", "analyzed", "failed"]).optional(),
+  rssBody: z.object({ feedUrl: z.string().min(1), allowJina: z.literal(false),
+    bodyProof: z.object({ bodySha256: z.string().regex(/^[a-f0-9]{64}$/), tailSha256: z.string().regex(/^[a-f0-9]{64}$/), requiredTerms: z.array(z.string().min(2).max(100)).min(1).max(12) }).strict().optional(),
+    descriptionProof: z.object({ bodySha256: z.string().regex(/^[a-f0-9]{64}$/), tailSha256: z.string().regex(/^[a-f0-9]{64}$/), requiredTerms: z.array(z.string().min(2).max(100)).min(1).max(12) }).strict().optional() }).strict().optional() }).strict();
 const planSchema = z.object({ version: z.literal(1), id: z.string().regex(/^[a-zA-Z0-9_-]{8,80}$/),
   kind: z.enum(["bird-pending", "model-failure", "web-body-recovery"]), createdAt: z.string(), windowAt: z.string().datetime().optional(),
   evidence: z.string().min(1), members: z.array(memberSchema).min(1).max(118), digest: z.string() }).strict();
 export type RecoveryMember = z.infer<typeof memberSchema>;
+export type RssBodyPolicy = NonNullable<RecoveryMember["rssBody"]>;
 export type RecoveryPlan = z.infer<typeof planSchema>;
 export interface RecoveryBatch extends RecoveryPlan {
   status: "active" | "revoked" | "complete";
@@ -67,6 +71,13 @@ export function parseRecoveryPlan(value: unknown): RecoveryPlan {
   const plan = planSchema.parse(value);
   if (new Set(plan.members.map(m => m.articleId)).size !== plan.members.length) throw new Error("Duplicate recovery article ID");
   if (plan.kind === "model-failure" && plan.members.length > 3) throw new Error("Model failure recovery is limited to three fixed IDs");
+  const rssMembers = plan.members.filter(m => m.rssBody);
+  if (rssMembers.length && (plan.kind !== "web-body-recovery" || rssMembers.length > 3)) throw new Error("RSS body recovery requires at most three fixed web members");
+  for (const member of rssMembers) {
+    if (!publicWebCandidate(member.rssBody!.feedUrl) || (!member.rssBody!.bodyProof && !member.rssBody!.descriptionProof)) {
+      throw new Error("RSS body recovery needs a public feed and verified exact body proof");
+    }
+  }
   if (plan.kind === "web-body-recovery") {
     z.string().datetime().parse(plan.createdAt);
     const anchorAge = Date.parse(plan.createdAt) - Date.parse(plan.windowAt ?? "");
@@ -131,8 +142,9 @@ async function save(batch: RecoveryBatch, actor: string, db: Db) {
     ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_by=EXCLUDED.updated_by,updated_at=clock_timestamp()`;
 }
 /** Plan captures primary source and revision, never body text, responses or credentials. */
-export async function planRecoveryBatch(input: { id: string; kind: RecoveryPlan["kind"]; articleIds: string[]; evidence: string; windowAt?: string }, db: Db = sql): Promise<RecoveryPlan> {
+export async function planRecoveryBatch(input: { id: string; kind: RecoveryPlan["kind"]; articleIds: string[]; evidence: string; windowAt?: string; rssBodies?: Record<string, RssBodyPolicy> }, db: Db = sql): Promise<RecoveryPlan> {
   if (new Set(input.articleIds).size !== input.articleIds.length) throw new Error("Duplicate recovery article ID");
+  if (Object.keys(input.rssBodies ?? {}).some(id => !input.articleIds.includes(id))) throw new Error("RSS strategy outside fixed recovery IDs");
   let createdAt = new Date().toISOString();
   if (input.kind === "web-body-recovery") {
     const [clock] = await db<{ at: string }[]>`SELECT to_char(clock_timestamp() AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS at`;
@@ -154,7 +166,8 @@ export async function planRecoveryBatch(input: { id: string; kind: RecoveryPlan[
     }
     const member = memberSchema.parse({ articleId, revision: row.revision, sourceId: row.source_id, sourceKind: row.kind, mode: row.participation_mode,
       ...(input.kind === "web-body-recovery" ? { url: row.url, sourceConfigMd5: row.source_config_md5, publishedAt: row.published_at_key,
-        initialBodyStatus: row.body_status, initialProcessingState: row.processing_state } : {}) });
+        initialBodyStatus: row.body_status, initialProcessingState: row.processing_state } : {}),
+      ...(input.rssBodies?.[articleId] ? { rssBody: input.rssBodies[articleId] } : {}) });
     const admission = match(member, member.revision, row);
     if (admission !== "admitted") throw new Error(`Recovery article ${articleId}: ${admission}`);
     if (input.kind === "bird-pending" && (!row.bird || row.kind !== "x_search" || row.processing_state !== "new")) {
@@ -225,6 +238,21 @@ export async function getRecoveryAdmission(articleId: string, db: Db = sql): Pro
     return match(member, batch.currentRevisions[articleId] ?? member.revision, article) === "admitted";
   });
   return batch ? { batchId: batch.id, priority: RECOVERY_PRIORITY } : null;
+}
+/** The audited no-Jina instruction survives completion/revoke; only active exact members may use the feed. */
+export async function getRecoveryRssBodyPolicy(articleId: string, db: Db = sql): Promise<{
+  denyJina: boolean; strategy: (RssBodyPolicy & { batchId: string; batchDigest: string }) | null;
+}> {
+  const [article] = await readArticles([articleId], db);
+  if (!article) return { denyJina: false, strategy: null };
+  const batches = (await readBatches(db)).filter(batch => batch.members.some(m => m.articleId === articleId && m.url === article.url && m.rssBody));
+  for (const batch of batches.sort((a,b) => b.activatedAt.localeCompare(a.activatedAt))) {
+    const member = batch.members.find(m => m.articleId === articleId)!;
+    if (batch.status === 'active' && match(member,batch.currentRevisions[articleId] ?? member.revision,article) === 'admitted') {
+      return { denyJina: true, strategy: { ...member.rssBody!,batchId: batch.id,batchDigest: batch.digest } };
+    }
+  }
+  return { denyJina: batches.length > 0, strategy: null };
 }
 /** Only official extraction calls this inside the transaction which created the exact next revision. */
 export async function advanceRecoveryExtractionRevision(articleId: string, from: number, to: number, db: Db): Promise<void> {
