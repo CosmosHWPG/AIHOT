@@ -15717,6 +15717,60 @@
         "scope": "Only original /evaluations/ report URLs from the research listing; exclude /blog/.",
         "description": "监测 METR 公开模型能力与风险评测报告，保留原始日期。作为研究资料单独浏览，不参与新闻精选与热点热度。"
       }
+    },
+    "corescope-web-eleutherai-blog": {
+      "policy": "native",
+      "adapter": {
+        "kind": "web_list",
+        "config": {
+          "url": "https://blog.eleuther.ai/",
+          "adapter": "article_links",
+          "itemSelector": "article.blog-card",
+          "linkSelector": "a.link[href]",
+          "titleSelector": "h3",
+          "summarySelector": "p:not(.item-meta)",
+          "publishedAtSelector": ".item-meta",
+          "publishedAtUtcOffset": "+00:00",
+          "itemUrlPattern": "^/(?!blog|about)[a-z0-9-]+/?$",
+          "minTitleLength": 8,
+          "requirePublishedAt": true,
+          "sortByPublishedAt": true,
+          "_aihot": {
+            "initialBackfillLimit": 2
+          }
+        }
+      },
+      "verification": {
+        "id": "corescope-web-eleutherai-blog",
+        "status": "verified",
+        "checkedAt": "2026-11-01T14:00:08.606Z",
+        "scope": "Public endpoint/offline native parser preview only; production collection and ingestion are separate.",
+        "observedSourceName": "EleutherAI：Blog",
+        "evidenceFile": ".data/qa/aihot-source-refresh-20261101/identity-final-review.json",
+        "publicEvidence": [
+          {
+            "url": "https://blog.eleuther.ai/subliminal-learning-pretraining/",
+            "aihotItem": "https://aihot.news/items/az6eueo365r5oij4xlc4d2kow",
+            "publishedAt": "2026-10-24T16:00:00.000Z"
+          }
+        ],
+        "previewStatus": "existing_generic_html_parser_preview_verified",
+        "limitations": [
+          "Future fresh posts remain editorial. The user-designated Oct25 article is old reference material; Root must use the reviewed resource admission path rather than making up a current date or disabling the global news age gate. Do not isolate every future article solely for this one historical reference."
+        ],
+        "configProvenance": "Independent public route/account reconstruction; not AIHOT private collector export.",
+        "paidRuntimeAcceptance": "Not inferred; Root records actual collection, empty results, ingestion and blocked acceptance separately."
+      },
+      "nonArticle": false,
+      "participationMode": "editorial",
+      "referenceArticles": [
+        {
+          "url": "https://blog.eleuther.ai/subliminal-learning-pretraining/",
+          "title": "EleutherAI · Subliminal Learning 研究资料",
+          "category": "模型训练与安全研究",
+          "description": "原始发布日期2026-10-25；按研究资料浏览，不计作本周新发新闻。未来同源新文章继续正常新闻筛选。"
+        }
+      ]
     }
   }
 }

@@ -3423,6 +3423,286 @@
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-rss-pragmatic-newsletter",
+      "name": "The Pragmatic Engineer：Newsletter",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://newsletter.pragmaticengineer.com/feed",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "signal_group_id": "feed:0ed1fdcf7cff510b99c8",
+      "interval_minutes": 360,
+      "tags": [
+        "AI",
+        "研发效能/工程管理",
+        "AI SRE",
+        "20261101核查补齐"
+      ]
+    },
+    {
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-rss-pydantic-articles",
+      "name": "Pydantic AI：官方文章",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://pydantic.dev/feed.xml",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "signal_group_id": "publisher:pydantic",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "Agent框架",
+        "可观测性",
+        "20261101核查补齐"
+      ]
+    },
+    {
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-rss-sarvam-ai",
+      "name": "Sarvam AI：Blog",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.sarvam.ai/rss.xml",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "signal_group_id": "publisher:sarvam",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "语音AI",
+        "多语言模型",
+        "企业Agent",
+        "20261101核查补齐"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-rss-steve-yegge-medium",
+      "name": "Steve Yegge：Medium",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://medium.com/feed/@steve-yegge",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "signal_group_id": "publisher:steve-yegge",
+      "interval_minutes": 360,
+      "tags": [
+        "AI",
+        "编码Agent",
+        "软件架构",
+        "20261101核查补齐"
+      ]
+    },
+    {
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-rss-gamma-changelog",
+      "name": "Gamma：Changelog",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://meetgamma.canny.io/api/changelog/feed.rss",
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "signal_group_id": "publisher:gamma",
+      "interval_minutes": 360,
+      "tags": [
+        "AI",
+        "产品动态",
+        "20261101核查补齐"
+      ]
+    },
+    {
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-web-eleutherai-blog",
+      "name": "EleutherAI：Blog",
+      "kind": "web_list",
+      "config": {
+        "url": "https://blog.eleuther.ai/",
+        "adapter": "article_links",
+        "itemSelector": "article.blog-card",
+        "linkSelector": "a.link[href]",
+        "titleSelector": "h3",
+        "summarySelector": "p:not(.item-meta)",
+        "publishedAtSelector": ".item-meta",
+        "publishedAtUtcOffset": "+00:00",
+        "itemUrlPattern": "^/(?!blog|about)[a-z0-9-]+/?$",
+        "minTitleLength": 8,
+        "requirePublishedAt": true,
+        "sortByPublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        }
+      },
+      "signal_group_id": "publisher:eleutherai",
+      "interval_minutes": 360,
+      "tags": [
+        "AI",
+        "开源模型",
+        "研究论文",
+        "20261101核查补齐"
+      ]
+    },
+    {
+      "id": "corescope-web-openmoss-blog",
+      "name": "OpenMOSS：研究博客",
+      "kind": "web_list",
+      "config": {
+        "url": "https://openmoss.ai/blog/cn/",
+        "adapter": "article_links",
+        "itemSelector": ".post-preview",
+        "linkSelector": "a[href]",
+        "titleSelector": "h2.title",
+        "summarySelector": "p.abstract",
+        "publishedAtSelector": ".publishedDate",
+        "publishedAtUtcOffset": "+08:00",
+        "itemUrlPattern": "^/blog/cn/[^/?#]+/?$",
+        "minTitleLength": 4,
+        "requirePublishedAt": true,
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:openmoss",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261101核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-web-lg-ai-research-blog",
+      "name": "LG AI Research：官方研究博客",
+      "kind": "json_list",
+      "config": {
+        "url": "https://www.lgresearch.ai/api/board/blog/list?pg=1&pgSz=12&schExpsYn=Y&schLangTp=en&schCatgCd=BAAACC&sordFld=sort&sordMetd=ASC",
+        "headers": {
+          "accept": "application/json",
+          "referer": "https://www.lgresearch.ai/blog/",
+          "accept-language": "en-US,en;q=0.9"
+        },
+        "itemsPath": "data.list",
+        "titlePaths": [
+          "ttl"
+        ],
+        "urlTemplate": "https://www.lgresearch.ai/blog/view?seq={seq}",
+        "summaryPaths": [
+          "description"
+        ],
+        "publishedAtPath": "expsYmd",
+        "publishedAtUnit": "yyyymmdd",
+        "externalIdPath": "seq",
+        "requireBoolean": {
+          "path": "expsYn",
+          "equals": "Y"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:lg-ai-research",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261101核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "corescope-rss-trailofbits-blog",
+      "name": "Trail of Bits：AI安全研究",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://blog.trailofbits.com/index.xml",
+        "_aihot": {
+          "initialBackfillLimit": 2
+        },
+        "sortByPublishedAt": true
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:trail-of-bits",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "AI",
+        "技术博客/工程博客",
+        "20261101核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
     }
   ],
   "aliases": [
@@ -11523,6 +11803,278 @@
       "checkedAt": "2026-10-20T11:28:47.916Z",
       "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
       "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
+    },
+    "corescope-rss-pragmatic-newsletter": {
+      "id": "corescope-rss-pragmatic-newsletter",
+      "status": "verified",
+      "checkedAt": "2026-11-01T13:52:24.065Z",
+      "scope": "Public endpoint/offline native parser preview only; production collection and ingestion are separate.",
+      "observedSourceName": "Pragmatic Engineer（RSS）",
+      "evidenceFile": ".data/qa/aihot-source-refresh-20261101/identity-final-review.json",
+      "publicEvidence": [
+        {
+          "url": "https://newsletter.pragmaticengineer.com/p/software-engineering-at-google-and",
+          "aihotItem": "https://aihot.news/items/yn4lnmvxmm2y828n7v5xgjv5a",
+          "publishedAt": "2026-10-29T13:37:13.000Z"
+        },
+        {
+          "url": "https://newsletter.pragmaticengineer.com/p/ai-sre",
+          "aihotItem": "https://aihot.news/items/nq6z6flv4c8w8v8ornwoit4xz",
+          "publishedAt": "2026-10-27T16:19:22.000Z"
+        }
+      ],
+      "previewStatus": "endpoint_preview_verified",
+      "limitations": [
+        "Keep existing v2-source-628 blog RSS unchanged. Distinct newsletter feed, but reuse the same existing opaque publisher signal group to avoid double heat counting one publisher."
+      ],
+      "configProvenance": "Independent public route/account reconstruction; not AIHOT private collector export.",
+      "paidRuntimeAcceptance": "Not inferred; Root records actual collection, empty results, ingestion and blocked acceptance separately."
+    },
+    "corescope-rss-pydantic-articles": {
+      "id": "corescope-rss-pydantic-articles",
+      "status": "verified",
+      "checkedAt": "2026-11-01T13:55:29.603Z",
+      "scope": "Public endpoint/offline native parser preview only; production collection and ingestion are separate.",
+      "observedSourceName": "Pydantic AI 官方文章",
+      "evidenceFile": ".data/qa/aihot-source-refresh-20261101/identity-final-review.json",
+      "publicEvidence": [
+        {
+          "url": "https://pydantic.dev/articles/why-code-mode-is-the-future",
+          "aihotItem": "https://aihot.news/items/mcucufe6w6qrftx6l40hkmjrz",
+          "publishedAt": "2026-10-28T09:00:00.000Z"
+        },
+        {
+          "url": "https://pydantic.dev/articles/aaif-outstanding-technical-contribution-award",
+          "aihotItem": "https://aihot.news/items/de7kcvmrag3q34f1zb7b3i3dv",
+          "publishedAt": "2026-10-27T09:00:00.000Z"
+        }
+      ],
+      "previewStatus": "endpoint_preview_verified",
+      "limitations": [],
+      "configProvenance": "Independent public route/account reconstruction; not AIHOT private collector export.",
+      "paidRuntimeAcceptance": "Not inferred; Root records actual collection, empty results, ingestion and blocked acceptance separately."
+    },
+    "corescope-rss-sarvam-ai": {
+      "id": "corescope-rss-sarvam-ai",
+      "status": "verified",
+      "checkedAt": "2026-11-01T13:55:29.611Z",
+      "scope": "Public endpoint/offline native parser preview only; production collection and ingestion are separate.",
+      "observedSourceName": "Sarvam AI（网页）",
+      "evidenceFile": ".data/qa/aihot-source-refresh-20261101/identity-final-review.json",
+      "publicEvidence": [
+        {
+          "url": "https://www.sarvam.ai/blogs/sarvam-hq-ids-mou",
+          "aihotItem": "https://aihot.news/items/f9g6dbtp22bp1jeojg9mu1v0r",
+          "publishedAt": "2026-10-26T16:00:00.000Z"
+        },
+        {
+          "url": "https://www.sarvam.ai/blogs/sarvam-ministry-of-defence-mou",
+          "aihotItem": "https://aihot.news/items/veo8ely639lzc8jevzehj3blg",
+          "publishedAt": "2026-10-26T16:00:00.000Z"
+        }
+      ],
+      "previewStatus": "endpoint_preview_verified_partial_observed_history",
+      "limitations": [
+        "Feed preview matched at least one observed original; do not claim complete historical coverage."
+      ],
+      "configProvenance": "Independent public route/account reconstruction; not AIHOT private collector export.",
+      "paidRuntimeAcceptance": "Not inferred; Root records actual collection, empty results, ingestion and blocked acceptance separately."
+    },
+    "corescope-rss-steve-yegge-medium": {
+      "id": "corescope-rss-steve-yegge-medium",
+      "status": "verified",
+      "checkedAt": "2026-11-01T13:52:25.372Z",
+      "scope": "Public endpoint/offline native parser preview only; production collection and ingestion are separate.",
+      "observedSourceName": "Steve Yegge：Medium（RSS）",
+      "evidenceFile": ".data/qa/aihot-source-refresh-20261101/identity-final-review.json",
+      "publicEvidence": [
+        {
+          "url": "https://steve-yegge.medium.com/the-counting-house-steve-yegge-83f5145cc35b?source=rss-c1ec701babb7------2",
+          "aihotItem": "https://aihot.news/items/q2es9w34ljyhevwkszp8ngr3w",
+          "publishedAt": "2026-10-27T00:00:52.000Z"
+        },
+        {
+          "url": "https://steve-yegge.medium.com/the-counting-house-e11125c60ce1?source=rss-c1ec701babb7------2",
+          "aihotItem": "https://aihot.news/items/aswy4xzdr2s4vjofrkp6l97n9",
+          "publishedAt": "2026-10-27T15:15:01.000Z"
+        }
+      ],
+      "previewStatus": "endpoint_preview_verified_partial_observed_history",
+      "limitations": [
+        "Current bounded Medium feed does not contain every previously observed URL."
+      ],
+      "configProvenance": "Independent public route/account reconstruction; not AIHOT private collector export.",
+      "paidRuntimeAcceptance": "Not inferred; Root records actual collection, empty results, ingestion and blocked acceptance separately."
+    },
+    "corescope-rss-gamma-changelog": {
+      "id": "corescope-rss-gamma-changelog",
+      "status": "verified",
+      "checkedAt": "2026-11-01T13:55:29.615Z",
+      "scope": "Public endpoint/offline native parser preview only; production collection and ingestion are separate.",
+      "observedSourceName": "Gamma Changelog",
+      "evidenceFile": ".data/qa/aihot-source-refresh-20261101/identity-final-review.json",
+      "publicEvidence": [
+        {
+          "url": "https://meetgamma.canny.io/changelog/whats-new-in-gamma-septemberoctober-2026",
+          "aihotItem": "https://aihot.news/items/tckw64et369c0brghxzwke9qe",
+          "publishedAt": "2026-10-26T19:14:26.000Z"
+        }
+      ],
+      "previewStatus": "endpoint_preview_verified",
+      "limitations": [],
+      "configProvenance": "Independent public route/account reconstruction; not AIHOT private collector export.",
+      "paidRuntimeAcceptance": "Not inferred; Root records actual collection, empty results, ingestion and blocked acceptance separately."
+    },
+    "corescope-web-eleutherai-blog": {
+      "id": "corescope-web-eleutherai-blog",
+      "status": "verified",
+      "checkedAt": "2026-11-01T14:00:08.606Z",
+      "scope": "Public endpoint/offline native parser preview only; production collection and ingestion are separate.",
+      "observedSourceName": "EleutherAI：Blog",
+      "evidenceFile": ".data/qa/aihot-source-refresh-20261101/identity-final-review.json",
+      "publicEvidence": [
+        {
+          "url": "https://blog.eleuther.ai/subliminal-learning-pretraining/",
+          "aihotItem": "https://aihot.news/items/az6eueo365r5oij4xlc4d2kow",
+          "publishedAt": "2026-10-24T16:00:00.000Z"
+        }
+      ],
+      "previewStatus": "existing_generic_html_parser_preview_verified",
+      "limitations": [
+        "Future fresh posts remain editorial. The user-designated Oct25 article is old reference material; Root must use the reviewed resource admission path rather than making up a current date or disabling the global news age gate. Do not isolate every future article solely for this one historical reference."
+      ],
+      "configProvenance": "Independent public route/account reconstruction; not AIHOT private collector export.",
+      "paidRuntimeAcceptance": "Not inferred; Root records actual collection, empty results, ingestion and blocked acceptance separately."
+    },
+    "corescope-web-openmoss-blog": {
+      "id": "corescope-web-openmoss-blog",
+      "status": "verified",
+      "scope": "Public live HTTP and the existing native collector parser only; not production source collection or ingestion",
+      "checkedAt": "2026-11-01T14:57:07.718Z",
+      "transport": "guardedFetch:configured environment egress proxy",
+      "httpStatus": 200,
+      "items": 13,
+      "datedItems": 13,
+      "latestPublishedAt": "2026-10-28T16:00:00.000Z",
+      "samples": [
+        {
+          "title": "MOSS-Image：让开放模型真正理解文字与版式",
+          "url": "https://openmoss.ai/blog/cn/moss-image/",
+          "publishedAt": "2026-10-28T16:00:00.000Z"
+        },
+        {
+          "title": "VLA、WAM 之外：OpenETA 如何把智能体闭环带入物理世界",
+          "url": "https://openmoss.ai/blog/cn/openeta/",
+          "publishedAt": "2026-08-09T16:00:00.000Z"
+        },
+        {
+          "title": "Thinking with Video：用视频生成做多模态推理",
+          "url": "https://openmoss.ai/blog/cn/thinking-with-video/",
+          "publishedAt": "2026-05-31T16:00:00.000Z"
+        }
+      ],
+      "sourceEvidenceFile": "pending-live-native-preview.json",
+      "windowEvidenceConfirmed": true,
+      "observedWindowArticleStatus": 200,
+      "limits": [
+        "Use the concrete Chinese index /blog/cn/, not the root /#blog shell or English meta-refresh.",
+        "Card publication dates are read from .publishedDate in +08:00, with explicit article URL scope and required dates.",
+        "Thirteen indexed and dated posts include MOSS-Image10/29; only recent eligible material should enter normal processing."
+      ],
+      "url": "https://openmoss.ai/blog/cn/",
+      "reason": "Native article_links collector mapped13 dated Chinese research cards including the observed MOSS-Image original.",
+      "configProvenance": "Independent public route/account reconstruction; not AIHOT private collector export.",
+      "paidRuntimeAcceptance": "Not inferred; Root records actual collection, empty results, ingestion and blocked acceptance separately."
+    },
+    "corescope-web-lg-ai-research-blog": {
+      "id": "corescope-web-lg-ai-research-blog",
+      "status": "verified",
+      "scope": "Public live HTTP and the existing native collector parser only; not production source collection or ingestion",
+      "checkedAt": "2026-11-01T15:09:53.781Z",
+      "transport": "guardedFetch:configured environment egress proxy",
+      "httpStatus": 200,
+      "items": 30,
+      "datedItems": 30,
+      "latestPublishedAt": "2026-10-26T00:00:00.000Z",
+      "samples": [
+        {
+          "title": "[ICML2026] Observation and action design in reinforcement learning using LLMs",
+          "url": "https://www.lgresearch.ai/blog/view?seq=724",
+          "publishedAt": "2026-10-26T00:00:00.000Z"
+        },
+        {
+          "title": "[ICML2026] Solving the Problem of Data Scarcity Using Riemannian Geometry",
+          "url": "https://www.lgresearch.ai/blog/view?seq=715",
+          "publishedAt": "2026-10-13T00:00:00.000Z"
+        },
+        {
+          "title": "[ICML2026] Application of Mechanistic Interpretability: Understanding Graph Transformers (TokenGT)",
+          "url": "https://www.lgresearch.ai/blog/view?seq=712",
+          "publishedAt": "2026-10-02T00:00:00.000Z"
+        }
+      ],
+      "sourceEvidenceFile": "pending-lg-native-preview.json",
+      "windowEvidenceConfirmed": true,
+      "observedWindowArticleStatus": 200,
+      "limits": [
+        "Public Nuxt chunk f937669.js establishes the API and parameters. Omit schExpsYmd to avoid hardcoded current date; metadata is filtered for expsYn=Y, English and BAAACC category.",
+        "Page1 pgSz30 returns30 of138 available records, latestseq7242026-10-26; no claim of full history or additional pages.",
+        "publishedAtUnit=yyyymmdd uses the current native day parser (UTC calendar-day precision); no invented publication clock.",
+        "Direct/no-context network attempts timed out; one configured-egress native request with JSON/public-referrer headers succeeded. Production acceptance must confirm runtime egress."
+      ],
+      "url": "https://www.lgresearch.ai/api/board/blog/list?pg=1&pgSz=12&schExpsYn=Y&schLangTp=en&schCatgCd=BAAACC&sordFld=sort&sordMetd=ASC",
+      "reason": "Native JSON collector mapped30 published English rows to original URLs and real calendar dates, including seq724.",
+      "configProvenance": "Independent public route/account reconstruction; not AIHOT private collector export.",
+      "paidRuntimeAcceptance": "Not inferred; Root records actual collection, empty results, ingestion and blocked acceptance separately.",
+      "boundedPageRefinement": {
+        "previousUrl": "https://www.lgresearch.ai/api/board/blog/list?pg=1&pgSz=30&schExpsYn=Y&schLangTp=en&schCatgCd=BAAACC&sordFld=sort&sordMetd=ASC",
+        "currentUrl": "https://www.lgresearch.ai/api/board/blog/list?pg=1&pgSz=12&schExpsYn=Y&schLangTp=en&schCatgCd=BAAACC&sordFld=sort&sordMetd=ASC",
+        "publicFrontendDefault": 12,
+        "nativePreviewCount": 12,
+        "datedItems": 12,
+        "observedArticle": "https://www.lgresearch.ai/blog/view?seq=724",
+        "scope": "Production-function public preview only; deployment collect acceptance recorded separately"
+      }
+    },
+    "corescope-rss-trailofbits-blog": {
+      "id": "corescope-rss-trailofbits-blog",
+      "status": "verified",
+      "scope": "Public live HTTP and the existing native collector parser only; not production source collection or ingestion",
+      "checkedAt": "2026-11-01T14:57:08.318Z",
+      "transport": "guardedFetch:configured environment egress proxy",
+      "httpStatus": 200,
+      "items": 20,
+      "datedItems": 20,
+      "latestPublishedAt": "2026-10-21T15:00:00.000Z",
+      "samples": [
+        {
+          "title": "Your AI agent fixed the bug, but what else did it change?",
+          "url": "https://blog.trailofbits.com/2026/10/21/your-ai-agent-fixed-the-bug-but-what-else-did-it-change/",
+          "publishedAt": "2026-10-21T15:00:00.000Z"
+        },
+        {
+          "title": "Package managers have an integrity problem",
+          "url": "https://blog.trailofbits.com/2026/10/14/package-managers-have-an-integrity-problem/",
+          "publishedAt": "2026-10-14T11:00:00.000Z"
+        },
+        {
+          "title": "SequenceHash: multihashing for the rest of us",
+          "url": "https://blog.trailofbits.com/2026/10/02/sequencehash-multihashing-for-the-rest-of-us/",
+          "publishedAt": "2026-10-02T11:00:00.000Z"
+        }
+      ],
+      "sourceEvidenceFile": "pending-live-native-preview.json",
+      "windowEvidenceConfirmed": false,
+      "observedWindowArticleStatus": 404,
+      "limits": [
+        "Current public RSS is fetchable and dated but latest is2026-10-21; normal recent-material admission may return zero.",
+        "AIHOT-observed2026-10-27 original remains404 on our direct HTTP; search-engine cached text is not injected into collection or taken as restoration.",
+        "Source transport/parse success is distinct from collecting the requested recent window."
+      ],
+      "url": "https://blog.trailofbits.com/index.xml",
+      "reason": "Native RSS HTTP200 with20 dated items; requested2026-10-27 article remains unavailable and current feed is older than the recent window.",
+      "configProvenance": "Independent public route/account reconstruction; not AIHOT private collector export.",
+      "paidRuntimeAcceptance": "Not inferred; Root records actual collection, empty results, ingestion and blocked acceptance separately."
     }
   },
   "coverage": [
@@ -12098,6 +12650,60 @@
       "observedIdentity": "entry:https://developer.ant-ling.com/zh-CN/blogs",
       "status": "reviewed_configuration_added_runtime_acceptance_separate",
       "evidence": "docs/corescope-source-expansion-20261020.json"
+    },
+    {
+      "sourceId": "corescope-rss-pragmatic-newsletter",
+      "observedIdentity": "entry:https://newsletter.pragmaticengineer.com/feed",
+      "status": "reviewed_configuration_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261101.json"
+    },
+    {
+      "sourceId": "corescope-rss-pydantic-articles",
+      "observedIdentity": "entry:https://pydantic.dev/feed.xml",
+      "status": "reviewed_configuration_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261101.json"
+    },
+    {
+      "sourceId": "corescope-rss-sarvam-ai",
+      "observedIdentity": "entry:https://www.sarvam.ai/rss.xml",
+      "status": "reviewed_configuration_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261101.json"
+    },
+    {
+      "sourceId": "corescope-rss-steve-yegge-medium",
+      "observedIdentity": "entry:https://medium.com/feed/@steve-yegge",
+      "status": "reviewed_configuration_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261101.json"
+    },
+    {
+      "sourceId": "corescope-rss-gamma-changelog",
+      "observedIdentity": "entry:https://meetgamma.canny.io/api/changelog/feed.rss",
+      "status": "reviewed_configuration_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261101.json"
+    },
+    {
+      "sourceId": "corescope-web-eleutherai-blog",
+      "observedIdentity": "entry:https://blog.eleuther.ai/",
+      "status": "reviewed_configuration_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261101.json"
+    },
+    {
+      "sourceId": "corescope-web-openmoss-blog",
+      "observedIdentity": "entry:https://openmoss.ai/blog/cn",
+      "status": "reviewed_configuration_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261101.json"
+    },
+    {
+      "sourceId": "corescope-web-lg-ai-research-blog",
+      "observedIdentity": "entry:https://www.lgresearch.ai/api/board/blog/list?pg=1&pgSz=30&schCatgCd=BAAACC&schExpsYn=Y&schLangTp=en&sordFld=sort&sordMetd=ASC",
+      "status": "reviewed_configuration_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261101.json"
+    },
+    {
+      "sourceId": "corescope-rss-trailofbits-blog",
+      "observedIdentity": "entry:https://blog.trailofbits.com/index.xml",
+      "status": "reviewed_configuration_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261101.json"
     }
   ],
   "refreshReviews": [
@@ -12161,6 +12767,23 @@
       ],
       "evidence": "docs/corescope-source-expansion-20261020.json",
       "scope": "Independent public entry/account reconstruction; runtime acceptance is separate."
+    },
+    {
+      "observedAt": "2026-11-01T13:51:03.750Z",
+      "preparedAt": "2026-11-01T15:02:37.938Z",
+      "sourceIds": [
+        "corescope-rss-pragmatic-newsletter",
+        "corescope-rss-pydantic-articles",
+        "corescope-rss-sarvam-ai",
+        "corescope-rss-steve-yegge-medium",
+        "corescope-rss-gamma-changelog",
+        "corescope-web-eleutherai-blog",
+        "corescope-web-openmoss-blog",
+        "corescope-web-lg-ai-research-blog",
+        "corescope-rss-trailofbits-blog"
+      ],
+      "evidence": "docs/corescope-source-expansion-20261101.json",
+      "scope": "User-authorized13-source refresh; actual collection acceptance separate."
     }
   ]
 }

@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { REPO_ROOT } from "../config.ts";
 import { sql } from "../db.ts";
+import { shortHash } from "../lib/ids.ts";
 
 export interface ResourceEntry {
   id: string;
@@ -15,11 +16,19 @@ export interface ResourceEntry {
 }
 
 interface SourceDefinition { id: string; name: string; tags?: string[] }
+interface ReferenceArticle {
+  url: string;
+  title: string;
+  category?: string;
+  description?: string;
+}
 interface Profile {
   nonArticle?: boolean;
   policy: string;
   verification?: { checkedAt?: string };
   catalogPlan?: { publicURL?: string; publicUrl?: string; title?: string; category?: string; description?: string; type?: string; required?: string; status?: string };
+  /** Authored reference links, independent of the source's future news participation. */
+  referenceArticles?: ReferenceArticle[];
 }
 interface SourceStatus { id: string; enabled: boolean; last_fetch_at: Date | null }
 
@@ -36,14 +45,16 @@ function publicUrl(value: unknown): string | null {
 /** Explicitly project a public shape; adapters, verification samples and private raw material stay private. */
 export function resourceDirectory(sources: SourceDefinition[], profiles: Record<string, Profile>, originals: Map<string, string>, statuses: SourceStatus[] = []): ResourceEntry[] {
   const state = new Map(statuses.map((source) => [source.id, source]));
-  return sources.filter((source) => profiles[source.id]?.nonArticle === true).map((source) => {
-    const profile = profiles[source.id]!;
+  const referencesSeen = new Set<string>();
+  return sources.flatMap((source) => {
+    const profile = profiles[source.id];
+    if (!profile) return [];
     const plan = profile.catalogPlan;
     const current = state.get(source.id);
     const verified = profile.policy === "native";
     const checked = current?.last_fetch_at?.toISOString() ?? profile.verification?.checkedAt;
     const checkedAt = checked && Number.isFinite(Date.parse(checked)) ? new Date(checked).toISOString() : null;
-    return {
+    const entries: ResourceEntry[] = profile.nonArticle === true ? [{
       id: source.id,
       name: plan?.title || source.name,
       category: plan?.category || "研究与开发资源",
@@ -51,7 +62,24 @@ export function resourceDirectory(sources: SourceDefinition[], profiles: Record<
       description: plan?.description || (verified ? "按明确条目监测资源更新，保留原始链接。" : "保留目录入口；确定关注对象后再监测具体更新。"),
       status: current && verified && !current.enabled ? "paused" : verified ? "monitored" : plan?.status === "needs_scope" ? "needs_scope" : "reference",
       checkedAt,
-    };
+    }] : [];
+    // These are directory metadata only, never a projection of private material or analysis.
+    // Archiving a particular article is performed separately; this does not isolate its source.
+    for (const reference of Array.isArray(profile.referenceArticles) ? profile.referenceArticles : []) {
+      const url = publicUrl(reference?.url);
+      if (!url || typeof reference?.title !== "string" || !reference.title.trim() || referencesSeen.has(url)) continue;
+      referencesSeen.add(url);
+      entries.push({
+        id: `${source.id}:reference:${shortHash(url, 12)}`,
+        name: reference.title.trim(),
+        category: reference.category || "研究参考资料",
+        url,
+        description: reference.description || "保留原始文章链接与原始发布日期，作为参考资料浏览。",
+        status: current && !current.enabled ? "paused" : "reference",
+        checkedAt,
+      });
+    }
+    return entries;
   });
 }
 
@@ -63,7 +91,7 @@ export async function loadResourceDirectory() {
   const mapping = JSON.parse(readFileSync(path.join(REPO_ROOT, "docs/corescope-v2-sources.json"), "utf8")).sources as Array<{ canonical_source_id: string | null; original_url?: string }>;
   const originals = new Map<string, string>();
   for (const source of mapping) if (source.canonical_source_id && source.original_url && !originals.has(source.canonical_source_id)) originals.set(source.canonical_source_id, source.original_url);
-  const ids = sources.filter((source) => profiles[source.id]?.nonArticle === true).map((source) => source.id);
+  const ids = sources.filter((source) => profiles[source.id]?.nonArticle === true || profiles[source.id]?.referenceArticles?.length).map((source) => source.id);
   const statuses = ids.length ? await sql<SourceStatus[]>`SELECT id,enabled,last_fetch_at FROM sources WHERE id = ANY(${ids}::text[])` : [];
   return { resources: resourceDirectory(sources, profiles, originals, statuses) };
 }

@@ -4514,6 +4514,138 @@
         "20261020核查补齐",
         "参与模式独立重建"
       ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-addyosmani",
+      "name": "Addy Osmani · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:addyosmani -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:addyosmani",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261101核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-dmwlff",
+      "name": "Adam Wolff · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:dmwlff -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:dmwlff",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261101核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-promptarmor",
+      "name": "PromptArmor · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:promptarmor -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:promptarmor",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261101核查补齐",
+        "参与模式独立重建"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-jensenhuang",
+      "name": "Jensen Huang 同名账号 · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:jensenhuang -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:jensenhuang",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261101核查补齐",
+        "参与模式独立重建"
+      ]
     }
   ],
   "aliases": [
@@ -8749,6 +8881,114 @@
       "checkedAt": "2026-10-20T11:02:56.363Z",
       "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
       "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
+    },
+    "corescope-x-addyosmani": {
+      "id": "corescope-x-addyosmani",
+      "status": "verified",
+      "checkedAt": "2026-11-01T13:52:30.446Z",
+      "scope": "Exact source-card primary author plus original URL; existing tested Bird adapter contract, not a new provider run.",
+      "observedSourceName": "Addy Osmani",
+      "evidenceFile": ".data/qa/aihot-source-refresh-20261101/identity-final-review.json",
+      "publicEvidence": [
+        {
+          "url": "https://x.com/addyosmani/status/2115688494865465370",
+          "aihotItem": "https://aihot.news/items/m1cx9dfhpep0da323x3tk7vht",
+          "publishedAt": "2026-10-29T06:13:39.000Z"
+        },
+        {
+          "url": "https://x.com/addyosmani/status/2115480412151762979",
+          "aihotItem": "https://aihot.news/items/zifluc07ejp2rmy2khpmc8eao",
+          "publishedAt": "2026-10-28T16:26:48.000Z"
+        },
+        {
+          "url": "https://x.com/addyosmani/status/2115326629488824753",
+          "aihotItem": "https://aihot.news/items/tw5fe5mj6a2zyp6ica2ec3qpb",
+          "publishedAt": "2026-10-28T06:15:43.000Z"
+        },
+        {
+          "url": "https://x.com/addyosmani/status/2114967833708732607",
+          "aihotItem": "https://aihot.news/items/p0564s3bnal29y8dxo4k1xzrj",
+          "publishedAt": "2026-10-27T06:30:00.000Z"
+        },
+        {
+          "url": "https://x.com/addyosmani/status/2114604912520921136",
+          "aihotItem": "https://aihot.news/items/tayvvf1exa7cyqyxmjm2c6dbj",
+          "publishedAt": "2026-10-26T06:27:53.000Z"
+        }
+      ],
+      "previewStatus": "exact_primary_x_identity_verified",
+      "limitations": [
+        "Primary status author and source card verified; real-world employment, official account authenticity, AIHOT private heat strategy, provider availability and complete48h coverage are separate acceptance layers.",
+        "Use current Bird provider, profile gate, paid-request receipts, cursor and budget checks; do not bypass account cooldown/lease or change provider to force acceptance."
+      ],
+      "configProvenance": "Independent public route/account reconstruction; not AIHOT private collector export.",
+      "paidRuntimeAcceptance": "Not inferred; Root records actual collection, empty results, ingestion and blocked acceptance separately."
+    },
+    "corescope-x-dmwlff": {
+      "id": "corescope-x-dmwlff",
+      "status": "verified",
+      "checkedAt": "2026-11-01T13:52:33.890Z",
+      "scope": "Exact source-card primary author plus original URL; existing tested Bird adapter contract, not a new provider run.",
+      "observedSourceName": "Adam Wolff",
+      "evidenceFile": ".data/qa/aihot-source-refresh-20261101/identity-final-review.json",
+      "publicEvidence": [
+        {
+          "url": "https://x.com/dmwlff/status/2115614417689944066",
+          "aihotItem": "https://aihot.news/items/rmoip040puarxmykygotag5mf",
+          "publishedAt": "2026-10-29T01:19:18.000Z"
+        }
+      ],
+      "previewStatus": "exact_primary_x_identity_verified",
+      "limitations": [
+        "Primary status author and source card verified; real-world employment, official account authenticity, AIHOT private heat strategy, provider availability and complete48h coverage are separate acceptance layers.",
+        "Use current Bird provider, profile gate, paid-request receipts, cursor and budget checks; do not bypass account cooldown/lease or change provider to force acceptance."
+      ],
+      "configProvenance": "Independent public route/account reconstruction; not AIHOT private collector export.",
+      "paidRuntimeAcceptance": "Not inferred; Root records actual collection, empty results, ingestion and blocked acceptance separately."
+    },
+    "corescope-x-promptarmor": {
+      "id": "corescope-x-promptarmor",
+      "status": "verified",
+      "checkedAt": "2026-11-01T13:52:37.401Z",
+      "scope": "Exact source-card primary author plus original URL; existing tested Bird adapter contract, not a new provider run.",
+      "observedSourceName": "PromptArmor",
+      "evidenceFile": ".data/qa/aihot-source-refresh-20261101/identity-final-review.json",
+      "publicEvidence": [
+        {
+          "url": "https://x.com/PromptArmor/status/2115491281967202736",
+          "aihotItem": "https://aihot.news/items/toco96zndt3zpj4ro3njfjnpr",
+          "publishedAt": "2026-10-28T17:10:00.000Z"
+        }
+      ],
+      "previewStatus": "exact_primary_x_identity_verified",
+      "limitations": [
+        "Primary status author and source card verified; real-world employment, official account authenticity, AIHOT private heat strategy, provider availability and complete48h coverage are separate acceptance layers.",
+        "Use current Bird provider, profile gate, paid-request receipts, cursor and budget checks; do not bypass account cooldown/lease or change provider to force acceptance."
+      ],
+      "configProvenance": "Independent public route/account reconstruction; not AIHOT private collector export.",
+      "paidRuntimeAcceptance": "Not inferred; Root records actual collection, empty results, ingestion and blocked acceptance separately."
+    },
+    "corescope-x-jensenhuang": {
+      "id": "corescope-x-jensenhuang",
+      "status": "verified",
+      "checkedAt": "2026-11-01T13:52:40.891Z",
+      "scope": "Exact source-card primary author plus original URL; existing tested Bird adapter contract, not a new provider run.",
+      "observedSourceName": "Jensen Huang",
+      "evidenceFile": ".data/qa/aihot-source-refresh-20261101/identity-final-review.json",
+      "publicEvidence": [
+        {
+          "url": "https://x.com/JensenHuang/status/2114773600574279837",
+          "aihotItem": "https://aihot.news/items/boquhpsn9ruk54lijpobgx6ci",
+          "publishedAt": "2026-10-26T17:38:11.000Z"
+        }
+      ],
+      "previewStatus": "exact_primary_x_identity_verified",
+      "limitations": [
+        "Primary status author and source card verified; real-world employment, official account authenticity, AIHOT private heat strategy, provider availability and complete48h coverage are separate acceptance layers.",
+        "Use current Bird provider, profile gate, paid-request receipts, cursor and budget checks; do not bypass account cooldown/lease or change provider to force acceptance."
+      ],
+      "configProvenance": "Independent public route/account reconstruction; not AIHOT private collector export.",
+      "paidRuntimeAcceptance": "Not inferred; Root records actual collection, empty results, ingestion and blocked acceptance separately."
     }
   },
   "coverage": [
@@ -9489,6 +9729,30 @@
       "observedIdentity": "x:xsquarerobot",
       "status": "reviewed_configuration_added_runtime_acceptance_separate",
       "evidence": "docs/corescope-source-expansion-20261020.json"
+    },
+    {
+      "sourceId": "corescope-x-addyosmani",
+      "observedIdentity": "x:addyosmani",
+      "status": "reviewed_configuration_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261101.json"
+    },
+    {
+      "sourceId": "corescope-x-dmwlff",
+      "observedIdentity": "x:dmwlff",
+      "status": "reviewed_configuration_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261101.json"
+    },
+    {
+      "sourceId": "corescope-x-promptarmor",
+      "observedIdentity": "x:promptarmor",
+      "status": "reviewed_configuration_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261101.json"
+    },
+    {
+      "sourceId": "corescope-x-jensenhuang",
+      "observedIdentity": "x:jensenhuang",
+      "status": "reviewed_configuration_runtime_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261101.json"
     }
   ],
   "refreshReviews": [
@@ -9565,6 +9829,18 @@
       ],
       "evidence": "docs/corescope-source-expansion-20261020.json",
       "scope": "Independent public entry/account reconstruction; runtime acceptance is separate."
+    },
+    {
+      "observedAt": "2026-11-01T13:51:03.750Z",
+      "preparedAt": "2026-11-01T15:02:37.938Z",
+      "sourceIds": [
+        "corescope-x-addyosmani",
+        "corescope-x-dmwlff",
+        "corescope-x-promptarmor",
+        "corescope-x-jensenhuang"
+      ],
+      "evidence": "docs/corescope-source-expansion-20261101.json",
+      "scope": "User-authorized13-source refresh; actual collection acceptance separate."
     }
   ]
 }

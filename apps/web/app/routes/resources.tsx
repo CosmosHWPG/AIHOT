@@ -7,7 +7,7 @@ interface Resource {
   id: string; name: string; category: string; url: string | null; description: string;
   status: "monitored" | "needs_scope" | "reference" | "paused"; checkedAt: string | null;
 }
-const LABELS: Record<Resource["status"], string> = { monitored: "监测更新", needs_scope: "待确定关注对象", reference: "目录入口", paused: "监测已暂停" };
+const LABELS: Record<Resource["status"], string> = { monitored: "监测更新", needs_scope: "待确定关注对象", reference: "参考资料", paused: "监测已暂停" };
 
 export async function loader({ request }: { request: Request }) {
   const result = await apiGet<{ resources: Resource[] }>("/api/site/resources", { signal: request.signal });
@@ -28,7 +28,7 @@ export default function ResourcesPage() {
         <div className="flex items-start justify-between gap-3"><h2 className="text-[15px] font-bold text-ink">{resource.name}</h2><span className="whitespace-nowrap rounded bg-bg-sunk px-2 py-1 text-[10px] text-ink-3">{LABELS[resource.status]}</span></div>
         <p className="mt-2 text-[11px] text-accent">{resource.category}</p>
         <p className="mt-2 flex-1 text-[12.5px] leading-[1.7] text-ink-3">{resource.description}</p>
-        {resource.url && <a href={resource.url} target="_blank" rel="noopener noreferrer" className="mt-4 text-[12px] font-medium text-accent hover:underline">打开原始目录 →</a>}
+        {resource.url && <a href={resource.url} target="_blank" rel="noopener noreferrer" className="mt-4 text-[12px] font-medium text-accent hover:underline">打开原始链接 →</a>}
       </li>)}
     </ul>
     {!resources.length && <p className="text-[13px] text-ink-3">资源目录尚未配置。</p>}
