@@ -13,7 +13,7 @@ function sources(dir: string): Array<{ file: string; text: string }> {
   for (const entry of readdirSync(path.join(ROOT, dir), { withFileTypes: true, recursive: true })) {
     const full = path.join(entry.parentPath, entry.name);
     if (!entry.isFile() || !/\.tsx?$/.test(entry.name) || /[/\\](node_modules|build|\.react-router)[/\\]/.test(full)) continue;
-    out.push({ file: path.relative(ROOT, full), text: readFileSync(full, "utf8") });
+    out.push({ file: path.relative(ROOT, full).replaceAll("\\", "/"), text: readFileSync(full, "utf8") });
   }
   return out;
 }
@@ -26,7 +26,7 @@ function backendPath(file: string, spec: string): string | null {
   if (spec.startsWith("@aihot/backend/")) return `${spec.slice("@aihot/backend/".length)}.ts`;
   if (!spec.startsWith(".")) return null;
   const target = path.relative(BACKEND, path.resolve(ROOT, path.dirname(file), spec));
-  return target.startsWith("..") ? null : target;
+  return target.startsWith("..") ? null : target.replaceAll("\\", "/");
 }
 
 function violations(files: Array<{ file: string; text: string }>, broken: (file: string, spec: string) => boolean): string[] {
@@ -73,7 +73,7 @@ const OWNERS: Record<string, string> = {
 test("the tables that carry a rule are written only by the module that owns it", () => {
   const found: string[] = [];
   for (const { file, text } of sources("packages/backend/src")) {
-    const own = path.relative("packages/backend/src", file);
+    const own = path.relative("packages/backend/src", file).replaceAll("\\", "/");
     for (const [, table] of text.matchAll(/\b(?:INSERT\s+INTO|DELETE\s+FROM|UPDATE)\s+([a-z_]+)\b/gi)) {
       const owner = OWNERS[table!.toLowerCase()];
       if (owner && !own.startsWith(owner)) found.push(`${file} writes ${table} (owner ${owner})`);

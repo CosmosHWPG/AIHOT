@@ -4,7 +4,7 @@
 import type { z } from "zod";
 import { config, credential } from "../config.ts";
 import { sha256 } from "../lib/ids.ts";
-import { completeReceipt, paidRequest, ProviderRejectedError, rejectReceivedResponse } from "./receipts.ts";
+import { completeReceipt, logicalKeyFor, paidRequest, ProviderRejectedError, ReceiptBusyError, ReceiptUnknownError, rejectReceivedResponse, type ReceiptRequest } from "./receipts.ts";
 import { sql } from "../db.ts";
 
 export interface ModelSpec {
@@ -94,6 +94,8 @@ export interface ChatJsonOptions<S extends z.ZodType> {
   schema: S;
   temperature?: number;
   maxTokens?: number;
+  /** Reuse an exact, schema-valid earlier generation before increasing its output budget. Never re-send it. */
+  reusePreviousMaxTokens?: number;
   attemptTag?: string;
   timeoutMs?: number;
   /** false: the model answers in its own text format (no JSON mode); `parse` turns it into the schema's input. */
@@ -167,7 +169,49 @@ export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): P
 
   const temperature = opts.temperature ?? 0.2;
   const maxTokens = Math.max(opts.maxTokens ?? 1500, 512) + (spec.key.endsWith("-think") ? 4000 : 0);
+  const extra = spec.extra ?? null;
   const userText = typeof opts.user === "string" ? opts.user : JSON.stringify(opts.user);
+  const requestFor = (tokens: number): ReceiptRequest => ({
+    service: spec.service, model: spec.model, purpose: opts.purpose, subject: opts.subject,
+    identity: { model: spec.model, promptVersion: opts.promptVersion, system: sha256(opts.system), user: sha256(userText), temperature, maxTokens: tokens, extra },
+    requestSummary: { promptVersion: opts.promptVersion, systemHash: sha256(opts.system), userHash: sha256(userText), userChars: userText.length, temperature, maxTokens: tokens },
+    attemptTag: opts.attemptTag,
+  });
+  const parse = (response: unknown) => {
+    const saved = response as { choices?: Array<{ message?: { content?: string } }>; usage?: Record<string, unknown> };
+    const content = saved?.choices?.[0]?.message?.content ?? "";
+    return { data: opts.schema.parse(opts.parse ? opts.parse(content) : extractJson(content)), usage: saved?.usage ?? null };
+  };
+  const request = requestFor(maxTokens);
+  if (opts.reusePreviousMaxTokens !== undefined) {
+    const previousTokens = Math.max(opts.reusePreviousMaxTokens, 512) + (spec.key.endsWith("-think") ? 4000 : 0);
+    if (previousTokens !== maxTokens) {
+      // Full identity, including independent score tag, must match. Subject alone is never enough.
+      const previous = requestFor(previousTokens);
+      const previousKey = logicalKeyFor(previous);
+      const currentKey = logicalKeyFor(request);
+      const generations = await sql<{ id: number; logical_key: string; status: string; response: unknown }[]>`
+        SELECT id, logical_key, status, response FROM receipts WHERE logical_key IN (${previousKey}, ${currentKey})
+          AND service = ${spec.service} AND model = ${spec.model} AND purpose = ${opts.purpose} AND subject = ${opts.subject}`;
+      // A late successful old client cannot hide an unresolved request under the current identity.
+      for (const generation of generations) {
+        if (generation.status === "pending") throw new ReceiptBusyError(`Receipt ${generation.id} is in flight`);
+        if (generation.status === "unknown") throw new ReceiptUnknownError(generation.id, `Receipt ${generation.id} has an unknown outcome; generation changes cannot re-send it`);
+      }
+      const saved = generations.find((generation) => generation.logical_key === previousKey);
+      if (saved) {
+        request.requestSummary = { ...request.requestSummary, previousReceiptId: saved.id, previousMaxTokens: previousTokens };
+        if (saved.status === "received" || saved.status === "completed") {
+          try {
+            const valid = parse(saved.response);
+            return { ...valid, receiptId: saved.id, reused: true, model: spec.key };
+          } catch {
+            // Preserve the old evidence; only a new, separately metered identity may replace unusable output.
+          }
+        }
+      }
+    }
+  }
   const body: Record<string, unknown> = {
     model: spec.model,
     messages: [
@@ -179,19 +223,11 @@ export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): P
     temperature,
     max_tokens: maxTokens,
     ...(spec.jsonMode && opts.json !== false ? { response_format: { type: "json_object" } } : {}),
-    ...(spec.extra ?? {}),
+    ...(extra ?? {}),
   };
 
   const receipt = await paidRequest(
-    {
-      service: spec.service,
-      model: spec.model,
-      purpose: opts.purpose,
-      subject: opts.subject,
-      identity: { model: spec.model, promptVersion: opts.promptVersion, system: sha256(opts.system), user: sha256(userText), temperature, maxTokens, extra: spec.extra ?? null },
-      requestSummary: { promptVersion: opts.promptVersion, systemHash: sha256(opts.system), userHash: sha256(userText), userChars: userText.length, temperature, maxTokens },
-      attemptTag: opts.attemptTag,
-    },
+    request,
     async () => {
       const started = Date.now();
       let res: Response;
@@ -228,17 +264,15 @@ export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): P
     },
   );
 
-  const response = receipt.response as { choices?: Array<{ message?: { content?: string }; finish_reason?: string }>; usage?: Record<string, unknown> };
-  const content = response.choices?.[0]?.message?.content ?? "";
-  let parsed: z.infer<S>;
+  let parsed: ReturnType<typeof parse>;
   try {
-    parsed = opts.schema.parse(opts.parse ? opts.parse(content) : extractJson(content));
+    parsed = parse(receipt.response);
   } catch (error) {
     // Unusable output: record it and let a later attempt pay for a fresh answer.
     await rejectReceivedResponse(receipt.receiptId, `unusable output: ${String(error).slice(0, 500)}`);
     throw new ModelOutputError(`Model ${opts.model} returned unusable output for ${opts.subject}: ${String(error).slice(0, 300)}`, receipt.receiptId);
   }
-  return { data: parsed, receiptId: receipt.receiptId, reused: receipt.reused, model: spec.key, usage: response.usage ?? null };
+  return { ...parsed, receiptId: receipt.receiptId, reused: receipt.reused, model: spec.key };
 }
 
 export async function markReceiptsCompleted(ids: number[]): Promise<void> {

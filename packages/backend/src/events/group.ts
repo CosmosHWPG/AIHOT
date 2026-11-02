@@ -15,12 +15,12 @@
 // look when a report founds a fact close to them (rematchSignals); history (isHistorical) founds no
 // event. Runs serially (queue concurrency 1).
 import { beijingDate } from "@aihot/contracts/time";
-import { candidateViews, recallFacts, relatedPosts, vectorsFor } from "./recall.ts";
+import { candidateViews, recallFacts, relatedPosts, trusted, vectorsFor } from "./recall.ts";
 import { consolidate, liveStory, type Consolidation } from "./consolidate.ts";
 import { modelFor } from "../editorial/models.ts";
 import { sql, type Db, type Tx } from "../db.ts";
-import { newShortId, newUuid } from "../lib/ids.ts";
-import { chatJson } from "../providers/llm.ts";
+import { newShortId, newUuid, sha256, stableJson } from "../lib/ids.ts";
+import { chatJson, MODELS } from "../providers/llm.ts";
 import { completeReceipt } from "../providers/receipts.ts";
 import { embeddingsAvailable, cosine } from "../providers/embeddings.ts";
 import { isHistorical, STALE_ON_DISCOVERY_MS } from "../content/materials.ts";
@@ -89,9 +89,9 @@ async function confirmMerge(articleId: string, query: ReportView, cand: Candidat
   return { relation: res.data.relation, receiptId: res.receiptId };
 }
 
-async function judgeSignal(articleId: string, query: ReportView, cands: CandidateView[]): Promise<{ verdicts: Map<number, Verdict>; receiptId: number }> {
+async function judgeSignal(article: { id: string; revision: number }, query: ReportView, cands: CandidateView[], model: string, fingerprint: string): Promise<{ verdicts: Map<number, Verdict>; receiptId: number }> {
   const res = await chatJson({
-    model: await modelFor("group"), purpose: "group_signal", subject: `article:${articleId}`, promptVersion: RELATE_PROMPT_VERSION,
+    model, purpose: "group_signal", subject: `article:${article.id}@${article.revision}:signal:${fingerprint}`, promptVersion: RELATE_PROMPT_VERSION,
     system: SIGNAL_SYSTEM, user: batchUser(query, cands, "帖子"), schema: SignalSchema, temperature: 0, maxTokens: 150 + 60 * cands.length,
   });
   return { verdicts: verdictsByFact(res.data.decisions, cands), receiptId: res.receiptId };
@@ -131,7 +131,11 @@ export async function recordSignal(db: Tx, storyId: number, articleId: string, s
     ON CONFLICT (story_id, article_id) DO NOTHING`;
 }
 
-type DecisionCandidate = { id: number; score: number; relation?: Relation; confidence?: number };
+type DecisionCandidate = {
+  id: number; score: number; relation?: Relation; confidence?: number;
+  /** The first candidate stores the exact input judged, without adding a separate cache table. */
+  signalInputRevision?: number; signalInputFingerprint?: string;
+};
 
 async function recordDecision(db: Db, articleId: string, factId: number | null, storyId: number | null, verdict: string, candidates: DecisionCandidate[], receiptId: number | null) {
   await db`INSERT INTO grouping_decisions (article_id, fact_id, story_id, verdict, candidates, receipt_id)
@@ -270,7 +274,13 @@ async function decide(articleId: string, opts: GroupOptions): Promise<GroupResul
   if (kept) {
     await markGrouped(articleId);
     await publishArticle(articleId);
-    return { verdict: "kept", factId: kept.factId, storyId: kept.storyId };
+    const result: GroupResult = { verdict: "kept", factId: kept.factId, storyId: kept.storyId };
+    // A membership can predate the discussion import, or its first rematch can have waited on a
+    // budget. Keeping the report must still give those recent posts the normal matching path.
+    const [current] = await sql<{ title: string; summary: string | null }[]>`
+      SELECT title, summary FROM publications WHERE article_id = ${articleId} AND visibility = 'public'`;
+    if (current) await rematchReport(a, reportText(current.title, current.summary), result);
+    return result;
   }
 
   const [an] = await sql<{ id: number; relevance: string | null; title_zh: string | null; summary_zh: string | null; output: Record<string, any> | null }[]>`
@@ -406,15 +416,8 @@ async function decide(articleId: string, opts: GroupOptions): Promise<GroupResul
   }
   const redirected = await redirectEmptiedStories(articleId, left, result.storyId!);
   if (redirected.length) result.redirected = redirected;
-  // Discussion posts that reply to or quote this post and came first now have its story, whichever
-  // fact it joined (the posts waiting on an original wake when the original arrives).
-  if (a.x_post?.tweetId) {
-    try {
-      result.reclaimed = await reclaimWaiting(a.x_post.tweetId);
-    } catch (error) {
-      result.reclaimError = String(error).slice(0, 300);
-    }
-  }
+  // Discussion posts that reply to or quote this post wake whichever fact it joined.
+  await reclaimReport(a, result);
   // A new fact may be what discussion posts of the last hours were about before any report came.
   if (verdict === "new-story" || verdict === "new-fact-in-story") {
     try {
@@ -427,7 +430,7 @@ async function decide(articleId: string, opts: GroupOptions): Promise<GroupResul
 }
 
 /** How far back discussion posts that found no story get another look when a new fact appears. */
-const REMATCH_HOURS = 6;
+const REMATCH_HOURS = 48;
 /** How long a discussion post waits for the post it replies to or quotes (48 hours). */
 const WAIT_HOURS = 48;
 
@@ -438,6 +441,24 @@ const unattachedSignal = sql`
   AND NOT EXISTS (SELECT 1 FROM story_signals ss WHERE ss.article_id = a.id)
   AND NOT EXISTS (SELECT 1 FROM grouping_decisions d WHERE d.article_id = a.id AND d.verdict <> 'signal-unmatched')
   AND NOT EXISTS (SELECT 1 FROM grouping_overrides o WHERE o.article_id = a.id)`;
+
+async function reclaimReport(a: ArticleRow, result: GroupResult): Promise<void> {
+  if (!a.x_post?.tweetId) return;
+  try {
+    result.reclaimed = await reclaimWaiting(a.x_post.tweetId);
+  } catch (error) {
+    result.reclaimError = String(error).slice(0, 300);
+  }
+}
+
+async function rematchReport(a: ArticleRow, text: string, result: GroupResult): Promise<void> {
+  await reclaimReport(a, result);
+  try {
+    result.rematched = await rematchSignals(a.id, text);
+  } catch (error) {
+    result.rematchError = String(error).slice(0, 300);
+  }
+}
 
 /**
  * A reaction often comes before the post it quotes is collected (Dan Shipper's "SONNET 5.5 IS OUT!"
@@ -467,7 +488,10 @@ async function rematchSignals(articleId: string, queryText: string): Promise<num
   if (!mine) return 0;
   const posts = await sql<{ id: string; title: string; body_text: string | null }[]>`
     SELECT a.id, a.title, a.body_text FROM articles a JOIN sources s ON s.id = a.source_id
-    WHERE a.discovered_at > now() - make_interval(hours => ${REMATCH_HOURS}) AND ${unattachedSignal}`;
+    WHERE coalesce(a.published_at, a.discovered_at) > now() - make_interval(hours => ${REMATCH_HOURS})
+      AND coalesce(a.published_at, a.discovered_at) <= now() AND ${unattachedSignal}
+    ORDER BY coalesce(a.published_at, a.discovered_at) DESC, a.id
+    LIMIT 2000`;
   const vectors = await vectorsFor(posts.map((p) => ({ id: p.id, text: signalText(p) })));
   let close = 0;
   for (const p of posts) {
@@ -481,6 +505,31 @@ async function rematchSignals(articleId: string, queryText: string): Promise<num
 }
 
 /**
+ * Bounded catch-up for already founded, public facts of the heat window. It only queues the same
+ * signal jobs as a new report; their current candidates and stored decisions decide any attachment.
+ */
+export async function rematchRecentSignals(limit = 50): Promise<{ reports: number; enqueued: number }> {
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 200) throw new Error("Signal rematch limit must be between 1 and 200");
+  if (!embeddingsAvailable()) return { reports: 0, enqueued: 0 };
+  const reports = await sql<{ article_id: string; title: string; summary: string | null }[]>`
+    SELECT x.article_id, x.title, x.summary FROM (
+      SELECT DISTINCT ON (f.id) a.id AS article_id, p.title, p.summary,
+        coalesce(p.published_at, p.discovered_at) AS at
+      FROM facts f JOIN stories st ON st.id = f.story_id AND st.merged_into IS NULL
+      JOIN fact_articles fa ON fa.fact_id = f.id AND fa.role IN ('primary', 'report') AND ${trusted("fa")}
+      JOIN articles a ON a.id = fa.article_id JOIN publications p ON p.article_id = a.id
+      JOIN sources s ON s.id = a.source_id
+      WHERE p.visibility = 'public' AND p.eligible AND s.participation_mode = 'editorial'
+        AND coalesce(p.published_at, p.discovered_at) > now() - make_interval(hours => ${REMATCH_HOURS})
+        AND coalesce(p.published_at, p.discovered_at) <= now()
+      ORDER BY f.id, coalesce(p.published_at, p.discovered_at) DESC, a.id
+    ) x ORDER BY x.at DESC, x.article_id LIMIT ${limit}`;
+  let enqueued = 0;
+  for (const report of reports) enqueued += await rematchSignals(report.article_id, reportText(report.title, report.summary));
+  return { reports: reports.length, enqueued };
+}
+
+/**
  * Discussion evidence (hot_signal sources): the post the item replies to or quotes decides first;
  * otherwise clear candidates are judged, and a nearly identical report attaches without a call.
  */
@@ -489,7 +538,16 @@ async function groupSignal(a: ArticleRow, source: { id: string; signal_group_id:
   // evidence and decision commit together; a retry cannot leave half of a signal attached.
   const write = async (target: { factId: number; storyId: number } | null, verdict: "signal" | "signal-native" | "signal-unmatched", candidates: DecisionCandidate[], receiptId: number | null = null): Promise<GroupResult> => {
     return sql.begin(async (tx) => {
-      await tx`SELECT 1 FROM articles WHERE id = ${a.id} FOR UPDATE`;
+      // Source edits lock the source before its articles. A paid answer from an earlier material
+      // revision or a source whose participation changed cannot become current discussion evidence.
+      await tx`SELECT s.id FROM sources s JOIN articles x ON x.source_id = s.id WHERE x.id = ${a.id} FOR SHARE OF s`;
+      const [current] = await tx<{ revision: number; participation_mode: string }[]>`
+        SELECT x.revision, s.participation_mode FROM articles x JOIN sources s ON s.id = x.source_id
+        WHERE x.id = ${a.id} FOR UPDATE OF x`;
+      if (!current || current.revision !== a.revision || current.participation_mode !== "hot_signal") {
+        if (receiptId !== null) await completeReceipt(tx, receiptId);
+        return { verdict: "skipped" };
+      }
       const manual = await manualDecision(tx, a.id);
       if (!manual) {
         if (target) await recordSignal(tx, target.storyId, a.id, source, "signal", observedAt);
@@ -519,7 +577,24 @@ async function groupSignal(a: ArticleRow, source: { id: string; signal_group_id:
   const cands = await candidateViews(recalled);
   if (cands.length === 0) return { verdict: "signal-unmatched" };
   const query: ReportView = { title: a.title, source: a.source_name, firstParty: false, at: observedAt, summary: a.body_text?.slice(0, 300) ?? null };
-  const { verdicts, receiptId } = await judgeSignal(a.id, query, cands);
+  const model = await modelFor("group");
+  const spec = MODELS[model]!;
+  const fingerprint = sha256(stableJson({
+    revision: a.revision, model: spec.model, service: spec.service, extra: spec.extra ?? null,
+    prompt: RELATE_PROMPT_VERSION, user: batchUser(query, cands, "帖子"),
+    candidates: cands.map(c => ({ factId: c.factId, storyId: c.storyId, storyRoot: c.storyRoot, score: Math.round(c.score * 1_000_000) / 1_000_000 })),
+  }));
+  // An unrelated decision is evidence, not a reason to spend again every catch-up tick. A changed
+  // revision/candidate input needs a current decision, but chatJson still reuses its stored receipt
+  // when the actual model prompt is identical; an audit revision alone must not force a paid rerun.
+  const [settled] = await sql`
+    SELECT 1 FROM grouping_decisions WHERE article_id = ${a.id} AND verdict = 'signal-unmatched'
+      AND candidates->0->>'signalInputRevision' = ${String(a.revision)}
+      AND candidates->0->>'signalInputFingerprint' = ${fingerprint} LIMIT 1`;
+  if (settled) return { verdict: "signal-unmatched" };
+  const { verdicts, receiptId } = await judgeSignal(a, query, cands, model, fingerprint);
   const target = signalTarget(cands, verdicts);
-  return write(target, target ? "signal" : "signal-unmatched", asCandidates(verdicts), receiptId);
+  const decisions = asCandidates(verdicts);
+  decisions[0] = { ...decisions[0]!, signalInputRevision: a.revision, signalInputFingerprint: fingerprint };
+  return write(target, target ? "signal" : "signal-unmatched", decisions, receiptId);
 }

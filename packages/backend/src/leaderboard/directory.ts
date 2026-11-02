@@ -21,8 +21,11 @@ const chunks = <T>(list: T[], size: number) => Array.from({ length: Math.ceil(li
 
 export async function importModelDirectory(file = DIRECTORY_FILE): Promise<{ models: number; aliases: number }> {
   const dir = JSON.parse(readFileSync(file, "utf8")) as Directory;
+  // A normal restart must not resend the whole directory as conflicting INSERTs. Even a no-op
+  // ON CONFLICT still makes PostgreSQL parse and bind every row under host memory pressure.
+  const existingSlugs = new Set((await sql<{ slug: string }[]>`SELECT slug FROM lb_models`).map((m) => m.slug));
   let models = 0;
-  for (const chunk of chunks(dir.models, 500)) {
+  for (const chunk of chunks(dir.models.filter(([slug]) => !existingSlugs.has(slug)), 100)) {
     const rows = chunk.map(([slug, name, provider, providerSlug, releasedOn]) => ({
       id: createId(), slug, name, provider, provider_slug: providerSlug, released_at: releasedOn,
       release_date_source: releasedOn ? "directory" : null, metadata_source: "directory",
@@ -32,12 +35,14 @@ export async function importModelDirectory(file = DIRECTORY_FILE): Promise<{ mod
     models += res.count;
   }
   const ids = new Map((await sql<{ id: string; slug: string }[]>`SELECT id, slug FROM lb_models`).map((m) => [m.slug, m.id]));
+  const existingAliases = new Set((await sql<{ source_key: string; alias: string }[]>`SELECT source_key, alias FROM lb_aliases`)
+    .map((a) => JSON.stringify([a.source_key, a.alias])));
   const aliasRows = Object.entries(dir.aliases).flatMap(([sourceKey, names]) =>
     Object.entries(names)
-      .filter(([, slug]) => ids.has(slug))
+      .filter(([alias, slug]) => ids.has(slug) && !existingAliases.has(JSON.stringify([sourceKey, alias])))
       .map(([alias, slug]) => ({ id: createId(), source_key: sourceKey, alias, normalized_alias: slug, model_id: ids.get(slug)! })));
   let aliases = 0;
-  for (const chunk of chunks(aliasRows, 1000)) {
+  for (const chunk of chunks(aliasRows, 200)) {
     const res = await sql`INSERT INTO lb_aliases ${sql(chunk, "id", "source_key", "alias", "normalized_alias", "model_id")}
                           ON CONFLICT (source_key, alias) DO NOTHING`;
     aliases += res.count;

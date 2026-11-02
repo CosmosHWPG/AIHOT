@@ -3,6 +3,15 @@
 import { credential } from "../config.ts";
 import { guardedFetch } from "../lib/http-fetch.ts";
 import { paidRequest, ProviderRejectedError } from "./receipts.ts";
+import { jinaDeniedPublisher } from "../content/body-route.ts";
+
+/** Operator policy is checked before credentials, receipt lookup, budget or HTTP dispatch. */
+export class JinaPublisherPolicyError extends ProviderRejectedError {
+  constructor() {
+    super("Jina is disabled for this publisher; use its approved public body route", null, false);
+    this.name = "JinaPublisherPolicyError";
+  }
+}
 
 export interface JinaPage {
   title: string | null;
@@ -28,6 +37,7 @@ export async function jinaRead(
   targetUrl: string,
   opts: { purpose: string; subject: string; format?: "markdown" | "html"; cacheToleranceSeconds?: number; round?: string },
 ): Promise<JinaPage & { receiptId: number; raw: string }> {
+  if (jinaDeniedPublisher(targetUrl)) throw new JinaPublisherPolicyError();
   const key = credential("collectors", "JINA_API_KEY");
   if (!key) throw new Error("JINA_API_KEY is not configured");
   const base = (credential("collectors", "JINA_BASE_URL") ?? "https://r.jina.ai").replace(/\/$/, "");
@@ -46,11 +56,17 @@ export async function jinaRead(
         throw new ProviderRejectedError(`jina HTTP ${res.status}`, res.status, false);
       }
       if (res.status === 429 || res.status >= 500) throw new ProviderRejectedError(`jina HTTP ${res.status}`, res.status, true);
-      const text = res.text();
+      const originalText = res.text().slice(0, 2_000_000);
+      // JSONB rejects NUL and lone surrogates (including a pair split by the existing cap).
+      // Preserve the exact truncated UTF-16 units separately only when text needs repair.
+      const text = originalText.toWellFormed().replace(/\u0000/g, "");
+      const original = text === originalText ? {} : {
+        originalText: { encoding: "utf16le", base64: Buffer.from(originalText, "utf16le").toString("base64") },
+      };
       // Billed in tokens; estimated at about ¥0.36 per million. Without the usage header nothing is guessed.
       const tokens = Number(res.headers.get("x-usage-tokens")) || null;
       const cost = tokens ? { amount: (tokens / 1e6) * 0.36, currency: "CNY", basis: "estimated" as const } : null;
-      return { response: { text: text.slice(0, 2_000_000), status: res.status }, requestId: res.headers.get("x-request-id"), usage: { bytes: res.body.length, tokens }, cost };
+      return { response: { text, status: res.status, ...original }, requestId: res.headers.get("x-request-id"), usage: { bytes: res.body.length, tokens }, cost };
     },
   );
   const raw = String((receipt.response as { text?: string })?.text ?? "");

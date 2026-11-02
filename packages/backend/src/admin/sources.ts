@@ -15,6 +15,9 @@ import { assertSupportedConfig } from "../sources/config-keys.ts";
 import type { SourceRow } from "../sources/types.ts";
 import { fetchWebList } from "../sources/web-list.ts";
 import { fetchXSearch } from "../sources/x.ts";
+import { readWxCache } from "../sources/wx-cache.ts";
+import { bindHistoricXProviders, routeProvider, transitionXCursor } from "../sources/x-route.ts";
+import { credential } from "../config.ts";
 
 
 export interface SourceListFilters {
@@ -66,7 +69,39 @@ export async function sourceDetail(id: string): Promise<BeforeJson<AdminSourceDe
     FROM articles a WHERE a.source_id = ${id}`;
   const history = await auditHistory(`source:${id}`);
   const [republish] = await sql<{ value: Record<string, unknown> }[]>`SELECT value FROM settings WHERE key = ${republishKey(id)}`;
-  return { source, runs, items, stats: stats!, history, republish: republish?.value ?? null };
+  const x = source.kind === "x_search" ? await xSourceStatus(source) : undefined;
+  return { source, runs, items, stats: stats!, history, republish: republish?.value ?? null, ...(x ? { x } : {}) };
+}
+
+async function xSourceStatus(source: BeforeJson<AdminSource>): Promise<BeforeJson<NonNullable<AdminSourceDetail["x"]>>> {
+  const provider = routeProvider(source.config);
+  const cursor = source.cursor ?? {};
+  const bird = cursor.bird && typeof cursor.bird === "object" ? cursor.bird as Record<string, unknown> : {};
+  const backlog = provider === "bird" ? bird.backlog : cursor.xBacklog;
+  const gap = (provider === "bird" ? bird.gap : cursor.xProviderGap) as NonNullable<AdminSourceDetail["x"]>["gap"] | undefined;
+  const routeHistory = Array.isArray(cursor.xRouteHistory) ? cursor.xRouteHistory : [];
+  const changedAt = (routeHistory.at(-1) as { capturedAt?: unknown } | undefined)?.capturedAt;
+  const routeSince = typeof changedAt === "string" && Number.isFinite(Date.parse(changedAt)) ? new Date(changedAt) : null;
+  const [success] = await sql<{ at: Date | null }[]>`SELECT max(finished_at) AS at FROM fetch_runs
+    WHERE source_id=${source.id} AND status='ok' AND detail->>'provider'=${provider}
+      AND (${routeSince}::timestamptz IS NULL OR finished_at>=${routeSince})`;
+  let profile: BeforeJson<NonNullable<AdminSourceDetail["x"]>>["profile"] = null;
+  if (provider === "bird") {
+    const options = source.config.bird as Record<string, unknown> | undefined;
+    const name = String(options?.accountProfile ?? credential("collectors", "BIRD_ACCOUNT_PROFILE") ?? "birdclaw-primary");
+    const [gate] = await sql<{ verified_at: Date | null; cooldown_until: Date | null; lease_until: Date | null }[]>`
+      SELECT verified_at,cooldown_until,lease_until FROM bird_profile_gate WHERE profile=${name}`;
+    const now = Date.now();
+    const state = !/^(1|true)$/i.test(credential("collectors", "BIRD_ENABLED") ?? "false") ? "disabled"
+      : gate?.cooldown_until && gate.cooldown_until.getTime() > now ? "cooldown"
+      : gate?.lease_until && gate.lease_until.getTime() > now ? "busy" : gate?.verified_at ? "verified" : "unverified";
+    profile = { name, state, verifiedAt: gate?.verified_at ?? null, cooldownUntil: gate?.cooldown_until ?? null };
+  }
+  const coverage = provider === "bird" && ["complete", "partial", "unknown"].includes(String(bird.coverage))
+    ? bird.coverage as "complete" | "partial" | "unknown" : gap || Array.isArray(backlog) && backlog.length ? "partial" : "unknown";
+  return { provider, coverage, checkedAt: typeof bird.checkedAt === "string" && provider === "bird" ? bird.checkedAt : null,
+    lastSuccessAt: success!.at, backlogCount: Array.isArray(backlog) ? backlog.length : 0,
+    archivedRoutes: Array.isArray(cursor.xRouteHistory) ? cursor.xRouteHistory.length : 0, gap: gap ?? null, profile };
 }
 
 /** A stored source fetched now without storing anything; null when there is no such source. */
@@ -84,6 +119,7 @@ export async function previewSource(draft: Pick<SourceRow, "id" | "kind" | "conf
   else if (source.kind === "web_list") candidates = await fetchWebList(source, { preview: true });
   else if (source.kind === "json_list") candidates = await fetchJsonList(source);
   else if (source.kind === "x_search") candidates = (await fetchXSearch(source)).candidates;
+  else if (source.kind === "mp_account" && source.config.transport === "wx_cache") candidates = readWxCache(source).candidates;
   else throw new Error(`preview is not available for ${source.kind} sources`);
   return {
     ms: Date.now() - started,
@@ -128,10 +164,17 @@ export async function updateSource(id: string, input: { patch: unknown; version:
     }
     const keys = Object.keys(patch) as Array<keyof typeof patch>;
     if (!keys.length) return before;
+    const transition = before.kind === "x_search" && patch.config
+      ? transitionXCursor(before.cursor as Record<string, unknown> | null, before.config as Record<string, unknown>, patch.config) : null;
+    const changedRoute = transition !== null && transition.change !== "none";
+    const historicProviders = changedRoute ? await bindHistoricXProviders(tx, { id, config: before.config as Record<string, unknown> }) : null;
     const values = Object.fromEntries(keys.map((k) => [k, k === "config" ? tx.json(patch.config as never) : patch[k]]));
-    const [after] = await tx`UPDATE sources SET ${tx(values as never, ...(keys as string[]))}, updated_at = now(),
-      health = CASE WHEN ${patch.enabled ?? null}::boolean IS FALSE THEN 'paused' WHEN ${patch.enabled ?? null}::boolean IS TRUE AND health = 'paused' THEN 'unknown' ELSE health END,
-      next_fetch_at = CASE WHEN ${patch.enabled ?? null}::boolean IS TRUE THEN now() ELSE next_fetch_at END
+    if (changedRoute) values.cursor = tx.json(transition!.cursor as never);
+    const [after] = await tx`UPDATE sources SET ${tx(values as never, ...Object.keys(values))}, updated_at = now(),
+      health = CASE WHEN ${patch.enabled ?? before.enabled}::boolean IS FALSE THEN 'paused' WHEN ${changedRoute} OR ${patch.enabled ?? null}::boolean IS TRUE AND health = 'paused' THEN 'unknown' ELSE health END,
+      fail_count = CASE WHEN ${changedRoute} THEN 0 ELSE fail_count END,
+      last_error = CASE WHEN ${changedRoute} THEN NULL ELSE last_error END,
+      next_fetch_at = CASE WHEN ${changedRoute} OR ${patch.enabled ?? null}::boolean IS TRUE THEN now() ELSE next_fetch_at END
       WHERE id = ${id} RETURNING *`;
     if (before.participation_mode !== "editorial" && after!.participation_mode === "editorial") {
       await resumeSourceArticles(id, tx);
@@ -141,6 +184,10 @@ export async function updateSource(id: string, input: { patch: unknown; version:
       await invalidateStoryInputs(tx, articles.map((row) => row.id), new Date());
     }
     await audit(actor, "source.update", `source:${id}`, input.reason ?? null, Object.fromEntries(keys.map((k) => [k, before[k]])), patch, { db: tx });
+    if (changedRoute) await audit(actor, "source.x-provider-switch", `source:${id}`, input.reason ?? null,
+      { provider: routeProvider(before.config as Record<string, unknown>) },
+      { provider: routeProvider(patch.config!), transition: transition!.change, archivedBacklog: transition!.archivedBacklog,
+        historicProviders, watermarkPreserved: transition!.change === "provider-only" }, { db: tx });
     // What public exits show for this source's articles is derived from these fields: re-derive them
     // all (in the worker) so a revoked licence or an isolated source stops on every exit.
     if (keys.some((k) => PUBLICATION_FIELDS.includes(k) && JSON.stringify(before[k]) !== JSON.stringify(patch[k]))) {
@@ -175,12 +222,12 @@ const CreateSchema = z
 export function sourceIdentity(kind: string, config: Record<string, unknown>): string | null {
   const raw = (config.feedUrl ?? config.url ?? config.listUrl ?? config.endpoint ?? null) as string | null;
   if (kind === "x_search") {
-    const m = /from:([A-Za-z0-9_]{1,15})/.exec(String(config.query ?? ""));
+    const m = /from:([A-Za-z0-9_]{1,15})/i.exec(String(config.query ?? ""));
     return m ? `x:${m[1]!.toLowerCase()}` : null;
   }
   // A WeChat account is one account whichever id names it .
   if (kind === "mp_account") {
-    const id = String(config.ghid ?? config.wxid ?? "").trim().toLowerCase();
+    const id = String(config.ghid ?? config.wxid ?? config.account ?? "").trim().toLowerCase();
     return id ? `mp:${id}` : null;
   }
   if (!raw) return null;

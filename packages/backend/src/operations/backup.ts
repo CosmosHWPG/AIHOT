@@ -5,6 +5,7 @@ import { execFile } from "node:child_process";
 import { createHash, createHmac } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { mkdir, readdir, rm, stat } from "node:fs/promises";
+import { devNull } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import { config, credential } from "../config.ts";
@@ -74,15 +75,15 @@ async function upload(s: Store, key: string, file: string, sha: string, size: nu
   if (!res.ok) throw new Error(`backup upload ${key}: HTTP ${res.status} ${(await res.text()).slice(0, 300)}`);
 }
 
-export async function runBackup(now = new Date()) {
+export async function runBackup(now = new Date(), runCommand: (file: string, args: string[], options?: { maxBuffer?: number }) => Promise<unknown> = run) {
   const s = store();
   const dir = path.join(config.dataDir, "backups");
   await mkdir(dir, { recursive: true });
   const stamp = now.toISOString().slice(0, 16).replace(/[-:T]/g, "");
   const dump = path.join(dir, `aihot-${stamp}.dump`);
-  await run("pg_dump", ["--format=custom", "--compress=6", "--no-owner", "--file", dump, config.databaseUrl], { maxBuffer: 16 * 1024 * 1024 });
+  await runCommand("pg_dump", ["--format=custom", "--compress=6", "--no-owner", "--file", dump, config.databaseUrl], { maxBuffer: 16 * 1024 * 1024 });
   // Verify before shipping: the archive must list cleanly.
-  await run("pg_restore", ["--list", dump], { maxBuffer: 64 * 1024 * 1024 });
+  await runCommand("pg_restore", ["--list", dump], { maxBuffer: 64 * 1024 * 1024 });
   const files = path.join(dir, `aihot-files-${stamp}.tar.gz`);
   // An empty archive only when there is nothing to keep. A failure to read or pack existing files is
   // tried once more and otherwise reported: the database dump still ships, but the run fails.
@@ -90,9 +91,9 @@ export async function runBackup(now = new Date()) {
   // 尚未转发的反馈截图仍由数据库的 local: 引用，恢复时必须和上传文件一起保留。
   for (const d of ["uploads", "feedback-screenshots"]) if (await stat(path.join(config.dataDir, d)).then((i) => i.isDirectory(), () => false)) kept.push(d);
   let filesError: string | null = null;
-  if (!kept.length) await run("tar", ["-czf", files, "-T", "/dev/null"]);
+  if (!kept.length) await runCommand("tar", ["-czf", files, "-T", devNull]);
   else {
-    const pack = () => run("tar", ["-czf", files, "-C", config.dataDir, ...kept]);
+    const pack = () => runCommand("tar", ["-czf", files, "-C", config.dataDir, ...kept]);
     await pack().catch(() => pack()).catch((error: unknown) => {
       const stderr = (error as { stderr?: unknown })?.stderr;
       filesError = String(typeof stderr === "string" && stderr.trim() ? stderr.trim() : error instanceof Error ? error.message : error).slice(0, 300);

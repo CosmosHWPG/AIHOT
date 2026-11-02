@@ -24,12 +24,15 @@ function runTranslation() {
     import { shutdownSignal } from '@aihot/backend/jobs/queue';
     import { closeDb } from '@aihot/backend/db';
     process.on('SIGTERM', () => { shutdownSignal.abort(); process.send({ stopped: true }); });
+    process.on('message', message => {
+      if (message && message.action === 'shutdown') process.emit('SIGTERM');
+    });
     try { process.send({ result: await translatePending({ limit: 1 }) }); }
     finally { await closeDb(); process.disconnect(); }
   `;
   const child = spawn(process.execPath, ['--input-type=module', '-e', script], {
     cwd: process.cwd(), env: { ...process.env, MODEL_CALLS_ENABLED: 'true', TRANSLATE_MODEL: 'deepseek-flash', DEEPSEEK_BASE_URL: `${provider.url}/v1`, DEEPSEEK_API_KEY: 'test-key', AIHOT_CREDENTIALS_DIR: '/nonexistent-test-credentials' },
-    stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
+    windowsHide: true, stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
   });
   let result: any;
   let stderr = '';
@@ -59,7 +62,8 @@ for (const misaligned of [false, true]) test(`SIGTERM finishes the sent ${misali
   await publishArticle(articleId, { releasedAt: new Date(Date.now() - 60_000) });
   const interrupted = runTranslation();
   await Promise.race([active.asked.promise, interrupted.done.then(() => assert.fail('translation ended before a request'))]);
-  interrupted.child.kill('SIGTERM');
+  if (process.platform === 'win32') interrupted.child.send({ action: 'shutdown' });
+  else interrupted.child.kill('SIGTERM');
   await interrupted.stopped;
   active.hold.open();
   assert.deepEqual(await interrupted.done, { done: [], quotes: 0 });

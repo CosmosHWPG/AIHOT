@@ -158,34 +158,23 @@ for (const dirs of [[], ["uploads"], ["feedback-screenshots"], ["uploads", "feed
   });
 }
 
-async function withPackingFailures(failures: number, action: (count: () => Promise<number>) => Promise<void>) {
-  const bin = path.join(config.dataDir, "test-bin");
-  await mkdir(bin);
-  const countFile = path.join(bin, "count");
-  const realTar = (await run("sh", ["-c", "command -v tar"])).stdout.trim();
-  assert.ok(path.isAbsolute(realTar));
-  // 仅替换测试进程的命令查找；恢复与成功路径仍执行真正的 tar。
-  await writeFile(path.join(bin, "tar"), `#!/bin/sh
-n=0
-if [ -f "$BACKUP_TEST_COUNT" ]; then n=$(cat "$BACKUP_TEST_COUNT"); fi
-n=$((n+1))
-printf '%s' "$n" > "$BACKUP_TEST_COUNT"
-if [ "$n" -le "$BACKUP_TEST_FAILURES" ]; then echo 'fictional packing failure' >&2; exit 2; fi
-exec "$BACKUP_TEST_TAR" "$@"
-`, { mode: 0o755 });
-  const replacement = { PATH: `${bin}:${process.env.PATH}`, BACKUP_TEST_COUNT: countFile, BACKUP_TEST_FAILURES: String(failures), BACKUP_TEST_TAR: realTar };
-  const previous = Object.fromEntries(Object.keys(replacement).map(key => [key, process.env[key]]));
-  Object.assign(process.env, replacement);
-  try { await action(async () => Number(await readFile(countFile, "utf8"))); }
-  finally {
-    for (const [key, value] of Object.entries(previous)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }
-  }
+async function withPackingFailures(failures: number, action: (count: () => Promise<number>, command: NonNullable<Parameters<typeof runBackup>[1]>) => Promise<void>) {
+  let attempts = 0;
+  const command: NonNullable<Parameters<typeof runBackup>[1]> = async (file, args, options) => {
+    if (file === "tar" && args[0] === "-czf") {
+      attempts += 1;
+      if (attempts <= failures) throw Object.assign(new Error("fictional packing failure"), { stderr: "fictional packing failure" });
+    }
+    // Database dumps, restores and the successful retry still execute the real native binaries.
+    return run(file, args, options);
+  };
+  await action(async () => attempts, command);
 }
 
 test("packing retries once and a successful retry preserves the screenshot", async () => {
   await save("feedback-screenshots/retry.png");
-  await withPackingFailures(1, async count => {
-    assert.equal((await runBackup(NOW)).uploaded, true);
+  await withPackingFailures(1, async (count, command) => {
+    assert.equal((await runBackup(NOW, command)).uploaded, true);
     assert.equal(await count(), 2);
   });
   const { data } = await extractSavedFiles();
@@ -194,8 +183,8 @@ test("packing retries once and a successful retry preserves the screenshot", asy
 
 test("persistent packing failure still sends the database and reports incomplete backup", async () => {
   await save("feedback-screenshots/failure.png");
-  await withPackingFailures(2, async count => {
-    await assert.rejects(runBackup(NOW), /database backed up, but the file archive failed/);
+  await withPackingFailures(2, async (count, command) => {
+    await assert.rejects(runBackup(NOW, command), /database backed up, but the file archive failed/);
     assert.equal(await count(), 2);
   });
   assert.equal(objects.size, 3);

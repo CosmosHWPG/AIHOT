@@ -133,8 +133,9 @@ export function SearchField({ action = "/all", defaultValue = "", keep = {}, var
 
 /** Mobile home: the search icon at the end of the category row opens search on 全部动态. */
 export function SearchIconLink() {
+  const [params] = useSearchParams();
   return (
-    <Link to="/all?search=1" aria-label="搜索" className="flex size-9 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-bg-sunk hover:text-ink">
+    <Link to={hrefWith("/all", params, { search: "1" })} aria-label="搜索" className="flex size-9 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-bg-sunk hover:text-ink">
       <IconSearch size={19} />
     </Link>
   );

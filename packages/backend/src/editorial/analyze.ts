@@ -16,6 +16,7 @@ import { sql } from "../db.ts";
 import { chatJson, MODELS, ModelOutputError, type ContentPart } from "../providers/llm.ts";
 import { completeReceipt, ProviderRejectedError, ReceiptUnknownError } from "../providers/receipts.ts";
 import { collapseWhitespace } from "../lib/text.ts";
+import { withDomainTags } from "../lib/domain-tags.ts";
 import { modelFor } from "./models.ts";
 import { buildMaterial, firstImagePart, loadAnalyzeInput, type AnalyzeInputArticle } from "./input.ts";
 import { pageFetchable } from "../content/extract.ts";
@@ -61,10 +62,18 @@ export const UNDERSTAND_FLOOR = SELECTION.understandFloor;
  * Call parameters per score model. The GLM scorer runs at temperature 1 with high reasoning (the model
  * registry adds top_p and thinking) and up to 180 s per call.
  */
-const SCORE_CALL: Record<string, { temperature: number; maxTokens: number; timeoutMs: number }> = {
+interface ScoreCall { temperature: number; maxTokens: number; timeoutMs: number; reusePreviousMaxTokens?: number }
+const SCORE_CALL: Record<string, ScoreCall> = {
   "glm-5.3-flash-selection": { temperature: 1, maxTokens: 65_536, timeoutMs: 180_000 },
 };
-const scoreCall = (model: string) => SCORE_CALL[model] ?? { temperature: 0.2, maxTokens: 1024, timeoutMs: 120_000 };
+const scoreCall = (model: string): ScoreCall => {
+  // This deployment's DeepSeek route has spent all 1024 tokens on reasoning despite reasoning=false.
+  // Leave other models alone; preserve valid prior scores before buying an answer with more room.
+  if (model === "default" && MODELS.default!.model === "deepseek/deepseek-v4.1-flash") {
+    return { temperature: 0.2, maxTokens: 4096, timeoutMs: 120_000, reusePreviousMaxTokens: 1024 };
+  }
+  return SCORE_CALL[model] ?? { temperature: 0.2, maxTokens: 1024, timeoutMs: 120_000 };
+};
 
 /** The score prompt: the industry's taste (industry/prompts/selection-score.md). */
 export const SCORE_SYSTEM = promptText("selection-score");
@@ -99,7 +108,7 @@ export function buildScoreInput(a: AnalyzeInputArticle): string {
     "请按系统规则评估以下单篇材料所代表的事件。只输出 attentionScore。",
     `【发布时间（北京时间）】\n${at ? scoreInputTime(at) : ""}`,
     `【标题】\n${a.title.trim()}`,
-    `【完整正文】\n${body.length > MAX_BODY_CHARS ? body.slice(0, MAX_BODY_CHARS) : body}`,
+    `【${a.bodyStatus === "unconfirmed" ? "来源文本（完整性未确认，不推断缺失内容）" : a.bodyStatus === "pending" ? "现有文本（正文待获取）" : "完整正文"}】\n${body.length > MAX_BODY_CHARS ? body.slice(0, MAX_BODY_CHARS) : body}`,
   ].join("\n\n");
 }
 
@@ -252,6 +261,7 @@ async function runScores(
       const res = await chatJson({
         model, purpose: "score_article", subject: subjectOf(a), promptVersion: PROMPT_VERSIONS.score, system: SCORE_SYSTEM, user: input,
         schema: ScoreSchema, temperature: call.temperature, maxTokens: call.maxTokens, timeoutMs: call.timeoutMs,
+        reusePreviousMaxTokens: call.reusePreviousMaxTokens,
         // Each call is its own paid request; an explicit re-evaluation gets new ones.
         attemptTag: tagged(opts.attemptTag, `score-${i + 1}`),
       });
@@ -418,7 +428,7 @@ export function normalizeAnalysis(run: AnalysisRun) {
   const threshold = run.scores?.threshold ?? null;
   const selected = relevance === "pass" && sum !== null && threshold !== null && sum >= threshold * SCORE_CALLS;
   const subjects = run.structure?.subjects ?? [];
-  const tags = [...(run.writing?.tags ?? run.structure?.tags ?? [])];
+  const tags = withDomainTags([...(run.writing?.tags ?? run.structure?.tags ?? [])], run.structure?.tags ?? []);
   for (const s of subjects) {
     const display = ENTITIES[s]?.displayTag;
     if (display && !tags.includes(display)) tags.push(display);

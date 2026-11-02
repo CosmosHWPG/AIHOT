@@ -6,6 +6,8 @@ dist/
 .cache/
 .DS_Store
 .data/
+__pycache__/
+*.pyc
 
 # Web production build
 apps/web/build/

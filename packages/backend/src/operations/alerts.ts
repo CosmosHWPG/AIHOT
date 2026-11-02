@@ -196,6 +196,7 @@ const PROVIDERS: Record<string, { name: string; stops: string; where: string }> 
   deepseek: { name: "DeepSeek", stops: MODEL_STOPS, where: "DeepSeek 开放平台" },
   mimo: { name: "小米 MiMo", stops: MODEL_STOPS, where: "小米 MiMo 开放平台" },
   socialdata: { name: "SocialData", stops: "X（推特）上的新内容收不到", where: "SocialData 后台" },
+  xquik: { name: "Xquik", stops: "使用 Xquik 的 X 账号新内容收不到", where: "Xquik 后台" },
   jina: { name: "Jina", stops: "部分文章取不到正文", where: "Jina 后台" },
   dajiala: { name: "极致了（Dajiala）", stops: "公众号新文章收不到", where: "极致了后台" },
 };
@@ -225,7 +226,7 @@ async function providerFindings(): Promise<Finding[]> {
   const capped = await sql<{ service: string; per_day: number; used: number }[]>`
     SELECT b.service, b.per_day, count(a.id)::int AS used FROM budgets b
     JOIN receipt_attempts a ON a.service = b.service AND a.origin = 'live' AND a.started_at > now() - interval '1 day'
-    WHERE b.per_day > 0 GROUP BY 1, 2 HAVING count(a.id) >= b.per_day`;
+    WHERE b.enabled AND b.per_day > 0 GROUP BY 1, 2 HAVING count(a.id) >= b.per_day`;
   for (const c of capped) {
     out.push({
       key: `budget.day.${c.service}`,

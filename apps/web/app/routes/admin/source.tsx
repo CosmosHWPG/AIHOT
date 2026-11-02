@@ -39,7 +39,7 @@ function draftOf(s: AdminSource): Draft {
 }
 
 export default function SourceDetail({ loaderData }: Route.ComponentProps) {
-  const { source: s, runs, items, stats, history } = loaderData;
+  const { source: s, runs, items, stats, history, x } = loaderData;
   const { run, pending } = useAdminAction();
   const [draft, setDraft] = useState<Draft>(() => draftOf(s));
   const [draftFor, setDraftFor] = useState(s.updated_at);
@@ -52,6 +52,19 @@ export default function SourceDetail({ loaderData }: Route.ComponentProps) {
     setDraftFor(s.updated_at);
   }
   const base = `/api/admin/sources/${encodeURIComponent(s.id)}`;
+  const draftProvider = (() => { try { return String(JSON.parse(draft.config)?.provider ?? "socialdata"); } catch { return x?.provider ?? "socialdata"; } })();
+  const setXProvider = (provider: string) => {
+    try {
+      const config = { ...JSON.parse(draft.config), provider };
+      if (provider === "bird") {
+        config.bird ??= { accountProfile: "birdclaw-primary", strategy: "user_tweets", maxPagesPerRound: 1 };
+        config._aihot = { ...config._aihot, initialBackfillLimit: Math.max(20, Number(config._aihot?.initialBackfillLimit ?? 20)) };
+      }
+      else delete config.bird;
+      setDraft({ ...draft, config: JSON.stringify(config, null, 2) });
+      setConfigError(null);
+    } catch { setConfigError("请先修正采集配置 JSON，再切换 X 供应商。"); }
+  };
 
   const patch = (): Record<string, unknown> | null => {
     let config: unknown;
@@ -158,6 +171,15 @@ export default function SourceDetail({ loaderData }: Route.ComponentProps) {
               <Field label="名称">
                 <Input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
               </Field>
+              {s.kind === "x_search" && (
+                <Field label="X 采集供应商" hint="同账号切换保留已确认水位，旧供应商的续读游标及覆盖缺口会归档。Bird 只读账号时间线；凭据禁止填入 JSON。">
+                  <Select value={draftProvider} onChange={(e) => setXProvider(e.target.value)}>
+                    <option value="socialdata">SocialData（搜索 API）</option>
+                    <option value="xquik">Xquik（搜索 API）</option>
+                    <option value="bird">Bird（已授权账号会话）</option>
+                  </Select>
+                </Field>
+              )}
               <Field label="采集间隔（分钟）">
                 <Input type="number" min={1} max={1440} value={draft.interval_minutes} onChange={(e) => setDraft({ ...draft, interval_minutes: Number(e.target.value) })} />
               </Field>
@@ -227,6 +249,27 @@ export default function SourceDetail({ loaderData }: Route.ComponentProps) {
         </div>
 
         <div className="space-y-5">
+          {x && <Card title="X 路由与覆盖">
+            <KV items={[
+              ["供应商", ({ socialdata: "SocialData", xquik: "Xquik", bird: "Bird", unknown: "未知（禁止自动付费补抓）" })[x.provider]],
+              ["本供应商最近成功", x.lastSuccessAt ? bj(x.lastSuccessAt, true) : "尚无成功记录"],
+              ["当前读取区间", ({ complete: "已确认完整", partial: "部分覆盖 / 有未读区间", unknown: "覆盖未知" })[x.coverage]],
+              ["覆盖检查", x.checkedAt ? bj(x.checkedAt, true) : "尚未检查"],
+              ["待续读", `${x.backlogCount} 段`],
+              ["归档路由", `${x.archivedRoutes} 次`],
+              ...(x.profile ? [
+                ["会话配置名", x.profile.name],
+                ["本机状态", ({ disabled: "后端采集开关未启用", unverified: "待验证", verified: "已有验证记录", cooldown: "冷却中", busy: "调用占用中" })[x.profile.state]],
+                ["验证时间", x.profile.verifiedAt ? bj(x.profile.verifiedAt, true) : "尚未验证"],
+                ["冷却至", x.profile.cooldownUntil ? bj(x.profile.cooldownUntil, true) : null],
+              ] as Array<[string, string | null]> : []),
+            ]} />
+            {x.gap && <div className="mt-3 rounded-card bg-hot-soft p-3 text-[12px] text-hot">
+              覆盖缺口：{bj(x.gap.from, true)} 至 {bj(x.gap.to, true)}<br />
+              {x.gap.reason === "provider_switch_backlog" ? "切换前存在未完成区间，旧续读游标已归档。" : `原因：${x.gap.reason}`}
+            </div>}
+            {x.provider === "bird" && <p className="mt-3 text-[12px] text-ink-3">验证记录来自本机，不保证会话当前仍有效；抓取成功与区间完整覆盖分别记录。Bird 的额度统计为 CLI 调用次数。</p>}
+          </Card>}
           <Card title="状态">
             <KV
               items={[

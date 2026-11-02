@@ -7,6 +7,7 @@ import { useAdminAction } from "../../features/admin/action";
 import { bj, num } from "../../features/admin/format";
 import { AdminPage, Badge, Button, Card, DataTable, Input, ReasonDialog } from "../../features/admin/ui";
 import { toast } from "../../features/admin/toast";
+import { budgetChanged, budgetDraft, budgetUpdate } from "../../features/admin/budget";
 
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -51,29 +52,45 @@ function QrSlot({ slot, label, src }: { slot: "wechatQr" | "feishuQr"; label: st
 
 function BudgetRow({ b }: { b: AdminSettings["budgets"][number] }) {
   const { run, pending } = useAdminAction();
-  const [v, setV] = useState({ perMinute: b.per_minute, perHour: b.per_hour, perDay: b.per_day });
-  const [open, setOpen] = useState(false);
-  const changed = v.perMinute !== b.per_minute || v.perHour !== b.per_hour || v.perDay !== b.per_day;
+  const [v, setV] = useState(() => budgetDraft(b));
+  const [reason, setReason] = useState("");
+  const changed = budgetChanged(b, v);
+  const update = budgetUpdate(b, v, reason);
+  const saving = pending === "budget";
   return (
     <tr className="border-b border-line/70 last:border-0">
       <td className="px-3 py-2 font-mono text-[12.5px]">{b.service}</td>
+      <td className="px-3 py-2">
+        <label className="flex items-center gap-2 whitespace-nowrap text-[12.5px] text-ink">
+          <input type="checkbox" checked={v.enabled} disabled={saving} className="size-4 accent-accent"
+            aria-label={`${b.service} 启用额度限制`}
+            onChange={(event) => setV({ ...v, enabled: event.target.checked })} />
+          启用额度限制
+        </label>
+        <div className="mt-1 max-w-52 text-[11.5px] text-ink-4">
+          {v.enabled ? "超过上限后等待窗口恢复；0 会暂停服务。" : "请求照常计费，使用次数继续记录。"}
+        </div>
+      </td>
       {(["perMinute", "perHour", "perDay"] as const).map((k) => (
         <td key={k} className="px-3 py-2">
-          <Input type="number" min={0} className="!w-24 !py-1 text-right" value={v[k]} onChange={(e) => setV({ ...v, [k]: Number(e.target.value) })} />
+          <Input type="number" min={0} step={1} disabled={!v.enabled || saving}
+            aria-label={`${b.service} ${k === "perMinute" ? "每分钟" : k === "perHour" ? "滚动小时" : "滚动24小时"}上限`}
+            className="!w-24 !py-1 text-right disabled:opacity-50" value={Number.isFinite(v[k]) ? v[k] : ""}
+            onChange={(e) => setV({ ...v, [k]: e.target.valueAsNumber })} />
         </td>
       ))}
       <td className="num px-3 py-2 text-right text-ink-3">{num(b.used_hour)} / {num(b.used_day)}</td>
+      <td className="px-3 py-2">
+        <Input value={reason} disabled={saving} placeholder="修改原因（写入审计）" aria-label={`${b.service} 修改原因`}
+          className="!min-w-44 !py-1" onChange={(event) => setReason(event.target.value)} />
+      </td>
       <td className="px-3 py-2 text-right">
-        <Button size="sm" tone="primary" disabled={!changed} onClick={() => setOpen(true)}>保存</Button>
-        <ReasonDialog
-          open={open}
-          title={`调整 ${b.service} 的请求上限`}
-          description="上限是付费请求的熔断：超过后请求暂停并按窗口重试。填 0 表示立即停用这个服务。"
-          confirmLabel="保存"
-          busy={pending === "budget"}
-          onClose={() => setOpen(false)}
-          onSubmit={async (reason) => (await run("PUT", `/api/admin/budgets/${encodeURIComponent(b.service)}`, { ...v, reason }, { label: "budget", success: "上限已更新" })) !== null}
-        />
+        <Button size="sm" tone="primary" busy={saving} disabled={!update} title={changed && !reason.trim() ? "请填写修改原因" : undefined}
+          onClick={async () => {
+            if (!update) return;
+            await run("PUT", `/api/admin/budgets/${encodeURIComponent(b.service)}`, update,
+              { label: "budget", success: v.enabled ? "额度限制已更新" : "额度限制已关闭，计数继续记录" });
+          }}>保存</Button>
       </td>
     </tr>
   );
@@ -122,16 +139,21 @@ export default function SettingsAdmin({ loaderData: s }: Route.ComponentProps) {
           />
         </Card>
       </div>
-      <Card className="mt-5" title="付费请求上限" right={<span>已用：近 1 小时 / 近 24 小时</span>} pad={false}>
+      <Card className="mt-5" title="付费请求预算" right={<span>已用：滚动 1 小时 / 滚动 24 小时</span>} pad={false}>
+        <p className="border-b border-line px-4 py-3 text-[12.5px] text-ink-3">
+          各服务独立设置。关闭额度限制后继续记录使用次数，请求仍会产生费用；保留的上限在重新启用后生效。
+        </p>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-[13px]">
+          <table className="w-full min-w-[1024px] text-[13px]">
             <thead>
               <tr className="border-b border-line text-left text-[12px] text-ink-3">
                 <th className="px-3 py-2 font-medium">服务</th>
+                <th className="px-3 py-2 font-medium">额度开关</th>
                 <th className="px-3 py-2 font-medium">每分钟</th>
-                <th className="px-3 py-2 font-medium">每小时</th>
-                <th className="px-3 py-2 font-medium">每天</th>
+                <th className="px-3 py-2 font-medium">滚动小时</th>
+                <th className="px-3 py-2 font-medium">滚动24小时</th>
                 <th className="px-3 py-2 text-right font-medium">已用</th>
+                <th className="px-3 py-2 font-medium">修改原因</th>
                 <th />
               </tr>
             </thead>
