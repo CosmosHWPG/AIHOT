@@ -491,6 +491,31 @@
         "20261020核查补齐",
         "历史身份确认待后续新文"
       ]
+    },
+    {
+      "id": "corescope-mp-longcat-meituan",
+      "name": "公众号：龙猫LongCat（美团）",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzYyMTA0NTc5NQ%3D%3D&mid=2247486081&idx=1&sn=0609ae26ada1d4d96126b95044dd4519",
+        "biz": "MzYyMTA0NTc5NQ==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:meituan-longcat",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号",
+        "20261102核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
     }
   ],
   "verifications": {
@@ -872,6 +897,64 @@
       "checkedAt": "2026-10-20T11:28:47.916Z",
       "configProvenance": "Independently reconstructed configuration, not private AIHOT collector settings.",
       "paidRuntimeAcceptance": "Not inferred from identity or parser preview; recorded separately by root after application."
+    },
+    "corescope-mp-longcat-meituan": {
+      "status": "verified",
+      "scope": "Configured exact public long-link biz and supported native selector verified offline; unique against current snapshot. This is not a paid collector, article-ingest or full-body acceptance.",
+      "kind": "mp_account",
+      "biz": "MzYyMTA0NTc5NQ==",
+      "ghid": null,
+      "observedLabel": "公众号：龙猫LongCat（美团）",
+      "evidence": [
+        {
+          "itemId": "uglz0t6iq1oob9jcs9cwis9t7",
+          "sourceName": "公众号：龙猫LongCat（美团）",
+          "originalUrl": "https://mp.weixin.qq.com/s?__biz=MzYyMTA0NTc5NQ%3D%3D&mid=2247486081&idx=1&sn=0609ae26ada1d4d96126b95044dd4519",
+          "evidenceUrl": "https://aihot.news/items/uglz0t6iq1oob9jcs9cwis9t7",
+          "publishedAt": "2026-11-02T01:00:00.000Z",
+          "discoveredAt": "2026-11-02T01:11:13.645Z"
+        }
+      ],
+      "nativeConfigValidation": {
+        "unsupportedKeys": [],
+        "selector": {
+          "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzYyMTA0NTc5NQ%3D%3D&mid=2247486081&idx=1&sn=0609ae26ada1d4d96126b95044dd4519",
+          "biz": "MzYyMTA0NTc5NQ=="
+        },
+        "bizNumeric": "3621045795",
+        "parser": "resolveMpAccountSelector in packages/backend/src/providers/dajiala.ts; unsupportedConfig in packages/backend/src/sources/config-keys.ts"
+      },
+      "publicGet": {
+        "at": "2026-11-02T13:49:20.987Z",
+        "url": "https://mp.weixin.qq.com/s?__biz=MzYyMTA0NTc5NQ%3D%3D&mid=2247486081&idx=1&sn=0609ae26ada1d4d96126b95044dd4519",
+        "status": 200,
+        "finalUrl": "https://mp.weixin.qq.com/mp/wappoc_appmsgcaptcha",
+        "bytes": 18246,
+        "sha256": "98a6378682a65e7e379c82d6d2b2f7b3ad6ae5bf0ce8b59b23acbd6d8f14e1c2",
+        "title": "",
+        "fields": {
+          "nickname": null,
+          "user_name": null,
+          "biz": null,
+          "appuin": null,
+          "msg_title": null
+        },
+        "challenge": true,
+        "accountIdentityVerified": false,
+        "limitation": "Public original returned access challenge; no provider or body success is inferred.",
+        "redirectQueryWithheld": true
+      },
+      "cacheIdentity": {
+        "at": "2026-11-02T13:49:53.102Z",
+        "scope": "Read only authorized decrypted cache public-account contact exact identity; no messages/private-contact enumeration and no V2 file/DB reads",
+        "directoryConfigured": true,
+        "checkedContactDatabases": 1,
+        "matches": [],
+        "errors": []
+      },
+      "livePaidCollectionVerified": false,
+      "firstPartyPolicy": "False until independently verified account ownership; AIHOT publisher attribution retained in observed label only.",
+      "paidRuntimeAcceptance": "Actual collection acceptance is recorded separately in docs/corescope-source-expansion-20261102.json; config/identity verification alone is insufficient."
     }
   },
   "aliases": [],
@@ -938,6 +1021,12 @@
       "observedIdentity": "mp:MzkxMTYyMTAzNA==",
       "status": "reviewed_configuration_added_runtime_acceptance_separate",
       "evidence": "docs/corescope-source-expansion-20261020.json"
+    },
+    {
+      "sourceId": "corescope-mp-longcat-meituan",
+      "observedIdentity": "mp:MzYyMTA0NTc5NQ==",
+      "status": "reviewed_identity_collection_acceptance_separate",
+      "evidence": "docs/corescope-source-expansion-20261102.json"
     }
   ],
   "refreshReviews": [
@@ -971,6 +1060,15 @@
       ],
       "evidence": "docs/corescope-source-expansion-20261020.json",
       "scope": "Independent public entry/account reconstruction; runtime acceptance is separate."
+    },
+    {
+      "observedAt": "2026-11-02T13:46:42.153Z",
+      "preparedAt": "2026-11-02T13:55:10.897Z",
+      "sourceIds": [
+        "corescope-mp-longcat-meituan"
+      ],
+      "evidence": "docs/corescope-source-expansion-20261102.json",
+      "scope": "One user-authorized LongCat source; bounded paid acceptance recorded separately."
     }
   ]
 }

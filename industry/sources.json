@@ -18846,6 +18846,31 @@
       "site_fulltext": false,
       "syndicate_fulltext": false,
       "enabled": true
+    },
+    {
+      "id": "corescope-mp-longcat-meituan",
+      "name": "公众号：龙猫LongCat（美团）",
+      "kind": "mp_account",
+      "config": {
+        "transport": "dajiala",
+        "articleUrl": "https://mp.weixin.qq.com/s?__biz=MzYyMTA0NTc5NQ%3D%3D&mid=2247486081&idx=1&sn=0609ae26ada1d4d96126b95044dd4519",
+        "biz": "MzYyMTA0NTc5NQ==",
+        "limit": 2
+      },
+      "tier": "T1",
+      "first_party": false,
+      "owner_entity_id": null,
+      "signal_group_id": "publisher:meituan-longcat",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "AI",
+        "公众号原始账号",
+        "20261102核查补齐"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
     }
   ]
 }
