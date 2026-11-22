@@ -128,6 +128,13 @@ export function inTopic(t: Topic) {
   return topicMatch(sql`${t.tags}::text[]`, pattern);
 }
 
+/** Apply topic membership to the same publication alias across the timeline, pool and groups. */
+export function topicCondition(slug: string | null | undefined) {
+  if (!slug) return sql``;
+  const topic = findTopic(slug);
+  return topic ? sql`AND ${inTopic(topic)}` : sql`AND false`;
+}
+
 // ---------------------------------------------------------------------------------------------------
 // The selected set by topic, read in one pass and kept a minute (counts may lag by that much; the
 // rows of a page are checked again when read).

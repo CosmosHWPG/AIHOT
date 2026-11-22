@@ -8,7 +8,7 @@ import {
   type ItemRow,
 } from "./items.ts";
 import { browsedCondition, listedCondition } from "./scope.ts";
-import { findTopic, inTopic, tagTopics, TOPICS } from "./topics.ts";
+import { tagTopics, topicCondition, TOPICS } from "./topics.ts";
 
 export const POOL_PAGE_SIZE = 40;
 export const POOL_MAX_PAGES = 50;
@@ -112,16 +112,10 @@ export function publicMatchCondition(terms: string[]) {
 }
 
 /** The listed items under the filters, up to the pages the pool offers. */
-function topicFilter(slug: TimelineFilters["topic"]) {
-  if (!slug) return sql``;
-  const topic = findTopic(slug);
-  return topic ? sql`AND ${inTopic(topic)}` : sql`AND false`;
-}
-
 async function listedCount(f: TimelineFilters, now: Date): Promise<number> {
   return Number(one(await sql<{ n: number }[]>`
     SELECT count(*) AS n FROM (SELECT 1 FROM publications p WHERE ${browsedCondition(now)}
-      ${channelCondition(f.channel)} ${categoryCondition(f.category)} ${tagCondition(f.tag)} ${topicFilter(f.topic)}
+      ${channelCondition(f.channel)} ${categoryCondition(f.category)} ${tagCondition(f.tag)} ${topicCondition(f.topic)}
       LIMIT ${POOL_MAX_PAGES * POOL_PAGE_SIZE}) t`).n);
 }
 
@@ -151,7 +145,7 @@ async function queryPool(query: PoolQuery, now: Date): Promise<PoolResponse> {
   const tab = q && query.tab === "relevance" ? "relevance" : "time";
   const terms = q ? searchTerms(q) : [];
   const entityTag = q ? queryEntityTag(q) : null;
-  const filters = sql`${channelCondition(query.channel)} ${categoryCondition(query.category)} ${tagCondition(query.tag)} ${topicFilter(query.topic)}`;
+  const filters = sql`${channelCondition(query.channel)} ${categoryCondition(query.category)} ${tagCondition(query.tag)} ${topicCondition(query.topic)}`;
   const offset = (page - 1) * POOL_PAGE_SIZE;
   const cap = POOL_MAX_PAGES * POOL_PAGE_SIZE;
 

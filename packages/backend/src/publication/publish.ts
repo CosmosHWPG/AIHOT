@@ -249,7 +249,9 @@ export async function publishArticleTx(tx: Tx, articleId: string, options: Publi
   const category = pickString(f.category, analysis?.category ?? null);
   const subjects = (analysis?.subjects ?? []).map((subject) => `entity:${subject}`);
   const display = Array.isArray(f.tags) ? f.tags as string[] : withDomainTags(analysis?.tags ?? []);
-  const tags = [...new Set([...display, ...subjects])];
+  // Editing display tags keeps the verified subjects unless the correction names replacement subjects.
+  const subjectOverride = Array.isArray(f.tags) && display.some(tag => tag.startsWith("entity:"));
+  const tags = [...new Set(subjectOverride ? display : [...display, ...subjects])];
   const score = f.score === null || typeof f.score === "number" ? f.score : analysis?.score ?? null;
   const relevance = typeof f.relevance === "string" ? (f.relevance as string) : analysis?.relevance ?? null;
   const judgedSelected = typeof f.selected === "boolean" ? (f.selected as boolean) : analysis?.selected ?? null;

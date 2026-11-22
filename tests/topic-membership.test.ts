@@ -7,6 +7,8 @@ import assert from "node:assert/strict";
 import { after, test } from "node:test";
 import { closeDb, sql } from "@aihot/backend/db";
 import { findTopic, loadTopicPage, topicMembership } from "@aihot/backend/publication/topics";
+import type { GroupReportsResponse, TimelineResponse } from "@aihot/contracts/site";
+import { buildApp } from "../apps/api/src/app.ts";
 
 after(closeDb);
 
@@ -48,5 +50,41 @@ test("topic lists and pool counts share the exact membership predicate", async (
       .filter(row => row.topics.includes(topic.slug) && !row.visibility && !row.future);
     assert.equal(page.topic.poolTotal, visible.length, `${topic.slug} pool`);
     assert.deepEqual(page.items.map(row => row.id).sort(), visible.filter(row => row.selected !== false).map(row => row.id).sort(), `${topic.slug} selected`);
+  }
+});
+
+test("the cross-perspective topic applies to the selected list, cursor and group reports", async () => {
+  const source = `cross-${tag()}`;
+  const at = new Date("2026-01-01T00:00:00Z");
+  const factKey = `${source}-fact`;
+  await sql`INSERT INTO sources (id,name,kind) VALUES (${source},${source},'rss')`;
+  const [fact] = await sql<{ id: number }[]>`INSERT INTO facts(public_id,title) VALUES(${factKey},${factKey}) RETURNING id`;
+  for (const n of [0, 1, 2]) {
+    const id = source + n;
+    const url = `https://example.org/${id}`;
+    const tags = n ? ["核心网", "AI"] : ["核心网"];
+    await sql`INSERT INTO articles(id,source_id,identity_key,url,title,discovered_at,timeline_at)
+      VALUES(${id},${source},${id},${url},${id},${at},${at})`;
+    await sql`INSERT INTO publications(article_id,source_id,title,url,discovered_at,timeline_at,sort_at,visible_after,selected,eligible,channel,tags,fact_id)
+      VALUES(${id},${source},${id},${url},${at},${at},${at},${at},true,true,'news',${tags},${n < 2 ? fact!.id : null})`;
+    if (n < 2) await sql`INSERT INTO fact_articles(fact_id,article_id,role) VALUES(${fact!.id},${id},'primary')`;
+  }
+  const app = await buildApp();
+  try {
+    const params = new URLSearchParams({ tag: "核心网", topic: "ai", limit: "1" });
+    const get = (path: string) => app.inject({ url: path });
+    const first = (await get(`/api/site/timeline?${params}`)).json<TimelineResponse>();
+    assert.equal(first.filters.topic, "ai");
+    assert.equal(first.hot, null);
+    assert.ok(first.nextCursor, "the second matching card remains available");
+    const second = (await get(`/api/site/timeline?${params}&cursor=${first.nextCursor}`)).json<TimelineResponse>();
+    assert.deepEqual(new Set([...first.cards, ...second.cards].map(card => card.item.id)), new Set([source + 1, source + 2]));
+    params.delete("topic");
+    assert.equal((await get(`/api/site/timeline?${params}&cursor=${first.nextCursor}`)).statusCode, 400);
+    assert.equal((await get("/api/site/timeline?topic=no-such-topic")).statusCode, 400);
+    const group = (await get(`/api/site/groups/${factKey}/reports?topic=ai`)).json<GroupReportsResponse>();
+    assert.deepEqual(group.reports.map(report => report.id), [source + 1]);
+  } finally {
+    await app.close();
   }
 });
