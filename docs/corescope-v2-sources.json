@@ -14397,9 +14397,9 @@
     "upstream_sources": 18,
     "upstream_duplicate_aliases": 9,
     "upstream_native_rss": 267,
-    "canonical_sources": 731,
-    "enabled_sources": 715,
-    "enabled_native_sources": 595,
+    "canonical_sources": 735,
+    "enabled_sources": 719,
+    "enabled_native_sources": 599,
     "enabled_bridge_sources": 120,
     "upstream_aliases": [
       {
@@ -14448,7 +14448,7 @@
         "reason": "identical upstream/V2 feed URL including query"
       }
     ],
-    "supplemental_added": 306,
+    "supplemental_added": 310,
     "supplemental_source_ids": [
       "corescope-rss-ithome-com-5479b994",
       "corescope-rss-browser-use-com-b05a52d6",
@@ -14755,7 +14755,11 @@
       "corescope-web-openmoss-blog",
       "corescope-web-lg-ai-research-blog",
       "corescope-rss-trailofbits-blog",
-      "corescope-mp-longcat-meituan"
+      "corescope-mp-longcat-meituan",
+      "corescope-x-kateclarktweets",
+      "corescope-x-edbayes",
+      "corescope-x-mark-k",
+      "corescope-x-levelsio"
     ],
     "supplemental_aliases": [
       {

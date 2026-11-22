@@ -4646,6 +4646,134 @@
         "20261101核查补齐",
         "参与模式独立重建"
       ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-kateclarktweets",
+      "name": "Kate Clark · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:kateclarktweets -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:kateclarktweets",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261122核查补齐"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-edbayes",
+      "name": "Ed Bayes · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:edbayes -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:edbayes",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261122核查补齐"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "hot_signal",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-mark-k",
+      "name": "@mark_k · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:mark_k -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:mark_k",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261122核查补齐"
+      ]
+    },
+    {
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "hot_signal",
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "id": "corescope-x-levelsio",
+      "name": "@levelsio · X",
+      "kind": "x_search",
+      "config": {
+        "query": "from:levelsio -filter:replies",
+        "searchType": "Latest",
+        "provider": "bird",
+        "bird": {
+          "strategy": "user_tweets",
+          "initialLookbackHours": 48,
+          "maxPagesPerRound": 1
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "signal_group_id": "author:levelsio",
+      "interval_minutes": 1440,
+      "tags": [
+        "AI",
+        "X原始账号",
+        "20261122核查补齐"
+      ]
     }
   ],
   "aliases": [
@@ -8989,6 +9117,62 @@
       ],
       "configProvenance": "Independent public route/account reconstruction; not AIHOT private collector export.",
       "paidRuntimeAcceptance": "Not inferred; Root records actual collection, empty results, ingestion and blocked acceptance separately."
+    },
+    "corescope-x-kateclarktweets": {
+      "id": "corescope-x-kateclarktweets",
+      "status": "verified",
+      "checkedAt": "2026-11-22T04:23:48.173Z",
+      "scope": "AIHOT public item and original X author handle.",
+      "publicEvidence": [
+        {
+          "url": "https://x.com/KateClarkTweets/status/2123459198390243417",
+          "aihotItem": "https://aihot.news/items/hzlbq0fxcls8sxek76qoq63v8"
+        }
+      ],
+      "participation_mode": "editorial",
+      "configProvenance": "CoreScope Bird route and user-approved participation mode."
+    },
+    "corescope-x-edbayes": {
+      "id": "corescope-x-edbayes",
+      "status": "verified",
+      "checkedAt": "2026-11-22T04:23:48.173Z",
+      "scope": "AIHOT public item and original X author handle.",
+      "publicEvidence": [
+        {
+          "url": "https://x.com/edbayes/status/2121285578876719586",
+          "aihotItem": "https://aihot.news/items/czp2y4hzb8bf1qhwlqzvw7a7g"
+        }
+      ],
+      "participation_mode": "editorial",
+      "configProvenance": "CoreScope Bird route and user-approved participation mode."
+    },
+    "corescope-x-mark-k": {
+      "id": "corescope-x-mark-k",
+      "status": "verified",
+      "checkedAt": "2026-11-22T04:23:48.173Z",
+      "scope": "Explicit handle in AIHOT public source sample, marked heatOnly.",
+      "publicEvidence": [
+        {
+          "url": "https://x.com/mark_k",
+          "aihotDirectory": "https://aihot.news/api/site/stats"
+        }
+      ],
+      "participation_mode": "hot_signal",
+      "configProvenance": "CoreScope Bird route and user-approved participation mode."
+    },
+    "corescope-x-levelsio": {
+      "id": "corescope-x-levelsio",
+      "status": "verified",
+      "checkedAt": "2026-11-22T04:23:48.173Z",
+      "scope": "Explicit handle in AIHOT public source sample, marked heatOnly.",
+      "publicEvidence": [
+        {
+          "url": "https://x.com/levelsio",
+          "aihotDirectory": "https://aihot.news/api/site/stats"
+        }
+      ],
+      "participation_mode": "hot_signal",
+      "configProvenance": "CoreScope Bird route and user-approved participation mode."
     }
   },
   "coverage": [
@@ -9753,6 +9937,30 @@
       "observedIdentity": "x:jensenhuang",
       "status": "reviewed_configuration_runtime_acceptance_separate",
       "evidence": "docs/corescope-source-expansion-20261101.json"
+    },
+    {
+      "sourceId": "corescope-x-kateclarktweets",
+      "observedIdentity": "x:kateclarktweets",
+      "status": "reviewed_configuration_runtime_acceptance_separate",
+      "evidence": "docs/CORESCOPE_BIRD_SOURCE_ADDITION_20261122.md"
+    },
+    {
+      "sourceId": "corescope-x-edbayes",
+      "observedIdentity": "x:edbayes",
+      "status": "reviewed_configuration_runtime_acceptance_separate",
+      "evidence": "docs/CORESCOPE_BIRD_SOURCE_ADDITION_20261122.md"
+    },
+    {
+      "sourceId": "corescope-x-mark-k",
+      "observedIdentity": "x:mark_k",
+      "status": "reviewed_configuration_runtime_acceptance_separate",
+      "evidence": "docs/CORESCOPE_BIRD_SOURCE_ADDITION_20261122.md"
+    },
+    {
+      "sourceId": "corescope-x-levelsio",
+      "observedIdentity": "x:levelsio",
+      "status": "reviewed_configuration_runtime_acceptance_separate",
+      "evidence": "docs/CORESCOPE_BIRD_SOURCE_ADDITION_20261122.md"
     }
   ],
   "refreshReviews": [
@@ -9841,6 +10049,18 @@
       ],
       "evidence": "docs/corescope-source-expansion-20261101.json",
       "scope": "User-authorized13-source refresh; actual collection acceptance separate."
+    },
+    {
+      "observedAt": "2026-11-22T04:03:17.202Z",
+      "reviewedAt": "2026-11-22T04:23:48.173Z",
+      "sourceIds": [
+        "corescope-x-kateclarktweets",
+        "corescope-x-edbayes",
+        "corescope-x-mark-k",
+        "corescope-x-levelsio"
+      ],
+      "evidence": "docs/CORESCOPE_BIRD_SOURCE_ADDITION_20261122.md",
+      "scope": "Four exact X handles with user-approved editorial or heat-only participation."
     }
   ]
 }
