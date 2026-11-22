@@ -10,6 +10,7 @@ import { closeDb, sql } from "@aihot/backend/db";
 import { sha256 } from "@aihot/backend/lib/ids";
 import { completeLogin, endSession, loginRedirect, passwordLogin, SESSION_COOKIE, sessionPrincipal } from "@aihot/backend/admin/auth";
 import { adminHandler, registerAdminAuth } from "../apps/api/src/routes/admin-auth.ts";
+import { registerAdmin } from "../apps/api/src/routes/admin.ts";
 
 const T = tag();
 const PASSWORD_A = `test-password-a-${T}`;
@@ -38,6 +39,7 @@ const oauth = await stub(async (_hit, req) => {
 });
 const app = Fastify({ logger: false });
 registerAdminAuth(app);
+registerAdmin(app);
 let writes = 0;
 app.post("/api/admin/session-test", adminHandler(async () => ({ writes: ++writes })));
 let base = "";

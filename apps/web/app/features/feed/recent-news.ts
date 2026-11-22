@@ -7,9 +7,9 @@ function recent(item: FeedItemSummary, at: number): boolean {
 }
 
 /** An explicitly separate public sample while there are no fresh selected reports in this scope. */
-export async function recentPublicNews(timeline: Pick<TimelineResponse, "cards" | "generatedAt">,
+export async function recentPublicNews(timeline: Pick<TimelineResponse, "cards"> & { generatedAt?: string },
   readPool: () => Promise<PoolResponse>, signal?: AbortSignal): Promise<FeedItemSummary[]> {
-  const at = Date.parse(timeline.generatedAt);
+  const at = timeline.generatedAt ? Date.parse(timeline.generatedAt) : Date.now();
   if (!Number.isFinite(at) || timeline.cards.some(card => card.item.selected && recent(card.item, at))) return [];
   let pool: PoolResponse;
   try { pool = await readPool(); }

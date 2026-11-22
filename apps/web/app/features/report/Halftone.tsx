@@ -6,6 +6,8 @@
 // The real text stays in the page (for search, screen readers and before the script runs); the canvas
 // covers it once drawn. Mark the accent part of `children` with data-accent.
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { watchAppearance } from "../../lib/local-state";
+import { reducedMotion, seededRandom } from "../../lib/motion";
 
 interface Dot {
   x: number;
@@ -24,19 +26,9 @@ function hashSeed(s: string): number {
   return h >>> 0;
 }
 
-function mulberry32(seed: number) {
-  let a = seed;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 /** Smooth value noise in [0, 1] on a seeded lattice. */
 function valueNoise(seed: number) {
-  const rnd = mulberry32(seed);
+  const rnd = seededRandom(seed);
   const size = 64;
   const grid = Float32Array.from({ length: size * size }, () => rnd());
   const at = (ix: number, iy: number) => grid[(((iy % size) + size) % size) * size + (((ix % size) + size) % size)]!;
@@ -71,10 +63,10 @@ export function Halftone({ seed, className = "", children }: { seed: string; cla
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!host || !label || !canvas || !ctx) return;
-    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const still = reducedMotion();
     const hover = matchMedia("(hover: hover) and (pointer: fine)").matches;
     const noise = valueNoise(hashSeed(seed));
-    const phase = mulberry32(hashSeed(seed) ^ 0x9e3779b9);
+    const phase = seededRandom(hashSeed(seed) ^ 0x9e3779b9);
     const phaseX = phase();
     const phaseY = phase();
 
@@ -300,9 +292,7 @@ export function Halftone({ seed, className = "", children }: { seed: string; cla
       paintTint();
       redraw();
     };
-    const theme = new MutationObserver(recolour);
-    const scheme = matchMedia("(prefers-color-scheme: dark)");
-    const onScheme = recolour;
+    let unwatch = () => {};
 
     document.fonts.ready.then(() => {
       if (disposed || !layout()) return;
@@ -312,8 +302,7 @@ export function Halftone({ seed, className = "", children }: { seed: string; cla
       setDrawn(true);
       redraw();
       resize.observe(host);
-      theme.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "class"] });
-      scheme.addEventListener("change", onScheme);
+      unwatch = watchAppearance((change) => (change === "font" ? rebuild() : recolour()));
       if (hover && !still) {
         canvas.addEventListener("pointermove", onMove);
         canvas.addEventListener("pointerleave", onLeave);
@@ -324,8 +313,7 @@ export function Halftone({ seed, className = "", children }: { seed: string; cla
       disposed = true;
       if (frame) cancelAnimationFrame(frame);
       resize.disconnect();
-      theme.disconnect();
-      scheme.removeEventListener("change", onScheme);
+      unwatch();
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerleave", onLeave);
     };

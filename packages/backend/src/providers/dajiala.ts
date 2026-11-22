@@ -3,7 +3,7 @@
 // as the actual cost. Docs: https://s.apifox.cn/410674f9-f451-4b4f-957a-5f54f243bc83
 import { credential } from "../config.ts";
 import { guardedFetch } from "../lib/http-fetch.ts";
-import { paidRequest, ProviderRejectedError, type CallOutcome } from "./receipts.ts";
+import { assertAccepted, paidRequest, ProviderRejectedError, type CallOutcome } from "./receipts.ts";
 import { normalizeUrl } from "../lib/url.ts";
 
 /** Current post_history accepts ghid or a public article URL, not an inferred biz request field. */
@@ -71,6 +71,14 @@ export interface MpArticle {
   ghid: string | null;
 }
 
+/**
+ * Whether WeChat accounts are checked through Dajiala: only with DAJIALA_KEY. The scheduled checks and
+ * their queue run only then.
+ */
+export function dajialaConfigured(): boolean {
+  return credential("collectors", "DAJIALA_KEY") !== null;
+}
+
 function base(): { url: string; key: string } {
   const key = credential("collectors", "DAJIALA_KEY");
   if (!key) throw new Error("DAJIALA_KEY is not configured");
@@ -119,8 +127,9 @@ export async function mpHistory(account: MpAccountSelector, opts: { subject: str
         timeoutMs: 30_000,
         route: "direct",
       });
-      if (res.status === 429 || res.status >= 500) throw new ProviderRejectedError(`dajiala HTTP ${res.status}`, res.status, true);
-      const json = JSON.parse(res.text()) as { code?: number; msg?: string; cost_money?: number };
+      const text = res.text();
+      assertAccepted("dajiala", res.status, text);
+      const json = JSON.parse(text) as { code?: number; msg?: string; cost_money?: number };
       const cost = responseCost(json, "post_history");
       return { response: json, cost, usage: { posts: Array.isArray((json as { data?: unknown[] }).data) ? (json as { data: unknown[] }).data.length : 0 } };
     },
@@ -154,8 +163,9 @@ export async function mpArticle(articleUrl: string, opts: { subject: string; ide
         maxBytes: 8 * 1024 * 1024,
         route: "direct",
       });
-      if (res.status === 429 || res.status >= 500) throw new ProviderRejectedError(`dajiala HTTP ${res.status}`, res.status, true);
-      const json = JSON.parse(res.text()) as { code?: number; msg?: string; cost_money?: number };
+      const text = res.text();
+      assertAccepted("dajiala", res.status, text);
+      const json = JSON.parse(text) as { code?: number; msg?: string; cost_money?: number };
       const cost = responseCost(json, "article_detail");
       return { response: json, cost, usage: { chars: String((json as { content?: string }).content ?? "").length } };
     },

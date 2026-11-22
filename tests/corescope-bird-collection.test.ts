@@ -6,7 +6,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync } from "node:
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { closeDb, sql } from "@aihot/backend/db";
-import { stopBoss } from "@aihot/backend/jobs/queue";
+import { getBoss, stopBoss } from "@aihot/backend/jobs/queue";
 import { collectSource, adaptIntervals, scheduleDueSources } from "@aihot/backend/sources/collect";
 import { extractArticleBody } from "@aihot/backend/content/extract";
 import { upsertMaterial } from "@aihot/backend/content/materials";
@@ -32,6 +32,7 @@ function fixture(data: Record<string, unknown>) { writeFileSync(fixtureFile, JSO
 const cursor = async () => (await sql<{ cursor: Record<string, any> | null }[]>`SELECT cursor FROM sources WHERE id=${sourceId}`)[0]!.cursor;
 
 before(async () => {
+  await getBoss(); // Each file now has an independent database; initialize the queue before fixture cleanup.
   mkdirSync(path.join(root, "dist"));
   writeFileSync(path.join(root, "package.json"), JSON.stringify({ name: "@steipete/bird", version: "0.8.0", type: "module" }));
   writeFileSync(path.join(root, "dist/cli.js"), `import {readFileSync,writeFileSync} from 'node:fs';
@@ -135,7 +136,9 @@ test("a failed Bird material write rolls back queue, cursor and receipt acknowle
     const result = await collectSource(sourceId);
     assert.equal(result.status, "failed"); assert.equal(await cursor(), null);
     const [run] = await sql`SELECT detail FROM fetch_runs WHERE source_id=${sourceId} ORDER BY id DESC LIMIT 1`;
-    assert.deepEqual(run!.detail, { provider: "bird" }, "failed attribution must not persist the source config or credentials");
+    const { owner, ...attribution } = run!.detail;
+    assert.deepEqual(attribution, { provider: "bird" }, "failed attribution must not persist the source config or credentials");
+    assert.equal(owner.pid, process.pid, "the run retains upstream process ownership for crash recovery");
     assert.equal((await sql`SELECT id FROM articles WHERE identity_key=${`x:${t.id}`}`).length, 0);
     assert.equal((await sql`SELECT status FROM receipts WHERE service='bird' AND subject=${`source:${sourceId}`}`)[0]!.status, "received");
   } finally {

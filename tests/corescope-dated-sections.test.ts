@@ -5,7 +5,7 @@ import type { SourceRow } from "@aihot/backend/sources/types";
 
 const source: SourceRow = {
   id: "test-dated-sections", name: "Product release notes", kind: "web_list", tier: "T1", first_party: true,
-  participation_mode: "editorial", enabled: true, interval_minutes: 60, cursor: null, fail_count: 0,
+  participation_mode: "editorial", uses: [], enabled: true, interval_minutes: 60, cursor: null, fail_count: 0,
   config: { parseMode: "dated_sections", itemSelector: "article h2[id], article h3[id]", preserveUrlFragment: true, publishedAtUtcOffset: "+00:00" },
 };
 const page = `<article><h2 id="october">October 2026</h2>

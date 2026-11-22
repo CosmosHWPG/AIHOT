@@ -1,4 +1,4 @@
-import { SITE } from "@aihot/industry/site";
+import { SITE } from "@aihot/site";
 // Leaderboard read layer: every leaderboard page reads the latest published run through here.
 // Page reads never compute rankings; they only format what the run stored.
 import { LEADERBOARD_PUBLIC_BOARDS, type LeaderboardBoardKey } from "@aihot/contracts/taxonomy";

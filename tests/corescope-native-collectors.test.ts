@@ -11,7 +11,7 @@ import { fetchJsonList } from "@aihot/backend/sources/json-list";
 const source = (extra: Record<string, unknown> = {}): SourceRow => ({
   id: "native-article-profile", name: "Native article profile", kind: "web_list", cursor: null,
   tier: "T2", first_party: false, interval_minutes: 60, enabled: true, fail_count: 0,
-  participation_mode: "editorial", config: { adapter: "article_links", itemUrlPattern: "^/news/[a-z0-9-]+$", ...extra },
+  participation_mode: "editorial", uses: [], config: { adapter: "article_links", itemUrlPattern: "^/news/[a-z0-9-]+$", ...extra },
 });
 
 test("article profiles exclude menu, listing, resource and external links before deduplication", () => {

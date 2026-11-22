@@ -5,7 +5,7 @@ import type { SourceRow } from "@aihot/backend/sources/types";
 
 const source: SourceRow = {
   id: "test-flight", name: "Embedded publisher articles", kind: "json_list", tier: "T1", first_party: true,
-  participation_mode: "editorial", enabled: true, interval_minutes: 60, cursor: null, fail_count: 0,
+  participation_mode: "editorial", uses: [], enabled: true, interval_minutes: 60, cursor: null, fail_count: 0,
   config: { mode: "html_json_key", jsonKey: "articles" },
 };
 const flight = (text: string) => `<script>self.__next_f.push(${JSON.stringify([1, text])})</script>`;

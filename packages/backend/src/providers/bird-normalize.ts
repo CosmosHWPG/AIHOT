@@ -89,7 +89,7 @@ export function normalizeBirdTweet(input: unknown, context: "timeline" | "read" 
     return [{ type: m.type, media_url_https: url }];
   });
   return { id_str: id, tweet_created_at: new Date(createdAt).toISOString(), full_text: body,
-    user: { screen_name: handle, name: text(actor.name) || handle, profile_image_url_https: text(actor.profileImageUrl) || undefined },
+    user: { ...(row.authorId ? { id_str: String(row.authorId) } : {}), screen_name: handle, name: text(actor.name) || handle, profile_image_url_https: text(actor.profileImageUrl) || undefined },
     in_reply_to_status_id_str: text(row.inReplyToStatusId ?? legacy.in_reply_to_status_id_str) || null,
     quoted_status: quote, retweeted_status: repost, is_quote_status: Boolean(quotedTweetId || quote), entities: { urls }, extended_entities: { media },
     favorite_count: count(row.likeCount ?? legacy.favorite_count), retweet_count: count(row.retweetCount ?? legacy.retweet_count),

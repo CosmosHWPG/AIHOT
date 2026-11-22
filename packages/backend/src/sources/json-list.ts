@@ -1,9 +1,11 @@
 // JSON sources: plain JSON APIs, JSON embedded in HTML (script tags, window variables).
 import { credential } from "../config.ts";
-import { guardedFetch } from "../lib/http-fetch.ts";
+import { languageHeaders, requireOk } from "../lib/http-fetch.ts";
+import { JINA_PREFIX, jinaRead } from "../providers/jina.ts";
+import { fetchListing } from "./listing-fetch.ts";
 import { collapseWhitespace, stripTags } from "../lib/text.ts";
+import { readPublicationDate, type PublicationDate } from "./dates.ts";
 import { FetchError, type Candidate, type SourceRow } from "./types.ts";
-import { parseLooseDate } from "./web-list.ts";
 
 export function getPath(obj: unknown, path: string): unknown {
   if (!path) return obj;
@@ -40,28 +42,21 @@ export function renderTemplate(template: string, item: unknown): string | null {
   return missing ? null : out;
 }
 
-function toDate(v: unknown, unit: string | undefined, utcOffset: string | undefined): Date | null {
-  if (v === null || v === undefined || v === "") return null;
+/** Calendar days and exact epoch/ISO times preserve the source's stated precision. */
+export function toDate(v: unknown, unit: string | undefined, utcOffset: string | undefined): PublicationDate {
+  const unknown = { publishedAt: null, publicationTime: null };
+  if (v === null || v === undefined || v === "") return unknown;
+  let text: string;
+  try { text = String(v).trim(); } catch { return unknown; }
   if (unit === "epoch_ms" || unit === "epoch_s") {
-    try {
-      const date = new Date(Number(v) * (unit === "epoch_s" ? 1000 : 1));
-      return Number.isFinite(date.getTime()) ? date : null;
-    } catch {
-      return null;
-    }
+    const date = new Date(Number(text) * (unit === "epoch_s" ? 1000 : 1));
+    return Number.isFinite(date.getTime()) ? { publishedAt: date, publicationTime: date.toISOString() } : unknown;
   }
-  // 20260922: a calendar day at UTC midnight (some list APIs give dates as yyyymmdd).
   if (unit === "yyyymmdd") {
-    const m = /^(\d{4})(\d{2})(\d{2})$/.exec(String(v).trim());
-    const d = m ? new Date(`${m[1]}-${m[2]}-${m[3]}T00:00:00Z`) : null;
-    return d && Number.isFinite(d.getTime()) && d.toISOString().startsWith(`${m![1]}-${m![2]}-${m![3]}`) ? d : null;
+    const m = /^(\d{4})(\d{2})(\d{2})$/.exec(text);
+    return m ? readPublicationDate(`${m[1]}-${m[2]}-${m[3]}`, utcOffset) : unknown;
   }
-  if (utcOffset) {
-    const printed = String(v).trim();
-    return parseLooseDate(/^\d{4}-\d{2}-\d{2}$/.test(printed) ? `${printed}T00:00:00${utcOffset}` : printed, utcOffset);
-  }
-  const t = Date.parse(String(v));
-  return Number.isFinite(t) ? new Date(t) : null;
+  return readPublicationDate(text, utcOffset);
 }
 
 function findKey(obj: unknown, key: string, depth = 0): unknown {
@@ -165,24 +160,27 @@ export function embeddedJson(html: string, source: SourceRow): unknown {
 export async function fetchJsonList(source: SourceRow): Promise<Candidate[]> {
   const c = source.config;
   const url = String(c.url ?? "");
-  const headers: Record<string, string> = { accept: "application/json, text/html;q=0.9", ...(c.headers ?? {}) };
+  const headers: Record<string, string> = { accept: "application/json, text/html;q=0.9", ...languageHeaders(c.acceptLanguage), ...(c.headers ?? {}) };
   if (/^https:\/\/api\.github\.com\//.test(url)) {
     const token = credential("collectors", "GITHUB_TOKEN");
     if (token) headers.authorization = `Bearer ${token}`;
   }
-  const res = await guardedFetch(url, {
-    redirectPolicy: "same-origin",
-    method: c.method ?? "GET",
-    headers: c.bodyJson ? { ...headers, "content-type": "application/json" } : headers,
-    body: c.bodyJson ? JSON.stringify(c.bodyJson) : undefined,
-    timeoutMs: 25_000,
-  });
-  if (res.status !== 200) throw new FetchError(`HTTP ${res.status}`, res.status);
+  const embedded = c.mode === "html_json_key" || c.mode === "html_window_var";
+  // A page that blocks our addresses can be read through Jina's rendered HTML, which keeps its scripts.
+  const text = embedded && url.startsWith(JINA_PREFIX)
+    ? (await jinaRead(url.slice(JINA_PREFIX.length), { purpose: "source_listing", subject: `source:${source.id}`, format: "html", perRead: true })).markdown
+    : requireOk(await fetchListing(url, {
+      redirectPolicy: "same-origin",
+      method: c.method ?? "GET",
+      headers: c.bodyJson ? { ...headers, "content-type": "application/json" } : headers,
+      body: c.bodyJson ? JSON.stringify(c.bodyJson) : undefined,
+      timeoutMs: 25_000,
+    })).text();
   let data: unknown;
-  if (c.mode === "html_json_key" || c.mode === "html_window_var") data = embeddedJson(res.text(), source);
+  if (embedded) data = embeddedJson(text, source);
   else {
     try {
-      data = JSON.parse(res.text());
+      data = JSON.parse(text);
     } catch {
       throw new FetchError("response is not JSON");
     }
@@ -196,18 +194,19 @@ export async function fetchJsonList(source: SourceRow): Promise<Candidate[]> {
     if (c.requireBoolean && getPath(item, c.requireBoolean.path) !== c.requireBoolean.equals) continue;
     if (c.minNumeric && !(Number(getPath(item, c.minNumeric.path)) >= Number(c.minNumeric.min))) continue;
     const title = firstString(item, c.titlePaths);
-    const url = (c.urlTemplate && renderTemplate(c.urlTemplate, item)) || (c.urlTemplateFallback && renderTemplate(c.urlTemplateFallback, item));
+    const linkedUrl = c.urlTemplate && renderTemplate(c.urlTemplate, item);
+    const url = linkedUrl || (c.urlTemplateFallback && renderTemplate(c.urlTemplateFallback, item));
     if (!title || !url) continue;
     const externalId = c.externalIdPath ? getPath(item, c.externalIdPath) : null;
     const summary = firstString(item, c.summaryPaths);
-    const raw = item && typeof item === "object" ? { ...(item as Record<string, unknown>) } : { value: item };
-    for (const k of c.rawDropKeys ?? []) delete (raw as Record<string, unknown>)[k];
-    const summaryIsBody = c.summaryIsBody === true && !!summary;
+    const summaryIsBody = !c.detail?.bodyUrlSuffix && c.summaryIsBody === true && !!summary;
+    const date = toDate(getPath(item, c.publishedAtPath), c.publishedAtUnit, c.publishedAtUtcOffset);
     out.push({
       url,
       title: collapseWhitespace(stripTags(title)),
       author: firstString(item, c.authorPaths),
-      publishedAt: toDate(getPath(item, c.publishedAtPath), c.publishedAtUnit, c.publishedAtUtcOffset),
+      ...date,
+      ...(!linkedUrl && c.publishedAtForFallbackUrl === true && date.publishedAt ? { listingDatesOriginal: true } : {}),
       excerpt: summary ? collapseWhitespace(stripTags(summary)).slice(0, 2000) : null,
       bodyText: summaryIsBody ? stripTags(summary!) : null,
       bodyStatus: summaryIsBody ? "ok" : "pending",

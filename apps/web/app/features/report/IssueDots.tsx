@@ -6,6 +6,8 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router";
 import type { ReportNavigationEntry, ReportKind } from "@aihot/contracts/site";
+import { watchAppearance } from "../../lib/local-state";
+import { reducedMotion } from "../../lib/motion";
 import { KIND_PATH, periodGrid } from "./format";
 
 const ROW = 20;
@@ -24,7 +26,7 @@ export function IssueDots({ kind, reportKey, issueNumber, index, className = "" 
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     const { cells, columns } = grid;
-    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const still = reducedMotion();
     let width = 0;
     let cw = 0;
     let hovered = -1;
@@ -125,16 +127,13 @@ export function IssueDots({ kind, reportKey, issueNumber, index, className = "" 
       readColors();
       redraw();
     };
-    const theme = new MutationObserver(recolour);
-    const scheme = matchMedia("(prefers-color-scheme: dark)");
 
     readColors();
     size();
     started = performance.now();
     redraw();
     resize.observe(canvas);
-    theme.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "class"] });
-    scheme.addEventListener("change", recolour);
+    const unwatch = watchAppearance((change) => change === "theme" && recolour());
     canvas.addEventListener("pointermove", onMove);
     canvas.addEventListener("pointerleave", onLeave);
     canvas.addEventListener("click", onClick);
@@ -142,8 +141,7 @@ export function IssueDots({ kind, reportKey, issueNumber, index, className = "" 
       disposed = true;
       if (frame) cancelAnimationFrame(frame);
       resize.disconnect();
-      theme.disconnect();
-      scheme.removeEventListener("change", recolour);
+      unwatch();
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerleave", onLeave);
       canvas.removeEventListener("click", onClick);
@@ -152,12 +150,12 @@ export function IssueDots({ kind, reportKey, issueNumber, index, className = "" 
 
   return (
     <div className={className}>
-      <div className="flex items-baseline justify-between text-[11px] text-ink-4">
+      <div className="flex items-baseline justify-between text-ui-caption-sm text-ink-4">
         <span className="font-semibold tracking-[0.2em] text-ink-2">{grid.title}</span>
         <span className="num">{grid.note}</span>
       </div>
       {grid.heads && (
-        <div className="mt-2 grid text-center text-[10px] leading-none text-ink-4" style={{ gridTemplateColumns: `repeat(${grid.columns}, minmax(0, 1fr))` }}>
+        <div className="mt-2 grid text-center text-ui-micro-7 leading-none text-ink-4" style={{ gridTemplateColumns: `repeat(${grid.columns}, minmax(0, 1fr))` }}>
           {grid.heads.map((h) => (
             <span key={h}>{h}</span>
           ))}

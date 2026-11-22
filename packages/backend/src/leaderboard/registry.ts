@@ -3,7 +3,7 @@
 import type { LeaderboardBoardKey } from "@aihot/contracts/taxonomy";
 import type { LbBrand, LbScoreFormat, LbSourceStatus } from "@aihot/contracts/leaderboard";
 import registryData from "./source-registry.json" with { type: "json" };
-import { SITE } from "@aihot/industry/site";
+import { SITE } from "@aihot/site";
 
 export interface RegistrySource {
   key: string;

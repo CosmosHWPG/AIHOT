@@ -207,7 +207,7 @@ test("Xquik Article extraction calls its own route and falls back to full bodyTe
   assert.equal(articleReads.at(-1), String(baseId + 20n));
   const [body] = await sql`SELECT title, x_article FROM articles WHERE id = ${material!.id}`;
   assert.equal(body!.title, "Confirmed Xquik Article"); assert.equal(body!.x_article.text, "Full original article body");
-  assert.equal(xArticleText({ title: "test", content_state: { blocks: [{ type: "unstyled", text: "body" }] } })!.text, "body");
+  assert.equal(xArticleText({ title: "test", content_state: { blocks: [{ type: "unstyled", text: "body" }] } }, "https://x.com/i/status/1")!.text, "body");
 });
 
 test("an in-flight paid single-source fetch cannot overwrite a newly selected Bird route", async () => {

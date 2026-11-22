@@ -8,13 +8,17 @@
  * 没归上类的资料在日报里放进第一个 key 为 industry 的类别所在的节（没有就放最后一节）。
  */
 export const CATEGORIES = [
-  { key: "ai-models", label: "模型", section: "模型发布/更新", guide: "新模型、模型版本、权重开放、模型能力与价格变化的发布与评测结果" },
-  { key: "ai-products", label: "产品", section: "产品与网络演进", guide: "核心网网元、通信平台与网络能力，以及 AI 产品、工具、API、平台的正式发布和更新；架构落地、部署工程与商用试点的具体能力变化" },
-  { key: "industry", label: "产业", section: "产业与标准进展", guide: "核心网与 AI 的标准发布、工作项目及版本阶段，政策监管、安全通报、市场竞争、公司经营、融资并购、合作与商业基础设施；标准提案与冻结要区分阶段" },
-  { key: "paper", label: "研究", section: "研究与评测", guide: "核心网、6G 与 AI 的研究论文、技术报告、基准、测量方法和数据集；研究结论须保留实验范围" },
-  { key: "tip", label: "工程", section: "工程与技术洞察", guide: "核心网或 AI 的架构设计、部署实践、性能与成本优化、协议分析、故障复盘、安全防御、可复用方法和深度技术讲解" },
-  { key: "opinion", label: "洞察", section: "工程与技术洞察", guide: "技术与商业判断、标准路线分析、架构取舍、战略规划、竞争格局、深度访谈与趋势讨论" },
+  { key: "ai-models", tagColor: "indigo", label: "模型", section: "模型发布/更新", guide: "新模型、模型版本、权重开放、模型能力与价格变化的发布与评测结果" },
+  { key: "ai-products", tagColor: "turquoise", label: "产品", section: "产品与网络演进", guide: "核心网网元、通信平台与网络能力，以及 AI 产品、工具、API、平台的正式发布和更新；架构落地、部署工程与商用试点的具体能力变化" },
+  { key: "industry", tagColor: "orange", label: "产业", section: "产业与标准进展", guide: "核心网与 AI 的标准发布、工作项目及版本阶段，政策监管、安全通报、市场竞争、公司经营、融资并购、合作与商业基础设施；标准提案与冻结要区分阶段" },
+  { key: "paper", tagColor: "violet", label: "研究", section: "研究与评测", guide: "核心网、6G 与 AI 的研究论文、技术报告、基准、测量方法和数据集；研究结论须保留实验范围" },
+  { key: "tip", tagColor: "green", label: "工程", section: "工程与技术洞察", guide: "核心网或 AI 的架构设计、部署实践、性能与成本优化、协议分析、故障复盘、安全防御、可复用方法和深度技术讲解" },
+  { key: "opinion", tagColor: "purple", label: "洞察", section: "工程与技术洞察", guide: "技术与商业判断、标准路线分析、架构取舍、战略规划、竞争格局、深度访谈与趋势讨论" },
 ] as const;
+
+/** 用于报告中单独统计模型发布。 */
+export const RELEASE: { category: string; tag: string; unit: string } | null = { category: "ai-models", tag: "模型发布", unit: "个新模型" };
+export const PLAIN_TERMS: readonly string[] = ["ai", "api", "llm", "gpu", "agi", "ceo", "ipo"];
 
 /**
  * 内容理解一步给每篇资料判的“内容类型”（写在 prompts/content-understanding.md 里，改了类型要同步改那份提示词）。
@@ -72,7 +76,7 @@ export const CATEGORY_BY_ITEM_TYPE: Readonly<Record<string, string>> = {
 // ── 公司与主体 ──────────────────────────────────────────────────────────────────────────
 
 /** 公司主题：id → 显示名、卡片上显示的标签（null 表示只用 entity:<id> 归类）、别名。 */
-export const ENTITIES: Record<string, { name: string; displayTag: string | null; aliases: string[] }> = {
+export const ENTITIES: Record<string, { name: string; displayTag: string | null; aliases: string[]; orgNames?: string[]; otherNames?: string[] }> = {
   openai: { name: "OpenAI", displayTag: "OpenAI", aliases: ["OpenAI", "ChatGPT", "Sora", "Codex", "GPT"] },
   anthropic: { name: "Anthropic", displayTag: "Anthropic", aliases: ["Anthropic", "Claude"] },
   google: { name: "Google", displayTag: "Google", aliases: ["Google", "DeepMind", "Gemini", "谷歌"] },

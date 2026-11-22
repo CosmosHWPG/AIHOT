@@ -12,6 +12,7 @@ import { sha256 } from "../lib/ids.ts";
 import { loadContact, type ContactSettings } from "../site/contact.ts";
 import { audit, Conflict } from "../audit.ts";
 import { cancelTemporaryLlmBudget } from "../providers/temporary-budget.ts";
+import { pushEnabled } from "../notify/deliver.ts";
 import { wakeJinaBudgetWaits, wakeLlmBudgetWaits } from "../jobs/budget-capacity.ts";
 
 const MAX_QR_BYTES = 2 * 1024 * 1024;
@@ -55,9 +56,9 @@ export async function setTargetEnabled(key: string, enabled: boolean, reason: st
   if (!before) return null;
   const [after] = await sql`
     UPDATE notify_targets SET enabled = ${enabled}, enabled_at = CASE WHEN ${enabled} AND NOT enabled THEN now() ELSE enabled_at END, updated_at = now()
-    WHERE key = ${key} RETURNING key, enabled, enabled_at`;
+    WHERE key = ${key} RETURNING key, enabled, enabled_at, kind`;
   await audit(actor, enabled ? "notify.enable" : "notify.disable", `notify-target:${key}`, reason, before, after);
-  return { ...after, pushEnabledHere: config.feishuContentPushEnabled };
+  return { ...after, pushEnabledHere: pushEnabled(after.kind) };
 }
 
 export async function listBudgets(): Promise<BeforeJson<AdminBudget>[]> {

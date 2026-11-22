@@ -6,7 +6,7 @@ import { spawn } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 import { after, before, test } from "node:test";
 import { sql, closeDb } from "@aihot/backend/db";
-import { getBoss, stopBoss } from "@aihot/backend/jobs/queue";
+import { getBoss, QUEUES, stopBoss } from "@aihot/backend/jobs/queue";
 import { upsertMaterial } from "@aihot/backend/content/materials";
 
 const T = tag();
@@ -120,7 +120,11 @@ test("SIGTERM during the final paid writing call still commits the complete anal
   assert.equal((await sql`SELECT processing_state FROM articles WHERE id=${articleId}`)[0]!.processing_state, "analyzed");
   const [analysis] = await sql`SELECT selected,score,receipt_ids FROM analyses WHERE article_id=${articleId}`;
   assert.equal(analysis!.selected, true); assert.equal(analysis!.score, 80); assert.equal(analysis!.receipt_ids.length, 5);
-  assert.equal((await sql`SELECT selected FROM publications WHERE article_id=${articleId}`)[0]!.selected, true);
+  const [publication] = await sql`SELECT eligible, selection_candidate, selected FROM publications WHERE article_id=${articleId}`;
+  assert.deepEqual({ ...publication }, { eligible: true, selection_candidate: true, selected: false },
+    "the committed candidate is readable while grouping must still confirm the selected seat");
+  const [group] = await sql`SELECT state FROM pgboss.job WHERE name=${QUEUES.group} AND data->>'articleId'=${articleId}`;
+  assert.equal(group?.state, "created", "grouping has a durable handoff after the isolated analysis worker stops");
   assert.equal((await sql`SELECT 1 FROM receipts WHERE subject=${`article:${articleId}@1`} AND status='completed'`).length, 5);
 });
 

@@ -22,9 +22,6 @@ export const BUDGETS = [
   { key: "professional", name: "行业专业任务", weight: 0.03 },
 ] as const;
 
-/** Budgets that count as a "专项" for the overall eligibility rule. */
-const SPECIALTY_EXCLUDED = new Set(["broad", "preference"]);
-
 export interface ScoringSource {
   key: string;
   /** Scored metric; multi-metric sources name the one metric that votes. */

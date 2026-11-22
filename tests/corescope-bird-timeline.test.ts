@@ -16,7 +16,7 @@ const tweet = (ageHours: number, handle = "OpenAI", extra: Partial<BirdTweet> = 
 });
 const source = (patch: Partial<SourceRow> = {}): SourceRow => ({
   id: "test-bird-openai", name: "OpenAI", kind: "x_search", enabled: true, tier: "T1", first_party: true,
-  participation_mode: "editorial", interval_minutes: 120, fail_count: 0, cursor: null,
+  participation_mode: "editorial", uses: [], interval_minutes: 120, fail_count: 0, cursor: null,
   config: { provider: "bird", query: "from:OpenAI -filter:replies", searchType: "Latest", bird: { accountProfile: "birdclaw-primary", maxPagesPerRound: 1 } },
   ...patch,
 });

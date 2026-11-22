@@ -9,7 +9,7 @@ test("domain filters keep explicit structure evidence when writing chooses other
     prefilter: { label: "PASS", reason: "source evidence", model: "stub", receiptId: 1, reused: false },
     scores: { model: "stub", threshold: 60, values: [75, 75], receiptIds: [2, 3], reused: false },
     writing: { kind: "understand", model: "stub", titleZh: "技术进展", summaryZh: "可审阅的原始材料摘要", reasonZh: "架构信息", tags: ["产品更新"], receiptIds: [5], reused: false },
-    structure: { model: "stub", category: "ai-products", tags: ["AI", "核心网"], subjects: [], fact: null, receiptId: 4, reused: false },
+    structure: { model: "stub", category: "ai-products", scope: "single", tags: ["AI", "核心网"], subjects: [], fact: null, receiptId: 4, reused: false },
   };
   const result = normalizeAnalysis(run);
   assert.deepEqual(result.tags, ["产品更新", "AI", "核心网"]);

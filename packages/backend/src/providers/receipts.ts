@@ -5,17 +5,21 @@
 // 3. The raw response is saved before any business write; recovery reuses a received response.
 // 4. A request whose outcome is unknown (timeout after sending, crash mid-flight) is not re-sent by the
 //    caller. ops.recover releases it once after 30 minutes (operations/recover.ts), so a lost answer
-//    costs at most one repeat; after that it waits for the admin.
+//    costs at most one repeat; after that it waits for the admin. A primary handed to a backup stays
+//    unknown for billing and is not automatically released or sent again.
 import { sql, type Db } from "../db.ts";
 import { sha256, stableJson } from "../lib/ids.ts";
 import { shutdownSignal } from "../lib/shutdown.ts";
 import { restoreExpiredLlmBudget, temporaryLlmAllowance } from "./temporary-budget.ts";
 
+/** The text of a spent budget's error; with `%` for both parts it is the LIKE pattern that finds every saved one. */
+export const budgetMessage = (service: string, window: string) => `Budget for ${service} exhausted (${window})`;
+
 export class BudgetExceededError extends Error {
   readonly service: string;
   readonly retryAfterSeconds: number;
   constructor(service: string, window: string, retryAfterSeconds: number) {
-    super(`Budget for ${service} exhausted (${window})`);
+    super(budgetMessage(service, window));
     this.service = service;
     this.retryAfterSeconds = retryAfterSeconds;
   }
@@ -25,8 +29,8 @@ export class ReceiptBusyError extends Error {}
 
 export class ReceiptUnknownError extends Error {
   readonly receiptId: number;
-  constructor(receiptId: number, message: string) {
-    super(message);
+  constructor(receiptId: number, message: string, options?: ErrorOptions) {
+    super(message, options);
     this.receiptId = receiptId;
   }
 }
@@ -35,11 +39,123 @@ export class ReceiptUnknownError extends Error {
 export class ProviderRejectedError extends Error {
   readonly status: number | null;
   readonly retryable: boolean;
-  constructor(message: string, status: number | null, retryable: boolean) {
+  readonly accessRefused: boolean;
+  constructor(message: string, status: number | null, retryable: boolean, accessRefused = false) {
     super(message);
     this.status = status;
     this.retryable = retryable;
+    this.accessRefused = accessRefused;
   }
+}
+
+/** Model calls are switched off (MODEL_CALLS_ENABLED=false), or the model has no address or key: nothing was sent. */
+export class ModelUnavailableError extends Error {}
+
+/** A received answer that cannot be used; rejectReceivedResponse lets a later attempt pay for a fresh one. */
+export class ModelOutputError extends Error {
+  readonly receiptId: number | null;
+  constructor(message: string, receiptId: number | null = null) {
+    super(message);
+    this.receiptId = receiptId;
+  }
+}
+
+/**
+ * What a failed paid call says about the work that made it. Each caller keeps its own policy per kind:
+ * - off: model calls are switched off or the model is not configured
+ * - budget: the service's budget window is full (or set to 0); nothing was sent
+ * - busy: the same request is in flight elsewhere; nothing was sent
+ * - outage: the provider turned the request away for now (rate limit, server error, no connection), unbilled
+ * - unknown: it may have been billed and is not sent again until released (operations/recover.ts)
+ * - refused: the provider refused it; the same request would be refused again
+ * - unusable: an answer came back that cannot be used
+ * - other: anything else (the database, a bug)
+ * A worker that is stopping is the worker's state, not the error's: callers that stop on it check shutdownSignal.
+ */
+export type FailureKind = "off" | "budget" | "busy" | "outage" | "unknown" | "refused" | "unusable" | "other";
+
+export function failureKind(error: unknown): FailureKind {
+  if (error instanceof ModelUnavailableError) return "off";
+  if (error instanceof BudgetExceededError) return "budget";
+  if (error instanceof ReceiptBusyError) return "busy";
+  if (error instanceof ProviderRejectedError) return error.retryable ? "outage" : "refused";
+  if (error instanceof ReceiptUnknownError) return "unknown";
+  if (error instanceof ModelOutputError) return "unusable";
+  return "other";
+}
+
+/** The receipt a failed call leaves to look at: its unusable answer, or the request whose outcome is unknown. */
+export function failedReceiptId(error: unknown): number | null {
+  return error instanceof ModelOutputError || error instanceof ReceiptUnknownError ? error.receiptId : null;
+}
+
+/** The provider boundary accepts both OpenAI-compatible nested errors and flat provider errors. */
+function rejectionDetail(body: string): { code: string; message: string } {
+  let data: unknown;
+  try { data = JSON.parse(body); } catch { return { code: "", message: body }; }
+  if (!data || typeof data !== "object") return { code: "", message: body };
+  const root = data as Record<string, unknown>;
+  const error = root.error && typeof root.error === "object" ? root.error as Record<string, unknown> : root;
+  return {
+    code: typeof error.code === "string" || typeof error.code === "number" ? String(error.code) : typeof error.type === "string" ? error.type : "",
+    message: typeof error.message === "string" ? error.message : typeof root.error === "string" ? root.error : body,
+  };
+}
+
+// Codes from the vendors' references: https://help.aliyun.com/en/model-studio/error-code,
+// https://docs.bigmodel.cn/cn/api/api-code, https://help.openai.com/en/articles/5955604-troubleshooting-api-rate-limits-and-429-errors,
+// https://github.com/anomalyco/opencode/blob/8c173a8f3805d8e749d44311054b07e37a1b2ce1/packages/ai/src/provider-error.ts (GoUsageLimitError).
+/** Account or spending refusals, shared by live requests and their saved alert evidence. */
+export function providerAccessRefused(service: string, error: string): boolean {
+  const http = /(?:^| )HTTP (\d{3})(?:: ?| )([\s\S]*)$/.exec(error);
+  if (!http) return false;
+  const status = Number(http[1]);
+  if ([401, 402, 403].includes(status)) return true;
+  if (status !== 429) return false;
+  const { code, message } = rejectionDetail(http[2]!);
+  if (["GoUsageLimitError", "FreeUsageLimitError", "CreditLimitExceeded", "credit_balance_exhausted", "organization_usage_limit_exceeded", "organization_spend_limit_exceeded", "project_spend_limit_exceeded"].includes(code)) return true;
+  if (service === "zhipu" && ["1113", "1308", "1309", "1310", "1311", "1314", "1315", "1316", "1317", "1318", "1319", "1320", "1321"].includes(code)) return true;
+  if (service === "dashscope") {
+    if (["CommodityNotPurchased", "PrepaidBillOverdue", "PostpaidBillOverdue", "BudgetLimitExceeded"].includes(code)) return true;
+    // AllocationQuota / insufficient_quota usually means TPM throttling here, not spent money.
+    if (["Throttling.AllocationQuota", "insufficient_quota"].includes(code) && message.trim() === "Free allocated quota exceeded.") return true;
+  }
+  // A bare quota/limit/insufficient word is not evidence that buying capacity is required.
+  return /\binsufficient (?:account |credit )?balance\b|\b(?:credit )?balance (?:is )?(?:exhausted|insufficient)\b|账户.*欠费|余额不足/i.test(message);
+}
+
+/**
+ * A refusal that every later request would meet too: the account cannot pay or the plan is spent.
+ * A 401/403 can be about one resource (a private post), and a 429 can be a TPM/RPM throttle, so neither
+ * stops anything; the alert layer still reports them.
+ */
+export function providerSpendingRefused(service: string, error: string): boolean {
+  const http = /(?:^| )HTTP (\d{3})(?:: ?| )([\s\S]*)$/.exec(error);
+  if (!http) return false;
+  const status = Number(http[1]);
+  if (status === 402) return true;
+  if (status !== 429) return false;
+  return providerAccessRefused(service, error);
+}
+
+/**
+ * A provider's safety or content-inspection filter declined this input or output (Zhipu 1301,
+ * DashScope DataInspectionFailed, DeepSeek Content Exists Risk, OpenAI-compatible content_filter).
+ */
+export function providerContentRefused(error: unknown): boolean {
+  return failureKind(error) === "refused"
+    && /contentFilter|"1301"|DataInspectionFailed|data_inspection_failed|content_filter|Content Exists Risk/i.test((error as Error).message);
+}
+
+/** A temporary rate limit can pass; account/spending refusals need access restored first. */
+export function assertAccepted(service: string, status: number, body: string): void {
+  if (status >= 200 && status < 300) return;
+  const { code, message } = rejectionDetail(body);
+  // Keep the structured code before truncating verbose text, so saved evidence classifies the same way.
+  const detail = code ? JSON.stringify({ code, message: message.slice(0, 500) }) : body.slice(0, 500);
+  const error = `${service} HTTP ${status}: ${detail}`;
+  const accessRefused = providerAccessRefused(service, error);
+  throw new ProviderRejectedError(error, status, status >= 500 || (status === 429 && !accessRefused), accessRefused);
 }
 
 export interface CallOutcome {
@@ -62,6 +178,8 @@ export interface ReceiptRequest {
   attemptTag?: string;
   /** New metered services must not become unlimited when an operator removes their budget. */
   requireBudget?: boolean;
+  /** The backup owns its own receipt; its unknown primary remains protected from replay. */
+  fallbackFor?: string;
   creditBudget?: {
     maximum: number;
     dailyLimit: number;
@@ -84,6 +202,11 @@ export function logicalKeyFor(req: ReceiptRequest): string {
   return [req.service, req.purpose, req.model ?? "-", identity, req.attemptTag ?? "0"].join(":");
 }
 
+export async function receiptState(req: ReceiptRequest): Promise<string | null> {
+  const [row] = await sql<{ status: string }[]>`SELECT status FROM receipts WHERE logical_key = ${logicalKeyFor(req)}`;
+  return row?.status ?? null;
+}
+
 interface ReceiptRow {
   id: number;
   status: string;
@@ -92,7 +215,24 @@ interface ReceiptRow {
   updated_at: Date;
 }
 
-async function checkBudget(tx: Db, service: string, required = false): Promise<void> {
+export const PROVIDER_STOP_SECONDS = 900;
+export const providerStopKey = (service: string, model?: string | null) => `provider.stop.${service}${model == null ? "" : `:${encodeURIComponent(model)}`}`;
+
+async function stopForRefusal(tx: Db, key: string): Promise<void> {
+  const until = new Date(Date.now() + PROVIDER_STOP_SECONDS * 1000).toISOString();
+  await tx`INSERT INTO settings (key, value, updated_by) VALUES (${key}, jsonb_build_object('until', ${until}::text, 'refusedAt', now()), 'receipts')
+           ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`;
+}
+
+async function clearStop(tx: Db, key: string, attemptId: number): Promise<void> {
+  await tx`DELETE FROM settings WHERE key = ${key}
+           AND coalesce((value->>'refusedAt')::timestamptz, 'epoch') < (SELECT started_at FROM receipt_attempts WHERE id = ${attemptId})`;
+}
+
+async function checkBudget(tx: Db, service: string, model?: string | null, required = false): Promise<void> {
+  const [stop] = await tx<{ value: { until?: string } }[]>`SELECT value FROM settings WHERE key = ${providerStopKey(service, model)}`;
+  const until = Date.parse(stop?.value.until ?? "");
+  if (until > Date.now()) throw new BudgetExceededError(service, "provider", Math.ceil((until - Date.now()) / 1000));
   if (service === "llm") {
     await restoreExpiredLlmBudget(tx);
   }
@@ -145,9 +285,9 @@ async function checkCredits(tx: Db, req: ReceiptRequest): Promise<void> {
 
 /**
  * Runs a paid request at most once per logical key and returns its raw response.
- * The caller parses the response and commits business results, then calls completeReceipt.
+ * A caller persisting business results completes the receipt in the same transaction.
  */
-export async function paidRequest(req: ReceiptRequest, call: () => Promise<CallOutcome>): Promise<ReceiptResult> {
+export async function paidRequest(req: ReceiptRequest, call: () => Promise<CallOutcome>, beforeRequest?: (tx: Db) => Promise<void>): Promise<ReceiptResult> {
   // Commit an expired restoration even when this claim subsequently rolls back on the 800/day cap.
   if (req.service === "llm") await restoreExpiredLlmBudget();
   const logicalKey = logicalKeyFor(req);
@@ -169,20 +309,26 @@ export async function paidRequest(req: ReceiptRequest, call: () => Promise<CallO
       }
       if (existing.status === "unknown") return { kind: "unknown" as const, row: existing };
       // failed: the provider did not take the request, or its answer was unusable; a new attempt is allowed.
-      await checkBudget(tx, req.service, req.requireBudget);
+      await checkBudget(tx, req.service, req.model, req.requireBudget);
       await checkCredits(tx, req);
+      await beforeRequest?.(tx);
       const [r] = await tx<{ attempts: number }[]>`
         UPDATE receipts SET status = 'pending', attempts = attempts + 1, error = NULL, updated_at = now() WHERE id = ${existing.id} RETURNING attempts`;
       const attemptId = await startAttempt(tx, existing.id, r!.attempts, req);
       return { kind: "call" as const, id: existing.id, attemptId };
     }
-    await checkBudget(tx, req.service, req.requireBudget);
+    await checkBudget(tx, req.service, req.model, req.requireBudget);
     await checkCredits(tx, req);
+    await beforeRequest?.(tx);
     const [row] = await tx<{ id: number }[]>`
       INSERT INTO receipts (logical_key, service, model, purpose, subject, status, request, attempts)
       VALUES (${logicalKey}, ${req.service}, ${req.model ?? null}, ${req.purpose}, ${req.subject ?? null}, 'pending',
               ${tx.json((req.requestSummary ?? {}) as never)}, 1)
       RETURNING id`;
+    if (req.fallbackFor) {
+      await tx`UPDATE receipts SET request = request || ${tx.json({ fallbackReceiptId: row!.id })}
+               WHERE logical_key = ${req.fallbackFor}`;
+    }
     const attemptId = await startAttempt(tx, row!.id, 1, req);
     return { kind: "call" as const, id: row!.id, attemptId };
   });
@@ -194,18 +340,24 @@ export async function paidRequest(req: ReceiptRequest, call: () => Promise<CallO
   }
 
   const { id: receiptId, attemptId } = claimed;
-  const started = Date.now();
+  const started = performance.now();
   let outcome: CallOutcome;
   try {
     outcome = await call();
   } catch (error) {
+    // The same classification the alert layer uses, narrowed to what no later request can avoid: an
+    // account/spending refusal (not a throttle or a private resource) also stops new calls to the service.
+    const spendingRefused = error instanceof ProviderRejectedError && providerSpendingRefused(req.service, error.message);
     const status = error instanceof ProviderRejectedError ? "failed" : "unknown";
     // "unknown": the request may have reached the provider (timeout, reset): do not re-send automatically.
     const message = (error instanceof ProviderRejectedError ? error.message : String(error)).slice(0, 2000);
     await sql.begin(async (tx) => {
       await tx`UPDATE receipts SET status = ${status}, error = ${message}, updated_at = now() WHERE id = ${receiptId}`;
-      await tx`UPDATE receipt_attempts SET status = ${status}, error = ${message}, latency_ms = ${Date.now() - started}, finished_at = now() WHERE id = ${attemptId}`;
+      await tx`UPDATE receipt_attempts SET status = ${status}, error = ${message}, latency_ms = ${Math.round(performance.now() - started)}, finished_at = now() WHERE id = ${attemptId}`;
+      if (spendingRefused) await stopForRefusal(tx, providerStopKey(req.service, req.model));
     });
+    // The first transport failure needs the same durable identity as a later unknown-result retry.
+    if (status === "unknown") throw new ReceiptUnknownError(receiptId, message, { cause: error });
     throw error;
   }
 
@@ -226,8 +378,10 @@ export async function paidRequest(req: ReceiptRequest, call: () => Promise<CallO
       UPDATE receipt_attempts SET
         status = 'received', request_id = ${outcome.requestId ?? null}, usage = ${outcome.usage ? tx.json(outcome.usage as never) : null},
         cost = ${outcome.cost?.amount ?? null}, currency = ${outcome.cost?.currency ?? null}, cost_basis = ${outcome.cost?.basis ?? null},
-        latency_ms = ${Date.now() - started}, finished_at = now()
+        latency_ms = ${Math.round(performance.now() - started)}, finished_at = now()
       WHERE id = ${attemptId}`;
+    // A real answer is the only proof that access is back; it releases a stop without waiting for it.
+    await clearStop(tx, providerStopKey(req.service, req.model), attemptId);
   });
   return { receiptId, response: outcome.response, reused: false };
 }
@@ -266,18 +420,31 @@ export async function markStalePendingReceipts(): Promise<number> {
 }
 
 /**
+ * An unknown receipt that still has to be released (by ops.recover once, then by an operator:
+ * operations/recover.ts). A primary its backup continued stays unknown for billing only.
+ */
+export function awaitingRelease(receipt: ReturnType<typeof sql> = sql`receipts`) {
+  return sql`(${receipt}.status = 'unknown' AND ${receipt}.request->>'fallbackReceiptId' IS NULL)`;
+}
+
+/**
  * Releases an unknown receipt: marked failed, so the next attempt of its request calls again (who
  * releases and when: operations/recover.ts). Null when the receipt is not, or no longer, unknown.
  */
-export async function releaseUnknownReceipt(db: Db, id: number, error: string): Promise<{ subject: string | null; purpose: string } | null> {
+export async function releaseUnknownReceipt(db: Db, id: number, error: string, opts: { autoReleased?: boolean } = {}): Promise<{ subject: string | null; purpose: string } | null> {
   const [released] = await db<{ subject: string | null; purpose: string }[]>`
     UPDATE receipts SET status = 'failed', error = ${error}, updated_at = now() WHERE id = ${id} AND status = 'unknown' RETURNING subject, purpose`;
-  if (released) await db`UPDATE receipt_attempts SET status = 'failed', error = ${error} WHERE receipt_id = ${id} AND status = 'unknown'`;
+  if (released) {
+    await db`UPDATE receipt_attempts SET status = 'failed', error = ${error}, auto_released = ${opts.autoReleased === true}
+             WHERE receipt_id = ${id} AND status = 'unknown'`;
+  }
   return released ?? null;
 }
 
-export async function completeReceipt(db: Db, receiptId: number): Promise<void> {
+/** `storedElsewhere`: a top-level field of the answer the caller's write now keeps (embeddings: the vectors), dropped from the receipt. */
+export async function completeReceipt(db: Db, receiptId: number, storedElsewhere?: string): Promise<void> {
   await db`UPDATE receipts SET status = 'completed', completed_at = coalesce(completed_at, now()), updated_at = now() WHERE id = ${receiptId}`;
+  if (storedElsewhere) await db`UPDATE receipts SET response = response - ${storedElsewhere}::text WHERE id = ${receiptId}`;
 }
 
 /** Marks a received response that could not be used (e.g. unparsable) so a fresh attempt can be made. */

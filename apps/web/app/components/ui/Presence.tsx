@@ -34,16 +34,21 @@ export function Presence({ show, children, enter, exit, duration }: {
   }, [show, duration]);
   if (!show && phase === "gone") return null;
   const child = show ? children : last.current;
-  const cls = !show ? exit : phase === "in" ? enter : "";
+  // The entrance class is on from the render that shows it: waiting for the effect painted one frame of the
+  // finished state before the animation restarted from nothing, a flash over the whole page for a sheet.
+  const cls = !show ? exit : phase === "still" ? "" : enter;
   return cloneElement(child, { className: `${child.props.className ?? ""} ${cls}`.trim() });
 }
 
-/** A block that opens to its natural height and closes to nothing (grid rows 0fr ↔ 1fr). */
+/**
+ * A block that opens to its natural height and closes to nothing (grid rows 0fr ↔ 1fr). Only the height
+ * is clipped, so rows inside may still reach past its sides (phone rows run to the screen's edges).
+ */
 export function Collapse({ open, children, duration = 240, className = "" }: { open: boolean; children: ReactNode; duration?: number; className?: string }) {
   return (
     <Presence show={open} enter="anim-collapse-in" exit="anim-collapse-out" duration={duration}>
-      <div className={`grid ${className}`} style={{ "--anim-ms": `${duration}ms` } as CSSProperties}>
-        <div className="min-h-0 overflow-hidden">{children}</div>
+      <div className={`grid grid-cols-[minmax(0,1fr)] ${className}`} style={{ "--anim-ms": `${duration}ms` } as CSSProperties}>
+        <div className="min-h-0 overflow-x-visible overflow-y-clip">{children}</div>
       </div>
     </Presence>
   );

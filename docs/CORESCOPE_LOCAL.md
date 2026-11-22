@@ -4,7 +4,7 @@ CoreScope 使用独立 PostgreSQL、API、网页、worker 和 V2 只读桥。它
 
 ## Windows 一键运行
 
-需要 Node.js 24.11 或更新版本。本机运行不需要 Docker，也不安装 Windows 数据库服务。
+需要 Node.js 24.22.1 或更新版本。本机运行不需要 Docker，也不安装 Windows 数据库服务。
 
 1. 在项目根目录准备私有 `.env`。当前交付已按授权复用 V2 模型服务配置，管理员密码和各个签名密钥另行随机生成；所有秘密仅在本机文件内，未提交 Git。
 2. 双击 `Start-CoreScope.cmd`，等待最后的 **[READY]**。

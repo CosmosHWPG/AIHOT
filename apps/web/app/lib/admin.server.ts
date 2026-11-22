@@ -1,16 +1,24 @@
 // Admin loaders read /api/admin/* with the visitor's own cookie; the web process holds no session.
 import { data, redirect } from "react-router";
+import { API_BASE_URL } from "./api.server.ts";
 
-const API_BASE = process.env.API_BASE_URL || "http://127.0.0.1:3001";
+function adminHeaders(request: Request) {
+  return { accept: "application/json", cookie: request.headers.get("cookie") ?? "", "user-agent": request.headers.get("user-agent") ?? "" };
+}
 
 export async function adminGet<T>(request: Request, path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { accept: "application/json", cookie: request.headers.get("cookie") ?? "", "user-agent": request.headers.get("user-agent") ?? "" },
+  return get<T>(request, path, false);
+}
+
+async function get<T>(request: Request, path: string, gray: boolean): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    headers: adminHeaders(request),
     signal: AbortSignal.any([request.signal, AbortSignal.timeout(30_000)]),
   });
   if (res.status === 401) {
+    if (gray) throw data({ message: "not_found" }, { status: 404 });
     const url = new URL(request.url);
-    throw redirect(`/admin/login?${new URLSearchParams({ return: url.pathname + url.search })}`);
+    throw redirect(`/api/auth/login?${new URLSearchParams({ return: url.pathname + url.search })}`);
   }
   if (res.status === 404) throw data({ message: "not_found" }, { status: 404 });
   if (!res.ok) {
@@ -23,4 +31,33 @@ export async function adminGet<T>(request: Request, path: string): Promise<T> {
     throw data({ message: detail }, { status: res.status >= 500 ? 503 : res.status });
   }
   return (await res.json()) as T;
+}
+
+/** No cache keeps a gray page: a loader using grayGet answers with these headers. */
+export const GRAY_HEADERS = { "Cache-Control": "private, no-store" };
+
+/** Gray data (ModulePage.gray): only signed-in admins or module-approved previewers; everyone else gets the site's 404. */
+export async function grayGet<T>(request: Request, path: string): Promise<T> {
+  await get(request, "/api/admin/preview", true);
+  return get<T>(request, path, true);
+}
+
+/** The signed-in admin page reader; everyone else gets the site's 404. */
+export function adminPageAccess(request: Request): Promise<{ name: string }> {
+  return get(request, "/api/admin/page-access", true);
+}
+
+/** Read-only admin page data, hidden from everyone else. */
+export async function adminPageGet<T>(request: Request, path: string): Promise<T> {
+  await adminPageAccess(request);
+  return get<T>(request, path, true);
+}
+
+/** Whether this request already carries an admin session (or the development stand-in). */
+export async function adminSignedIn(request: Request): Promise<boolean> {
+  const res = await fetch(`${API_BASE_URL}/api/admin/me`, {
+    headers: adminHeaders(request),
+    signal: AbortSignal.any([request.signal, AbortSignal.timeout(10_000)]),
+  });
+  return res.ok;
 }

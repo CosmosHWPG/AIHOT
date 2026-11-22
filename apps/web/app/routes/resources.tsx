@@ -2,6 +2,10 @@ import { data, useLoaderData } from "react-router";
 import type { Route } from "./+types/resources";
 import { apiGet } from "../lib/api.server";
 import { pageMeta } from "../lib/seo";
+import { PhoneBar } from "../components/shell/PhoneBar";
+import type { Screen } from "../components/shell/screens";
+
+export const handle: Screen = { home: "me", name: "资源" };
 
 interface Resource {
   id: string; name: string; category: string; url: string | null; description: string;
@@ -19,8 +23,9 @@ export function meta() { return pageMeta({ title: "研究与开发资源", path:
 export default function ResourcesPage() {
   const { resources } = useLoaderData<typeof loader>();
   return <div className="pb-10">
+    <PhoneBar back={{ to: "/more", label: "我的" }} title="研究与开发资源" />
     <header className="pb-5 pt-5 lg:pt-1">
-      <h1 className="text-[24px] font-semibold text-ink">研究与开发资源</h1>
+      <h1 data-page-title="" className="text-[24px] font-semibold text-ink">研究与开发资源</h1>
       <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-ink-3">模型、软件包、开源项目、播客与研究目录单独浏览。各资源按注明的范围单独采集与保存，可通过原始入口查看对应内容。</p>
     </header>
     <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

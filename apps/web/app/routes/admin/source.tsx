@@ -1,12 +1,12 @@
-import { SITE } from "@aihot/industry/site";
+import { SITE } from "@aihot/site";
 import { useState } from "react";
 import { Link } from "react-router";
-import type { AdminSource, AdminSourceDetail, AdminSourcePreview } from "@aihot/contracts/admin";
 import type { Route } from "./+types/source";
+import { REPLACEABLE_SOURCE_KINDS, type AdminSource, type AdminSourceDetail, type AdminSourcePreview, type AdminSourceUpdate } from "@aihot/contracts/admin";
 import { adminGet } from "../../lib/admin.server";
 import { useAdminAction } from "../../features/admin/action";
 import { bj, duration, num } from "../../features/admin/format";
-import { HEALTH_LABEL, KIND_LABEL, MODE_LABEL, TIER_LABEL, VISIBILITY_LABEL } from "../../features/admin/labels";
+import { HEALTH_LABEL, KIND_LABEL, MODE_LABEL, SELECTION_CLASS_LABEL, TIER_LABEL, VISIBILITY_LABEL } from "../../features/admin/labels";
 import { AdminPage, Badge, Button, Card, DataTable, Dot, Empty, Field, healthTone, Input, Json, KV, ReasonDialog, Select, Stat, Textarea, Time } from "../../features/admin/ui";
 
 
@@ -20,16 +20,19 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 export const meta: Route.MetaFunction = ({ loaderData }) => [{ title: `${loaderData?.source.name ?? "信源"} · ${SITE.name} 后台` }];
 
-type Draft = Pick<AdminSource, "name" | "interval_minutes" | "tier" | "participation_mode" | "signal_group_id" | "first_party" | "owner_entity_id" | "site_fulltext" | "syndicate_fulltext"> & { tags: string; config: string };
+type Draft = Pick<AdminSource, "name" | "kind" | "interval_minutes" | "tier" | "first_party" | "selection_class" | "participation_mode" | "uses" | "signal_group_id" | "owner_entity_id" | "site_fulltext" | "syndicate_fulltext"> & { tags: string; config: string };
 
 function draftOf(s: AdminSource): Draft {
   return {
     name: s.name,
+    kind: s.kind,
     interval_minutes: s.interval_minutes,
     tier: s.tier,
-    participation_mode: s.participation_mode,
-    signal_group_id: s.signal_group_id,
     first_party: s.first_party,
+    selection_class: s.selection_class,
+    participation_mode: s.participation_mode,
+    uses: s.uses,
+    signal_group_id: s.signal_group_id,
     owner_entity_id: s.owner_entity_id,
     site_fulltext: s.site_fulltext,
     syndicate_fulltext: s.syndicate_fulltext,
@@ -39,7 +42,7 @@ function draftOf(s: AdminSource): Draft {
 }
 
 export default function SourceDetail({ loaderData }: Route.ComponentProps) {
-  const { source: s, runs, items, stats, history, x } = loaderData;
+  const { source: s, runs, items, stats, history, x, useLabels } = loaderData;
   const { run, pending } = useAdminAction();
   const [draft, setDraft] = useState<Draft>(() => draftOf(s));
   const [draftFor, setDraftFor] = useState(s.updated_at);
@@ -66,7 +69,7 @@ export default function SourceDetail({ loaderData }: Route.ComponentProps) {
     } catch { setConfigError("请先修正采集配置 JSON，再切换 X 供应商。"); }
   };
 
-  const patch = (): Record<string, unknown> | null => {
+  const patch = (): AdminSourceUpdate["patch"] | null => {
     let config: unknown;
     try {
       config = JSON.parse(draft.config);
@@ -89,7 +92,8 @@ export default function SourceDetail({ loaderData }: Route.ComponentProps) {
       const was = k === "tags" ? s.tags : k === "config" ? s.config : before[k];
       if (JSON.stringify(v) !== JSON.stringify(was)) changed[k] = v;
     }
-    return changed;
+    if (draft.kind !== s.kind) changed.config = config;
+    return changed as AdminSourceUpdate["patch"];
   };
   const changes = (() => {
     try {
@@ -106,21 +110,26 @@ export default function SourceDetail({ loaderData }: Route.ComponentProps) {
           {s.name}
           <Badge>{KIND_LABEL[s.kind] ?? s.kind}</Badge>
           <Badge tone={s.participation_mode === "editorial" ? "accent" : "muted"}>{MODE_LABEL[s.participation_mode]}</Badge>
+          {s.uses.map((u) => <Badge key={u} tone="info">{useLabels[u] ?? u}</Badge>)}
         </span>
       }
-      subtitle={<span className="font-mono text-[12px]">{s.id}</span>}
+      subtitle={<span className="font-mono text-ui-caption">{s.id}</span>}
       actions={
         <>
           <Button
             busy={pending === "preview"}
             onClick={async () => {
-              const r = await run<AdminSourcePreview>("POST", `${base}/preview`, {}, { label: "preview", revalidate: false });
+              const p = patch();
+              if (!p) return;
+              const r = changes && (REPLACEABLE_SOURCE_KINDS as readonly string[]).includes(draft.kind)
+                ? await run<AdminSourcePreview>("POST", "/api/admin/sources/preview", { id: s.id, kind: draft.kind, config: p.config ?? s.config, participation_mode: draft.participation_mode }, { label: "preview", revalidate: false })
+                : await run<AdminSourcePreview>("POST", `${base}/preview`, undefined, { label: "preview", revalidate: false });
               if (r) setPreview(r);
             }}
           >
-            预览抓取
+            预览当前配置
           </Button>
-          <Button busy={pending === "fetch"} onClick={() => run("POST", `${base}/fetch`, {}, { label: "fetch", success: "已加入采集队列" })}>
+          <Button busy={pending === "fetch"} onClick={() => run("POST", `${base}/fetch`, undefined, { label: "fetch", success: "已加入采集队列" })}>
             立即采集
           </Button>
           <Button tone={s.enabled ? "danger" : "primary"} onClick={() => setDialog("toggle")}>
@@ -133,7 +142,7 @@ export default function SourceDetail({ loaderData }: Route.ComponentProps) {
         <Stat
           label="健康"
           value={
-            <span className="inline-flex items-center gap-2 text-[18px]">
+            <span className="inline-flex items-center gap-2 text-ui-heading-sm">
               <Dot tone={s.enabled ? healthTone(s.health) : "muted"} />
               {s.enabled ? HEALTH_LABEL[s.health] ?? s.health : "已暂停"}
             </span>
@@ -144,17 +153,17 @@ export default function SourceDetail({ loaderData }: Route.ComponentProps) {
         <Stat label="近 7 天" value={num(stats.last7d)} />
         <Stat label="入选精选" value={num(stats.selected)} />
       </div>
-      {s.last_error && s.health !== "ok" && <div className="mb-5 rounded-card bg-hot-soft px-4 py-3 text-[13px] text-hot ring-1 ring-hot/20">{s.last_error}</div>}
+      {s.last_error && s.health !== "ok" && <div className="mb-5 rounded-card bg-hot-soft px-4 py-3 text-ui-label text-hot ring-1 ring-hot/20">{s.last_error}</div>}
 
       {preview && (
         <Card className="mb-5" title={`预览：${preview.count} 条（${preview.ms}ms，未入库）`} right={<button onClick={() => setPreview(null)}>收起</button>}>
           {preview.items.length ? (
             <ul className="space-y-2.5">
               {preview.items.map((i) => (
-                <li key={i.url} className="text-[13px]">
+                <li key={i.url} className="text-ui-label">
                   <a href={i.url} target="_blank" rel="noreferrer" className="font-medium text-ink hover:text-accent">{i.title}</a>
-                  <div className="text-[12px] text-ink-4">{i.publishedAt ? bj(i.publishedAt, true) : "无发布时间"} · {i.url}</div>
-                  {i.excerpt && <div className="mt-0.5 line-clamp-2 text-[12.5px] text-ink-3">{i.excerpt}</div>}
+                  <div className="text-ui-caption text-ink-4">{i.publishedAt ? bj(i.publishedAt, true) : "无发布时间"} · {i.url}</div>
+                  {i.excerpt && <div className="mt-0.5 line-clamp-2 text-ui-caption-lg text-ink-3">{i.excerpt}</div>}
                 </li>
               ))}
             </ul>
@@ -188,9 +197,32 @@ export default function SourceDetail({ loaderData }: Route.ComponentProps) {
                   {Object.entries(MODE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </Select>
               </Field>
-              <Field label="等级">
+              {Object.keys(useLabels).length > 0 && (
+                <Field label="其他用途">
+                  <div className="flex flex-wrap gap-x-4 gap-y-2 pt-1.5 text-ui-label text-ink-2">
+                    {Object.entries(useLabels).map(([u, label]) => (
+                      <label key={u} className="inline-flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          className="size-4 accent-[var(--accent)]"
+                          checked={draft.uses.includes(u)}
+                          onChange={(e) => setDraft({ ...draft, uses: Object.keys(useLabels).filter((k) => (k === u ? e.target.checked : draft.uses.includes(k))) })}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </Field>
+              )}
+              <Field label="等级" hint="用于确定精选分数门槛">
                 <Select value={draft.tier} onChange={(e) => setDraft({ ...draft, tier: e.target.value })}>
                   {Object.entries(TIER_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </Select>
+              </Field>
+              <Field label="类别" hint="抬高精选门槛，一手身份不变">
+                <Select value={draft.selection_class ?? ""} onChange={(e) => setDraft({ ...draft, selection_class: e.target.value || null })}>
+                  <option value="">无（按等级）</option>
+                  {Object.entries(SELECTION_CLASS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </Select>
               </Field>
               <Field label="讨论分组 ID" hint="同一机构的多个账号共用，热度只算一次">
@@ -202,9 +234,9 @@ export default function SourceDetail({ loaderData }: Route.ComponentProps) {
               <Field label="标签（逗号分隔）">
                 <Input value={draft.tags} onChange={(e) => setDraft({ ...draft, tags: e.target.value })} />
               </Field>
-              <div className="flex flex-col justify-end gap-2 text-[13px] text-ink-2">
+              <div className="flex flex-col justify-end gap-2 text-ui-label text-ink-2">
                 {([
-                  ["first_party", "一手信源（官方账号或官网）"],
+                  ["first_party", "标记为一手信源"],
                   ["site_fulltext", "站内可展示全文"],
                   ["syndicate_fulltext", "对外接口可带全文"],
                 ] as const).map(([k, label]) => (
@@ -217,12 +249,12 @@ export default function SourceDetail({ loaderData }: Route.ComponentProps) {
             </div>
             <div className="mt-4">
               <Field label="采集配置（JSON）">
-                <Textarea className="font-mono !text-[12px]" rows={Math.min(18, draft.config.split("\n").length + 1)} value={draft.config} onChange={(e) => setDraft({ ...draft, config: e.target.value })} spellCheck={false} />
+                <Textarea className="font-mono !text-ui-caption" rows={Math.min(18, draft.config.split("\n").length + 1)} value={draft.config} onChange={(e) => setDraft({ ...draft, config: e.target.value })} spellCheck={false} />
               </Field>
-              {configError && <div className="mt-1 text-[12.5px] text-hot">{configError}</div>}
+              {configError && <div className="mt-1 text-ui-caption-lg text-hot">{configError}</div>}
             </div>
             <div className="mt-4 flex items-center justify-end gap-2">
-              {changes > 0 && <span className="text-[12.5px] text-ink-3">{changes} 项改动未保存</span>}
+              {changes > 0 && <span className="text-ui-caption-lg text-ink-3">{changes} 项改动未保存</span>}
               <Button tone="ghost" disabled={!changes} onClick={() => setDraft(draftOf(s))}>还原</Button>
               <Button tone="primary" disabled={!changes} onClick={() => patch() && setDialog("save")}>保存</Button>
             </div>
@@ -307,7 +339,7 @@ export default function SourceDetail({ loaderData }: Route.ComponentProps) {
           </Card>
           <Card title="修改记录">
             {history.length ? (
-              <ul className="space-y-3 text-[12.5px]">
+              <ul className="space-y-3 text-ui-caption-lg">
                 {history.map((h, i) => (
                   <li key={i}>
                     <div className="text-ink-2"><span className="font-medium">{h.action}</span> · {h.actor} · {bj(h.created_at)}</div>
@@ -325,13 +357,14 @@ export default function SourceDetail({ loaderData }: Route.ComponentProps) {
       <ReasonDialog
         open={dialog === "save"}
         title="保存信源设置"
-        description={`将修改：${Object.keys(patchPreview(draft, s)).join("、") || "无"}`}
+        description={`${draft.kind !== s.kind ? `采集方式由 ${KIND_LABEL[s.kind]} 调整为 ${KIND_LABEL[draft.kind]}，保留历史内容。` : ""}将修改：${Object.keys(patchPreview(draft, s)).join("、") || "无"}`}
         busy={pending === "save"}
         onClose={() => setDialog(null)}
         onSubmit={async (reason) => {
           const p = patch();
           if (!p) return false;
-          const r = await run("PATCH", base, { patch: p, version: new Date(s.updated_at).toISOString(), reason }, { label: "save", success: "已保存" });
+          const body: AdminSourceUpdate = { patch: p, version: new Date(s.updated_at).toISOString(), reason };
+          const r = await run("PATCH", base, body, { label: "save", success: "已保存" });
           return r !== null;
         }}
       />

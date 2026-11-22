@@ -241,7 +241,7 @@ function Invoke-CapturedNode([string[]]$Arguments) { return (Invoke-CapturedExec
 function Read-Config {
     $versionText = Invoke-CapturedNode -Arguments @('--version')
     if (-not $versionText) { throw 'Node.js version check did not return output. Inspect the Windows host log.' }
-    if ([Version]$versionText.TrimStart('v') -lt [Version]'24.11.0') { throw 'Install Node.js 24.11 or newer before starting CoreScope.' }
+    if ([Version]$versionText.TrimStart('v') -lt [Version]'24.22.1') { throw 'Install Node.js 24.22.1 or newer before starting CoreScope.' }
     if (-not (Test-Path -LiteralPath $EnvFile)) { throw 'Create the private .env configuration first (see docs/CORESCOPE_LOCAL.md).' }
     $raw = Invoke-CapturedNode -Arguments @('-e', "const fs=require('node:fs');const{parseEnv}=require('node:util');process.stdout.write(JSON.stringify(parseEnv(fs.readFileSync(process.argv[1],'utf8'))));", $EnvFile)
     if (-not $raw) { throw 'Cannot read local .env configuration.' }
@@ -1282,7 +1282,7 @@ try {
         $StartupLog = Join-Path $LogDir ("host-{0}.log" -f $HostMode.ToLowerInvariant())
         $script:HostedErrorLog = Join-Path $LogDir ("host-{0}.error.log" -f $HostMode.ToLowerInvariant())
     }
-    Write-Stage 'node-runtime' 'Checking Node.js 24.11 or newer.'
+    Write-Stage 'node-runtime' 'Checking Node.js 24.22.1 or newer.'
     if ($NodeExecutable) {
         if (-not [IO.Path]::IsPathRooted($NodeExecutable) -or -not (Test-Path -LiteralPath $NodeExecutable -PathType Leaf) -or [IO.Path]::GetFileName($NodeExecutable) -ne 'node.exe') { throw 'NodeExecutable must name an existing absolute node.exe path.' }
         $Node = [IO.Path]::GetFullPath($NodeExecutable)

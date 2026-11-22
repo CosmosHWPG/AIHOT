@@ -1,7 +1,7 @@
-import { SITE } from "@aihot/industry/site";
+import { SITE } from "@aihot/site";
 import { Form, Link, useNavigate, useSearchParams } from "react-router";
-import type { AdminContentRow, AdminContentSearch } from "@aihot/contracts/admin";
 import type { Route } from "./+types/content";
+import type { AdminContentRow, AdminContentSearch } from "@aihot/contracts/admin";
 import { adminGet } from "../../lib/admin.server";
 import { VISIBILITY_LABEL } from "../../features/admin/labels";
 import { AdminPage, Badge, Button, Card, DataTable, Empty, Input, Time } from "../../features/admin/ui";
@@ -40,7 +40,7 @@ export default function Content({ loaderData }: Route.ComponentProps) {
                 render: (r) => (
                   <div className="min-w-[320px]">
                     <Link to={`/admin/content/${r.id}`} className="font-medium text-ink hover:text-accent" onClick={(e) => e.stopPropagation()}>{r.title}</Link>
-                    <div className="font-mono text-[11.5px] text-ink-4">{r.id}</div>
+                    <div className="font-mono text-ui-caption-md text-ink-4">{r.id}</div>
                   </div>
                 ),
               },

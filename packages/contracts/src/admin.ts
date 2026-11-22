@@ -2,6 +2,29 @@
 // functions and the admin pages. Only administrators reach it; it changes with the admin UI and is
 // never a public contract. Rows mirror their SQL columns (snake_case); timestamps are ISO strings.
 
+/** Where signing in leads when the visitor was not headed anywhere. Only a site with admin pages has a sign-in. */
+export const SIGN_IN_HOME = "/admin";
+
+/**
+ * A path on this site to go to after signing in; anything else (other hosts, protocol-relative, schemes) is
+ * SIGN_IN_HOME. So is a path too long for a Location header: a reverse proxy's default response header buffer
+ * is a few kilobytes, and an overflowing response is an error page.
+ */
+export function safeReturn(target: string): string {
+  try {
+    // A proxy's login redirect may pass the whole original URL; only its path and query count.
+    const path = /^https?:\/\//i.test(target) ? ((u) => `${u.pathname}${u.search}`)(new URL(target)) : target;
+    // The URL parser drops tabs and newlines and reads a backslash as a slash, as browsers do.
+    const u = new URL(path, "http://return.invalid");
+    const kept = `${u.pathname}${u.search}`;
+    // Check what is returned, not only what came in: resolved dot segments can leave "//" in front.
+    const here = (p: string) => new URL(p, "http://return.invalid").host === "return.invalid";
+    return path.startsWith("/") && here(path) && here(kept) && kept.length <= 2000 ? kept : SIGN_IN_HOME;
+  } catch {
+    return SIGN_IN_HOME;
+  }
+}
+
 declare const iso: unique symbol;
 
 /** An ISO 8601 time in a JSON body. The pages read it as a string; the api may produce it from a Date. */
@@ -20,8 +43,26 @@ export interface AdminMe {
   dev: boolean;
 }
 
+export interface AdminPresentationRefresh {
+  revision: number;
+  version: string;
+  ready: boolean;
+  applied: boolean;
+  changed: boolean;
+  reason: string | null;
+  images: { before: number; after: number };
+  links: { before: number; after: number };
+  translation: "absent" | "reused" | "source" | "blocked";
+}
+
+export interface AdminRerun {
+  step: "extract" | "analyze" | "group" | "presentation";
+  preview?: boolean;
+  version?: string;
+}
+
 /** Items waiting for the admin, shown on the navigation. */
-export type AdminNavCounts = Partial<Record<"feedback" | "sources" | "runs" | "monitor", number>>;
+export type AdminNavCounts = Partial<Record<"feedback" | "sources" | "runs", number>>;
 
 /** One manual change (audit_log), as a history list shows it. */
 export interface AdminAuditEntry {
@@ -43,14 +84,28 @@ export interface AdminAudit {
   rows: AdminAuditRow[];
 }
 
-// Sources (F18)
+// Sources
+
+/** Ordinary collectors may replace one another while retaining a source's identity and history. */
+export const REPLACEABLE_SOURCE_KINDS = ["rss", "web_list", "json_list"] as const;
+export type ReplaceableSourceKind = typeof REPLACEABLE_SOURCE_KINDS[number];
+
+export interface AdminSourceUpdate {
+  patch: Partial<Pick<AdminSource, "name" | "enabled" | "interval_minutes" | "tier" | "first_party" | "selection_class" | "participation_mode" | "signal_group_id" | "owner_entity_id" | "site_fulltext" | "syndicate_fulltext" | "tags" | "uses">> & (
+    { kind?: never; config?: Record<string, unknown> } | { kind: ReplaceableSourceKind; config: Record<string, unknown> }
+  );
+  version: string;
+  reason?: string;
+}
 
 export interface AdminSourceRow {
   id: string;
   name: string;
   kind: string;
   tier: string;
+  selection_class: string | null;
   participation_mode: string;
+  uses: string[];
   enabled: boolean;
   health: string;
   fail_count: number;
@@ -68,6 +123,8 @@ export interface AdminSources {
   page: number;
   rows: AdminSourceRow[];
   totals: { total: number; enabled: number; failing: number; degraded: number };
+  /** The uses the installed modules declare, by name: what the admin calls each. */
+  useLabels: Record<string, string>;
 }
 
 export interface AdminSource {
@@ -76,10 +133,14 @@ export interface AdminSource {
   kind: string;
   config: Record<string, unknown>;
   tags: string[];
-  first_party: boolean;
   owner_entity_id: string | null;
   tier: string;
+  first_party: boolean;
+  /** A class of the industry pack's selection rules (industry/selection.ts): raises the tier's threshold. */
+  selection_class: string | null;
   participation_mode: string;
+  /** Uses besides the news pipeline, each declared by an installed module. */
+  uses: string[];
   signal_group_id: string | null;
   interval_minutes: number;
   site_fulltext: boolean;
@@ -118,6 +179,8 @@ export interface AdminSourceDetail {
     gap: { from: string; to: string; reason: string } | null;
     profile: { name: string; state: "disabled" | "unverified" | "verified" | "cooldown" | "busy"; verifiedAt: Timestamp | null; cooldownUntil: Timestamp | null } | null;
   };
+  /** The uses the installed modules declare, by name: what the admin calls each. */
+  useLabels: Record<string, string>;
 }
 
 /** Creating a source: refused as a duplicate of an existing one, or created. */
@@ -132,7 +195,7 @@ export interface AdminSourcePreview {
   items: Array<{ title: string; url: string; publishedAt: Timestamp | null; excerpt: string }>;
 }
 
-// Content and events (F19)
+// Content and events
 
 export interface AdminContentRow {
   id: string;
@@ -158,6 +221,7 @@ export interface AdminPublication {
   visibility: string;
   eligible: boolean;
   selected: boolean;
+  seat: boolean;
   title: string;
   original_title: string | null;
   summary: string | null;
@@ -177,6 +241,7 @@ export interface AdminPublication {
   selected_ready_at: Timestamp | null;
   visible_after: Timestamp | null;
   body_mode: string;
+  suppress_original: boolean;
   syndicate: boolean;
   indexable: boolean;
   seo_indexed_at: Timestamp | null;
@@ -203,14 +268,14 @@ export interface AdminContentChain {
   }>;
   publication: AdminPublication | null;
   override: { fields: Record<string, unknown>; visibility: string | null; reason: string | null; version: number; updated_by: string; updated_at: Timestamp } | null;
-  ledger: Array<{ seq: number; op: string; visible_at: Timestamp; changed_at: Timestamp }>;
+  ledger: Array<{ seq: number; op: string; changed_at: Timestamp }>;
   membership: Array<{ fact_id: number; role: string; manual: boolean; fact_public_id: string; fact_title: string; story_id: number | null; story_public_id: string | null; story_title: string | null }>;
   decisions: Array<{ verdict: string; fact_id: number | null; story_id: number | null; receipt_id: number | null; candidates: unknown; created_at: Timestamp }>;
   deliveries: Array<{ target_key: string; dedupe_key: string; status: string; attempts: number; response: string | null; created_at: Timestamp; sent_at: Timestamp | null }>;
   history: AdminAuditEntry[];
 }
 
-// Feedback (F14)
+// Feedback
 
 export interface AdminFeedbackRow {
   id: number;
@@ -221,23 +286,32 @@ export interface AdminFeedbackRow {
   screenshot: "local" | "feishu" | "gone" | null;
   source_hash: string;
   status: string;
+  /** bug, suggestion, question or other; null until handled. */
+  kind: string | null;
+  /** For a suggestion, the idea it asks for (the name its pool entry goes by). */
+  idea: string | null;
   note: string | null;
   forwarded_at: Timestamp | null;
   forward_error: string | null;
   created_at: Timestamp;
   updated_at: Timestamp;
   banned: boolean;
+  email_banned: boolean;
   from_source: number;
 }
 
 export interface AdminFeedback {
   page: number;
   rows: AdminFeedbackRow[];
+  /** All feedback by status, and the handled ones by kind. */
   counts: Record<string, number>;
-  bans: Array<{ source_hash: string; reason: string | null; created_by: string | null; created_at: Timestamp }>;
+  kinds: Record<string, number>;
+  /** The suggestion pool, most asked first: how many senders asked for each idea, spam left out. */
+  ideas: Array<{ idea: string; people: number }>;
+  bans: Array<{ source_hash: string; reason: string | null; created_by: string | null; created_at: Timestamp; expires_at: Timestamp | null }>;
 }
 
-// Runs (F20)
+// Runs
 
 export interface AdminReceiptIssue {
   id: number;
@@ -271,6 +345,11 @@ export interface AdminRuns {
   timeline: Array<{ id: number; job: string; started_at: Timestamp; finished_at: Timestamp | null; status: string; error: string | null }>;
   queues: Array<{ name: string; state: string; n: number; oldest: Timestamp }>;
   failedJobs: Array<{ name: string; failed: number; last: Timestamp | null; last_output: string | null }>;
+  grouping: {
+    waiting: number;
+    needsAttention: number;
+    items: Array<{ articleId: string; title: string; since: Timestamp; failed: boolean; recovery: "automatic" | "receipt" | "manual"; receiptId: number | null; error: string | null }>;
+  };
   lagging: Array<{
     id: string; name: string; kind: string; health: string; fail_count: number; last_ok_at: Timestamp | null; last_fetch_at: Timestamp | null;
     next_fetch_at: Timestamp | null; interval_minutes: number; last_error: string | null;
@@ -280,10 +359,109 @@ export interface AdminRuns {
   errors: Array<{ error: string; n: number; last: Timestamp; example: string }>;
   retrying: { count: number; next: Timestamp | null };
   ingest: Array<{ client: string; kind: string; status: string; error: string | null; summary: unknown; created_at: Timestamp }>;
-  leaderboard: { at: Timestamp; sources: Array<{ key: string; ok: boolean; at: Timestamp; lastOkAt: Timestamp | null; changed?: boolean; rows?: number; error?: string }> } | null;
 }
 
-// Reset monitor corrections (F12)
+// Settings
+
+export interface AdminNotifyTarget {
+  key: string;
+  purpose: string;
+  kind: string;
+  enabled: boolean;
+  enabled_at: Timestamp | null;
+  config_ref: string | null;
+  note: string | null;
+  updated_at: Timestamp;
+  deliveries_7d: number;
+  last_sent_at: Timestamp | null;
+}
+
+export interface AdminBudget {
+  service: string;
+  enabled: boolean;
+  per_minute: number;
+  per_hour: number;
+  per_day: number;
+  note: string | null;
+  updated_at: Timestamp;
+  used_day: number;
+  used_hour: number;
+}
+
+/** Omitted values preserve the current budget; a switch can be edited without rewriting its limits. */
+export interface AdminBudgetUpdate {
+  enabled?: boolean;
+  perMinute?: number;
+  perHour?: number;
+  perDay?: number;
+  reason: string;
+  version?: string;
+}
+
+export interface AdminSettings {
+  contact: { wechatQr: string | null; feishuQr: string | null };
+  targets: AdminNotifyTarget[];
+  budgets: AdminBudget[];
+}
+
+// Models and evaluation
+
+export interface AdminModelUsage {
+  purpose: string;
+  service: string;
+  model: string | null;
+  promptVersion: string | null;
+  calls: number;
+  ok: number;
+  failed: number;
+  unknown: number;
+  p50: number | null;
+  p95: number | null;
+  tokensIn: number;
+  tokensOut: number;
+  actualCost: number | null;
+  currency: string | null;
+  estimate: { amount: number; currency: string } | null;
+}
+
+export interface AdminModels {
+  days: number;
+  capabilities: Array<{ key: string; label: string; env: string; defaultModel: string; vision: boolean; current: { model: string; source: "admin" | "env" | "default"; invalid?: string }; fallback: { model: string; primaryPaused: boolean; backupPaused: boolean; nextProbeAt: string | null } | null; usage: AdminModelUsage[] }>;
+  choices: Array<{ key: string; service: string; vision: boolean }>;
+  history: Array<{ id: number; at: Timestamp; actor: string; subject: string; reason: string | null; before: { model: string; source: string } | null; after: { model: string; source: string } | null }>;
+  benches: Array<{ id: string; label: string; sample_size: number; prompt_version: string | null; models: string[]; created_at: Timestamp }>;
+}
+
+export interface AdminSelectBenchRun {
+  id: string;
+  label: string;
+  split: string | null;
+  sample_size: number;
+  prompt_version: string | null;
+  models: string[];
+  summary: Record<string, Record<string, number>>;
+  created_at: Timestamp;
+}
+
+export interface AdminSelectBenchRuns {
+  runs: Array<AdminSelectBenchRun & { imported_by: string | null; cases: number }>;
+}
+
+export interface AdminSelectBenchDecision {
+  decision: "select" | "reject" | null;
+  score: number | null;
+  relevance: string | null;
+  category: string | null;
+  reason: string | null;
+  error: string | null;
+  receiptId: number | null;
+}
+
+export interface AdminSelectBenchCases {
+  run: AdminSelectBenchRun;
+  rows: Array<{ case_id: string; title: string; stratum: string | null; gold: "select" | "reject" | "either"; by_model: Record<string, AdminSelectBenchDecision> }>;
+  strata: Array<{ stratum: string | null; n: number }>;
+}
 
 export interface AdminMonitorEventPost {
   postId: string;
@@ -342,105 +520,4 @@ export interface AdminMonitorPosts {
   page: number;
   filter: string;
   rows: AdminMonitorPost[];
-}
-
-// Settings
-
-export interface AdminNotifyTarget {
-  key: string;
-  purpose: string;
-  kind: string;
-  enabled: boolean;
-  enabled_at: Timestamp | null;
-  config_ref: string | null;
-  note: string | null;
-  updated_at: Timestamp;
-  deliveries_7d: number;
-  last_sent_at: Timestamp | null;
-}
-
-export interface AdminBudget {
-  service: string;
-  enabled: boolean;
-  per_minute: number;
-  per_hour: number;
-  per_day: number;
-  note: string | null;
-  updated_at: Timestamp;
-  used_day: number;
-  used_hour: number;
-}
-
-/** Omitted values preserve the current budget; a switch can be edited without rewriting its limits. */
-export interface AdminBudgetUpdate {
-  enabled?: boolean;
-  perMinute?: number;
-  perHour?: number;
-  perDay?: number;
-  reason: string;
-  version?: string;
-}
-
-export interface AdminSettings {
-  contact: { wechatQr: string | null; feishuQr: string | null };
-  targets: AdminNotifyTarget[];
-  budgets: AdminBudget[];
-}
-
-// Models and evaluation (F20)
-
-export interface AdminModelUsage {
-  purpose: string;
-  model: string | null;
-  promptVersion: string | null;
-  calls: number;
-  ok: number;
-  failed: number;
-  unknown: number;
-  p50: number | null;
-  p95: number | null;
-  tokensIn: number;
-  tokensOut: number;
-  actualCost: number | null;
-  currency: string | null;
-  estimate: { amount: number; currency: string } | null;
-}
-
-export interface AdminModels {
-  days: number;
-  capabilities: Array<{ key: string; label: string; env: string; defaultModel: string; vision: boolean; current: { model: string; source: "admin" | "env" | "default" }; usage: AdminModelUsage[] }>;
-  choices: Array<{ key: string; service: string; vision: boolean }>;
-  history: Array<{ at: Timestamp; actor: string; subject: string; reason: string | null; before: { model: string; source: string } | null; after: { model: string; source: string } | null }>;
-  benches: Array<{ id: string; label: string; sample_size: number; prompt_version: string | null; models: string[]; created_at: Timestamp }>;
-}
-
-export interface AdminSelectBenchRun {
-  id: string;
-  label: string;
-  split: string | null;
-  sample_size: number;
-  prompt_version: string | null;
-  models: string[];
-  summary: Record<string, Record<string, number>>;
-  created_at: Timestamp;
-}
-
-export interface AdminSelectBenchRuns {
-  runs: Array<AdminSelectBenchRun & { imported_by: string | null; cases: number }>;
-}
-
-export interface AdminSelectBenchDecision {
-  decision: "select" | "reject" | null;
-  score: number | null;
-  relevance: string | null;
-  category: string | null;
-  reason: string | null;
-  error: string | null;
-  receiptId: number | null;
-}
-
-export interface AdminSelectBenchCases {
-  run: AdminSelectBenchRun;
-  rows: Array<{ case_id: string; title: string; stratum: string | null; gold: "select" | "reject" | "either"; by_model: Record<string, AdminSelectBenchDecision> }>;
-  strata: Array<{ stratum: string | null; n: number }>;
 }

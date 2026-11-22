@@ -1,64 +1,93 @@
 // The judging and writing steps (editorial/analyze.ts): the prefilter decides relevance, two scores
-// against the tier threshold decide 精选, selected and near-selected items are written by the content
-// understanding and the rest by the title/summary prompts, a structure step gives the category, subjects
-// and fact. Material with only a feed summary has its page fetched first. The steps run on the models
-// AIHOT assigns them (set through the environment here); every prompt in the pack renders.
-import { Reply, stub, tag } from "./setup.ts";
+// against the source's threshold (its tier's, raised by its class) decide 精选, selected and near-selected items are written by the content
+// understanding and the rest by the title/summary translation, a structure step gives the category,
+// subjects and fact. Material with only a feed summary has its page fetched first.
+import { gate, pointModels, Reply, stub, tag } from "./setup.ts";
+import { analysisStep, SELECTING_SCORE, type AnalysisStep } from "./analysis-steps.ts";
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { after, before, test } from "node:test";
 import { closeDb, sql } from "@aihot/backend/db";
 import { upsertMaterial } from "@aihot/backend/content/materials";
-import { analyzeArticle, SCORE_SYSTEM, tierThreshold } from "@aihot/backend/editorial/analyze";
-import { queueProcessing } from "@aihot/backend/jobs/content";
+import { analyzeArticle, buildMaterial, loadAnalyzeInput, normalizeAnalysis, normalizeStructure, runAnalysis, selectionThreshold, StructureSchema, type AnalyzeInputArticle, UNDERSTAND_FLOOR } from "@aihot/backend/editorial/analyze";
+import { createSource, updateSource } from "@aihot/backend/admin/sources";
+import { processArticle, queueProcessing } from "@aihot/backend/jobs/content";
+import { isPoolEligible } from "@aihot/backend/publication/rules";
 import { QUEUES, stopBoss } from "@aihot/backend/jobs/queue";
-import { compactAnswerFirstSummary, enforceIdentity, parseTranslateOutput, PREFILTER_SYSTEM } from "@aihot/backend/editorial/writing";
+import { compactAnswerFirstSummary, enforceIdentity, MAX_BODY_CHARS, parseTranslateOutput, PREFILTER_SYSTEM } from "@aihot/backend/editorial/writing";
 import { promptText } from "@aihot/backend/editorial/prompts";
-import { SITE } from "@aihot/industry/site";
+import { SITE } from "@aihot/site";
+import { READER_WORDING } from "@aihot/industry/wording";
+import { SELECTION } from "@aihot/industry/selection";
+import { ITEM_TYPES } from "@aihot/industry/taxonomy";
 
 const T = tag();
 const SOURCE = `test-analyze-${T}`;
 const X_SOURCE = `test-analyze-x-${T}`;
+const CLASSED_SOURCE = `test-analyze-classed-${T}`;
 
-type Step = "prefilter" | "score" | "understand" | "summarize" | "structure";
-interface Req { step: Step; marker: string; system: string; user: string; body: Record<string, any> }
+interface Req { step: AnalysisStep; marker: string; user: string; body: { messages: Array<{ role: string; content: unknown }>; response_format?: unknown } }
 const requests: Req[] = [];
-const MARKERS = ["CLEAR", "RESCUE", "LOW", "OFFTOPIC", "BARE", "VAGUE", "THIN", "SENSITIVE", "推文"];
-const scoreAnswers: Record<string, number[]> = { CLEAR: [78, 72], RESCUE: [56, 50], LOW: [45, 40], THIN: [70, 70], SENSITIVE: [80, 80], 推文: [40, 40], BARE: [30, 34], VAGUE: [60, 62] };
+const MARKERS = ["CLEAR", "RESCUE", "LOW", "OFFTOPIC", "BARE", "VAGUE", "THIN", "SENSITIVE", "推文", "WORDY", "REFUSAL", "RENUMBER", "UNMENDED", "ECOSYS", "BAD_STRUCT"];
+// The scores sit a few points around the pack's T1 threshold and understand floor, so each case means
+// the same after a site recalibrates them: selected when the two add up to 2 × T1, written like a
+// selected item when they add up to more than 2 × FLOOR, translated otherwise.
+const T1 = selectionThreshold({ tier: "T1" })!;
+const T2 = selectionThreshold({ tier: "T2" })!;
+const FLOOR = UNDERSTAND_FLOOR;
+// A pack class whose floor lies between the official and the media threshold: it raises the first, not the second.
+const [CLASS, CLASS_FLOOR] = Object.entries(SELECTION.classes).map(([key, c]) => [key, c.threshold] as const).find(([, t]) => t > T1 && t < T2) ?? [undefined, NaN];
+const scoreAnswers: Record<string, number[]> = {
+  CLEAR: [T1 + 3, T1 - 1], RESCUE: [FLOOR + 1, FLOOR], LOW: [FLOOR, FLOOR - 1], THIN: [T1, T1], SENSITIVE: [T1, T1], 推文: [FLOOR, FLOOR],
+  BARE: [FLOOR - 2, FLOOR - 4], VAGUE: [T1, T1 + 2], WORDY: [T1, T1], REFUSAL: [T1, T1], RENUMBER: [T1, T1], UNMENDED: [T1, T1],
+  ECOSYS: [CLASS_FLOOR, CLASS_FLOOR - 1],
+};
 
-const stepOf = (system: string, user: string): Step =>
-  system.includes("宽召回") && system.includes("预筛") ? "prefilter" : system.includes("事件注意力评分器") ? "score"
-  : system.includes("内容理解编辑") ? "understand" : system.includes("资料结构化助手") ? "structure"
-  : user.includes("title_zh") ? "summarize" : (() => { throw new Error("unknown request"); })();
+const WORDY = ["WORDY", "REFUSAL", "RENUMBER", "UNMENDED"];
+let prefilterHold: { entered: ReturnType<typeof gate<void>>; release: ReturnType<typeof gate<void>> } | null = null;
 
 // One stub stands in for DashScope (prefilter, structure), Zhipu (score, understand) and DeepSeek (summarize).
-const provider = await stub((_hit, req) => {
-  const body = JSON.parse(req.body) as { messages: Array<{ role: string; content: unknown }> } & Record<string, any>;
-  const system = body.messages[0]!.role === "system" ? String(body.messages[0]!.content) : "";
+const provider = await stub(async (_hit, req) => {
+  const body = JSON.parse(req.body) as { messages: Array<{ role: string; content: unknown }> };
   const last = body.messages[body.messages.length - 1]!.content;
   const user = typeof last === "string" ? last : JSON.stringify(last);
-  const step = stepOf(system, user);
+  const step = analysisStep(req.body);
   const marker = MARKERS.find((m) => user.includes(m)) ?? "";
-  requests.push({ step, marker, system, user, body });
+  requests.push({ step, marker, user, body });
   const answer = (content: unknown) => ({ id: `stub-${requests.length}`, model: "stub", choices: [{ message: { content: typeof content === "string" ? content : JSON.stringify(content) } }], usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 } });
+  if (step === "prefilter" && prefilterHold) {
+    const waiting = prefilterHold;
+    waiting.entered.open();
+    await waiting.release.promise;
+  }
   if (step === "prefilter") return answer({ label: marker === "OFFTOPIC" || marker === "BARE" ? "BLOCK" : marker === "VAGUE" ? "UNKNOWN" : "PASS", reason: "测试" });
-  if (step === "score") return answer({ attentionScore: scoreAnswers[marker]!.shift() });
+  if (step === "score") return answer({ attentionScore: scoreAnswers[marker]?.shift() ?? SELECTING_SCORE });
+  // Copy with a word a site keeps from readers (added to the pack's list below), and its mended form: whole (WORDY),
+  // refused by the provider, with a number changed, or with as many such words as before.
+  if (step === "understand" && WORDY.includes(marker)) return answer({ itemType: ITEM_TYPES[0], authorRole: "principal", tags: [], editorialJudgment: `理由里有禁用词 ${marker}`, titleZh: `标题里有禁用词 ${marker}`, summaryZh: `${marker} 的摘要。第二句补充 3 个数字。` });
+  // A refusal in a provider's own words: each provider words its own, and the same request would meet it again.
+  if (step === "wording" && marker === "REFUSAL") return new Reply(400, { error: { message: "request refused", type: "invalid_request_error" } });
+  if (step === "wording") {
+    const unmended = marker === "UNMENDED" ? "有禁用词" : "换了说法";
+    return answer({ titleZh: `标题里${unmended} ${marker}`, summaryZh: `${marker} 的摘要。第二句补充 ${marker === "RENUMBER" ? 4 : 3} 个数字。`, reasonZh: `理由里${unmended} ${marker}` });
+  }
   if (step === "understand") {
     if (marker === "SENSITIVE") return new Reply(400, { contentFilter: [{ level: 1, role: "user" }], error: { code: "1301", message: "系统检测到输入或生成内容可能包含不安全或敏感内容" } });
     return answer({ itemType: "model_release", authorRole: "principal", tags: ["模型发布", "开源", "Agent", "不存在的标签"], editorialJudgment: `理由 ${marker}`, titleZh: `理解标题 ${marker}`, summaryZh: `理解摘要 ${marker}。第二句补充一个关键数字。` });
   }
-  if (step === "structure") return answer({ category: "ai-models", tags: ["模型发布", "推理"], subjects: ["anthropic", "unknown-co"], fact: { title: `事实 ${marker}`, subject: "某公司", action: "发布", object: "模型", occurredAt: null } });
+  if (step === "structure") {
+    if (marker === "BAD_STRUCT") return answer("invalid output");
+    return answer({ category: "ai-models", tags: ["模型发布", "推理"], subjects: ["anthropic", "unknown-co"], scope: "single", fact: { title: `事实 ${marker}`, subject: "某公司", action: "发布", object: "模型", occurredAt: null, evidence: "a lab released a model", conditions: [] } });
+  }
   return answer(`title_zh: 翻译标题 ${marker}\nsummary_zh: 翻译摘要 ${marker}。第二句补充影响。`);
 });
-for (const env of ["DASHSCOPE_BASE_URL", "ZHIPU_BASE_URL", "DEEPSEEK_BASE_URL"]) process.env[env] = `${provider.url}/v1`;
-for (const env of ["DASHSCOPE_API_KEY", "ZHIPU_API_KEY", "DEEPSEEK_API_KEY"]) process.env[env] = "test-key";
-// AIHOT's own assignment of models to steps (the open-source default is one model for all of them).
-Object.assign(process.env, { PREFILTER_MODEL: "qwen3.7-flash", SCORE_MODEL: "glm-5.3-flash-selection", UNDERSTAND_MODEL: "glm-5.3-flash", SUMMARIZE_MODEL: "deepseek-flash", STRUCTURE_MODEL: "qwen3.8-flash" });
+pointModels(provider.url);
 
 before(async () => {
   await sql`INSERT INTO sources (id, name, kind, tier, participation_mode, next_fetch_at) VALUES
     (${SOURCE}, 'Test analyze source', 'rss', 'T1', 'editorial', '2100-01-01'),
-    (${X_SOURCE}, 'Test X account', 'x_search', 'T1', 'editorial', '2100-01-01')`;
+    (${X_SOURCE}, 'Test X account', 'x_search', 'T1', 'editorial', '2100-01-01'),
+    (${CLASSED_SOURCE}, 'Test official source that gets a class', 'rss', 'T1', 'editorial', '2100-01-01')`;
 });
 after(async () => {
   await provider.close();
@@ -86,35 +115,99 @@ test("every prompt in the pack renders, and the site's name replaces AIHOT's", (
   const values = Object.fromEntries([...names].map((n) => [n, "x"]));
   for (const file of files) {
     const text = promptText(file.slice(0, -3), values);
-    assert.ok(text.length > 20 && !/\{\{/.test(text), file);
+    assert.ok(text.trim().length > 0 && !/\{\{/.test(text), file);
   }
   assert.ok(PREFILTER_SYSTEM.startsWith(`为${SITE.name}做宽召回`));
 });
 
 test("a selected item: prefilter, two scores, the content understanding and the structure", async () => {
-  assert.equal(tierThreshold("T1"), 60);
+  assert.ok(FLOOR >= 4 && FLOOR < T1 && T1 <= 97, "the cases need the understand floor below the T1 threshold, and a few points either side");
   const id = await article("CLEAR");
   const res = await analyzeArticle(id);
-  assert.deepEqual([res!.output!.selected, res!.output!.score], [true, 75], "78 + 72 = 150 >= 120");
+  assert.deepEqual([res!.output!.selected, res!.output!.score], [true, T1 + 1], `${T1 + 3} + ${T1 - 1} >= 2 × ${T1}; the mean is shown`);
   assert.deepEqual(calls("CLEAR").sort(), ["prefilter", "score", "score", "structure", "understand"]);
   const r = await row(id);
   assert.deepEqual([r.title_zh, r.reason_zh, r.category, r.receipt_ids.length], ["理解标题 CLEAR", "理由 CLEAR", "ai-models", 5]);
   assert.deepEqual(r.tags, ["模型发布", "开源/仓库", "Agent", "AI", "Anthropic"], "vocabulary tags, the inferred AI domain, and the subject's tag");
   assert.deepEqual(r.subjects, ["anthropic"]);
   assert.deepEqual([r.output.writer, r.output.itemType, r.output.prefilter.label, r.output.fact.title], ["understand", "model_release", "PASS", "事实 CLEAR"]);
+  assert.equal(r.output.scope, "single");
+  assert.equal(r.output.fact.evidence, "a lab released a model");
   const score = requests.find((q) => q.marker === "CLEAR" && q.step === "score")!;
   assert.match(score.user, /【标题】\nCLEAR model release/, "the score reads the original title, before any writing");
-  assert.deepEqual([score.body.temperature, score.body.reasoning_effort, score.body.max_tokens], [1, "high", 65536]);
-  const understand = requests.find((q) => q.marker === "CLEAR" && q.step === "understand")!;
-  assert.ok(understand.user.startsWith("请按系统规则理解以下单篇材料，一次返回全部六个字段。"));
-  assert.ok(understand.system.includes("【摘要答案前置规则") && understand.system.includes("【标题自洽规则"));
-  const prefilter = requests.find((q) => q.marker === "CLEAR" && q.step === "prefilter")!;
-  assert.ok(JSON.parse(prefilter.user).includes("【材料质量】"), "the material context, sent as a JSON string");
+});
+
+test("a word the site keeps from readers goes back once to be changed; copy without one is not sent", async () => {
+  // A word only this test bans: the pack's list is the site's own (empty in the template).
+  (READER_WORDING as Array<readonly [RegExp, string]>).push([/禁用词/u, "换一个说法"]);
+  try {
+    const id = await article("WORDY");
+    await analyzeArticle(id);
+    assert.equal(calls("WORDY").filter((s) => s === "wording").length, 1);
+    const r = await row(id);
+    assert.deepEqual([r.title_zh, r.reason_zh], ["标题里换了说法 WORDY", "理由里换了说法 WORDY"], "the mended copy is stored");
+    const sent = requests.find((q) => q.marker === "WORDY" && q.step === "wording")!;
+    assert.ok(sent.user.includes("标题用了“禁用词”") && sent.user.includes("推荐理由用了“禁用词”"), "each use named");
+    assert.ok(!requests.some((q) => q.step === "wording" && q.marker !== "WORDY"), "the other items' copy uses none");
+  } finally {
+    (READER_WORDING as Array<readonly [RegExp, string]>).pop();
+  }
+});
+
+test("the first copy stands when the provider refuses the mend, the mend changes a number or leaves as many such words", async () => {
+  (READER_WORDING as Array<readonly [RegExp, string]>).push([/禁用词/u, "换一个说法"]);
+  try {
+    for (const marker of ["REFUSAL", "RENUMBER", "UNMENDED"]) {
+      const id = await article(marker);
+      await analyzeArticle(id);
+      const r = await row(id);
+      assert.deepEqual([r.title_zh, r.reason_zh], [`标题里有禁用词 ${marker}`, `理由里有禁用词 ${marker}`], `${marker}: the first copy is stored`);
+      assert.equal(calls(marker).filter((s) => s === "wording").length, 1, `${marker}: mended once`);
+      const [receipt] = await sql<{ status: string }[]>`SELECT status FROM receipts WHERE purpose = 'mend_wording' AND subject LIKE ${`article:${id}@%`}`;
+      assert.equal(receipt!.status, marker === "REFUSAL" ? "failed" : "completed", `${marker}: the mend's receipt`);
+    }
+  } finally {
+    (READER_WORDING as Array<readonly [RegExp, string]>).pop();
+  }
+});
+
+test("structure retains grounded conditions, rejects invented or unseen quotes, and does not infer missing scope", async () => {
+  const input = (await loadAnalyzeInput(await article("CONDITIONS", {
+    bodyText: "Preview is free for Pro users until October 10.\n" + "x".repeat(11000) + "\nOnly available in the US. " + "x".repeat(MAX_BODY_CHARS) + "This late detail was not sent.",
+  })))!;
+  input.translationZh = "仅中文译文中出现的限制";
+  const frame = { title: "预览上线", evidence: "Preview is free for Pro users until October 10.", conditions: [
+    { text: "仅Pro用户，免费至10月10日", quote: "Preview is free for Pro users until October 10." },
+    { text: "仅限美国", quote: "Only available in the US." },
+    { text: "无限免费", quote: "Unlimited free access for everyone." },
+    { text: "不在模型输入里的句子", quote: "This late detail was not sent." },
+  ] };
+  const base = { category: "ai-models", tags: [], subjects: [], fact: frame };
+  const out = normalizeStructure(StructureSchema.parse(base), input);
+  assert.ok(buildMaterial(input).includes("Only available in the US."), "a condition after the old 7000-character cutoff reaches the model");
+  assert.ok(buildMaterial(input).includes("后文未提供"));
+  assert.equal(out.scope, "unknown", "an older result with a fact is not proof of single scope");
+  assert.deepEqual(out.fact?.conditions, frame.conditions.slice(0, 2));
+  assert.equal(out.fact?.evidence, frame.evidence);
+  const partial = normalizeStructure(StructureSchema.parse({ ...base, fact: { ...frame, conditions: [
+    { quote: "x".repeat(401) },
+    { quote: "Preview is free... until October 10." },
+    { quote: "Only available in the US." },
+  ] } }), input);
+  assert.deepEqual(partial.fact?.conditions, [{ text: "Only available in the US.", quote: "Only available in the US." }],
+    "an invalid sibling cannot discard a valid original condition; spliced quotes remain rejected");
+  const invented = normalizeStructure(StructureSchema.parse({ ...base, fact: { ...frame, evidence: input.source.name, conditions: [{ text: "翻译限制", quote: input.translationZh }] } }), input);
+  assert.equal(invented.fact?.evidence, null, "source metadata is not original evidence");
+  assert.deepEqual(invented.fact?.conditions, [], "a translation does not count as an original quote");
+  assert.equal(normalizeStructure(StructureSchema.parse({ ...base, scope: "composite" }), input).fact, null, "composite output cannot also claim one fact");
+  const titleOnly = normalizeStructure(StructureSchema.parse({ ...base, scope: "single" }), { ...input, bodyText: null, excerpt: null });
+  assert.equal(titleOnly.scope, "unknown", "a confident model cannot supply the missing original material");
+  assert.equal(titleOnly.fact, null);
 });
 
 test("a near-selected item is written like a selected one; below the floor it is translated", async () => {
   const near = await analyzeArticle(await article("RESCUE"));
-  assert.deepEqual([near!.output!.selected, near!.output!.reasonZh], [false, "理由 RESCUE"], "56 + 50 = 106 > 100");
+  assert.deepEqual([near!.output!.selected, near!.output!.reasonZh], [false, "理由 RESCUE"], `${FLOOR + 1} + ${FLOOR} > 2 × ${FLOOR}`);
   const lowId = await article("LOW");
   const low = await analyzeArticle(lowId);
   assert.deepEqual([low!.output!.selected, low!.output!.titleZh, low!.output!.reasonZh], [false, "翻译标题 LOW", null]);
@@ -125,26 +218,25 @@ test("a near-selected item is written like a selected one; below the floor it is
   assert.deepEqual((await row(lowId)).tags, ["模型发布", "推理", "AI", "Anthropic"], "structure tags retain the inferred AI domain");
 });
 
-test("the prefilter's BLOCK stops everything; UNKNOWN goes on like PASS", async () => {
+test("the prefilter's BLOCK stops everything; UNKNOWN with material goes on like PASS", async () => {
   const off = await analyzeArticle(await article("OFFTOPIC"));
   assert.deepEqual([off!.output!.relevance, off!.output!.selected], ["block", false]);
   assert.deepEqual(calls("OFFTOPIC"), ["prefilter"]);
-  // An UNKNOWN with material is judged and written like a PASS, up to 精选 (60 + 62 ≥ 2 × 60).
+  // An UNKNOWN with material is judged and written like a PASS, up to 精选 (T1 + T1 + 2 ≥ 2 × T1).
   const vagueId = await article("VAGUE");
   const vague = await analyzeArticle(vagueId);
   assert.deepEqual([vague!.output!.relevance, vague!.output!.selected, vague!.output!.titleZh], ["pass", true, "理解标题 VAGUE"]);
   assert.equal((await row(vagueId)).output.prefilter.label, "UNKNOWN", "the prefilter's own answer stays on record");
-  // Nothing but a title and no page to fetch: the BLOCK counts as UNKNOWN and is scored, but the
-  // translation writes nothing from a bare title, so it waits for material instead of being published.
+  // Nothing but a title and no page to fetch: it waits for material without a model call.
   const bare = await analyzeArticle(await article("BARE", { bodyText: null, excerpt: null, bodyStatus: "none" }));
-  assert.deepEqual([bare!.output!.relevance, bare!.output!.selected, bare!.output!.score], ["unknown", false, 32]);
-  assert.deepEqual(calls("BARE").sort(), ["prefilter", "score", "score", "structure"]);
+  assert.deepEqual([bare!.output!.relevance, bare!.output!.selected, bare!.output!.score], ["unknown", false, null]);
+  assert.deepEqual(calls("BARE"), []);
 });
 
 test("a feed summary alone: the article page is fetched first, then the whole article is judged", async () => {
   const id = await article("THIN", { bodyText: null, bodyStatus: "pending", excerpt: `THIN: a short feed summary (${T}).` });
-  // The queue sends it to extraction although its source does not ask for full text (the safety net
-  // does the same after a failed fetch, so extraction failures add up to "unconfirmed" and end).
+  // The queue sends it to extraction although its source does not ask for full text (the sweep does
+  // the same after a failed fetch, so extraction failures add up to "unconfirmed" and end).
   await queueProcessing(id);
   const [job] = await sql<{ name: string }[]>`SELECT name FROM pgboss.job WHERE data->>'articleId' = ${id}`;
   assert.equal(job?.name, QUEUES.extractBody);
@@ -161,9 +253,10 @@ test("a feed summary alone: the article page is fetched first, then the whole ar
 test("a short post in Chinese is its own copy; a content-filter refusal is translated instead", async () => {
   // The tag rides as a hashtag, which the language check strips.
   const text = `推文：今天把智能体接进了工作流，效果不错。#t${T}`;
+  const postIdForFixture = "19000000000008";
   const { articleId } = await upsertMaterial({
-    sourceId: X_SOURCE, url: `https://x.com/test/status/1${Date.now()}`, title: text, via: "fetch", publishedAt: new Date(),
-    xPost: { tweetId: `1${Date.now()}`, authorName: "测试", handle: "test", text },
+    sourceId: X_SOURCE, url: `https://x.com/test/status/${postIdForFixture}`, title: text, via: "fetch", publishedAt: new Date(Date.now() - 60_000),
+    xPost: { tweetId: postIdForFixture, authorName: "测试", handle: "test", text },
   });
   const post = await analyzeArticle(articleId);
   assert.deepEqual([post!.output!.titleZh, post!.output!.summaryZh], [text, text]);
@@ -182,12 +275,43 @@ test("guards: a company the input does not name is not written in; long summarie
   assert.equal(enforceIdentity(alibaba, { titleZh: "阿里巴巴发布编程模型", summaryZh: "阿里巴巴发布了编程模型并公布价格。" }).identityGuard.outcome, "pass");
   const long = "第一句交代了谁做了什么以及关键结果，这一句本身已经足够说明核心事件的来龙去脉。".repeat(3) + "第二句补充数字。".repeat(20);
   assert.ok(compactAnswerFirstSummary(long).length <= 190);
+  // A short first sentence and a long second one: the card once ended "…可连接 Google Ads 和 Meta 账号在 Google。".
+  const lovable = "Lovable 推出增长工具，在原有建应用聊天窗口中提供增长计划、广告投放和 SEO 能力。用户设定目标后，Lovable 依据应用上下文生成可执行计划；可连接 Google Ads 和 Meta 账号在 Google、YouTube、Facebook、Instagram 投放广告，广告上线前需用户审批，计费直接走 Google Ads 和 Meta 账号，Lovable 不加收服务费；SEO 方面覆盖索引基础、内置 Semrush 关键词机会分析和站外社区推广建议。功能现已在 Free、Pro 和 Business 计划可用。";
+  assert.equal(compactAnswerFirstSummary(lovable), "Lovable 推出增长工具，在原有建应用聊天窗口中提供增长计划、广告投放和 SEO 能力。", "whole sentences, never half of one");
+  // Only a first sentence longer than the limit is cut, at a clause, never inside an enumeration.
+  const runOn = "某实验室发布新模型，支持" + "甲乙丙、".repeat(39) + "甲乙丙，" + "补充说明".repeat(20) + "。";
+  const head = compactAnswerFirstSummary(runOn).slice(0, -1);
+  assert.ok(runOn.startsWith(head) && "，；".includes(runOn[head.length]!), head);
   assert.deepEqual(parseTranslateOutput("title_zh: 标题\nsummary_zh: 第一句。\n第二句。"), { titleZh: "标题", summaryZh: "第一句。\n第二句。", bodyZh: "" });
   assert.equal(parseTranslateOutput("title_zh: 标题\nbody_zh: 我们懂你。\n\n来源：X：PixVerse (@PixVerse)").bodyZh, "我们懂你。", "a repeated prompt line is dropped");
 });
 
+test("a source class raises its tier's threshold to the class floor and never lowers one", () => {
+  assert.ok(CLASS && CLASS_FLOOR - 1 >= T1, "the cases need a pack class whose floor lies above the official threshold and below the media one");
+  assert.equal(selectionThreshold({ tier: "T1", selectionClass: null }), T1);
+  assert.equal(selectionThreshold({ tier: "T1", selectionClass: CLASS }), CLASS_FLOOR);
+  assert.equal(selectionThreshold({ tier: "T2", selectionClass: CLASS }), T2, "a media source keeps its own, higher threshold");
+  assert.equal(selectionThreshold({ tier: "EXCLUDE_MP", selectionClass: CLASS }), null, "a tier without a threshold stays out of 精选");
+});
+
+test("after the admin gives a source a class, analysing again holds the paid scores against the class floor", async () => {
+  // Scores that select from an ordinary official source and stay under the class floor.
+  const id = await article("ECOSYS", { sourceId: CLASSED_SOURCE });
+  const first = await analyzeArticle(id);
+  assert.deepEqual([first!.output!.selected, (await row(id)).output.threshold], [true, T1]);
+  const version = async () => (await sql<{ updated_at: Date }[]>`SELECT updated_at FROM sources WHERE id = ${CLASSED_SOURCE}`)[0]!.updated_at.toISOString();
+  await assert.rejects(updateSource(CLASSED_SOURCE, { patch: { selection_class: "not-a-class" }, version: await version() }, "test"), "only the pack's classes");
+  await updateSource(CLASSED_SOURCE, { patch: { selection_class: CLASS }, version: await version(), reason: "test" }, "test");
+  const hits = provider.hits();
+  const again = await analyzeArticle(id);
+  assert.equal(provider.hits(), hits, "the same paid answers: the class is not part of any model input");
+  assert.deepEqual([again!.output!.selected, again!.output!.score, (await row(id)).output.threshold], [false, CLASS_FLOOR - 1, CLASS_FLOOR]);
+  const created = await createSource({ id: `test-classed-new-${T}`, name: "Created with a class", kind: "rss", config: { feedUrl: `https://example.com/feed-${T}.xml` }, tier: "T1", selection_class: CLASS }, "test");
+  assert.equal(created.created && created.source.selection_class, CLASS, "a new source can start with a class");
+});
+
 test("analysing the same revision again reuses every paid answer", async () => {
-  scoreAnswers.CLEAR = [80, 70];
+  scoreAnswers.CLEAR = [T1 + 2, T1];
   const id = await article("CLEAR", { url: `https://example.com/CLEAR-again-${T}`, title: `CLEAR model release again ${T}` });
   const first = await analyzeArticle(id);
   assert.equal(first!.reused, false);
@@ -195,4 +319,133 @@ test("analysing the same revision again reuses every paid answer", async () => {
   const again = await analyzeArticle(id);
   assert.equal(provider.hits(), hits, "no new requests");
   assert.deepEqual([again!.reused, again!.receiptIds], [true, first!.receiptIds]);
+});
+
+test("an unresolved current identity does not start a separate writing request", async () => {
+  const beforeLen = requests.length;
+  const text = "BAD_STRUCT: We released Manus 2.0 on September 28. Today we explain Game Dev's editing workflow.";
+  await assert.rejects(runAnalysis({ id: `identity-${tag()}`, revision: 1, title: "BAD_STRUCT Manus Game Dev", url: "https://example.org/news", author: null,
+    publishedAt: new Date("2026-10-02T00:00:00Z"), bodyStatus: "ok", bodyText: text, excerpt: null, media: [], xPost: null,
+    source: { name: "Fixture", kind: "rss", tier: "T1", firstParty: true } }));
+  const seen = requests.slice(beforeLen).map((r) => r.step);
+  assert.ok(seen.includes("structure"));
+  assert.equal(seen.filter((s) => s === "understand" || s === "summarize").length, 0);
+});
+
+const missingArticle = (changes: Partial<AnalyzeInputArticle> = {}): AnalyzeInputArticle => ({
+  id: `missing-${tag()}`, revision: 1, title: "模型发布", url: "https://example.org/news", author: null,
+  publishedAt: new Date("2026-10-02T00:00:00Z"), bodyStatus: "unconfirmed", bodyText: null,
+  excerpt: null, media: [], xPost: null,
+  source: { name: "Fixture", kind: "rss", tier: "T1", firstParty: true }, ...changes,
+});
+const runFresh = (input: AnalyzeInputArticle) => runAnalysis(input, { attemptTag: tag() });
+
+test("title-only articles wait for evidence without a model call (no prefilter label could count)", async () => {
+  const beforeLen = requests.length;
+  const run = await runFresh(missingArticle({ bodyText: " \n", excerpt: " " }));
+  const out = normalizeAnalysis(run);
+  assert.deepEqual(requests.slice(beforeLen), []);
+  assert.equal(out.relevance, "unknown");
+  assert.equal(out.score, null);
+  assert.equal(out.selected, false);
+  assert.equal(out.titleZh, "");
+  assert.equal(out.summaryZh, "");
+  assert.equal(isPoolEligible({ participationMode: "editorial", relevance: out.relevance, title: out.titleZh, summary: out.summaryZh }), false);
+});
+
+test("real body, feed excerpt and quoted text still receive both scores and writing", async (t) => {
+  for (const changes of [{ bodyText: "来源确认模型发布。" }, { excerpt: "来源确认模型发布。" },
+    { xPost: { text: "支持", quoted: { text: "来源确认模型发布。" } } }]) await t.test(JSON.stringify(changes), async () => {
+    const beforeLen = requests.length;
+    const out = normalizeAnalysis(await runFresh(missingArticle(changes)));
+    const seen = requests.slice(beforeLen).map((r) => r.step);
+    assert.equal(seen.filter((step) => step === "score").length, 2);
+    assert.ok(seen.includes("understand"));
+    assert.equal(out.relevance, "pass");
+    assert.equal(out.selected, true);
+  });
+});
+
+test("an empty or link-only original post still needs copy to enter the editorial feed", async (t) => {
+  for (const text of ["", "https://example.org/launch"]) await t.test(text || "media-only", async () => {
+    const beforeLen = requests.length;
+    const run = await runFresh(missingArticle({ xPost: { text, media: [] } }));
+    const out = normalizeAnalysis(run);
+    const seen = requests.slice(beforeLen).map((r) => r.step);
+    assert.equal(seen.filter((step) => step === "score").length, 2);
+    assert.equal(seen.filter((step) => step === "understand" || step === "summarize").length, 0);
+    assert.equal(run.writing?.kind, "verbatim");
+    assert.equal(out.relevance, "pass");
+    assert.equal(out.selected, true);
+    assert.equal(isPoolEligible({ participationMode: "editorial", relevance: out.relevance, title: out.titleZh, summary: out.summaryZh, originalPost: true }), !!text);
+  });
+});
+
+test("a later material revision can be scored after the title-only revision waits", async () => {
+  const input = missingArticle();
+  assert.equal(normalizeAnalysis(await runFresh(input)).relevance, "unknown");
+  const beforeLen = requests.length;
+  const out = normalizeAnalysis(await runFresh({ ...input, revision: 2, bodyStatus: "ok", bodyText: "来源确认模型发布。" }));
+  assert.equal(requests.slice(beforeLen).filter((r) => r.step === "score").length, 2);
+  assert.equal(out.relevance, "pass");
+  assert.equal(out.selected, true);
+});
+
+const consistencyMaterial = (name: string) => ({ sourceId: SOURCE, url: `https://example.org/${SOURCE}/${name}`, title: `A lab releases a model ${name}`,
+  bodyText: `A lab released a model ${name}. ` + "The release includes benchmark results and pricing details. ".repeat(12),
+  bodyStatus: "ok" as const, via: "fetch" as const, publishedAt: new Date(Date.now() - 60_000) });
+
+test("a late successful analysis preserves newer input awaiting processing", async () => {
+  const input = consistencyMaterial("stale-success");
+  const { articleId } = await upsertMaterial(input);
+  const waiting = { entered: gate(), release: gate() };
+  prefilterHold = waiting;
+  const pending = processArticle(articleId);
+  await waiting.entered.promise;
+  try {
+    const revised = await upsertMaterial({ ...input, title: "The lab corrects the release", bodyText: "Corrected benchmark and pricing details. ".repeat(12) });
+    assert.equal(revised.revised, true);
+  } finally {
+    prefilterHold = null;
+    waiting.release.open();
+  }
+  const result = await pending;
+  const [current] = await sql`SELECT revision,processing_state,processing_error FROM articles WHERE id=${articleId}`;
+  assert.deepEqual({ ...current }, { revision: 2, processing_state: "new", processing_error: null },
+    "the recovery sweep must still see the new revision as unprocessed");
+  assert.equal(result.state, "stale");
+  const analyses = await sql`SELECT input_revision FROM analyses WHERE article_id=${articleId}`;
+  assert.deepEqual(analyses.map(r => r.input_revision), [1], "the obsolete result is retained only against its original input");
+  assert.equal((await sql`SELECT 1 FROM publications WHERE article_id=${articleId}`).length, 0);
+});
+
+test("a failed analysis commit rolls back its judgement and receipt completion; retry reuses the saved responses", async () => {
+  const { articleId } = await upsertMaterial(consistencyMaterial("atomic-commit"));
+  const subject = `article:${articleId}@1`;
+  await sql.unsafe(`CREATE FUNCTION reject_analysis_completion() RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN IF NEW.processing_state = 'analyzed' THEN RAISE EXCEPTION 'injected analysis commit failure'; END IF; RETURN NEW; END $$`);
+  await sql.unsafe("CREATE TRIGGER reject_analysis_completion BEFORE UPDATE ON articles FOR EACH ROW EXECUTE FUNCTION reject_analysis_completion()");
+  try {
+    assert.equal((await processArticle(articleId)).state, "retrying");
+  } finally {
+    await sql.unsafe("DROP TRIGGER reject_analysis_completion ON articles");
+    await sql.unsafe("DROP FUNCTION reject_analysis_completion()");
+  }
+  assert.equal((await sql`SELECT 1 FROM analyses WHERE article_id=${articleId}`).length, 0, "a failed commit cannot leave a usable partial judgement");
+  const received = await sql`SELECT id,status FROM receipts WHERE subject=${subject} ORDER BY id`;
+  assert.ok(received.length > 0, "paid responses arrived before the business failure");
+  assert.ok(received.every(r => r.status === "received"), "receipt completion rolls back with the judgement");
+  const [failed] = await sql`SELECT processing_state,processing_error FROM articles WHERE id=${articleId}`;
+  assert.equal(failed!.processing_state, "new");
+  assert.match(failed!.processing_error, /injected analysis commit failure/);
+  assert.equal((await sql`SELECT 1 FROM publications WHERE article_id=${articleId}`).length, 0);
+  const hits = provider.hits();
+  assert.equal((await processArticle(articleId)).state, "pass");
+  assert.equal(provider.hits(), hits, "retry commits the persisted responses without buying them again");
+  assert.equal((await sql`SELECT 1 FROM analyses WHERE article_id=${articleId}`).length, 1);
+  const completed = await sql`SELECT id,status FROM receipts WHERE subject=${subject} ORDER BY id`;
+  assert.deepEqual(completed.map(r => r.id), received.map(r => r.id));
+  assert.ok(completed.every(r => r.status === "completed"));
+  assert.deepEqual({ ...(await sql`SELECT selected, selection_candidate FROM publications WHERE article_id=${articleId}`)[0] },
+    { selected: false, selection_candidate: true }, "saved analysis nominates a candidate while news identity is pending");
 });

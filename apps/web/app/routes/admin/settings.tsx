@@ -1,7 +1,7 @@
-import { SITE } from "@aihot/industry/site";
+import { ADMIN, SITE } from "@aihot/site";
 import { useRef, useState } from "react";
-import type { AdminSettings } from "@aihot/contracts/admin";
 import type { Route } from "./+types/settings";
+import type { AdminSettings } from "@aihot/contracts/admin";
 import { adminGet } from "../../lib/admin.server";
 import { useAdminAction } from "../../features/admin/action";
 import { bj, num } from "../../features/admin/format";
@@ -23,8 +23,8 @@ function QrSlot({ slot, label, src }: { slot: "wechatQr" | "feishuQr"; label: st
     <div className="flex items-center gap-4">
       {src ? <img src={src} alt={label} className="size-28 rounded-card bg-white object-contain p-1.5 ring-1 ring-line" /> : <div className="flex size-28 shrink-0 items-center justify-center rounded-card bg-surface text-sm text-ink-4 ring-1 ring-line">未设置</div>}
       <div>
-        <div className="text-[14px] font-medium text-ink">{label}</div>
-        <div className="mt-0.5 break-all font-mono text-[11.5px] text-ink-4">{src}</div>
+        <div className="text-ui-body-sm font-medium text-ink">{label}</div>
+        <div className="mt-0.5 break-all font-mono text-ui-caption-md text-ink-4">{src}</div>
         <input
           ref={input}
           type="file"
@@ -131,7 +131,7 @@ export default function SettingsAdmin({ loaderData: s }: Route.ComponentProps) {
             rows={s.targets}
             rowKey={(t) => t.key}
             columns={[
-              { key: "k", label: "目的地", render: (t) => <div><div className="font-medium text-ink">{t.note ?? t.key}</div><div className="font-mono text-[11.5px] text-ink-4">{t.key} · {t.config_ref}</div></div> },
+              { key: "k", label: "目的地", render: (t) => <div><div className="font-medium text-ink">{t.note ?? t.key}</div><div className="font-mono text-ui-caption-md text-ink-4">{t.key} · {t.config_ref}</div></div> },
               { key: "e", label: "状态", render: (t) => (t.enabled ? <Badge tone="ok">启用于 {bj(t.enabled_at)}</Badge> : <Badge>停用</Badge>) },
               { key: "d", label: "7 天投递", align: "right", render: (t) => num(t.deliveries_7d) },
               { key: "a", label: "", align: "right", render: (t) => <TargetToggle t={t} /> },
@@ -146,7 +146,7 @@ export default function SettingsAdmin({ loaderData: s }: Route.ComponentProps) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1024px] text-[13px]">
             <thead>
-              <tr className="border-b border-line text-left text-[12px] text-ink-3">
+              <tr className="border-b border-line text-left text-ui-caption text-ink-3">
                 <th className="px-3 py-2 font-medium">服务</th>
                 <th className="px-3 py-2 font-medium">额度开关</th>
                 <th className="px-3 py-2 font-medium">每分钟</th>
