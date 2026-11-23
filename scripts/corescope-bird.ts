@@ -75,7 +75,7 @@ async function enable() {
   for (const snapshot of rows) {
     const [row] = await sql<(SourceRow & { updated_at: Date })[]>`SELECT * FROM sources WHERE id=${snapshot.id} AND enabled AND kind='x_search'`;
     if (!row || JSON.stringify(row.config)!==JSON.stringify(snapshot.config)) throw new Error("Source route changed during rollout; review it before retrying");
-    const nextConfig = { ...row.config, provider: "bird", _aihot: { ...row.config._aihot, initialBackfillLimit: 20 },
+    const nextConfig: SourceRow["config"] = { ...row.config, provider: "bird", _aihot: { ...row.config._aihot, initialBackfillLimit: 20 },
       bird: { ...row.config.bird, strategy: "user_tweets", initialLookbackHours: 48, maxPagesPerRound: 1,
         accountProfile: process.env.BIRD_ACCOUNT_PROFILE ?? "birdclaw-primary" } };
     if (!/^from:[A-Za-z0-9_]{1,15} -filter:replies$/i.test(String(nextConfig.query))) throw new Error("Bird rollout only supports plain account sources");

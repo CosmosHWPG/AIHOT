@@ -34,7 +34,7 @@ async function verify() {
     promptVersion: "corescope-model-check-v1", system: "Return one JSON object with ok=true and language=zh. No other fields.",
     user: "验证连接。", schema: z.object({ ok: z.literal(true), language: z.literal("zh") }), maxTokens: 512 });
   await sql.begin((tx) => completeReceipt(tx, reply.receiptId));
-  const vectors = await ensureEmbeddings("article", [{ id: "corescope-model-check-v1", text: "5G core network and AI agent architecture" }]);
+  const vectors = await ensureEmbeddings([{ id: "corescope-model-check-v1", text: "5G core network and AI agent architecture" }]);
   const result = { checkedAt: new Date().toISOString(), chat: { ok: true, receiptId: reply.receiptId, reused: reply.reused },
     embeddings: { ok: vectors.has("corescope-model-check-v1"), dimensions: vectors.get("corescope-model-check-v1")?.length ?? 0 } };
   await mkdir(config.dataDir, { recursive: true });

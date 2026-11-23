@@ -20,7 +20,8 @@ const VECTOR = EMBEDDING_DIMS > 0 ? z.array(z.number()).length(EMBEDDING_DIMS) :
 
 /** Embeddings are paid model calls: MODEL_CALLS_ENABLED=false switches them off like every other call. */
 export function embeddingsAvailable(): boolean {
-  return config.modelCallsEnabled && !!(credential("models", "EMBEDDING_API_KEY") ?? credential("models", "DASHSCOPE_API_KEY"));
+  return config.modelCallsEnabled && process.env.EMBEDDINGS_ENABLED !== "false"
+    && !!(credential("models", "EMBEDDING_API_KEY") ?? credential("models", "DASHSCOPE_API_KEY"));
 }
 
 /** Null vectors: the receipt of a batch already stored, which keeps none (see the top of this file). */
@@ -77,22 +78,23 @@ function storedVector(data: Buffer): number[] | null {
 }
 
 /**
- * The stored, usable vectors of these items, found by text (hash) and model: the item's own row, else
- * any article's with the same text, which is the same request and the same vector.
+ * The stored, usable vectors of these items, found by text (hash) and model: the item's own row, then
+ * an article with the same text, then a legacy fact or story with the exact same input.
  */
 async function storedVectors(items: Array<{ id: string }>, hashes: Map<string, string>): Promise<Map<string, number[]>> {
   const ids = items.map((i) => i.id);
-  const rows = await sql<{ ref_id: string; text_hash: string; vector: Buffer }[]>`
-    SELECT ref_id, text_hash, array_send(vector) AS vector FROM embeddings
-    WHERE kind = 'article' AND model = ${EMBEDDING_MODEL} AND text_hash = ANY(${[...new Set(ids.map((id) => hashes.get(id)!))]}::text[])
-    ORDER BY created_at DESC`;
+  const rows = await sql<{ kind: string; ref_id: string; text_hash: string; vector: Buffer }[]>`
+    SELECT kind, ref_id, text_hash, array_send(vector) AS vector FROM embeddings
+    WHERE kind IN ('article', 'fact', 'story') AND model = ${EMBEDDING_MODEL}
+      AND text_hash = ANY(${[...new Set(ids.map((id) => hashes.get(id)!))]}::text[])
+    ORDER BY (kind = 'article') DESC, created_at DESC`;
   // Only usable rows count, so an unusable one (another size, say) never hides a usable one of the same text.
   const own = new Map<string, number[]>();
   const byText = new Map<string, number[]>();
   for (const row of rows) {
     const vector = storedVector(row.vector);
     if (!vector || !VECTOR.safeParse(vector).success) continue;
-    if (row.text_hash === hashes.get(row.ref_id)) own.set(row.ref_id, vector);
+    if (row.kind === "article" && row.text_hash === hashes.get(row.ref_id)) own.set(row.ref_id, vector);
     if (!byText.has(row.text_hash)) byText.set(row.text_hash, vector);
   }
   const out = new Map<string, number[]>();

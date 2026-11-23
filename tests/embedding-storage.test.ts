@@ -18,16 +18,16 @@ process.env.EMBEDDING_MODEL = T;
 process.env.EMBEDDING_DIMS = "0";
 process.env.EMBEDDING_API_KEY = "test-key";
 process.env.EMBEDDING_BASE_URL = `${provider.url}/v1`;
-const { ensureEmbeddings } = await import("@aihot/backend/providers/embeddings");
+const { embeddingsAvailable, ensureEmbeddings } = await import("@aihot/backend/providers/embeddings");
 after(async () => { await provider.close(); await closeDb(); });
 
 const bits = (vector: number[]) => Buffer.from(Float32Array.from(vector).buffer);
 let serial = 0;
 const item = () => ({ id: `${T}-${++serial}`, text: `${T} text ${serial}` });
 
-async function store(it: { id: string; text: string }, vector: string, model = T, hash = sha256(it.text)) {
+async function store(it: { id: string; text: string }, vector: string, model = T, hash = sha256(it.text), kind: "article" | "fact" | "story" = "article") {
   await sql`INSERT INTO embeddings (kind, ref_id, model, text_hash, vector)
-    VALUES ('article', ${it.id}, ${model}, ${hash}, ${vector}::real[])`;
+    VALUES (${kind}, ${it.id}, ${model}, ${hash}, ${vector}::real[])`;
 }
 
 test("stored float32 coordinates retain their bits without asking the provider", async () => {
@@ -75,6 +75,32 @@ test("an article with the exact text of another stored article takes its vector 
   const before = provider.hits();
   assert.deepEqual((await ensureEmbeddings([twin])).get(twin.id), [0, 0, 1, 0]);
   assert.equal(provider.hits(), before);
+});
+
+test("upgraded recall can reuse exact historical fact and story vectors without buying them again", async () => {
+  const fact = item();
+  const story = item();
+  await store(fact, "{0,1,0,0}", T, sha256(fact.text), "fact");
+  await store(story, "{0,0,1,0}", T, sha256(story.text), "story");
+  const articles = [{ id: `${fact.id}-article`, text: fact.text }, { id: `${story.id}-article`, text: story.text }];
+  const before = provider.hits();
+  const vectors = await ensureEmbeddings(articles);
+  assert.deepEqual(vectors.get(articles[0]!.id), [0, 1, 0, 0]);
+  assert.deepEqual(vectors.get(articles[1]!.id), [0, 0, 1, 0]);
+  assert.equal(provider.hits(), before);
+});
+
+test("automatic recall honors the existing embeddings switch with a configured provider", () => {
+  const before = process.env.EMBEDDINGS_ENABLED;
+  try {
+    process.env.EMBEDDINGS_ENABLED = "true";
+    assert.equal(embeddingsAvailable(), true);
+    process.env.EMBEDDINGS_ENABLED = "false";
+    assert.equal(embeddingsAvailable(), false);
+  } finally {
+    if (before === undefined) delete process.env.EMBEDDINGS_ENABLED;
+    else process.env.EMBEDDINGS_ENABLED = before;
+  }
 });
 
 test("an unusable row of a text does not hide a usable one of the same text", async () => {
