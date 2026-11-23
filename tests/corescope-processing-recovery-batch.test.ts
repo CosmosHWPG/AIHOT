@@ -1,7 +1,7 @@
 import { tag } from "./setup.ts";
 import assert from "node:assert/strict";
 import http from "node:http";
-import { setTimeout as delay } from "node:timers/promises";
+import { pollFor } from "./poll.ts";
 import { after, afterEach, before, test } from "node:test";
 import { sql, closeDb, type Db } from "@aihot/backend/db";
 import { config } from "@aihot/backend/config";
@@ -62,7 +62,7 @@ async function article(name: string, kind: keyof typeof sources = "editorial", s
   const post = kind === "editorial" || kind === "hot_signal" ? { provider: "bird", tweetId: "123456789", text: "local fixture" } : null;
   await sql`INSERT INTO articles(id,source_id,identity_key,url,title,body_text,body_status,processing_state,published_at,discovered_at,timeline_at,x_post)
     VALUES(${id},${sources[kind]},${id},${'https://example.test/' + id},'Local fixture','Short original excerpt','ok',${state},
-      now()-${minutes}*interval '1 minute',now(),now(),${post ? sql.json(post) : null})`;
+      now()-${minutes}*interval '1 minute',now()-interval '1 second',now()-interval '1 second',${post ? sql.json(post) : null})`;
   return id;
 }
 async function attachStory(articleId: string, role = 'report') {
@@ -298,7 +298,7 @@ test("a revoked due deferral stays paused without changing date/retry balance, t
   assert.equal((await sweepDeferredEventJobs()).enqueued,0);
   assert.equal((await sweepDeferredEventJobs()).enqueued,0);
   assert.deepEqual(await sql`SELECT * FROM event_job_deferrals WHERE singleton_key=${id}`,prior);
-  await sql`UPDATE articles SET published_at=now() WHERE id=${id}`;
+  await sql`UPDATE articles SET published_at=now()-interval '1 second' WHERE id=${id}`;
   invalidateRecentContentCache();
   assert.equal((await sweepDeferredEventJobs()).enqueued,1);
   const [job] = await sql`SELECT data,retry_limit FROM pgboss.job WHERE name='events.group' AND data->>'articleId'=${id}`;
@@ -327,11 +327,8 @@ test("complete requires material, grouping and deferrals to settle; revoked cons
   await sql`UPDATE articles SET backfill=true WHERE id=${historical}`;
   await registerEventJobs(await getBoss());
   const job = await queueProcessing(historical);
-  const deadline = Date.now() + 10_000;
-  while ((await sql`SELECT state FROM pgboss.job WHERE id=${job}`)[0]?.state !== "completed") {
-    assert.ok(Date.now() < deadline, "event consumer did not finish the permitted historical member");
-    await delay(30);
-  }
+  await pollFor(async () => (await sql`SELECT state FROM pgboss.job WHERE id=${job}`)[0]?.state === "completed",
+    "event consumer to finish the permitted historical member", 10_000);
   const output = (await sql`SELECT output FROM pgboss.job WHERE id=${job}`)[0].output;
   assert.equal(output.verdict, "skipped", "existing historical/no-heat rule is preserved");
   assert.equal((await sql`SELECT processing_state FROM articles WHERE id=${historical}`)[0].processing_state, "skipped");
@@ -339,10 +336,8 @@ test("complete requires material, grouping and deferrals to settle; revoked cons
   const prior = await sql`SELECT * FROM event_job_deferrals WHERE singleton_key=${revoked}`;
   await stopRecoveryBatch(plan.id, "revoked", "test", "stop this fixed permission");
   const stoppedJob = await enqueue(QUEUES.group, { articleId: revoked, signalOnly: true }, { singletonKey: revoked });
-  while ((await sql`SELECT state FROM pgboss.job WHERE id=${stoppedJob}`)[0]?.state !== "completed") {
-    assert.ok(Date.now() < deadline, "revoked consumer did not finish its admission check");
-    await delay(30);
-  }
+  await pollFor(async () => (await sql`SELECT state FROM pgboss.job WHERE id=${stoppedJob}`)[0]?.state === "completed",
+    "revoked consumer to finish its admission check", 10_000);
   assert.deepEqual(await sql`SELECT * FROM event_job_deferrals WHERE singleton_key=${revoked}`, prior);
   assert.equal((await sql`SELECT output FROM pgboss.job WHERE id=${stoppedJob}`)[0].output.state, "outside-priority-window");
 });

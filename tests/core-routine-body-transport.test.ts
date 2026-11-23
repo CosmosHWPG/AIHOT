@@ -106,7 +106,7 @@ test("the daily DoublePulsar route propagates HTTP 429 without using direct Read
 test("the existing extraction handler gives transient native failures its normal three attempts, then settles unconfirmed", async () => {
   const i = input(); let hits = 0;
   intercept(i.endpoint).reply(() => { hits++; return { statusCode: 503, data: "Upstream temporarily unavailable" }; }).persist();
-  const created = await upsertMaterial({ sourceId, url: i.originalUrl, title, publishedAt: new Date(), bodyStatus: "pending", via: "fetch" });
+  const created = await upsertMaterial({ sourceId, url: i.originalUrl, title, publishedAt: new Date(Date.now() - 60 * 60_000), bodyStatus: "pending", via: "fetch" });
   ids.push(created.articleId); invalidateRecentContentCache();
   let handle: ((jobs: any[]) => Promise<any>) | undefined;
   const fakeBoss = { work: async (_name: string, _options: unknown, handler: (jobs: any[]) => Promise<any>) => { handle = handler; return "offline-handler"; } };

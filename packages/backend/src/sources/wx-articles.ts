@@ -1,4 +1,5 @@
 // Public WeChat article records; transport diagnostics never become article bodies.
+import { beijingMidnight, isValidDate } from "@aihot/contracts/time";
 import { collapseWhitespace, stripTags } from "../lib/text.ts";
 import { sanitizeBody } from "../content/sanitize.ts";
 import { parseLooseDate } from "./web-list.ts";
@@ -33,7 +34,8 @@ export function wxPublishedAt(row: Record<string, unknown>): Date | null {
     if (Number.isFinite(date.getTime())) return date;
   }
   const printed = first(row, ["time", "recv_time_str", "publish_time", "published", "datetime"]);
-  return parseLooseDate(/^\d{4}-\d{2}-\d{2}$/.test(printed) ? `${printed}T00:00:00+08:00` : printed, "+08:00");
+  if (/^\d{4}-\d{2}-\d{2}$/.test(printed)) return isValidDate(printed) ? beijingMidnight(printed) : null;
+  return parseLooseDate(printed, "+08:00");
 }
 
 /** Invalid output is an error; a recognized empty JSON array is a successful empty check. */

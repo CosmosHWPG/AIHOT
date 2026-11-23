@@ -66,8 +66,8 @@ export default function LeaderboardPage() {
   return (
     <div key={board.key} className={entrance ? "animate-fade-up" : undefined}>
       <div className="mt-3 flex flex-col gap-1 lg:flex-row lg:items-center lg:justify-between">
-        <p className="text-[13.5px] text-ink-2">{board.description}</p>
-        <p className="num text-[12px] text-ink-4">
+        <p className="text-ui-label-lg text-ink-2">{board.description}</p>
+        <p className="num text-ui-caption text-ink-4">
           {board.sourceCount} 项评测<span className="mx-2">·</span>
           {board.operatorCount} 家机构<span className="mx-2">·</span>
           {shortStamp(run.generatedAt)} 更新
@@ -78,9 +78,9 @@ export default function LeaderboardPage() {
 
       <section className="card mt-3 overflow-hidden" aria-labelledby="lb-board-title">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 lg:px-[22px]">
-          <h2 id="lb-board-title" className="text-[16px] font-bold text-ink">
+          <h2 id="lb-board-title" className="text-ui-body-lg font-bold text-ink">
             {board.key === "overall" ? "综合榜" : `${board.name}榜`}
-            <span className="mono ml-2 text-[11px] font-normal tracking-wide text-ink-4">{filtered ? `${shown.length} 个模型` : `TOP ${entries.length}`}</span>
+            <span className="mono ml-2 text-ui-caption-sm font-normal tracking-wide text-ink-4">{filtered ? `${shown.length} 个模型` : `TOP ${entries.length}`}</span>
           </h2>
           <PillToggles
             label="筛选模型"
@@ -89,8 +89,8 @@ export default function LeaderboardPage() {
             onChange={setFilters}
           />
         </div>
-        {shown.length ? <BoardTable entries={shown} board={board.key} /> : <p role="status" className="border-t border-line px-5 py-10 text-center text-[14px] text-ink-3">当前榜单暂无符合条件的模型。</p>}
-        <div className="border-t border-line px-4 py-3 text-[12px] leading-relaxed text-ink-4 lg:px-[22px]">
+        {shown.length ? <BoardTable entries={shown} board={board.key} /> : <p role="status" className="border-t border-line px-5 py-10 text-center text-ui-body-sm text-ink-3">当前榜单暂无符合条件的模型。</p>}
+        <div className="border-t border-line px-4 py-3 text-ui-caption leading-relaxed text-ink-4 lg:px-[22px]">
           {!filtered && pending.length > 0 && <p className="mb-1 text-ink-3">
             综合榜前十中暂未进入{board.name}榜：{pending.map((p, i) => <span key={p.model.slug}>
               {i > 0 && "、"}<Link to={`/leaderboard/${p.model.slug}`} className="font-medium text-ink-2 hover:text-accent">{p.model.name}</Link>（已有 {p.sources} 项{board.name}评测）
@@ -104,18 +104,18 @@ export default function LeaderboardPage() {
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <section className="card p-5">
-          <h2 className="flex items-center gap-1.5 text-[14px] font-semibold text-ink">
+          <h2 className="flex items-center gap-1.5 text-ui-body-sm font-semibold text-ink">
             <IconInfo size={16} className="text-accent" />
             如何看这张榜
           </h2>
-          <p className="mt-2 text-[13px] leading-relaxed text-ink-3">{board.howToRead}价格不参与排名，缺测不记零分，指数不是正确率。</p>
-          <Link to="/leaderboard/rules" className="mt-2.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-accent hover:text-accent-ink">
+          <p className="mt-2 text-ui-label leading-relaxed text-ink-3">{board.howToRead}价格不参与排名，缺测不记零分，指数不是正确率。</p>
+          <Link to="/leaderboard/rules" className="mt-2.5 inline-flex items-center gap-1 text-ui-caption-lg font-medium text-accent hover:text-accent-ink">
             了解计算方法 →
           </Link>
         </section>
         <section className="card p-5">
-          <h2 className="text-[14px] font-semibold text-ink">关于价格</h2>
-          <p className="mt-2 text-[13px] leading-relaxed text-ink-3">
+          <h2 className="text-ui-body-sm font-semibold text-ink">关于价格</h2>
+          <p className="mt-2 text-ui-label leading-relaxed text-ink-3">
             API 价格来自厂商官网，按每百万 Token 展示。{run.fx ? `美元报价按 ${run.fx.asOf} 汇率折算成人民币。` : ""}缓存价格指命中后的输入价格，缓存写入、存储及订阅费用另计。
           </p>
         </section>

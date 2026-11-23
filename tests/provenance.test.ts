@@ -17,10 +17,10 @@ import { groupArticle } from "@aihot/backend/events/group";
 
 after(async () => { await stopBoss(); await closeDb(); });
 
-async function source(tier: string, config = {}, opts: { kind?: string; mode?: string; enabled?: boolean } = {}) {
+async function source(tier: string, config = {}, opts: { kind?: string; mode?: string; enabled?: boolean; firstParty?: boolean } = {}) {
   const id = `provenance-${tag()}`;
-  await sql`INSERT INTO sources (id, name, kind, tier, config, participation_mode, site_fulltext, next_fetch_at, enabled)
-    VALUES (${id}, ${id}, ${opts.kind ?? 'rss'}, ${tier}, ${sql.json(config)}, ${opts.mode ?? 'editorial'}, true, '2100-01-01', ${opts.enabled ?? true})`;
+  await sql`INSERT INTO sources (id, name, kind, tier, config, participation_mode, site_fulltext, next_fetch_at, enabled, first_party)
+    VALUES (${id}, ${id}, ${opts.kind ?? 'rss'}, ${tier}, ${sql.json(config)}, ${opts.mode ?? 'editorial'}, true, '2100-01-01', ${opts.enabled ?? true}, ${opts.firstParty ?? false})`;
   return id;
 }
 
@@ -156,7 +156,7 @@ test("a later verified publisher repairs source and author, preserving judgement
     VALUES (${articleId}, 1, 'replay', 'pass', '原始发布', '真实摘要', 85, true)`;
   await publishArticle(articleId, { releasedAt: at });
   const [before] = await sql`SELECT * FROM publications WHERE article_id = ${articleId}`;
-  const official = await source("T1", { publisherUrlPrefixes: [scope] });
+  const official = await source("T1", { publisherUrlPrefixes: [scope] }, { firstParty: true });
   const correction = await upsertMaterial({ sourceId: official, url, title: "Publisher listing title", author: "Publisher team", via: "fetch" });
   const [a] = await sql`SELECT * FROM articles WHERE id = ${articleId}`;
   const [p] = await sql`SELECT * FROM publications WHERE article_id = ${articleId}`;

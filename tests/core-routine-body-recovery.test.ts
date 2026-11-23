@@ -1,5 +1,5 @@
 // Routine publisher bodies use ordinary queues, unknown future IDs, and offline responses only.
-import { gate, tag } from './setup.ts';
+import { holdMockRequest, tag } from './setup.ts';
 import assert from 'node:assert/strict';
 import { after, afterEach, before, test } from 'node:test';
 import { MockAgent, getGlobalDispatcher, setGlobalDispatcher } from 'undici';
@@ -116,19 +116,21 @@ for(const change of ['paused','noneditorial'] as const)test(`${change} sources c
   assert.equal(await extractArticleBody(f.id,true),'skipped');assert.equal(apiHits,beforeHits);
   assert.equal((await sql`SELECT revision,body_status FROM articles WHERE id=${f.id}`)[0]!.revision,1);
 });
-for(const change of ['source','config','revision','url','paused','noneditorial'] as const)test(`${change} drift while native HTTP is in flight cannot write a stale routine body`,async()=>{
-  const f=await fixture(),entered=gate(),url=new URL(f.endpoint);
-  mock.get(url.origin).intercept({path:url.pathname+url.search}).reply(()=>{
-    entered.open();return{statusCode:200,data:JSON.stringify(f.response),responseOptions:{headers:{'content-type':'application/json'}}};
-  }).delay(180);
+for(const change of ['source','config','revision','url','paused','noneditorial'] as const)test(`${change} drift while native HTTP is in flight cannot write a stale routine body`,async t=>{
+  const f=await fixture(),url=new URL(f.endpoint);
+  const {entered,release}=holdMockRequest(t,mock,url);
+  mock.get(url.origin).intercept({path:url.pathname+url.search}).reply(200,JSON.stringify(f.response),
+    {headers:{'content-type':'application/json'}});
   const pending=extractArticleBody(f.id,true);
-  await Promise.race([entered.promise,new Promise<never>((_,reject)=>{const t=setTimeout(()=>reject(Error('No local native dispatch')),5000);t.unref();})]);
-  if(change==='source')await sql`UPDATE articles SET source_id=${sourceIds[1]!} WHERE id=${f.id}`;
-  if(change==='config')await sql`UPDATE sources SET config='{"changed":true}' WHERE id=${sourceIds[0]!}`;
-  if(change==='revision')await sql`UPDATE articles SET revision=revision+1 WHERE id=${f.id}`;
-  if(change==='url')await sql`UPDATE articles SET url=${f.url+'?changed=1'} WHERE id=${f.id}`;
-  if(change==='paused')await sql`UPDATE sources SET enabled=false WHERE id=${sourceIds[0]!}`;
-  if(change==='noneditorial')await sql`UPDATE sources SET participation_mode='hot_signal' WHERE id=${sourceIds[0]!}`;
+  try {
+    await Promise.race([entered.promise,pending.then(()=>{throw Error('No local native dispatch');})]);
+    if(change==='source')await sql`UPDATE articles SET source_id=${sourceIds[1]!} WHERE id=${f.id}`;
+    if(change==='config')await sql`UPDATE sources SET config='{"changed":true}' WHERE id=${sourceIds[0]!}`;
+    if(change==='revision')await sql`UPDATE articles SET revision=revision+1 WHERE id=${f.id}`;
+    if(change==='url')await sql`UPDATE articles SET url=${f.url+'?changed=1'} WHERE id=${f.id}`;
+    if(change==='paused')await sql`UPDATE sources SET enabled=false WHERE id=${sourceIds[0]!}`;
+    if(change==='noneditorial')await sql`UPDATE sources SET participation_mode='hot_signal' WHERE id=${sourceIds[0]!}`;
+  } finally {release.open();}
   assert.equal(await pending,'skipped');
   const [saved]=await sql`SELECT body_status,body_text FROM articles WHERE id=${f.id}`;
   assert.equal(saved!.body_status,'pending');assert.notEqual(saved!.body_text,f.body.text);

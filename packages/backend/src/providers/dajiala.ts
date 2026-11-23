@@ -4,7 +4,7 @@
 import { credential } from "../config.ts";
 import { guardedFetch } from "../lib/http-fetch.ts";
 import { assertAccepted, paidRequest, ProviderRejectedError, type CallOutcome } from "./receipts.ts";
-import { normalizeUrl } from "../lib/url.ts";
+import { normalizeUrl, wechatAccountBiz } from "../lib/url.ts";
 
 /** Current post_history accepts ghid or a public article URL, not an inferred biz request field. */
 export type MpAccountSelector = string | { ghid?: string; articleUrl?: string; biz?: string };
@@ -14,15 +14,8 @@ export class MpIdentityError extends ProviderRejectedError {
 }
 
 export function mpBizFromUrl(value: string): string | null {
-  let url: URL;
-  try { url = new URL(value); } catch { throw new Error("dajiala: invalid WeChat article URL"); }
-  if (!/^https?:$/.test(url.protocol) || url.hostname !== "mp.weixin.qq.com" || url.username || url.password || url.port
-    || !/^\/s(?:\/|$)/.test(url.pathname)) throw new Error("dajiala: expected a public WeChat article URL");
-  const biz = url.searchParams.get("__biz");
-  if (!biz) return null; // A short link must be resolved by the body service before its account is known.
-  const numeric = Buffer.from(biz, "base64").toString("ascii");
-  if (!/^\d{8,10}$/.test(numeric) || Buffer.from(numeric).toString("base64") !== biz) throw new Error("dajiala: invalid WeChat biz");
-  return biz;
+  try { return wechatAccountBiz(value); }
+  catch (error) { throw new Error(`dajiala: ${(error as Error).message}`, { cause: error }); }
 }
 
 export function resolveMpAccountSelector(value: MpAccountSelector): { ghid?: string; articleUrl?: string; biz: string | null } {

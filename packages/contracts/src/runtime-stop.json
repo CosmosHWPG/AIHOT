@@ -1,0 +1,6 @@
+{
+  "queueDrainMs": 470000,
+  "childExitMs": 490000,
+  "supervisorExitMs": 500000,
+  "controlWaitMs": 515000
+}

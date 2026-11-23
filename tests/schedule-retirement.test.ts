@@ -1,5 +1,5 @@
-// Retirement failures: old schedules keep producing work, already-unscheduled queues keep old jobs,
-// cleanup removes a live/business queue or its durable run history, or retired failures stay in the
+// Retirement failures: old schedules keep producing work, cleanup removes an execution queue
+// or its durable run history, or retired failures stay in the
 // admin's current schedules. Use pg-boss and PostgreSQL.
 import "./setup.ts";
 import assert from "node:assert/strict";
@@ -12,7 +12,7 @@ import { registerSchedules } from "../apps/worker/src/schedules.ts";
 
 after(async () => { await stopBoss(); await closeDb(); });
 
-test("retired schedules leave the current overview and execution queues while live jobs and history remain", async () => {
+test("retired schedules leave the current overview while retained jobs and history remain", async () => {
   const boss = await getBoss();
   const retired = ["cron.retired.scheduled", "cron.retired.unscheduled", "cron.paused", "cron.renamed.old"];
   for (const name of [...retired, "cron.kept", "cron.renamed.new", "business.kept"]) {
@@ -39,8 +39,8 @@ test("retired schedules leave the current overview and execution queues while li
   const schedules = await boss.getSchedules();
   for (const name of retired) {
     assert.ok(!schedules.some((s) => s.name === name));
-    assert.equal(await boss.getQueue(name), null, `${name} leaves no execution queue`);
-    assert.equal((await sql`SELECT id FROM pgboss.job WHERE name = ${name}`).length, 0);
+    assert.ok(await boss.getQueue(name), `${name} retains its queue evidence`);
+    assert.equal((await sql`SELECT id FROM pgboss.job WHERE name = ${name}`).length, 1);
   }
   for (const name of ["cron.kept", "cron.renamed.new"]) assert.ok(schedules.some((s) => s.name === name));
   for (const name of ["cron.kept", "cron.renamed.new", "business.kept"]) {

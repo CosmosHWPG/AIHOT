@@ -6,10 +6,15 @@ export class UnavailablePageError extends Error {
   constructor(reason: string) { super(`Unavailable page: ${reason}`); }
 }
 
+const pageLabel = (title: string) => collapseWhitespace(title).split(/\s+[|—–-]\s+/)[0]!;
+
+export function hasHttpErrorPageLabel(title: string): boolean {
+  return /^(?:(?:error\s*)?(?:401|403|404|410|429|500|502|503|504)(?:\s*:?\s*(?:page )?(?:not found|forbidden|unauthorized|gone|too many requests|internal server error|bad gateway|service unavailable|gateway time-?out))?|(?:page )?not found|access denied)$/i.test(pageLabel(title));
+}
+
 /** Match page-level error labels and observed interstitial templates, never keywords in prose. */
 export function assertPageContent(title: string, text: string): void {
-  const label = collapseWhitespace(title).split(/\s+[|—–-]\s+/)[0]!;
-  if (/^(?:(?:error\s*)?(?:401|403|404|410|429|500|502|503|504)(?:\s*:?\s*(?:page )?(?:not found|forbidden|unauthorized|gone|too many requests|internal server error|bad gateway|service unavailable|gateway time-?out))?|(?:page )?not found|access denied|just a moment\.{0,3}|attention required!?|security verification)$/i.test(label)) {
+  if (hasHttpErrorPageLabel(title) || /^(?:just a moment\.{0,3}|attention required!?|security verification)$/i.test(pageLabel(title))) {
     throw new UnavailablePageError(title);
   }
   const lead = collapseWhitespace(text);

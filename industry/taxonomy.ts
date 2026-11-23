@@ -9,10 +9,10 @@
  */
 export const CATEGORIES = [
   { key: "ai-models", tagColor: "indigo", label: "模型", section: "模型发布/更新", guide: "新模型、模型版本、权重开放、模型能力与价格变化的发布与评测结果" },
-  { key: "ai-products", tagColor: "turquoise", label: "产品", section: "产品与网络演进", guide: "核心网网元、通信平台与网络能力，以及 AI 产品、工具、API、平台的正式发布和更新；架构落地、部署工程与商用试点的具体能力变化" },
-  { key: "industry", tagColor: "orange", label: "产业", section: "产业与标准进展", guide: "核心网与 AI 的标准发布、工作项目及版本阶段，政策监管、安全通报、市场竞争、公司经营、融资并购、合作与商业基础设施；标准提案与冻结要区分阶段" },
-  { key: "paper", tagColor: "violet", label: "研究", section: "研究与评测", guide: "核心网、6G 与 AI 的研究论文、技术报告、基准、测量方法和数据集；研究结论须保留实验范围" },
-  { key: "tip", tagColor: "green", label: "工程", section: "工程与技术洞察", guide: "核心网或 AI 的架构设计、部署实践、性能与成本优化、协议分析、故障复盘、安全防御、可复用方法和深度技术讲解" },
+  { key: "ai-products", tagColor: "turquoise", label: "产品", section: "产品与网络演进", sectionAliases: ["产品发布/更新"], guide: "核心网网元、通信平台与网络能力，以及 AI 产品、工具、API、平台的正式发布和更新；架构落地、部署工程与商用试点的具体能力变化" },
+  { key: "industry", tagColor: "orange", label: "产业", section: "产业与标准进展", sectionAliases: ["行业动态"], guide: "核心网与 AI 的标准发布、工作项目及版本阶段，政策监管、安全通报、市场竞争、公司经营、融资并购、合作与商业基础设施；标准提案与冻结要区分阶段" },
+  { key: "paper", tagColor: "violet", label: "研究", section: "研究与评测", sectionAliases: ["论文研究"], guide: "核心网、6G 与 AI 的研究论文、技术报告、基准、测量方法和数据集；研究结论须保留实验范围" },
+  { key: "tip", tagColor: "green", label: "工程", section: "工程与技术洞察", sectionAliases: ["技巧与观点"], guide: "核心网或 AI 的架构设计、部署实践、性能与成本优化、协议分析、故障复盘、安全防御、可复用方法和深度技术讲解" },
   { key: "opinion", tagColor: "purple", label: "洞察", section: "工程与技术洞察", guide: "技术与商业判断、标准路线分析、架构取舍、战略规划、竞争格局、深度访谈与趋势讨论" },
 ] as const;
 
@@ -94,16 +94,18 @@ export const TAG_DISPLAY: Readonly<Record<string, string | null>> = {
 export const ENTITIES: Record<string, { name: string; displayTag: string | null; aliases: string[]; orgNames?: string[]; otherNames?: string[] }> = {
   openai: { name: "OpenAI", displayTag: "OpenAI", aliases: ["OpenAI", "ChatGPT", "Sora", "Codex", "GPT"] },
   anthropic: { name: "Anthropic", displayTag: "Anthropic", aliases: ["Anthropic", "Claude"] },
-  google: { name: "Google", displayTag: "Google", aliases: ["Google", "DeepMind", "Gemini", "谷歌"] },
+  google: { name: "Google", displayTag: "Google", aliases: ["Google", "DeepMind", "Gemini", "谷歌"], orgNames: ["Google", "谷歌", "DeepMind"] },
   deepseek: { name: "DeepSeek", displayTag: "DeepSeek", aliases: ["DeepSeek", "深度求索"] },
-  qwen: { name: "千问 Qwen", displayTag: null, aliases: ["Qwen", "通义", "阿里"] },
+  qwen: { name: "千问 Qwen", displayTag: null, aliases: ["Qwen", "通义", "阿里"], orgNames: ["通义千问", "通义实验室", "阿里巴巴", "阿里云", "阿里", "Qwen Team", "Qwen", "Alibaba"], otherNames: ["千问", "千问APP", "Alibaba Cloud"] },
   kimi: { name: "Kimi / 月之暗面", displayTag: null, aliases: ["Kimi", "月之暗面", "Moonshot"] },
   minimax: { name: "MiniMax", displayTag: null, aliases: ["MiniMax", "海螺"] },
   zhipu: { name: "智谱 GLM", displayTag: null, aliases: ["智谱", "GLM", "Z.ai"] },
-  xai: { name: "xAI", displayTag: "xAI", aliases: ["xAI", "Grok"] },
-  meta: { name: "Meta", displayTag: "Meta", aliases: ["Meta", "Llama"] },
+  xai: { name: "xAI", displayTag: "xAI", aliases: ["xAI", "Grok"], orgNames: ["SpaceX Super Intelligence", "SpaceXAI", "SpaceXSI", "xAI"], otherNames: ["Grok Bot"] },
+  meta: { name: "Meta", displayTag: "Meta", aliases: ["Meta", "Llama"], orgNames: ["Meta Superintelligence Labs", "Meta AI", "Meta"], otherNames: ["AI at Meta", "Muse"] },
   microsoft: { name: "Microsoft", displayTag: "Microsoft", aliases: ["Microsoft", "微软", "Copilot"] },
-  nvidia: { name: "NVIDIA", displayTag: null, aliases: ["NVIDIA", "英伟达"] },
+  nvidia: { name: "NVIDIA", displayTag: null, aliases: ["NVIDIA", "英伟达"], orgNames: ["NVIDIA", "英伟达"] },
+  "world-labs": { name: "World Labs", displayTag: null, aliases: ["World Labs"] },
+  amd: { name: "AMD", displayTag: null, aliases: ["AMD", "Advanced Micro Devices"] },
   "hugging-face": { name: "Hugging Face", displayTag: "Hugging Face", aliases: ["Hugging Face"] },
   cursor: { name: "Cursor", displayTag: null, aliases: ["Cursor", "Anysphere"] },
   openrouter: { name: "OpenRouter", displayTag: null, aliases: ["OpenRouter"] },

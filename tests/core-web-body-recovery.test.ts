@@ -47,7 +47,7 @@ async function article(name: string, options: { kind?: string; state?: string; b
   await sql`INSERT INTO articles(id,source_id,identity_key,url,title,body_status,processing_state,published_at,discovered_at,timeline_at,x_post)
     VALUES(${id},${sources[kind]},${id},${options.url ?? 'https://www.example.com/' + id},'Offline web body fixture',
       ${options.body ?? 'unconfirmed'},${options.state ?? 'new'},${options.at === undefined ? new Date(Date.now() - 60 * 60_000) : options.at},
-      now(),now(),${kind === 'x_search' ? sql.json({ provider: 'bird', tweetId: '12345', text: 'offline fixture' }) : null})`;
+      now()-interval '1 second',now()-interval '1 second',${kind === 'x_search' ? sql.json({ provider: 'bird', tweetId: '12345', text: 'offline fixture' }) : null})`;
   return id;
 }
 function plan(name: string, articleIds: string[], kind: RecoveryPlan["kind"] = "web-body-recovery", windowAt?: string) {

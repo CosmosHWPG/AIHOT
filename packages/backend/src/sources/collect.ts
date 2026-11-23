@@ -15,7 +15,7 @@ import { fetchDetail, fetchWebList, isCallToActionTitle, needsTitle, type Detail
 import { unsupportedConfig } from "./config-keys.ts";
 import { admitListing, filterPublicationWindow } from "./filters.ts";
 import { fetchJsonList } from "./json-list.ts";
-import { fetchXSearch, planXShards, readXSearch, shardHandle, shardQuery, SHARDABLE_SQL, tweetToCandidate, accountHandle, initialXWatermark, planXBootstrap, xProvider, type XProvider, type XBacklog } from "./x.ts";
+import { fetchXSearch, planXShards, readXSearch, shardHandle, shardQuery, selfThreadHandle, SHARDABLE_SQL, tweetToCandidate, accountHandle, initialXWatermark, planXBootstrap, xProvider, type XProvider, type XBacklog } from "./x.ts";
 import { xHandle } from "./account.ts";
 import { routeProvider } from "./x-route.ts";
 export { noiseFiltered } from "./filters.ts";
@@ -209,10 +209,14 @@ export async function enrichDetails(candidates: CollectionCandidate[], source: S
   const ordered = [...candidates.slice(start), ...candidates.slice(0, start)];
   for (const c of ordered) {
     const stored = known.get(c.identityKey!);
-    if (stored && stored.source_id !== source.id) continue;
+    const otherSource = stored && stored.source_id !== source.id;
+    if (otherSource && (source.config.detail?.requirePublishedAt !== true || stored.published_at || c.publishedAt)) continue;
     const listingTitle = c.title;
-    if (stored && fromStored(c, stored, source, rules)) continue;
-    const need = rules === null ? null : detailNeed(c, stored, source, listingTitle);
+    if (stored && !otherSource && fromStored(c, stored, source, rules)) continue;
+    // A configured source may establish the date of its own discovery without revising the
+    // original publisher's undated material, or supplying that publisher's title or body.
+    const need = rules === null ? null
+      : otherSource ? { date: true, title: false, summary: false } : detailNeed(c, stored, source, listingTitle);
     if (!need) continue;
     const listed = c.publishedAt?.toISOString() ?? null;
     const seen = opts.datedOut[c.identityKey!];
@@ -406,7 +410,8 @@ export async function collectSource(sourceId: string, opts: { force?: boolean; x
     if (firstImport) candidates = candidates.slice(0, Number(source.config._aihot?.initialBackfillLimit ?? 30));
     const reads = await enrichDetails(candidates, source, known, {
       budget: Number(d?.maxFetches ?? 0), admits,
-      after: source.cursor?.detailRules === rules ? source.cursor?.detailAfter : undefined,
+      after: source.cursor?.detailRules === rules ? source.cursor?.detailAfter
+        : !source.cursor?.detailRules && typeof source.cursor?.detailDateAfterIdentity === "string" ? source.cursor.detailDateAfterIdentity : undefined,
       datedOut: source.cursor?.detailRules === rules ? source.cursor?.detailDatedOut ?? {} : {},
       retries: source.cursor?.detailRules === rules ? source.cursor?.detailRetries ?? {} : {},
     });
@@ -417,6 +422,7 @@ export async function collectSource(sourceId: string, opts: { force?: boolean; x
       // A validator covers the whole listing: accept 304 only after its detail work is complete.
       if (source.kind === "rss" && reads.pending > 0) delete nextCursor.rss;
     } else { delete nextCursor.detailRules; delete nextCursor.detailAfter; }
+    delete nextCursor.detailDateAfterIdentity;
 
     // Detail pages can establish a date the listing did not have, including an old archive date: such an
     // entry is not stored, and the cursor remembers what its page said (enrichDetails).
@@ -554,68 +560,88 @@ export async function collectXShard(key: string, sourceIds: string[]): Promise<{
         stretches.add(`${b.query} ${b.next}`);
       }
     }
-    const query = shardQuery(members.map((m) => accountHandle(m)!));
+    const query = shardQuery(members.map((m) => accountHandle(m)!), members.map(selfThreadHandle).filter((h): h is string => h !== null));
     const read = await readXSearch(bootstrap ? `${query} since_id:${since}` : query,
       { lastId: bootstrap ? null : String(since), backlog, subject: `x-shard:${key}`, provider });
     const detail = { shard: key, provider, bootstrap, accounts: members.length, pages: read.pages, truncated: read.truncated, backlog: read.backlog.length, backlogPages: read.backlogPages, dropped: read.dropped };
-    const counts = new Map<string, { found: number; created: number }>();
+    const matchesAccount = (m: SourceRow, t: { user: { id_str?: string; screen_name: string } }) =>
+      m.config.xUserId && t.user.id_str
+        ? t.user.id_str === String(m.config.xUserId)
+        : t.user.screen_name.toLowerCase() === accountHandle(m)?.toLowerCase();
+    // An unread stretch may name an account that has since moved to a different shard.
+    const strays = read.tweets.filter(t => !members.some(m => matchesAccount(m, t)));
+    const otherAccounts = strays.length ? (await sql<SourceRow[]>`
+      SELECT id, name, kind, config, tier, participation_mode, first_party, uses, interval_minutes, enabled, cursor, fail_count
+      FROM sources WHERE enabled AND ${sharded()} AND id NOT IN ${sql(members.map(m => m.id))}`)
+      .filter(m => xProvider(m) === provider && strays.some(t => matchesAccount(m, t))) : [];
     const accounts = await sql.begin(async tx => {
+      const targets = [...members, ...otherAccounts];
       const current = await tx<Pick<SourceRow, "id" | "kind" | "config" | "cursor" | "enabled">[]>`
-        SELECT id,kind,config,cursor,enabled FROM sources WHERE id IN ${tx(members.map(m => m.id))} ORDER BY id FOR UPDATE`;
+        SELECT id,kind,config,cursor,enabled FROM sources WHERE id IN ${tx(targets.map(m => m.id))} ORDER BY id FOR UPDATE`;
       const snapshots = new Map(current.map(m => [m.id, m]));
       const unchanged = members.filter(m => {
         const row = snapshots.get(m.id);
         return row?.enabled && row.kind === m.kind && stableJson(row.config) === stableJson(m.config) && stableJson(row.cursor) === stableJson(m.cursor);
       });
       const kept = new Set(unchanged.map(m => m.id));
+      const keeper = unchanged[0]?.id;
       for (const m of members) {
         if (!kept.has(m.id)) {
           await tx`UPDATE fetch_runs SET status='skipped',finished_at=now(),error='source changed during X shard fetch' WHERE id=${runs.get(m.id)!}`;
           continue;
         }
-        const handle = accountHandle(m)!.toLowerCase();
-        const mine = read.tweets.filter(t => t.user.screen_name.toLowerCase() === handle);
+        const mine = read.tweets.filter(t => matchesAccount(m, t));
         const stored = await store(m.id, m.kind, admitListing(mine.map(t => tweetToCandidate(t, provider)), m),
           provider === "xquik" && !m.cursor?.initializedAt ? "first-import" : null, tx);
         found += mine.length; created += stored.created;
-        counts.set(m.id, { found: mine.length, created: stored.created });
         const own = m.cursor?.lastTweetId ? String(m.cursor.lastTweetId) : null;
-        const ownPosts = read.tweets.filter(t => t.user.screen_name.toLowerCase() === accountHandle(m)!.toLowerCase());
-        const newest = provider === "xquik" ? ownPosts.reduce<string | null>((latest, t) => latest === null || BigInt(t.id_str) > BigInt(latest) ? t.id_str : latest, own) : read.lastId;
+        const newest = mine.reduce<string | null>((latest, t) => latest === null || BigInt(t.id_str) > BigInt(latest) ? t.id_str : latest, own);
         const cursor: Record<string, unknown> = { ...(m.cursor ?? {}), lastOkAt: new Date().toISOString() };
         if (newest) cursor.lastTweetId = newest;
-        if (provider !== "xquik" && own && (!newest || BigInt(own) > BigInt(newest))) cursor.lastTweetId = own;
-        if (provider === "xquik" && ownPosts.length && !cursor.initializedAt) cursor.initializedAt = new Date().toISOString();
-        if (read.backlog.length) cursor.xBacklog = read.backlog;
+        if (provider === "xquik" && mine.length && !cursor.initializedAt) cursor.initializedAt = new Date().toISOString();
+        if (read.backlog.length && m.id === keeper) cursor.xBacklog = read.backlog;
         else delete cursor.xBacklog;
         await tx`
           UPDATE sources SET last_fetch_at = now(), last_ok_at = now(), fail_count = 0, last_error = NULL,
             health = 'ok', cursor = ${tx.json(cursor as never)}, interval_minutes = ${minutes}, updated_at = now(),
             next_fetch_at = now() + make_interval(mins => ${minutes})
           WHERE id = ${m.id}`;
-        const count = counts.get(m.id)!;
-        await tx`UPDATE fetch_runs SET status = 'ok', finished_at = now(), found_count = ${count.found}, new_count = ${count.created},
+        await tx`UPDATE fetch_runs SET status = 'ok', finished_at = now(), found_count = ${mine.length}, new_count = ${stored.created},
                     detail = ${tx.json(detail as never)} WHERE id = ${runs.get(m.id)!}`;
+        const userId = !m.config.xUserId ? mine.find(t => t.user.id_str)?.user.id_str : null;
+        if (userId) await tx`UPDATE sources SET config=jsonb_set(config,'{xUserId}',to_jsonb(${userId}::text))
+          WHERE id=${m.id} AND config->>'xUserId' IS NULL`;
+      }
+      for (const account of otherAccounts) {
+        const row = snapshots.get(account.id);
+        if (!row?.enabled || row.kind !== account.kind || stableJson(row.config) !== stableJson(account.config)) continue;
+        const mine = strays.filter(t => matchesAccount(account, t));
+        created += (await store(account.id, account.kind, admitListing(mine.map(t => tweetToCandidate(t, provider)), account), null, tx)).created;
       }
       if (unchanged.length) for (const receiptId of read.receiptIds) await completeReceipt(tx, receiptId);
       return unchanged.length;
     });
     return { key, status: accounts ? "ok" : "skipped", accounts, found, created };
   } catch (error) {
-    if (shutdownSignal.signal.aborted) throw error;
+    if (shutdownSignal.signal.aborted) {
+      await sql`UPDATE fetch_runs SET status='skipped', finished_at=now(), error='worker stopped before collection completed'
+        WHERE id IN ${sql([...runs.values()])} AND status='running'`;
+      throw error;
+    }
     const message = String(error instanceof Error ? error.message : error).slice(0, 1000);
     const budget = error instanceof BudgetExceededError;
-    for (const m of members) {
-      await sql`
-        UPDATE sources SET last_fetch_at = now(),
-          fail_count = CASE WHEN ${budget} THEN fail_count ELSE fail_count + 1 END,
-          last_error = ${message},
-          health = CASE WHEN ${budget} THEN health WHEN fail_count + 1 >= 5 THEN 'failing' ELSE 'degraded' END,
-          next_fetch_at = now() + make_interval(mins => CASE WHEN ${budget} THEN 15 ELSE LEAST(${minutes} * (fail_count + 2), 360) END),
-          updated_at = now()
-        WHERE id = ${m.id} AND config=${sql.json(m.config)}`;
-      await sql`UPDATE fetch_runs SET status = 'failed', finished_at = now(), error = ${message}, detail = ${sql.json({ shard: key, accounts: members.length })} WHERE id = ${runs.get(m.id)!}`;
-    }
+    await sql.begin(async tx => {
+      for (const m of members) {
+        const [current] = await tx`SELECT kind,config FROM sources WHERE id=${m.id} FOR UPDATE`;
+        const detail = { shard: key, accounts: members.length };
+        if (!current || current.kind !== m.kind || stableJson(current.config) !== stableJson(m.config)) {
+          await tx`UPDATE fetch_runs SET status='failed',finished_at=now(),error=${message},detail=${tx.json(detail)}
+            WHERE id=${runs.get(m.id)!} AND status='running'`;
+          continue;
+        }
+        await recordFetch(tx, m.id, runs.get(m.id)!, { found: 0, created: 0, detail, error: message, budget });
+      }
+    });
     return { key, status: "failed", accounts: members.length, found, created: 0, error: message };
   }
 }

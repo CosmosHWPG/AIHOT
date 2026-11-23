@@ -9,6 +9,7 @@ import { overrideFields } from "@aihot/backend/admin/content";
 import { upsertMaterial } from "@aihot/backend/content/materials";
 import { publishArticle } from "@aihot/backend/publication/publish";
 import { dailyMetrics } from "@aihot/backend/reports/compose";
+import { sectionOf } from "@aihot/backend/reports/edition";
 import type { EditionEntry } from "@aihot/backend/reports/edition";
 import { QUEUES, getBoss, stopBoss } from "@aihot/backend/jobs/queue";
 
@@ -62,12 +63,12 @@ test("category corrections revise every standard report atomically without selec
     const c = saved!.content;
     assert.equal(c.leadItemId, articleId);
     if (r.kind === "daily") {
-      assert.deepEqual(c.sections, [{ key: "ai-products", label: "产品发布/更新", items: [entry] }]);
+      assert.deepEqual(c.sections, [{ key: "ai-products", label: sectionOf("ai-products"), items: [entry] }]);
       assert.equal(c.metrics.modelsReleased, 0);
       assert.deepEqual(c.highlights, [articleId]);
       assert.equal(c.lead.title, "冻结头条");
     } else {
-      assert.deepEqual(c.themes, [{ key: "ai-products", heading: "产品发布/更新", summary: null, storyRefs: [entry] }]);
+      assert.deepEqual(c.themes, [{ key: "ai-products", heading: sectionOf("ai-products"), summary: null, storyRefs: [entry] }]);
       assert.deepEqual(c.storyOrder, [articleId]);
       assert.equal(c.overview, "保留总述");
     }
@@ -80,7 +81,7 @@ test("category corrections revise every standard report atomically without selec
   assert.equal(restored!.content.metrics.modelsReleased, 1);
 });
 
-test("a correction keeps the introduction of the section it moves into", async () => {
+test("a correction moves into the historical section and keeps its introduction", async () => {
   const sourceId = `category-intro-${tag()}`;
   await sql`INSERT INTO sources (id,name,kind,tier,participation_mode) VALUES (${sourceId},'Category intro fixture','rss','T2','editorial')`;
   const { articleId } = await upsertMaterial({ sourceId, url: `https://example.com/${sourceId}`, title: "推理工具更新", bodyText: "正文", bodyStatus: "ok", via: "fetch", publishedAt: new Date(Date.now() - 60_000) });
@@ -100,4 +101,6 @@ test("a correction keeps the introduction of the section it moves into", async (
   const intros = Object.fromEntries((saved!.content.themes as Array<{ heading: string; summary: string | null }>).map(g => [g.heading, g.summary]));
   // The section it left may name it, so its introduction goes; the target's names only what is still there.
   assert.deepEqual(intros, { "模型发布/更新": null, "产品发布/更新": "本周产品导读" });
+  assert.deepEqual(saved!.content.themes.find((group: { key?: string }) => group.key === "ai-products")?.storyRefs,
+    [...themes[1]!.storyRefs, moved]);
 });

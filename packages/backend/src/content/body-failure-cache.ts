@@ -2,6 +2,7 @@
 import { sql, type Db } from "../db.ts";
 import { audit } from "../audit.ts";
 import { sha256 } from "../lib/ids.ts";
+import { hasHttpErrorPageLabel } from "../lib/page-content.ts";
 import { collapseWhitespace, stripTags } from "../lib/text.ts";
 import { parseJinaText } from "../providers/jina.ts";
 import { ReceiptBusyError, ReceiptUnknownError } from "../providers/receipts.ts";
@@ -32,7 +33,9 @@ export function classifyJinaBodyFailure(raw: string,url: string): { reason: Excl
   const bodyHash = sha256(text);
   const metadataEnd = /\r?\nMarkdown Content:\r?\n/.exec(raw)?.index;
   const metadata = metadataEnd === undefined ? '' : raw.slice(0,metadataEnd);
-  if (/^Warning:\s*Target URL returned error\s+([45]\d{2})\b/im.test(metadata)) return { reason: 'target_http_error',bodyHash };
+  if (/^Warning:\s*Target URL returned error\s+([45]\d{2})\b/im.test(metadata) || (metadata && hasHttpErrorPageLabel(page.title ?? ""))) {
+    return { reason: 'target_http_error',bodyHash };
+  }
   const beginning = collapseWhitespace(text).slice(0,1500);
   const verificationTitle = /^Just a moment(?:\.{3}|…)$/i.test(page.title?.trim() ?? '');
   const verificationBody = /enable javascript and cookies to continue|performing security verification|verify (?:that )?you are human|verifying you are human|needs to review the security of your connection before proceeding/i.test(beginning);

@@ -2,7 +2,7 @@
 import { stub, tag } from "./setup.ts";
 import assert from "node:assert/strict";
 import http from "node:http";
-import { setTimeout as delay } from "node:timers/promises";
+import { pollFor } from "./poll.ts";
 import { after, before, test } from "node:test";
 import { config } from "@aihot/backend/config";
 import { closeDb, sql } from "@aihot/backend/db";
@@ -79,7 +79,7 @@ async function source(suffix: string, mode = "isolated") {
 async function material(sourceId: string, suffix: string, extra: Record<string, unknown> = {}) {
   return (await upsertMaterial({
     sourceId, url: `${pageUrl}/${T}-${suffix}`, title: `Model release ${T} ${suffix}`, bodyText: BODY, bodyStatus: "ok",
-    via: "fetch", publishedAt: new Date(), ...extra,
+    via: "fetch", publishedAt: new Date(Date.now() - 1_000), ...extra,
   } as Parameters<typeof upsertMaterial>[0])).articleId;
 }
 
@@ -94,7 +94,7 @@ test("source details preserve the configured first-party identity at every tier"
 
 test("promoting a settled auto-created source resumes normal editorial extraction", async () => {
   const sourceId = `test-promote-${T}-ingest`;
-  assert.deepEqual(await ingestItems({ sourceId, items: [{ title: `Model release ${T}`, url: `${pageUrl}/${T}-ingest`, publishedAt: new Date().toISOString() }] }), { ok: true, created: 1 });
+  assert.deepEqual(await ingestItems({ sourceId, items: [{ title: `Model release ${T}`, url: `${pageUrl}/${T}-ingest`, publishedAt: new Date(Date.now() - 1_000).toISOString() }] }), { ok: true, created: 1 });
   const [article] = await sql<{ id: string }[]>`SELECT id FROM articles WHERE source_id = ${sourceId}`;
   const id = article!.id;
   await settleNonEditorial(id);
@@ -347,15 +347,10 @@ test("overlapping promotion and old settlement leave the unscheduled tail recove
   let settlement: ReturnType<typeof settleNonEditorial> | undefined;
   let triggerCreated = false;
   async function waitForBlocked(blocker: number) {
-    const deadline = Date.now() + 15_000;
-    while (Date.now() < deadline) {
-      // The holder can observe both other transactions even with a three-connection app pool.
-      const [waiting] = await hold<{ pid: number }[]>`
-        SELECT pid FROM pg_stat_activity WHERE ${blocker} = ANY(pg_blocking_pids(pid))`;
-      if (waiting) return waiting.pid;
-      await delay(10);
-    }
-    throw new Error(`No transaction blocked by backend ${blocker}`);
+    // The holder can observe both other transactions even with a three-connection app pool.
+    return pollFor(async () => (await hold<{ pid: number }[]>`
+      SELECT pid FROM pg_stat_activity WHERE ${blocker} = ANY(pg_blocking_pids(pid))`)[0]?.pid,
+    `transaction blocked by backend ${blocker}`, 15_000);
   }
   try {
     await hold`SELECT pg_advisory_lock(${lockKey})`;

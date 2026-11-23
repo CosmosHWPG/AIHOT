@@ -60,7 +60,7 @@ async function route(articleId: string, db: Db): Promise<Route | null> {
     && page?.protocol === "https:" && page.hostname === "mp.weixin.qq.com";
   const needsPage = (whole && (pageFetchable(row.url, row.kind) || wxCacheBody) && (wantsBody || row.bare))
     || !!routineBodyRoute(row.url) && !signal;
-  const needsXArticle = row.kind === "x_search" && (!signal || (row.participation_mode === "hot_signal" && !historical));
+  const needsXArticle = row.kind === "x_search" && (whole || (row.participation_mode === "hot_signal" && !historical));
   return { step: pending && (needsPage || needsXArticle) ? "extract" : "analyze", signal, historical };
 }
 

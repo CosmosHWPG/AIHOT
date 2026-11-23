@@ -38,10 +38,10 @@ process.env.DEEPSEEK_BASE_URL = `${provider.url}/v1`;
 process.env.DEEPSEEK_API_KEY = "test-key";
 after(async () => { await provider.close(); await stopBoss(); await closeDb(); });
 
-async function source(suffix: string, tier: string, owner: string | null = null, role: string | null = null) {
+async function source(suffix: string, tier: string, owner: string | null = null, role: string | null = null, firstParty = false) {
   const id = `${key}-${suffix}`;
-  await sql`INSERT INTO sources (id,name,kind,tier,participation_mode,owner_entity_id,config,next_fetch_at)
-    VALUES (${id},${suffix},'rss',${tier},'editorial',${owner},${sql.json(role ? { publisherRole: role } : {})},'2100-01-01')`;
+  await sql`INSERT INTO sources (id,name,kind,tier,participation_mode,owner_entity_id,config,next_fetch_at,first_party)
+    VALUES (${id},${suffix},'rss',${tier},'editorial',${owner},${sql.json(role ? { publisherRole: role } : {})},'2100-01-01',${firstParty})`;
   return id;
 }
 async function story(title = "OpenAI 发布 Dots") {
@@ -93,7 +93,7 @@ test("source tier and event ownership are separate; mentions of an entity do not
 test("mentions cannot choose a timeline origin, anchor, representative, or a latest-progress link", async () => {
   const organization = await source("organization", "T1_5", "openai", "organization");
   const media = await source("media", "T2");
-  const t1 = await source("t1", "T1");
+  const t1 = await source("t1", "T1", null, null, true);
   const g = await story();
   const official = await report(organization, g, { title: "Dots 正式发布", hours: 3, score: 65 });
   const latest = await report(media, g, { title: "Dots 后续更新", hours: 2, score: 90 });
@@ -114,7 +114,7 @@ test("mentions cannot choose a timeline origin, anchor, representative, or a lat
   assert.equal(detail.firstReportAt, at(4).toISOString());
   assert.deepEqual(detail.latestReport, { id: latest });
   assert.equal(detail.latest, "Dots 后续更新");
-  assert.equal(detail.officialReports.length, 1, "only tier T1 has the first-party label");
+  assert.equal(detail.officialReports.length, 1, "only a source explicitly marked first-party has the label");
   assert.equal(detail.developments[0]!.representative.source.firstParty, false);
   const edition = await candidates(at(100), now);
   assert.equal(edition.find((c) => c.factId === g.factPublicId)?.itemId, official, "report editions use the same authority within their own time window");
@@ -126,7 +126,7 @@ test("mentions cannot choose a timeline origin, anchor, representative, or a lat
   assert.equal(after.latest, "Dots 正式发布");
   assert.equal((await v1Story(g.storyId))!.story.latest, after.latest);
   const firstParty = await loadTimeline({ ...q, channel: "firstParty" });
-  assert.ok(!firstParty.cards.some(c => c.item.id === official), "a stale true projection flag cannot put T1_5 into first-party channel");
+  assert.ok(!firstParty.cards.some(c => c.item.id === official), "a stale true projection flag cannot put an unmarked source into the first-party channel");
 });
 
 // The detail's group badge and its expanded report list must count the same evidence, even while

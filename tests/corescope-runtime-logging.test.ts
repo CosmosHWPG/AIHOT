@@ -8,6 +8,7 @@ import { promisify } from "node:util";
 
 const run = promisify(execFile);
 const runtimeSource = path.resolve(import.meta.dirname, "../scripts/corescope-runtime.ps1");
+const stopTiming = "packages/contracts/src/runtime-stop.json";
 const fakePassword = "runtime-test-only-password";
 const fakeKey = "runtime-test-only-provider-key";
 
@@ -16,15 +17,17 @@ async function sandbox() {
   await mkdir(path.join(root, "scripts"));
   await mkdir(path.join(root, ".data", "logs"), { recursive: true });
   await mkdir(path.join(root, ".data", "runtime"));
+  await mkdir(path.join(root, path.dirname(stopTiming)), { recursive: true });
+  await copyFile(path.resolve(import.meta.dirname, "..", stopTiming), path.join(root, stopTiming));
   await copyFile(runtimeSource, path.join(root, "scripts", "corescope-runtime.ps1"));
   await copyFile(path.resolve(import.meta.dirname, "../Start-CoreScope.cmd"), path.join(root, "Start-CoreScope.cmd"));
   return {
     root,
     async close() {
-      for (const relative of [".env", "probe.ps1", "Start-CoreScope.cmd", "scripts/fail.mjs", "scripts/corescope-runtime.ps1", ".data/logs/startup.log", ".data/logs/startup.error.log"]) {
+      for (const relative of [".env", "probe.ps1", stopTiming, "Start-CoreScope.cmd", "scripts/fail.mjs", "scripts/corescope-runtime.ps1", ".data/logs/startup.log", ".data/logs/startup.error.log"]) {
         await unlink(path.join(root, relative)).catch(() => {});
       }
-      for (const relative of [".data/logs", ".data/runtime", ".data", "scripts", "."]) {
+      for (const relative of [".data/logs", ".data/runtime", ".data", "scripts", "packages/contracts/src", "packages/contracts", "packages", "."]) {
         await rmdir(path.join(root, relative));
       }
     },
@@ -155,6 +158,54 @@ Write-Host 'caller environment restored after success and failure'
     const logs = await readFile(path.join(instance.root, ".data", "logs", "startup.log"), "utf8");
     assert.ok(!(result.stdout + result.stderr + logs).includes(fakeKey));
   } finally {
+    await instance.close();
+  }
+});
+
+test("CoreScope prefers its portable Node and runs npm and its subprocesses with that same runtime", { skip: process.platform !== "win32" }, async () => {
+  const instance = await sandbox();
+  const portable = ".data/runtime/node";
+  const cli = `${portable}/node_modules/npm/bin/npm-cli.js`;
+  const exe = path.join(instance.root, portable, "node.exe");
+  const invocations = ".data/runtime/npm-fixture.jsonl";
+  try {
+    await mkdir(path.dirname(path.join(instance.root, cli)), { recursive: true });
+    await mkdir(path.join(instance.root, "node_modules"));
+    await copyFile(process.execPath, exe);
+    await writeFile(path.join(instance.root, "package-lock.json"), '{"lockfileVersion":3}');
+    await writeFile(path.join(instance.root, cli), `
+const { execFileSync } = require('node:child_process');
+const child = execFileSync('node', ['-p', 'process.execPath'], { encoding: 'utf8' }).trim();
+require('node:fs').appendFileSync(${JSON.stringify(invocations)}, JSON.stringify({ args: process.argv.slice(2), node: process.execPath, child }) + '\\n');
+`);
+    await writeFile(path.join(instance.root, "probe.ps1"), `$ErrorActionPreference='Stop'
+$ProjectRoot=$PSScriptRoot
+$RuntimeDir=Join-Path $ProjectRoot '.data\\runtime'
+$tokens=$null;$parseErrors=$null
+$ast=[System.Management.Automation.Language.Parser]::ParseFile((Join-Path $ProjectRoot 'scripts\\corescope-runtime.ps1'),[ref]$tokens,[ref]$parseErrors)
+$names=@('Resolve-CoreScopeNode','Invoke-CoreScopeNpm','Get-CoreScopeFileSha256','Sync-CoreScopeDependencies')
+. ([ScriptBlock]::Create(($ast.EndBlock.Statements | Where-Object { $_ -is [Management.Automation.Language.FunctionDefinitionAst] -and $_.Name -in $names } | ForEach-Object { $_.Extent.Text }) -join "\x60n"))
+function Write-Stage { }
+$Node=Resolve-CoreScopeNode ''
+$script:NodeVersion=(& $Node --version).TrimStart('v')
+$original=$env:Path
+if (-not (Sync-CoreScopeDependencies)) { throw 'Expected first locked install' }
+if (Sync-CoreScopeDependencies) { throw 'Repeated startup installed the same dependencies again' }
+Set-Content -LiteralPath (Join-Path $ProjectRoot 'package-lock.json') -Value '{"lockfileVersion":3,"name":"updated-fixture"}'
+if (-not (Sync-CoreScopeDependencies)) { throw 'Changed lockfile did not prompt install' }
+Invoke-CoreScopeNpm @('run','build','-w','@aihot/web')
+if ($env:Path -cne $original) { throw 'CoreScope changed the caller PATH' }
+`);
+    await run("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", path.join(instance.root, "probe.ps1")], { cwd: instance.root, windowsHide: true, timeout: 20_000 });
+    const rows = (await readFile(path.join(instance.root, invocations), "utf8")).trim().split(/\r?\n/).map(line => JSON.parse(line));
+    assert.deepEqual(rows.map(row => row.args), [["ci"], ["ci"], ["run", "build", "-w", "@aihot/web"]]);
+    for (const row of rows) {
+      assert.equal(row.node.toLowerCase(), exe.toLowerCase());
+      assert.equal(row.child.toLowerCase(), exe.toLowerCase());
+    }
+  } finally {
+    for (const relative of [cli, `${portable}/node.exe`, invocations, ".data/runtime/npm-dependencies.json", "package-lock.json"]) await unlink(path.join(instance.root, relative)).catch(() => {});
+    for (const relative of [`${portable}/node_modules/npm/bin`, `${portable}/node_modules/npm`, `${portable}/node_modules`, portable, "node_modules"]) await rmdir(path.join(instance.root, relative)).catch(error => { if (error.code !== "ENOENT") throw error; });
     await instance.close();
   }
 });

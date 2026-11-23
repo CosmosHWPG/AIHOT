@@ -39,7 +39,7 @@ test("a daily with nothing judged in its window is refused, not published as a q
 });
 
 test("a weekly that froze no summaries shows the articles' public summaries", async () => {
-  await sql`INSERT INTO sources (id, name, kind, tier, participation_mode, next_fetch_at) VALUES (${SOURCE}, 'Reports', 'rss', 'T1', 'editorial', '2100-01-01')`;
+  await sql`INSERT INTO sources (id, name, kind, tier, participation_mode, next_fetch_at, first_party) VALUES (${SOURCE}, 'Reports', 'rss', 'T1', 'editorial', '2100-01-01', true)`;
   // Found, published and released a minute ago: a rolling window that ends at the reader's clock holds it.
   const minuteAgo = new Date(Date.now() - 60_000);
   const { articleId } = await upsertMaterial({ sourceId: SOURCE, url: `https://example.com/${T}`, title: `R ${T}`, bodyText: "b", bodyHtml: "<p>b</p>", bodyStatus: "ok", via: "fetch", publishedAt: minuteAgo, discoveredAt: minuteAgo });
@@ -53,7 +53,7 @@ test("a weekly that froze no summaries shows the articles' public summaries", as
   assert.equal(report?.sections[0]?.items[0]?.summary, `公开摘要-${T}`);
   assert.equal(report?.sections[0]?.items[0]?.sourceName, "Reports");
   assert.equal(report?.sections[0]?.items[0]?.firstParty, true, "a frozen citation cannot override verified current provenance");
-  await sql`UPDATE sources SET tier = 'T1_5' WHERE id = ${SOURCE}`;
+  await sql`UPDATE sources SET first_party = false WHERE id = ${SOURCE}`;
   await publishArticle(articleId);
   assert.equal((await loadReport("weekly", WEEK))?.sections[0]?.items[0]?.firstParty, false);
 });

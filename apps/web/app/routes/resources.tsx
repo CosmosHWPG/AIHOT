@@ -25,17 +25,17 @@ export default function ResourcesPage() {
   return <div className="pb-10">
     <PhoneBar back={{ to: "/more", label: "我的" }} title="研究与开发资源" />
     <header className="pb-5 pt-5 lg:pt-1">
-      <h1 data-page-title="" className="text-[24px] font-semibold text-ink">研究与开发资源</h1>
-      <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-ink-3">模型、软件包、开源项目、播客与研究目录单独浏览。各资源按注明的范围单独采集与保存，可通过原始入口查看对应内容。</p>
+      <h1 data-page-title="" className="text-ui-heading-lg font-semibold text-ink">研究与开发资源</h1>
+      <p className="mt-2 max-w-2xl text-ui-label leading-relaxed text-ink-3">模型、软件包、开源项目、播客与研究目录单独浏览。各资源按注明的范围单独采集与保存，可通过原始入口查看对应内容。</p>
     </header>
     <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {resources.map((resource) => <li key={resource.id} className="card flex flex-col p-5">
-        <div className="flex items-start justify-between gap-3"><h2 className="text-[15px] font-bold text-ink">{resource.name}</h2><span className="whitespace-nowrap rounded bg-bg-sunk px-2 py-1 text-[10px] text-ink-3">{LABELS[resource.status]}</span></div>
-        <p className="mt-2 text-[11px] text-accent">{resource.category}</p>
-        <p className="mt-2 flex-1 text-[12.5px] leading-[1.7] text-ink-3">{resource.description}</p>
-        {resource.url && <a href={resource.url} target="_blank" rel="noopener noreferrer" className="mt-4 text-[12px] font-medium text-accent hover:underline">打开原始链接 →</a>}
+        <div className="flex items-start justify-between gap-3"><h2 className="text-ui-body font-bold text-ink">{resource.name}</h2><span className="whitespace-nowrap rounded-mark bg-bg-sunk px-2 py-1 text-ui-micro-7 text-ink-3">{LABELS[resource.status]}</span></div>
+        <p className="mt-2 text-ui-caption-sm text-accent">{resource.category}</p>
+        <p className="mt-2 flex-1 text-ui-caption-lg leading-[1.7] text-ink-3">{resource.description}</p>
+        {resource.url && <a href={resource.url} target="_blank" rel="noopener noreferrer" className="mt-4 text-ui-caption font-medium text-accent hover:underline">打开原始链接 →</a>}
       </li>)}
     </ul>
-    {!resources.length && <p className="text-[13px] text-ink-3">资源目录尚未配置。</p>}
+    {!resources.length && <p className="text-ui-label text-ink-3">资源目录尚未配置。</p>}
   </div>;
 }

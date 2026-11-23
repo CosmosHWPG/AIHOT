@@ -1,16 +1,17 @@
 import assert from "node:assert/strict";
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { once } from "node:events";
 import { mkdtemp, readFile, readdir, rmdir, unlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { pollFor } from "./poll.ts";
 
 const projectRoot = path.resolve(import.meta.dirname, "..");
 const runtimeScript = path.join(projectRoot, "scripts", "corescope-runtime.ps1");
 const fixtureScript = path.join(projectRoot, "scripts", "test-fixtures", "corescope-recovery-probe.ps1");
 const powershell = path.join(process.env.SystemRoot ?? "C:\\Windows", "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
-const pause = (milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 
 function cleanEnvironment(): NodeJS.ProcessEnv {
   const allowed = new Set(["systemroot", "windir", "systemdrive", "comspec", "path", "temp", "tmp", "userprofile", "username", "userdomain", "localappdata", "appdata", "homedrive", "homepath"]);
@@ -32,7 +33,7 @@ tick();setInterval(tick,75);
 `);
   return {
     directory, nonce, entry, heartbeat, stop,
-    async run(action: "Probe" | "Intent" | "IntentUpdate" | "IntentGate" | "OfflineStop" | "RecoveryPermit" | "PermitResume" | "PermitExpired" | "PermitNewIntent" | "Repair" | "Adopt" | "Task", fakePid?: number) {
+    async run(action: "Probe" | "Intent" | "IntentUpdate" | "IntentGate" | "OfflineStop" | "RecoveryPermit" | "PermitResume" | "PermitExpired" | "PermitNewIntent" | "Repair" | "Adopt" | "Task" | "TaskRepin", fakePid?: number) {
       const args = ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", fixtureScript,
         "-Action", action, "-RuntimeScript", runtimeScript, "-FixtureRoot", directory, "-NodeExecutable", process.execPath, "-Nonce", nonce];
       if (fakePid !== undefined) args.push("-FakePid", String(fakePid));
@@ -47,7 +48,7 @@ tick();setInterval(tick,75);
     async close(child?: ChildProcess) {
       await writeFile(stop, "self exit the owned fake heartbeat");
       if (child && child.exitCode === null && child.signalCode === null) {
-        await Promise.race([new Promise<void>((resolve) => child.once("exit", () => resolve())), pause(5_000)]);
+        await once(child, "exit", { signal: AbortSignal.timeout(5_000) }).catch((error: Error) => { if (error.name !== "AbortError") throw error; });
         if (child.exitCode === null && child.signalCode === null) { child.kill(); await new Promise<void>((resolve) => child.once("exit", () => resolve())); }
       }
       // Never recurse into a checkout; this directory was just created by mkdtemp.
@@ -65,11 +66,10 @@ test("native owned-process monitoring survives WMI failure and keeps unknown dis
     cwd: sandbox.directory, env: cleanEnvironment(), windowsHide: true, stdio: "ignore",
   });
   try {
-    const deadline = Date.now() + 10_000;
-    let ready: { pid: number; nonce: string; ticks: number } | undefined;
-    while (!ready && Date.now() < deadline) {
-      try { ready = JSON.parse(await readFile(sandbox.heartbeat, "utf8")); } catch { await pause(50); }
-    }
+    const ready = await pollFor(async () => {
+      try { return JSON.parse(await readFile(sandbox.heartbeat, "utf8")) as { pid: number; nonce: string }; }
+      catch { return undefined; }
+    }, "the isolated heartbeat", 10_000);
     assert.equal(ready?.pid, child.pid);
     assert.equal(ready?.nonce, sandbox.nonce);
     const result = await sandbox.run("Probe", child.pid);
@@ -127,6 +127,21 @@ test("the scheduler upgrades only the exact owned legacy task to bounded restart
     assert.equal(result.changedActionRejected, true);
     assert.equal(result.changedActionPreserved, true, "a mismatched task definition must never be overwritten");
     assert.equal(result.taskDeleted, true);
+  } finally { await sandbox.close(); }
+});
+
+test("the scheduler changes an owned Node path only after both modes stop and the ports are free", {
+  skip: process.platform !== "win32", timeout: 30_000,
+}, async () => {
+  const sandbox = await fixture();
+  try {
+    const result = await sandbox.run("TaskRepin");
+    assert.equal(result.runningIntentRejected, true);
+    assert.equal(result.busyPortRejected, true);
+    assert.equal(result.unchanged, true, "a failed rebind keeps the previous registration");
+    assert.equal(result.repinned, true, "the new executable is pinned without starting the fixture task");
+    assert.equal(result.tamperedRejected, true);
+    assert.equal(result.tamperedUnchanged, true);
   } finally { await sandbox.close(); }
 });
 

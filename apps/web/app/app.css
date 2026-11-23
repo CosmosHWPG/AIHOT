@@ -69,6 +69,8 @@
   --text-ui-display-5: 44px;
   --text-ui-display-6: 46px;
   --text-ui-display-7: 48px;
+  --text-ui-display-7-plus: 52px;
+  --text-ui-display-8-sm: 55px;
   --text-ui-display-8: 56px;
   --text-ui-display-9: 64px;
   --text-ui-title-fluid: clamp(var(--text-ui-heading-lg), 2.6vw, var(--text-ui-title-6));

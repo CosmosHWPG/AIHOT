@@ -7,17 +7,12 @@ import path from "node:path";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { childShutdownController } from "../scripts/corescope-runtime-child.ts";
+import shutdownTiming from "../packages/contracts/src/runtime-stop.json" with { type: "json" };
+import { pollFor } from "./poll.ts";
 
 const scripts = path.resolve(import.meta.dirname, "../scripts");
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 async function eventually<T>(read: () => Promise<T | undefined>, timeout = 10_000): Promise<T> {
-  const deadline = Date.now() + timeout;
-  do {
-    const value = await read();
-    if (value !== undefined) return value;
-    await sleep(25);
-  } while (Date.now() < deadline);
-  throw new Error("Isolated runtime fixture did not settle in time");
+  return pollFor(read, "the isolated runtime fixture", timeout);
 }
 async function json<T>(file: string): Promise<T | undefined> {
   try { return JSON.parse(await readFile(file, "utf8")) as T; } catch { return undefined; }
@@ -60,6 +55,19 @@ test("a child that does not drain reaches its bounded shutdown deadline", async 
   } finally { control.dispose(); }
 });
 
+test("the default child deadline lets a worker spend its full drain window before expiring", (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const exits: number[] = [];
+  const control = childShutdownController({ hasHandler: () => true, signal: () => {}, exit: code => exits.push(code) });
+  try {
+    control.request();
+    t.mock.timers.tick(shutdownTiming.queueDrainMs);
+    assert.deepEqual(exits, [], "the Windows wrapper must still be alive at the end of the queue drain");
+    t.mock.timers.tick(shutdownTiming.childExitMs - shutdownTiming.queueDrainMs);
+    assert.deepEqual(exits, [1], "the wrapper still bounds a child that never drains");
+  } finally { control.dispose(); }
+});
+
 test("IPC disconnect drains a child's actual listening port before its natural exit", { timeout: 15_000 }, async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "corescope-recovery-test-"));
   const entry = path.join(directory, "port.mjs");
@@ -90,6 +98,9 @@ async function sandbox(crashingWorker = false) {
   await mkdir(path.join(directory, "scripts"));
   await mkdir(path.join(directory, ".data/runtime"), { recursive: true });
   for (const file of ["corescope-runtime.ts", "corescope-runtime-child.ts", "corescope-runtime-launch.ts"]) await copyFile(path.join(scripts, file), path.join(directory, "scripts", file));
+  const timing = "packages/contracts/src/runtime-stop.json";
+  await mkdir(path.join(directory, path.dirname(timing)), { recursive: true });
+  await copyFile(path.resolve(scripts, "..", timing), path.join(directory, timing));
   await writeFile(path.join(directory, ".env"), "COLLECT_ENABLED=false\nMODEL_CALLS_ENABLED=false\nCORESCOPE_BRIDGE_ENABLED=false\nLLM_API_KEY=fixture-secret-never-log\n");
   for (const [role, relative] of [["api", "apps/api/src/main.ts"], ["web", "apps/web/server.ts"], ["worker", "apps/worker/src/main.ts"]]) {
     const file = path.join(directory, relative!);
@@ -99,7 +110,7 @@ async function sandbox(crashingWorker = false) {
       : `import net from 'node:net';import fs from 'node:fs/promises';const role=${JSON.stringify(role)};
 const server=net.createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));
 await fs.writeFile('.data/runtime/'+role+'.json',JSON.stringify({pid:process.pid,port:server.address().port}));
-process.on('SIGTERM',()=>server.close(async()=>{await new Promise(r=>setTimeout(r,40));await fs.writeFile('.data/runtime/'+role+'-closed.json',JSON.stringify({drained:true,pid:process.pid}));}));`;
+process.on('SIGTERM',()=>server.close(async()=>{await fs.writeFile('.data/runtime/'+role+'-closed.json',JSON.stringify({drained:true,pid:process.pid}));}));`;
     await writeFile(file, body);
   }
   const runtime = path.join(directory, "scripts/corescope-runtime.ts");

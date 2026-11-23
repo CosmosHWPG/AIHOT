@@ -38,7 +38,7 @@ import { mergeFactInto, mergeStoryInto } from "./merge.ts";
 import { bestPerFact, candidateViews, cosine32, RECALL_DAYS, recallFacts, recallFactsByPosts, recallSelectedBackground, relatedPosts, vectorsFor, type Recalled, type CardRow } from "./recall.ts";
 import {
   BATCH_SYSTEM, BATCH_PROMPT_VERSION, BatchSchema, PAIR_SYSTEM, PairSchema, RELATE_PROMPT_VERSION, SIGNAL_SYSTEM, SignalSchema, TIE_MIN_CONFIDENCE,
-  batchUser, completeDecisions, firmlyTied, pairUser, reportText, sameOccurrence, signalTarget, signalText, storyForDevelopment, verdictsByFact,
+  batchUser, completeDecisions, describeReport, firmlyTied, pairUser, reportText, sameOccurrence, signalTarget, signalText, storyForDevelopment, verdictsByFact,
   type CandidateView, type ReadingContext, type Relation, type ReportView, type SelectionValue, type Verdict,
 } from "./relate.ts";
 
@@ -293,7 +293,11 @@ export async function recordSignal(db: Tx, storyId: number, articleId: string, s
     ON CONFLICT (story_id, article_id) DO NOTHING`;
 }
 
-type DecisionCandidate = { id: number; score: number; relation?: Relation; confidence?: number; signalInputRevision?: number; signalInputFingerprint?: string };
+type DecisionCandidate = {
+  id: number; score: number; relation?: Relation; confidence?: number;
+  signalInputRevision?: number; signalInputFingerprint?: string;
+  signalFactFingerprint?: string; signalFactEvidence?: string;
+};
 
 async function recordDecision(db: Db, articleId: string, factId: number | null, storyId: number | null, verdict: string, candidates: DecisionCandidate[], receiptId: number | null) {
   await db`INSERT INTO grouping_decisions (article_id, fact_id, story_id, verdict, candidates, receipt_id)
@@ -516,7 +520,9 @@ async function decide(articleId: string, opts: GroupOptions, revision: number, r
       await markGrouped(articleId, a.revision, undefined, tx);
       await syncArticleEventCopyTx(tx, articleId);
     });
-    return { verdict: "kept", factId: kept.factId, storyId: kept.storyId, replaces };
+    const result = { verdict: "kept" as const, factId: kept.factId, storyId: kept.storyId, replaces };
+    if (an?.relevance === "pass") await rematch(result, articleId, reportText(an.title_zh || a.title, an.summary_zh), kept.factId, SIGNAL_MIN_COSINE);
+    return result;
   }
 
   const frame = (an?.output?.fact ?? null) as Record<string, any> | null;
@@ -593,7 +599,10 @@ async function decide(articleId: string, opts: GroupOptions, revision: number, r
       for (const receiptId of receipts) await completeReceipt(tx, receiptId);
       return manual;
     });
-    return late ? { verdict: "manual", factId: late.factId } : { verdict: "kept", factId: kept.factId, storyId: kept.storyId, replaces };
+    if (late) return { verdict: "manual", factId: late.factId };
+    const result = { verdict: "kept" as const, factId: kept.factId, storyId: kept.storyId, replaces };
+    await rematch(result, articleId, reportText(title, an.summary_zh), kept.factId, SIGNAL_MIN_COSINE);
+    return result;
   }
   let verdict: GroupResult["verdict"] = "new-story";
   let factId: number | null = null;
@@ -735,13 +744,9 @@ const unattachedSignal = sql`
   AND coalesce((SELECT d.verdict FROM grouping_decisions d WHERE d.article_id = a.id ORDER BY d.id DESC LIMIT 1), 'signal-unmatched') = 'signal-unmatched'
   AND NOT EXISTS (SELECT 1 FROM grouping_overrides o WHERE o.article_id = a.id)`;
 
-/**
- * The facts the judge already answered for while leaving discussion post `article` unattached: it is
- * not asked about them again (an attachment it made stays open to an editor's regroup).
- */
-const answeredFacts = (article: ReturnType<typeof sql>) => sql`ARRAY(
-  SELECT (c->>'id')::bigint FROM grouping_decisions j CROSS JOIN LATERAL jsonb_array_elements(j.candidates) c
-  WHERE j.article_id = ${article} AND j.verdict = 'signal-unmatched')`;
+/** Additional corroboration alone does not change a representative's evidence. */
+const signalFactEvidence = (c: CandidateView) => sha256(stableJson({ factId: c.factId, storyId: c.storyId,
+  storyRoot: c.storyRoot, factTitle: c.factTitle, report: describeReport(c.report, "候选") }));
 
 /**
  * A reaction often comes before the post it quotes is collected (Dan Shipper's "SONNET 5.5 IS OUT!"
@@ -762,17 +767,26 @@ async function reclaimWaiting(tweetId: string): Promise<number> {
  * or a report or post that puts the news in their words. Whenever a fact gains evidence (a report
  * founds or joins it, a post attaches to it), the unattached posts close to that evidence that still
  * count for heat are grouped again, each judged the usual way against all candidates. A post the judge
- * already answered for this fact is left as it is.
+ * already answered for this fact is left as it is until its revision or the representative changes.
  */
 async function rematchSignals(articleId: string, queryText: string, factId: number, minScore: number): Promise<number> {
   if (!embeddingsAvailable()) return 0;
+  const [representative] = await candidateViews([{ factId, score: 0 }]);
+  if (!representative) return 0;
+  const evidence = signalFactEvidence(representative);
   const mine = (await vectorsFor([{ id: articleId, text: queryText }])).get(articleId);
   if (!mine) return 0;
   const posts = await sql<{ id: string; title: string; body_text: string | null }[]>`
     SELECT a.id, a.title, left(a.body_text, 300) AS body_text FROM articles a JOIN sources s ON s.id = a.source_id
     WHERE a.discovered_at > now() - make_interval(hours => ${HEAT_WINDOW_HOURS})
       AND coalesce(a.published_at, a.discovered_at) > now() - make_interval(hours => ${HEAT_WINDOW_HOURS}) AND ${unattachedSignal}
-      AND NOT ${factId}::bigint = ANY(${answeredFacts(sql`a.id`)})
+      AND NOT coalesce((
+        SELECT c->>'signalFactEvidence' IS NULL OR c->>'signalFactEvidence' = ${evidence}
+        FROM grouping_decisions j CROSS JOIN LATERAL jsonb_array_elements(j.candidates) c
+        WHERE j.article_id=a.id AND j.verdict='signal-unmatched' AND (c->>'id')::bigint=${factId}
+          AND j.candidates->0->>'signalInputRevision'=a.revision::text
+        ORDER BY j.id DESC LIMIT 1
+      ), false)
     ORDER BY coalesce(a.published_at, a.discovered_at) DESC, a.id LIMIT 2000`;
   const vectors = await vectorsFor(posts.map((p) => ({ id: p.id, text: signalText(p) })));
   let close = 0;
@@ -847,7 +861,11 @@ async function groupSignal(a: ArticleRow, source: { id: string; signal_group_id:
                    WHERE f.story_id = ss.story_id AND fa.role IN ('primary', 'report') AND ${groupingEvidenceCondition(sql`r.id`)}
                      AND r.discovered_at > now() - make_interval(days => ${RECALL_DAYS})))`;
         if (target) await recordSignal(tx, target.storyId, a.id, source, "signal", observedAt);
-        await recordDecision(tx, a.id, target?.factId ?? null, target?.storyId ?? null, verdict, candidates, receiptId);
+        const [sameDecision] = await tx`SELECT 1 FROM (
+          SELECT verdict, fact_id, story_id, candidates FROM grouping_decisions WHERE article_id=${a.id} ORDER BY id DESC LIMIT 1
+        ) previous WHERE verdict=${verdict} AND fact_id IS NOT DISTINCT FROM ${target?.factId ?? null}::bigint
+          AND story_id IS NOT DISTINCT FROM ${target?.storyId ?? null}::bigint AND candidates=${tx.json(candidates as never)}`;
+        if (regroup || !sameDecision) await recordDecision(tx, a.id, target?.factId ?? null, target?.storyId ?? null, verdict, candidates, receiptId);
       }
       if (receiptId !== null) await completeReceipt(tx, receiptId);
       return manual ? { verdict: "manual", factId: manual.factId } : { verdict, ...(target ? { storyId: target.storyId } : {}) };
@@ -865,38 +883,52 @@ async function groupSignal(a: ArticleRow, source: { id: string; signal_group_id:
   if (!embeddingsAvailable()) return { verdict: "signal-unmatched" };
   const asCandidates = (recalled: Recalled[], verdicts?: Map<number, Verdict>): DecisionCandidate[] =>
     recalled.map((r) => ({ id: r.factId, score: Math.round(r.score * 1000) / 1000, relation: verdicts?.get(r.factId)?.relation, confidence: verdicts?.get(r.factId)?.confidence }));
-  // The facts of the story the post counts for are judged again: an earlier "no" to one of them must
-  // not withdraw an attachment made since.
-  const answered = new Set(regroup ? [] : (await sql<{ id: number }[]>`
-    SELECT unnest(${answeredFacts(sql`${a.id}`)}) AS id
-    EXCEPT SELECT f.id FROM facts f JOIN story_signals ss ON ss.story_id = f.story_id WHERE ss.article_id = ${a.id}`).map((r) => r.id));
-  const open = (recalled: Recalled[]) => recalled.filter((r) => !answered.has(r.factId));
-  const byReports = open(await recallFacts(a.id, text, SIGNAL_MIN_COSINE, Infinity));
-  if (byReports[0] && byReports[0].score >= SIGNAL_AUTO_COSINE) {
-    return write(byReports[0], "signal", asCandidates(byReports.slice(0, SIGNAL_TOP_FACTS)));
-  }
-  const byPosts = open(await recallFactsByPosts(a.id, text, SIGNAL_PEER_MIN_COSINE, HEAT_WINDOW_HOURS));
-  const recalled = bestPerFact([...byReports, ...byPosts], SIGNAL_TOP_FACTS);
+  const byReports = await recallFacts(a.id, text, SIGNAL_MIN_COSINE, Infinity);
+  const byPosts = await recallFactsByPosts(a.id, text, SIGNAL_PEER_MIN_COSINE, HEAT_WINDOW_HOURS);
+  const recalled = bestPerFact([...byReports, ...byPosts]);
   if (recalled.length === 0) {
     // Recorded, so a post that found nothing is told apart from one never decided.
     return write(null, "signal-unmatched", []);
   }
-  const cands = await candidateViews(recalled);
-  if (cands.length === 0) return write(null, "signal-unmatched", []);
   const query: ReportView = { title: a.title, source: a.source_name, firstParty: false, at: a.published_at, publicationTime: a.publication_time, summary: a.body_text?.slice(0, 300) ?? null };
   const model = await modelFor("group");
   const spec = MODELS[model]!;
+  const modelInput = { model: spec.model, service: spec.service, extra: spec.extra ?? null, prompt: RELATE_PROMPT_VERSION };
+  const queryEvidence = describeReport(query, "帖子");
+  const factFingerprint = (c: CandidateView) => sha256(stableJson({ ...modelInput, queryEvidence, fact: signalFactEvidence(c) }));
+  const earlier = regroup ? [] : await sql<{ fact_id: number; fingerprint: string }[]>`
+    SELECT (c->>'id')::bigint AS fact_id, c->>'signalFactFingerprint' AS fingerprint
+    FROM grouping_decisions j CROSS JOIN LATERAL jsonb_array_elements(j.candidates) c
+    WHERE j.article_id=${a.id} AND j.verdict='signal-unmatched' AND j.candidates->0->>'signalInputRevision'=${String(a.revision)}
+      AND c->>'signalFactFingerprint' IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM story_signals ss JOIN facts f ON f.story_id=ss.story_id
+        WHERE ss.article_id=${a.id} AND f.id=(c->>'id')::bigint)`;
+  const answered = new Set(earlier.map(c => c.fingerprint));
+  const priorFacts = new Set(earlier.map(c => Number(c.fact_id)));
+  const unchanged = new Set((await candidateViews(recalled.filter(c => priorFacts.has(c.factId))))
+    .filter(c => answered.has(factFingerprint(c))).map(c => c.factId));
+  const current = recalled.filter(c => !unchanged.has(c.factId));
+  if (!current.length) return { verdict: "signal-unmatched" };
+  const reportCandidates = byReports.filter(c => !unchanged.has(c.factId));
+  if (reportCandidates[0] && reportCandidates[0].score >= SIGNAL_AUTO_COSINE) {
+    return write(reportCandidates[0], "signal", asCandidates(reportCandidates.slice(0, SIGNAL_TOP_FACTS)));
+  }
+  const cands = await candidateViews(current.slice(0, SIGNAL_TOP_FACTS));
+  if (!cands.length) return write(null, "signal-unmatched", []);
   const fingerprint = sha256(stableJson({
-    revision: a.revision, model: spec.model, service: spec.service, extra: spec.extra ?? null,
-    prompt: RELATE_PROMPT_VERSION, user: batchUser(query, cands, "帖子"),
+    revision: a.revision, ...modelInput, user: batchUser(query, cands, "帖子"),
     candidates: cands.map(c => ({ factId: c.factId, storyId: c.storyId, storyRoot: c.storyRoot, score: Math.round(c.score * 1_000_000) })),
   }));
-  const [settled] = await sql`SELECT 1 FROM grouping_decisions WHERE article_id=${a.id} AND verdict='signal-unmatched'
-    AND candidates->0->>'signalInputRevision'=${String(a.revision)} AND candidates->0->>'signalInputFingerprint'=${fingerprint} LIMIT 1`;
+  const [settled] = await sql`SELECT 1 FROM (
+    SELECT verdict, candidates FROM grouping_decisions WHERE article_id=${a.id} ORDER BY id DESC LIMIT 1
+  ) previous WHERE verdict='signal-unmatched' AND candidates->0->>'signalInputRevision'=${String(a.revision)}
+    AND candidates->0->>'signalInputFingerprint'=${fingerprint}`;
   if (settled && !regroup) return { verdict: "signal-unmatched" };
   const { verdicts, receiptId } = await judgeSignal(a, model, fingerprint, query, cands);
   const target = signalTarget(cands, verdicts);
-  const decisions = asCandidates(recalled, verdicts);
+  const decisions = asCandidates(cands, verdicts).map((decision, i) => ({ ...decision,
+    signalFactFingerprint: factFingerprint(cands[i]!), signalFactEvidence: signalFactEvidence(cands[i]!),
+  }));
   decisions[0] = { ...decisions[0]!, signalInputRevision: a.revision, signalInputFingerprint: fingerprint };
   return write(target, target ? "signal" : "signal-unmatched", decisions, receiptId);
 }

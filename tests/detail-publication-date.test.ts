@@ -13,7 +13,9 @@ import { unsupportedConfig } from "@aihot/backend/sources/config-keys";
 import { identityKeyForUrl } from "@aihot/backend/lib/url";
 
 const T = tag();
-const dates = Array.from({ length: 4 }, (_, i) => new Date(Date.now() - (i + 1) * 86_400_000).toISOString());
+// Keep this pagination fixture within the normal 48-hour admission window.
+const fixtureNow = Date.now();
+const dates = Array.from({ length: 4 }, (_, i) => new Date(fixtureNow - (i + 1) * 3_600_000).toISOString());
 const reads = new Map<string, number>();
 let missingDateAvailable = false;
 let rotationHeadInserted = false;
@@ -129,7 +131,7 @@ test("detail date admission accepts a boolean policy and refuses ambiguous confi
 test("permanently undated and failing details cannot starve later dated articles or a new listing head", async () => {
   const first = await collectSource(id("rotate"), { force: true });
   assert.deepEqual([first.status, first.created], ["ok", 0]);
-  assert.equal((await cursor("rotate")).detailDateAfterIdentity, identityKeyForUrl(`${base}/rotate/post-1`));
+  assert.equal((await cursor("rotate")).detailAfter, identityKeyForUrl(`${base}/rotate/post-1`));
   assert.equal(reads.get("/rotate/post-2"), undefined, "the first import still respects its two-item bound");
 
   const second = await collectSource(id("rotate"), { force: true });
@@ -153,7 +155,9 @@ test("a changed listing that drops the saved detail position restarts safely at 
   const run = await collectSource(id("position"), { force: true });
   assert.deepEqual([run.status, run.created], ["ok", 2]);
   assert.deepEqual((await articles("position")).map(a => a.url), [`${base}/position/post-0`, `${base}/position/post-1`]);
-  assert.equal((await cursor("position")).detailDateAfterIdentity, identityKeyForUrl(`${base}/position/post-1`));
+  const advanced = await cursor("position");
+  assert.equal(advanced.detailAfter, identityKeyForUrl(`${base}/position/post-1`));
+  assert.equal(advanced.detailDateAfterIdentity, undefined);
 });
 
 test("a failed material commit preserves the detail position and storage keeps original listing order", async () => {

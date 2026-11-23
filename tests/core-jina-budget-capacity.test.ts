@@ -63,7 +63,7 @@ async function article(name: string, options: { error?: string; state?: string; 
   await sql`INSERT INTO articles(id,source_id,identity_key,url,title,published_at,discovered_at,timeline_at,body_status,
     processing_state,processing_error,processing_retry_at,processing_attempts,processing_attempt_tag)
     VALUES(${id},${source},${id},${'https://www.example.com/' + id},'Quota fixture',now()-${options.minutes ?? 1}*interval '1 minute',
-      now(),now(),${options.body ?? 'pending'},${options.state ?? 'new'},${options.error ?? 'extract: Budget for jina exhausted (day)'},
+      now()-interval '1 second',now()-interval '1 second',${options.body ?? 'pending'},${options.state ?? 'new'},${options.error ?? 'extract: Budget for jina exhausted (day)'},
       now()+interval '1 hour',2,'retained-evaluation')`;
   return id;
 }

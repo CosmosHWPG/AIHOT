@@ -1,6 +1,6 @@
 // A classification correction moves the same frozen entry; it never composes another issue or pays
 // a writer. The override, publication, report revisions and audit commit in the caller's transaction.
-import { RELEASE } from "@aihot/industry/taxonomy";
+import { CATEGORIES, RELEASE } from "@aihot/industry/taxonomy";
 import type { Tx } from "../db.ts";
 import { isRelease } from "../editorial/vocabulary.ts";
 import { emit } from "../modules.ts";
@@ -10,11 +10,14 @@ interface Entry { itemId: string; followUp?: string; firstParty?: boolean; offic
 interface Group { key?: string; label?: string; heading?: string; summary?: unknown; items?: Entry[]; storyRefs?: Entry[]; [key: string]: unknown }
 interface Content { sections?: Group[]; themes?: Group[]; metrics?: Record<string, number>; [key: string]: unknown }
 
+const historicalSectionKeys = new Map<string, string>(CATEGORIES.flatMap(category => "sectionAliases" in category
+  ? category.sectionAliases.map(label => [label, sectionKeyOf(category.key)] as const) : []));
+
 /** Resolves a stored group to its canonical section key, falling back to label for historical issues. */
 function groupSectionKey(group: Group, labelKey: "label" | "heading"): string | null {
   if (typeof group.key === "string" && SECTION_KEY_ORDER.includes(group.key)) return group.key;
   const label = group[labelKey];
-  return label ? (SECTIONS.find((s) => s.label === label)?.key ?? null) : null;
+  return label ? (SECTIONS.find((s) => s.label === label)?.key ?? historicalSectionKeys.get(label) ?? null) : null;
 }
 
 /** Moves the item to its new section in every issue that carries it; says whether any issue changed. */
@@ -44,6 +47,8 @@ export async function correctReportClassification(tx: Tx, articleId: string, rea
       from[entriesKey] = from[entriesKey]!.filter(e => e.itemId !== articleId);
       let target = groups.find(g => groupSectionKey(g, labelKey) === targetKey);
       if (!target) { target = { key: targetKey, [labelKey]: label, [entriesKey]: [] }; groups.push(target); }
+      from.key = fromKey;
+      target.key = targetKey;
       target[entriesKey]!.push(...moving);
       // The section it left may have named it, so that introduction goes. The target's names only entries that are
       // still there, so it stays; a section created here has none.

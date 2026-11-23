@@ -3,6 +3,7 @@
 // and both sides are checked against JobData, so a payload cannot drift between producer and consumer.
 // A module declares its own queues (modules.ts ModuleQueue), typed by the queue in the same way.
 import { PgBoss, type SendOptions, type WorkOptions } from "pg-boss";
+import shutdownTiming from "../../../contracts/src/runtime-stop.json" with { type: "json" };
 import { config } from "../config.ts";
 import { sql, type Db } from "../db.ts";
 import { shutdownSignal } from "../lib/shutdown.ts";
@@ -82,7 +83,7 @@ export async function getBoss({ supervise = false } = {}): Promise<PgBoss> {
 }
 
 /** Let in-flight backups and paid calls finish; process supervisors wait longer for cleanup. */
-export const STOP_TIMEOUT_MS = 470_000;
+export const STOP_TIMEOUT_MS = shutdownTiming.queueDrainMs;
 
 export async function stopBoss(): Promise<void> {
   shutdownSignal.abort();

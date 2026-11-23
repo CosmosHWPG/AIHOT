@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 import * as cheerio from "cheerio";
+import { beijingMidnight, isValidDate } from "@aihot/contracts/time";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = new Set(process.argv.slice(2));
@@ -235,7 +236,13 @@ async function probeConfiguredWeb(source:any,adapter:Adapter):Promise<Check>{
       for(const node of $("article h2[id],article h3[id],.markdown h2[id],.markdown h3[id]").toArray()){
         const heading=$(node),title=cleanTitle(heading.text().replace(/\u200b/g,"").replace(/#$/,"")),id=heading.attr("id");
         const match=/^(?:[^\d:：]{1,12}[:：])?\s*(20\d{2})[-/.年](\d{1,2})[-/.月](\d{1,2})日?$/.exec(title);
-        if(match){sectionDate=parseDate(`${match[1]}-${match[2]!.padStart(2,"0")}-${match[3]!.padStart(2,"0")}T00:00:00${c.publishedAtUtcOffset??"+08:00"}`);continue;}
+        if (match) {
+          const day = `${match[1]}-${match[2]!.padStart(2, "0")}-${match[3]!.padStart(2, "0")}`;
+          sectionDate = c.publishedAtUtcOffset != null
+            ? parseDate(`${day}T00:00:00${c.publishedAtUtcOffset}`)
+            : isValidDate(day) ? beijingMidnight(day).toISOString() : null;
+          continue;
+        }
         if(heading.is("h2"))sectionDate=null;
         if(title.length>=4&&id)items.push({title,url:new URL(`#${id}`,final).toString(),publishedAt:sectionDate});
       }

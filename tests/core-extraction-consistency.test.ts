@@ -2,6 +2,7 @@
 // or X Article is in flight; an obsolete empty response marks new input unconfirmed; an admin
 // repeats extraction of unchanged HTML. Neither content nor revision history may go backwards.
 import { gate, Reply, stub, tag } from "./setup.ts";
+import { pollFor } from "./poll.ts";
 import assert from "node:assert/strict";
 import http from "node:http";
 import { after, before, test } from "node:test";
@@ -14,6 +15,7 @@ import { queueProcessing, registerExtractionJobs } from "@aihot/backend/jobs/con
 import { logicalKeyFor } from "@aihot/backend/providers/receipts";
 
 const sourceId = `extract-consistency-${tag()}`;
+let nextTweetId = 10_000_000;
 const body = "This is the original article, with enough substantive text to extract its paragraphs. ".repeat(12);
 let hold: { entered: ReturnType<typeof gate<void>>; release: ReturnType<typeof gate<void>>; count: number; empty: boolean; failed?: boolean };
 const page = http.createServer(async (_req, res) => {
@@ -59,7 +61,7 @@ const state = async (id: string) => ({ ...(await sql`SELECT title,body_text,body
 for (const x of [false, true]) for (const empty of [false, true]) {
   test(`a stale ${x ? "X Article" : "page"} ${empty ? "empty" : "successful"} response cannot change newer material`, async () => {
     reset(1, empty);
-    const tweetId = `${Date.now()}${empty ? 2 : 1}`;
+    const tweetId = String(++nextTweetId);
     const material = { sourceId, url: `${base}/${tag()}`, title: "Original", via: "fetch" as const,
       ...(x ? { xPost: { tweetId, provider: "socialdata" as const, authorName: "Author", handle: "author", text: "https://x.com/i/article/123" } } : {}) };
     const { articleId } = await upsertMaterial(material);
@@ -100,26 +102,23 @@ test("an obsolete extraction failure cannot penalize a newer complete report", a
   hold.failed = true;
   const source = `${sourceId}-worker`;
   await sql`INSERT INTO sources(id,name,kind) VALUES (${source},'Extraction worker','x_search')`;
-  const material = { sourceId: source, url: `https://x.com/author/status/${Date.now()}`, title: "Original", via: "fetch" as const,
-    xPost: { tweetId: `${Date.now()}9`, provider: "socialdata" as const, authorName: "Author", handle: "author", text: "https://x.com/i/article/123" } };
+  const tweetId = String(++nextTweetId);
+  const material = { sourceId: source, url: `https://x.com/author/status/${tweetId}`, title: "Original", via: "fetch" as const,
+    xPost: { tweetId, provider: "socialdata" as const, authorName: "Author", handle: "author", text: "https://x.com/i/article/123" } };
   const { articleId } = await upsertMaterial(material);
   const job = await queueProcessing(articleId);
   await registerExtractionJobs(await getBoss());
   await hold.entered.promise;
   try { await upsertMaterial({ ...material, title: "Corrected", bodyText: "Complete corrected body" }); }
   finally { hold.release.open(); }
-  const deadline = Date.now() + 12_000;
-  while ((await sql`SELECT state FROM pgboss.job WHERE id=${job!}`)[0]?.state !== "completed") {
-    assert.ok(Date.now() < deadline, "extraction worker did not finish");
-    await new Promise(resolve => setTimeout(resolve, 20));
-  }
+  await pollFor(async () => (await sql`SELECT state FROM pgboss.job WHERE id=${job!}`)[0]?.state === "completed", "completed extraction", 12_000);
   const [row] = await sql`SELECT body_status,processing_attempts,processing_error,processing_retry_at FROM articles WHERE id=${articleId}`;
   assert.deepEqual({ ...row }, { body_status: "ok", processing_attempts: 0, processing_error: null, processing_retry_at: null });
 });
 
 async function pendingXArticle(name: string) {
   const source = `${sourceId}-${name}`;
-  const tweetId = `${Date.now()}${Math.floor(Math.random() * 10000)}`;
+  const tweetId = String(++nextTweetId);
   await sql`INSERT INTO sources(id,name,kind) VALUES (${source},${name},'x_search')`;
   const { articleId } = await upsertMaterial({ sourceId: source, url: `https://x.com/author/status/${tweetId}`, title: name, via: "fetch",
     xPost: { tweetId, provider: "socialdata", authorName: "Author", handle: "author", text: "https://x.com/i/article/123" } });
@@ -129,11 +128,7 @@ async function pendingXArticle(name: string) {
 async function extractionRound(articleId: string) {
   const job = await queueProcessing(articleId, { step: "extract" });
   assert.ok(job);
-  const deadline = Date.now() + 12_000;
-  while ((await sql`SELECT state FROM pgboss.job WHERE id=${job}`)[0]?.state !== "completed") {
-    assert.ok(Date.now() < deadline, "extraction worker did not finish");
-    await new Promise(resolve => setTimeout(resolve, 20));
-  }
+  await pollFor(async () => (await sql`SELECT state FROM pgboss.job WHERE id=${job}`)[0]?.state === "completed", "completed extraction", 12_000);
   return (await sql`SELECT output FROM pgboss.job WHERE id=${job}`)[0]!.output;
 }
 
@@ -187,11 +182,7 @@ test("shutdown during a failed extraction preserves pending evidence and the pre
   const job = await queueProcessing(articleId, { step: "extract" });
   await hold.entered.promise;
   shutdownSignal.abort(); hold.release.open();
-  const deadline = Date.now() + 12_000;
-  while ((await sql`SELECT state FROM pgboss.job WHERE id=${job!}`)[0]?.state !== "retry") {
-    assert.ok(Date.now() < deadline, "interrupted extraction did not remain retryable");
-    await new Promise(resolve => setTimeout(resolve, 20));
-  }
+  await pollFor(async () => (await sql`SELECT state FROM pgboss.job WHERE id=${job!}`)[0]?.state === "retry", "retryable interrupted extraction", 12_000);
   const [row] = await sql`SELECT body_status,processing_attempts,processing_error,processing_retry_at FROM articles WHERE id=${articleId}`;
   assert.deepEqual({ ...row }, { body_status: "pending", processing_attempts: 2, processing_error: "previous failure", processing_retry_at: null });
 });

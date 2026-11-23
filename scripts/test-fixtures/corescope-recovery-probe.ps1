@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory=$true)][ValidateSet('Probe','Intent','IntentUpdate','IntentGate','OfflineStop','RecoveryPermit','PermitResume','PermitExpired','PermitNewIntent','Repair','Adopt','Task')][string]$Action,
+    [Parameter(Mandatory=$true)][ValidateSet('Probe','Intent','IntentUpdate','IntentGate','OfflineStop','RecoveryPermit','PermitResume','PermitExpired','PermitNewIntent','Repair','Adopt','Task','TaskRepin')][string]$Action,
     [Parameter(Mandatory=$true)][string]$RuntimeScript,
     [Parameter(Mandatory=$true)][string]$FixtureRoot,
     [Parameter(Mandatory=$true)][string]$NodeExecutable,
@@ -255,6 +255,58 @@ if ($Action -eq 'Adopt') {
         $result[$scenario] = @{rejected=$rejected;saved=$script:Saved;pgPid=$script:HostReceipt.pg.pid;supervisorPid=$script:HostReceipt.supervisor.pid;adopted=@($script:Adopted)}
     }
     Write-FixtureResult $result
+    exit 0
+}
+
+if ($Action -eq 'TaskRepin') {
+    # Use the actual registration API with a temporary root and a non-existent fixture entry. Never run it.
+    $RuntimeScript = Join-Path $FixtureRoot 'fixture-runtime-entry.ps1'
+    $previousSpec = Get-CoreScopeTaskSpec 'System' (Join-Path $FixtureRoot 'old-node\node.exe')
+    $nextSpec = Get-CoreScopeTaskSpec 'System' $NodeExecutable
+    $service = Connect-CoreScopeScheduler
+    $folder = $service.GetFolder('\')
+    $createdTask = $false
+    $script:BlockedFixturePort = $false
+    $PgPort = 3101; $WebPort = 3102; $ApiPort = 3103
+    function Assert-PortFree([int]$Port) { if ($script:BlockedFixturePort -and $Port -eq $PgPort) { throw 'fixture runtime is still listening' } }
+    function Write-Stage { }
+    try {
+        $existing = $null
+        try { $existing = $folder.GetTask($nextSpec.TaskName) }
+        catch {
+            $exception = $_.Exception
+            while ($exception.InnerException) { $exception = $exception.InnerException }
+            if ($exception.HResult -ne -2147024894) { throw }
+        }
+        if ($existing) { throw 'Unique repin fixture task already exists; it was not changed.' }
+        $task = Register-CoreScopeTask $service $previousSpec
+        $createdTask = $true
+        $before = [string]$task.Xml
+        Set-CoreScopeDesiredState -State stopped -Mode Database | Out-Null
+        Set-CoreScopeDesiredState -State running -Mode System | Out-Null
+        $runningIntentRejected = Assert-FixtureFailure { Register-CoreScopeTask $service $nextSpec }
+        Set-CoreScopeDesiredState -State stopped -Mode System | Out-Null
+        $script:BlockedFixturePort = $true
+        $busyPortRejected = Assert-FixtureFailure { Register-CoreScopeTask $service $nextSpec }
+        $script:BlockedFixturePort = $false
+        $unchanged = [string]$folder.GetTask($nextSpec.TaskName).Xml -eq $before
+        $task = Register-CoreScopeTask $service $nextSpec
+        $repinned = $task.Definition.Actions.Item(1).Arguments -eq $nextSpec.Arguments -and $task.State -eq 3
+        $definition = $task.Definition
+        $definition.Actions.Item(1).Arguments = $definition.Actions.Item(1).Arguments.Replace('-HostMode System', '-HostMode Database')
+        $task = $folder.RegisterTaskDefinition($nextSpec.TaskName,$definition,4,$CurrentUserSid,$null,3,$null)
+        $before = [string]$task.Xml
+        $tamperedRejected = Assert-FixtureFailure { Register-CoreScopeTask $service $previousSpec }
+        $tamperedUnchanged = [string]$folder.GetTask($nextSpec.TaskName).Xml -eq $before
+    } finally {
+        if ($createdTask) {
+            $owned = $folder.GetTask($nextSpec.TaskName)
+            if ($owned.Definition.RegistrationInfo.Description -ne $nextSpec.Description -or $owned.Definition.Actions.Item(1).Path -ne $nextSpec.Executable -or
+                $owned.Definition.Actions.Item(1).WorkingDirectory -ne $FixtureRoot -or $owned.State -eq 4) { throw 'Repin fixture cleanup ownership gate failed.' }
+            $folder.DeleteTask($nextSpec.TaskName,0)
+        }
+    }
+    Write-FixtureResult @{runningIntentRejected=$runningIntentRejected;busyPortRejected=$busyPortRejected;unchanged=$unchanged;repinned=$repinned;tamperedRejected=$tamperedRejected;tamperedUnchanged=$tamperedUnchanged}
     exit 0
 }
 

@@ -812,6 +812,11 @@ export function readableDocument(document: Doc, url: string, rules: PageRules = 
 }
 
 interface AuditedUrlOptions { allowJina: boolean; subject: string; title?: string; rules?: PageRules; sourceId?: string }
+function readerRemoveSelector(hostname: string): string {
+  const extra = (DEPLOYMENT as { renderedArticleRemoveSelectors?: Record<string, string> }).renderedArticleRemoveSelectors?.[hostname];
+  return extra ? PAGE_CHROME + "," + extra : PAGE_CHROME;
+}
+
 export function extractFromUrl(url: string, subject: string, rules?: PageRules, opts?: { paidFallback?: boolean; sourceId?: string }): Promise<ExtractedBody | null>;
 export function extractFromUrl(url: string, opts: AuditedUrlOptions): Promise<UrlExtraction>;
 export function extractFromUrl(url: string, subject: string | AuditedUrlOptions, rules: PageRules = {}, opts: { paidFallback?: boolean; sourceId?: string } = {}): Promise<ExtractedBody | null | UrlExtraction> {
@@ -850,8 +855,7 @@ async function extractPageFromUrl(url: string, subject: string, rules: PageRules
   if (opts.paidFallback === false) return null;
   try {
     // The rendered text carries none of the page's metadata, so a body read this way has no cover.
-    const extra = (DEPLOYMENT as { renderedArticleRemoveSelectors?: Record<string, string> }).renderedArticleRemoveSelectors?.[target.hostname];
-    const page = await jinaRead(target.href, { purpose: "body_fallback", subject, removeSelector: extra ? `${PAGE_CHROME},${extra}` : PAGE_CHROME });
+    const page = await jinaRead(target.href, { purpose: "body_fallback", subject, removeSelector: readerRemoveSelector(target.hostname) });
     const html = markdownBody(page.markdown, url);
     const text = stripTags(html);
     if (text.length < MIN_BODY_CHARS) return null;
@@ -862,6 +866,15 @@ async function extractPageFromUrl(url: string, subject: string, rules: PageRules
   }
 }
 
+async function cachedJinaFailure(articleId: string, url: string): Promise<UrlExtraction | null> {
+  const cached = await getBodyFailure(articleId, url);
+  if (!cached) return null;
+  const [current] = await sql<{ body_text: string | null }[]>`SELECT body_text FROM articles WHERE id=${articleId} AND url=${url}`;
+  return { body: null, receiptId: cached.receiptId,
+    rejectedText: current?.body_text && sha256(current.body_text) === cached.bodyHash ? current.body_text : undefined,
+    reason: `Cached Jina body failure ${cached.id}: ${cached.reason}` };
+}
+
 async function extractAuditedUrl(url: string, opts: AuditedUrlOptions): Promise<UrlExtraction> {
   // This also covers callers with a source subject, before generic readability can accept a site shell.
   if (jinaDeniedPublisher(url)) {
@@ -869,7 +882,10 @@ async function extractAuditedUrl(url: string, opts: AuditedUrlOptions): Promise<
     return result ? { body: { ...result.body, via: result.via } }
       : { body: null, reason: "Publisher body route unavailable; Jina is prohibited" };
   }
-  if (isVideoPageUrl(url)) return { body: null };
+  const articleId = /^article:([^@:#]+)/.exec(opts.subject)?.[1];
+  // Player pages are never fetched as articles, but a previously paid exact interstitial can
+  // still be rejected from stored evidence when an old material is already in the extraction path.
+  if (isVideoPageUrl(url)) return (articleId ? await cachedJinaFailure(articleId, url) : null) ?? { body: null };
   const target = new URL(url);
   if (opts.rules?.bodyUrlSuffix) target.pathname += opts.rules.bodyUrlSuffix;
   let read: { body: ExtractedBody; pageUrl: string } | null = null;
@@ -889,20 +905,15 @@ async function extractAuditedUrl(url: string, opts: AuditedUrlOptions): Promise<
     const cover = await articleCover(read.body.cover ?? null, url, read.pageUrl, opts.sourceId);
     return { body: { ...read.body, cover } };
   }
-  const articleId = /^article:([^@:#]+)/.exec(opts.subject)?.[1];
   if (articleId) {
-    const cached = await getBodyFailure(articleId, url);
-    if (cached) {
-      const [current] = await sql<{ body_text: string | null }[]>`SELECT body_text FROM articles WHERE id=${articleId} AND url=${url}`;
-      return { body: null, receiptId: cached.receiptId,
-        rejectedText: current?.body_text && sha256(current.body_text) === cached.bodyHash ? current.body_text : undefined,
-        reason: `Cached Jina body failure ${cached.id}: ${cached.reason}` };
-    }
+    const cached = await cachedJinaFailure(articleId, url);
+    if (cached) return cached;
     if ((await getRecoveryBodyPolicy(articleId)).denyJina) return { body: null, reason: "Audited article policy prohibits Jina" };
   }
   if (!opts.allowJina) return { body: null };
   // Capacity and unknown outcomes are not an empty body; let the caller retain retryable evidence.
-  const page = await jinaRead(url, { purpose: "body_fallback", subject: opts.subject, acceptUnavailable: true });
+  const page = await jinaRead(url, { purpose: "body_fallback", subject: opts.subject,
+    removeSelector: readerRemoveSelector(target.hostname), acceptUnavailable: true });
   const html = markdownBody(page.markdown, url);
   const text = stripTags(html);
   const failed = classifyJinaBodyFailure(page.raw, url);
@@ -914,6 +925,8 @@ async function extractAuditedUrl(url: string, opts: AuditedUrlOptions): Promise<
   const targetError = /^Warning:\s*Target URL returned error\s+([45]\d{2})\b/im.exec(metadata);
   if (targetError) return { body: null, receiptId: page.receiptId, rejectedText: text,
     reason: `Jina Reader explicitly reported target HTTP ${targetError[1]}`, failure };
+  if (failed?.reason === "target_http_error") return { body: null, receiptId: page.receiptId, rejectedText: text,
+    reason: "Jina Reader returned an error page instead of the article", failure };
   const verificationTitle = /^Just a moment(?:\.{3}|…)$/i.test(page.title?.trim() ?? "");
   const beginning = collapseWhitespace(text).slice(0, 1500);
   const verificationBody = /enable javascript and cookies to continue|performing security verification|verify (?:that )?you are human|verifying you are human|needs to review the security of your connection before proceeding/i.test(beginning);

@@ -5,12 +5,13 @@ import { mkdtemp, readFile, readdir, rmdir, unlink, writeFile } from "node:fs/pr
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { scheduler } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 import { launchDetached, loadLaunchEnvironment } from "../scripts/corescope-runtime-launch.ts";
+import { pollFor } from "./poll.ts";
 
 interface Heartbeat { pid: number; nonce: string; ticks: number }
 interface ParentReady { parentPid: number; childPid: number; nonce: string }
-const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 const alive = (pid: number) => {
   try { process.kill(pid, 0); return true; } catch { return false; }
 };
@@ -20,13 +21,7 @@ async function readJson<T>(file: string): Promise<T | undefined> {
 }
 
 async function eventually<T>(probe: () => Promise<T | undefined>, timeout = 6_000): Promise<T> {
-  const deadline = Date.now() + timeout;
-  while (Date.now() < deadline) {
-    const result = await probe();
-    if (result !== undefined) return result;
-    await pause(50);
-  }
-  throw new Error("Timed out waiting for the isolated fake process");
+  return pollFor(probe, "the isolated fake process", timeout);
 }
 
 async function fakeFixture() {
@@ -69,7 +64,7 @@ async function cleanup(directory: string, stop: string, childPid?: number, paren
         const code = (error as NodeJS.ErrnoException).code;
         // Windows may retain a process cwd or file handle briefly after exit.
         if (process.platform !== "win32" || !["EBUSY", "EPERM"].includes(code ?? "") || Date.now() >= removalDeadline) throw error;
-        await pause(50);
+        await scheduler.wait(50);
       }
     }
   }

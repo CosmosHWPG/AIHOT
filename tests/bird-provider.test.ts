@@ -1,4 +1,5 @@
 import { tag } from "./setup.ts";
+import { pollFor } from "./poll.ts";
 import assert from "node:assert/strict";
 import { after, before, beforeEach, test } from "node:test";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
@@ -14,6 +15,7 @@ import { BudgetExceededError } from "@aihot/backend/providers/receipts";
 const T = tag(); const profile = `bird-test-${T}`;
 const root = mkdtempSync(path.join(tmpdir(), "corescope-bird-provider-"));
 const cli = path.join(root, "dist/cli.js"); const state = path.join(root, "fixture.json");
+const releaseFile = path.join(root, "release");
 const secrets = { authToken: "offline_provider_auth", ct0: "offline_provider_csrf" };
 let budget: { per_minute: number; per_hour: number; per_day: number; note: string | null } | undefined;
 const original = { ...process.env };
@@ -26,7 +28,14 @@ before(async () => {
     ON CONFLICT(service) DO UPDATE SET per_minute=1000,per_hour=10000,per_day=100000`;
   mkdirSync(path.dirname(cli));
   writeFileSync(path.join(root, "package.json"), JSON.stringify({ name: "@steipete/bird", version: "0.8.0", type: "module" }));
-  writeFileSync(cli, `import{readFileSync}from'node:fs';const v=JSON.parse(readFileSync(${JSON.stringify(state)},'utf8'));const cmd=process.argv[6];if(v.delay)await new Promise(r=>setTimeout(r,v.delay));if(v.error){process.stderr.write(v.error+' '+process.env.AUTH_TOKEN);process.exit(1);}if(cmd==='whoami')process.stdout.write('🙋 @'+(v.user??'test_account')+' (Fixture)\\n🪪 '+(v.userId??'9911223344'));else process.stdout.write(JSON.stringify(v.payload));`);
+  writeFileSync(cli, `import {existsSync,readFileSync} from 'node:fs';
+import {pollFor} from ${JSON.stringify(new URL('./poll.ts', import.meta.url).href)};
+const v=JSON.parse(readFileSync(${JSON.stringify(state)},'utf8'));
+const cmd=process.argv[6];
+if(v.hold) await pollFor(() => existsSync(${JSON.stringify(releaseFile)}), 'Bird fixture release', 15000);
+if(v.error){process.stderr.write(v.error+' '+process.env.AUTH_TOKEN);process.exit(1);}
+if(cmd==='whoami')process.stdout.write('🙋 @'+(v.user??'test_account')+' (Fixture)\\n🪪 '+(v.userId??'9911223344'));
+else process.stdout.write(JSON.stringify(v.payload));`);
   Object.assign(process.env, { BIRD_ENABLED: "true", BIRD_CLI_PATH: cli, BIRD_NODE_PATH: process.execPath,
     BIRD_CREDENTIAL_MODE: "process-env", BIRD_ACCOUNT_PROFILE: profile, BIRD_AUTH_TOKEN: secrets.authToken, BIRD_CT0: secrets.ct0 });
   for (const name of ["BIRD_CLI_SHA256", "BIRD_EXPECTED_USER_ID", "BIRD_EXPECTED_USERNAME"]) delete process.env[name];
@@ -89,15 +98,18 @@ test("429 cools the whole profile and diagnostics do not persist a credential pr
   assert.equal(receipt!.error, "Bird HTTP 429"); assert.ok(!receipt!.error.includes(secrets.authToken));
 });
 test("profile lease prevents another CoreScope process from starting an overlapping CLI", async () => {
-  change({ payload: { tweets: [tweet()], nextCursor: null }, delay: 700 });
+  change({ payload: { tweets: [tweet()], nextCursor: null }, hold: true });
   const first = birdUserTweets("example", { subject: T, window: T });
-  for (let i = 0; i < 100; i++) {
-    const [row] = await sql`SELECT lease_owner FROM bird_profile_gate WHERE profile=${profile}`;
-    if (row?.lease_owner) break; await new Promise(resolve => setTimeout(resolve, 5));
+  try {
+    await pollFor(async () => (await sql`SELECT lease_owner FROM bird_profile_gate WHERE profile=${profile}`)[0]?.lease_owner,
+      "first Bird process lease");
+    const code = `import {birdUserTweets} from '@aihot/backend/providers/bird';import{closeDb}from'@aihot/backend/db';try{await birdUserTweets('another',{subject:${JSON.stringify(T)},window:'other-process'});process.stdout.write('overlap');}catch(e){process.stdout.write(/profile-busy/.test(e.message)?'busy':'unexpected');}finally{await closeDb();}`;
+    const { stdout } = await promisify(execFile)(process.execPath, ["--input-type=module", "-e", code], { env: { ...process.env, AUTH_TOKEN: "offline_only", CT0: "offline_only" }, timeout: 10_000 });
+    assert.equal(stdout, "busy");
+  } finally {
+    writeFileSync(releaseFile, "release");
+    await first;
   }
-  const code = `import {birdUserTweets} from '@aihot/backend/providers/bird';import{closeDb}from'@aihot/backend/db';try{await birdUserTweets('another',{subject:${JSON.stringify(T)},window:'other-process'});process.stdout.write('overlap');}catch(e){process.stdout.write(/profile-busy/.test(e.message)?'busy':'unexpected');}finally{await closeDb();}`;
-  const { stdout } = await promisify(execFile)(process.execPath, ["--input-type=module", "-e", code], { env: { ...process.env, AUTH_TOKEN: "offline_only", CT0: "offline_only" }, timeout: 10_000 });
-  assert.equal(stdout, "busy"); await first;
 });
 test("Article read emits only confirmed body blocks and exposes its business completion receipt", async () => {
   change({ payload: { ...tweet(), text: "Article title", article: { title: "Article title", previewText: "Preview only" } } });

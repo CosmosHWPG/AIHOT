@@ -119,9 +119,9 @@ export default function TopicsPage() {
             { key: "all", label: "全部主题", to: "/topics" },
             ...PERSPECTIVES.map((p) => ({ key: p.key, label: p.label, to: `/topics?focus=${p.key}` })),
           ]} />
-          <span className="text-[12px] text-ink-4">{perspective?.description ?? "核心网与 AI 的长期阅读索引"} · <span className="num">{visible.length}</span> 个主题</span>
+          <span className="text-ui-caption text-ink-4">{perspective?.description ?? "核心网与 AI 的长期阅读索引"} · <span className="num">{visible.length}</span> 个主题</span>
         </div>
-        {perspective && <p className="mt-2 text-[12px] text-ink-4">按领域浏览主题目录，通用主题同时涵盖核心网与 AI。</p>}
+        {perspective && <p className="mt-2 text-ui-caption text-ink-4">按领域浏览主题目录，通用主题同时涵盖核心网与 AI。</p>}
       </header>
       {groups.filter((g) => visible.some((t) => t.group === g.key)).map((g) => (
         <section key={g.key} aria-labelledby={`topics-${g.key}`} className="pt-8">

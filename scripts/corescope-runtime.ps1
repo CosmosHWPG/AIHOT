@@ -24,6 +24,8 @@ $StartupLog = Join-Path $LogDir 'startup.log'
 $StartupErrorLog = Join-Path $LogDir 'startup.error.log'
 $script:StartupPhase = 'initialize'
 $script:Config = $null
+$script:NodeVersion = $null
+$StopTiming = $null
 $script:DbPassword = $null
 $RuntimeScript = Join-Path $ProjectRoot 'scripts\corescope-runtime.ps1'
 $CurrentUserSid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
@@ -238,10 +240,23 @@ function Invoke-CapturedExecutable([string]$Executable, [string[]]$Arguments, $E
 
 function Invoke-CapturedNode([string[]]$Arguments) { return (Invoke-CapturedExecutable -Executable $Node -Arguments $Arguments) }
 
+function Resolve-CoreScopeNode([string]$Requested) {
+    if ($Requested) {
+        if (-not [IO.Path]::IsPathRooted($Requested) -or -not (Test-Path -LiteralPath $Requested -PathType Leaf) -or [IO.Path]::GetFileName($Requested) -ne 'node.exe') {
+            throw 'NodeExecutable must name an existing absolute node.exe path.'
+        }
+        return [IO.Path]::GetFullPath($Requested)
+    }
+    $portable = Join-Path $RuntimeDir 'node\node.exe'
+    if (Test-Path -LiteralPath $portable -PathType Leaf) { return $portable }
+    return (Get-Command node.exe -ErrorAction Stop).Source
+}
+
 function Read-Config {
     $versionText = Invoke-CapturedNode -Arguments @('--version')
     if (-not $versionText) { throw 'Node.js version check did not return output. Inspect the Windows host log.' }
-    if ([Version]$versionText.TrimStart('v') -lt [Version]'24.22.1') { throw 'Install Node.js 24.22.1 or newer before starting CoreScope.' }
+    $script:NodeVersion = $versionText.Trim().TrimStart('v')
+    if ([Version]$script:NodeVersion -lt [Version]'24.22.1') { throw 'Use Node.js 24.22.1 or newer. CoreScope can use a portable copy in .data/runtime/node.' }
     if (-not (Test-Path -LiteralPath $EnvFile)) { throw 'Create the private .env configuration first (see docs/CORESCOPE_LOCAL.md).' }
     $raw = Invoke-CapturedNode -Arguments @('-e', "const fs=require('node:fs');const{parseEnv}=require('node:util');process.stdout.write(JSON.stringify(parseEnv(fs.readFileSync(process.argv[1],'utf8'))));", $EnvFile)
     if (-not $raw) { throw 'Cannot read local .env configuration.' }
@@ -255,6 +270,42 @@ function Read-Config {
     $script:DbPassword = [Uri]::UnescapeDataString(($db.UserInfo.Split(':', 2) | Select-Object -Last 1))
     if ($DbUser -ne 'corescope' -or -not $DbPassword -or $DbPassword -eq $DbUser) { throw 'Set an independent corescope database user and random password.' }
     if ([int]$Config.WEB_PORT -ne $WebPort -or [int]$Config.API_PORT -ne $ApiPort) { throw 'Local runtime requires WEB_PORT=8780 and API_PORT=8781.' }
+}
+
+function Invoke-CoreScopeNpm([string[]]$Arguments) {
+    $nodeDir = Split-Path -Parent $Node
+    $npm = Join-Path $nodeDir 'node_modules\npm\bin\npm-cli.js'
+    if (-not (Test-Path -LiteralPath $npm -PathType Leaf)) { throw 'The selected CoreScope Node runtime must include its bundled npm.' }
+    $previousPath = $env:Path
+    try {
+        # npm itself and subprocesses it starts must use the runtime pinned to this CoreScope task.
+        $env:Path = $nodeDir + [IO.Path]::PathSeparator + $previousPath
+        & $Node $npm @Arguments | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "CoreScope npm $($Arguments[0]) failed (exit $LASTEXITCODE)." }
+    } finally { $env:Path = $previousPath }
+}
+
+function Get-CoreScopeFileSha256([string]$File) {
+    $stream = [IO.File]::OpenRead($File)
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return [BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-', '').ToLowerInvariant() }
+    finally { $sha.Dispose(); $stream.Dispose() }
+}
+
+function Sync-CoreScopeDependencies {
+    $receiptFile = Join-Path $RuntimeDir 'npm-dependencies.json'
+    $lockHash = Get-CoreScopeFileSha256 (Join-Path $ProjectRoot 'package-lock.json')
+    $receipt = $null
+    if (Test-Path -LiteralPath $receiptFile) {
+        try { $receipt = Get-Content -LiteralPath $receiptFile -Raw -Encoding UTF8 | ConvertFrom-Json } catch { }
+    }
+    if ((Test-Path -LiteralPath (Join-Path $ProjectRoot 'node_modules') -PathType Container) -and
+        $receipt -and $receipt.lockHash -eq $lockHash -and $receipt.runtime -eq $script:NodeVersion -and $receipt.executable -eq $Node) { return $false }
+    Write-Stage 'dependencies' 'Installing application dependencies from the lockfile with the selected CoreScope Node runtime.'
+    Invoke-CoreScopeNpm @('ci')
+    @{ lockHash = $lockHash; runtime = $script:NodeVersion; executable = $Node } | ConvertTo-Json |
+        Set-Content -LiteralPath $receiptFile -Encoding UTF8
+    return $true
 }
 
 function Invoke-NodeScript([string]$RelativePath, [string[]]$ExtraArgs = @()) {
@@ -301,7 +352,7 @@ function Connect-CoreScopeScheduler {
     return $service
 }
 
-function Get-CoreScopeTaskSpec([string]$Mode) {
+function Get-CoreScopeTaskSpec([string]$Mode, [string]$RuntimeNode = $Node) {
     $sha = [Security.Cryptography.SHA256]::Create()
     try { $hash = ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($ProjectRoot.ToLowerInvariant())))).Replace('-', '').Substring(0, 20).ToLowerInvariant() }
     finally { $sha.Dispose() }
@@ -311,11 +362,12 @@ function Get-CoreScopeTaskSpec([string]$Mode) {
         UserSid = $CurrentUserSid
         Root = $ProjectRoot
         Executable = $powershell
-        Arguments = ('-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "{0}" -Action Hosted -HostMode {1} -NodeExecutable "{2}" -NoBrowser' -f $RuntimeScript, $Mode, $Node)
+        Arguments = ('-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "{0}" -Action Hosted -HostMode {1} -NodeExecutable "{2}" -NoBrowser' -f $RuntimeScript, $Mode, $RuntimeNode)
         WorkingDirectory = $ProjectRoot
         Description = "CoreScope current-user runtime host ($Mode): $ProjectRoot"
         RecoveryPolicy = $true
         Mode = $Mode
+        NodeExecutable = $RuntimeNode
     }
 }
 
@@ -404,8 +456,29 @@ function Register-CoreScopeTask($Service, $Spec) {
     }
     if ($task) {
         # Upgrade only the exact legacy safe definition; never overwrite a foreign or edited task.
-        Assert-CoreScopeTaskDefinition $task.Definition $Spec -AllowLegacyRecovery
-        if ($Spec.RecoveryPolicy -and $task.Definition.Settings.RestartCount -eq 0) {
+        $repin = $false
+        try { Assert-CoreScopeTaskDefinition $task.Definition $Spec -AllowLegacyRecovery }
+        catch {
+            if (-not $Spec.NodeExecutable -or $task.Definition.Actions.Count -ne 1) { throw }
+            $previous = [regex]::Match([string]$task.Definition.Actions.Item(1).Arguments, ' -NodeExecutable "([^"]+)" -NoBrowser$')
+            if (-not $previous.Success) { throw }
+            $previousNode = $previous.Groups[1].Value
+            if ($previousNode -eq $Spec.NodeExecutable -or -not [IO.Path]::IsPathRooted($previousNode) -or [IO.Path]::GetFileName($previousNode) -ne 'node.exe') { throw }
+            $previousSpec = Get-CoreScopeTaskSpec $Spec.Mode $previousNode
+            Assert-CoreScopeTaskDefinition $task.Definition $previousSpec -AllowLegacyRecovery
+            # A new Node path changes an otherwise identical action only after the old runtime stopped.
+            if ($task.State -ne 3 -or @(Get-CoreScopeTaskInstances $task).Count -gt 0) { throw 'Stop the existing CoreScope host before changing its Node runtime.' }
+            foreach ($mode in @('System','Database')) {
+                $intent = Get-CoreScopeDesiredState $mode
+                if (-not $intent -or $intent.state -ne 'stopped' -or (Get-HostReceipt $mode -RequireAlive)) {
+                    throw 'Stop both existing CoreScope host modes before changing the Node runtime.'
+                }
+            }
+            foreach ($port in @($PgPort, $WebPort, $ApiPort)) { Assert-PortFree $port }
+            $repin = $true
+        }
+        if ($repin -or ($Spec.RecoveryPolicy -and $task.Definition.Settings.RestartCount -eq 0)) {
+            if ($repin) { Write-Stage 'windows-host-node' "Updating the stopped CoreScope $($Spec.Mode) task to the selected Node runtime." }
             $definition = New-CoreScopeTaskDefinition $Service $Spec
             $task = $folder.RegisterTaskDefinition($Spec.TaskName, $definition, 6, $Spec.UserSid, $null, 3, $null)
         }
@@ -629,9 +702,9 @@ function Install-Postgres {
         Move-Item -LiteralPath $partial -Destination $Archive -Force
     }
     Write-Host 'Extracting PostgreSQL binaries (no Windows service will be installed)...'
-    & tar.exe -xf $Archive -C $RuntimeDir pgsql/bin pgsql/lib pgsql/share
+    & (Join-Path $env:SystemRoot 'System32\tar.exe') -xf $Archive -C $RuntimeDir pgsql/bin pgsql/lib pgsql/share
     if ($LASTEXITCODE -ne 0) { throw 'PostgreSQL archive extraction failed.' }
-    $sha = (Get-FileHash -LiteralPath $Archive -Algorithm SHA256).Hash.ToLowerInvariant()
+    $sha = Get-CoreScopeFileSha256 $Archive
     @{ version = '17.11-3'; url = $DownloadUrl; bytes = 341325378; sha256 = $sha } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $RuntimeDir 'postgres-download.json') -Encoding UTF8
     & (Join-Path $PgRoot 'bin\postgres.exe') --version
     if ($LASTEXITCODE -ne 0) { throw 'PostgreSQL cannot run on this Windows machine.' }
@@ -756,11 +829,7 @@ function Start-System([switch]$Recovery) {
     if (-not $Recovery) {
     Push-Location $ProjectRoot
     try {
-        if (-not (Test-Path -LiteralPath (Join-Path $ProjectRoot 'node_modules'))) {
-            Write-Stage 'dependencies' 'Installing application dependencies with npm ci.'
-            & npm.cmd ci
-            if ($LASTEXITCODE -ne 0) { throw 'npm ci failed.' }
-        }
+        $dependenciesChanged = Sync-CoreScopeDependencies
         Write-Stage 'migration' 'Applying any pending database migrations.'
         Invoke-NodeScript 'scripts/migrate.ts'
         Write-Stage 'seed' 'Synchronizing topics, sources and the model directory.'
@@ -777,13 +846,12 @@ function Start-System([switch]$Recovery) {
         }
         Write-Stage 'web-build-check' 'Checking whether the production web build needs updating.'
         $buildFile = Join-Path $ProjectRoot 'apps\web\build\server\index.js'
-        $sourceFiles = @(Get-ChildItem -LiteralPath (Join-Path $ProjectRoot 'apps\web\app'), (Join-Path $ProjectRoot 'industry'), (Join-Path $ProjectRoot 'packages\contracts\src') -Recurse -File)
-        $needsBuild = -not (Test-Path -LiteralPath $buildFile)
+        $sourceFiles = @(Get-ChildItem -LiteralPath (Join-Path $ProjectRoot 'apps\web\app'), (Join-Path $ProjectRoot 'industry'), (Join-Path $ProjectRoot 'packages\contracts\src'), (Join-Path $ProjectRoot 'site'), (Join-Path $ProjectRoot 'modules') -Recurse -File)
+        $needsBuild = $dependenciesChanged -or -not (Test-Path -LiteralPath $buildFile)
         if (-not $needsBuild) { $needsBuild = @($sourceFiles | Where-Object { $_.LastWriteTimeUtc -gt (Get-Item -LiteralPath $buildFile).LastWriteTimeUtc }).Count -gt 0 }
         if ($needsBuild) {
             Write-Stage 'web-build' 'Building the production website.'
-            & npm.cmd run build -w '@aihot/web'
-            if ($LASTEXITCODE -ne 0) { throw 'Web build failed.' }
+            Invoke-CoreScopeNpm @('run', 'build', '-w', '@aihot/web')
         }
     } finally { Pop-Location }
     }
@@ -826,7 +894,7 @@ function Stop-System {
     Write-HostedStopRequest
     $saved = Get-SupervisorState
     if ($saved) {
-        Write-Host 'Stopping owned CoreScope processes gracefully; an in-flight model call may take up to 205 seconds...'
+        Write-Host "Stopping owned CoreScope processes gracefully; the worker may drain for up to $($StopTiming.queueDrainMs / 1000) seconds..."
         $requestId = Write-LifecycleAudit 'supervisor-stop' 'explicit_stop' ([int]$saved.supervisor.pid) $systemIntent.requestId
         Invoke-NodeScript 'scripts/corescope-runtime.ts' @('stop', '--reason', 'explicit_stop', '--request-id', $requestId)
     } elseif (Test-Path -LiteralPath $StateFile) {
@@ -1017,7 +1085,7 @@ function Get-HostedRecoveryPermit {
 }
 
 function Wait-OwnedApplicationsDrained {
-    $deadline = [DateTimeOffset]::Now.AddSeconds(215)
+    $deadline = [DateTimeOffset]::Now.AddMilliseconds($StopTiming.controlWaitMs)
     do {
         if (Test-HostedStopRequest $script:HostReceipt) { return $false }
         $remaining = $false
@@ -1200,7 +1268,8 @@ function Run-HostedRuntime {
 }
 
 function Wait-HostedShutdown {
-    $deadline = (Get-Date).AddSeconds(300)
+    # A concurrent startup may still need to drain its child processes and stop PostgreSQL.
+    $deadline = (Get-Date).AddMilliseconds($StopTiming.controlWaitMs).AddSeconds(75)
     do {
         $remaining = @('System', 'Database') | Where-Object { Get-HostReceipt $_ -RequireAlive }
         $service = Connect-CoreScopeScheduler
@@ -1283,12 +1352,10 @@ try {
         $script:HostedErrorLog = Join-Path $LogDir ("host-{0}.error.log" -f $HostMode.ToLowerInvariant())
     }
     Write-Stage 'node-runtime' 'Checking Node.js 24.22.1 or newer.'
-    if ($NodeExecutable) {
-        if (-not [IO.Path]::IsPathRooted($NodeExecutable) -or -not (Test-Path -LiteralPath $NodeExecutable -PathType Leaf) -or [IO.Path]::GetFileName($NodeExecutable) -ne 'node.exe') { throw 'NodeExecutable must name an existing absolute node.exe path.' }
-        $Node = [IO.Path]::GetFullPath($NodeExecutable)
-    } else { $Node = (Get-Command node.exe -ErrorAction Stop).Source }
+    $Node = Resolve-CoreScopeNode $NodeExecutable
     Write-Stage 'configuration' 'Validating local configuration without displaying credentials.'
     Read-Config
+    $StopTiming = Get-Content -LiteralPath (Join-Path $ProjectRoot 'packages\contracts\src\runtime-stop.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     switch ($Action) {
         'Install' { Install-Postgres }
         'Database' { Start-HostedRuntime 'Database' }

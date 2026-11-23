@@ -5,6 +5,7 @@ import { mkdtemp, readFile, readdir, rmdir, unlink, writeFile } from "node:fs/pr
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { pollFor } from "./poll.ts";
 
 interface Heartbeat { pid: number; nonce: string; ticks: number }
 interface Identity { pid: number; creationTimeUtc: string; executable: string; commandLine: string }
@@ -28,7 +29,6 @@ interface SchedulerReceipt {
   instanceCount: number; instanceId: string; enginePid: number; engineAncestry: boolean;
   scheduleAncestry: boolean; callerEngineAncestry: boolean; rawInstanceProbe: InstanceProbe;
 }
-const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 const projectRoot = path.resolve(import.meta.dirname, "..");
 const runtimeScript = path.join(projectRoot, "scripts", "corescope-runtime.ps1");
 const jobFixture = path.join(projectRoot, "scripts", "test-fixtures", "corescope-private-job.ps1");
@@ -50,7 +50,7 @@ function startPowerShell(args: string[], cwd: string) {
   child.stderr!.on("data", (chunk) => { stderr += chunk.toString(); });
   const finished = new Promise<{ code: number | null; stdout: string; stderr: string }>((resolve, reject) => {
     child.once("error", reject);
-    child.once("exit", (code) => resolve({ code, stdout, stderr }));
+    child.once("close", (code) => resolve({ code, stdout, stderr }));
   });
   return { child, finished, errors: () => stderr };
 }
@@ -58,13 +58,7 @@ async function readJson<T>(file: string): Promise<T | undefined> {
   try { return JSON.parse(await readFile(file, "utf8")) as T; } catch { return undefined; }
 }
 async function eventually<T>(probe: () => Promise<T | undefined>, timeout = 45_000): Promise<T> {
-  const deadline = Date.now() + timeout;
-  while (Date.now() < deadline) {
-    const result = await probe();
-    if (result !== undefined) return result;
-    await pause(75);
-  }
-  throw new Error("Timed out waiting for an isolated Windows Job/Scheduler fixture");
+  return pollFor(probe, "an isolated Windows Job/Scheduler fixture", timeout);
 }
 async function writeJson(file: string, value: unknown) { await writeFile(file, JSON.stringify(value)); }
 function quotedArgument(value: string) {
@@ -154,7 +148,7 @@ tick(); setInterval(tick, 75);
       const value = await readJson<SchedulerReceipt>(callerReceiptFile);
       if (value?.state === "failed") throw new Error(`${value.error} | raw instance probe: ${JSON.stringify(value.rawInstanceProbe)}`);
       return value?.state === "ready" ? value : undefined;
-    });
+    }, 55_000);
     managedPid = ready.heartbeat.pid;
     assert.equal(ready.callerPid, running.caller.pid);
     assert.equal(ready.heartbeat.nonce, nonce);
@@ -244,7 +238,7 @@ tick(); setInterval(tick, 75);
     }
     await writeFile(stop, "owned managed fixture self-exit");
     await writeFile(negativeStop, "owned negative fixture self-exit");
-    const cleanup = startPowerShell(schedulerArgs("Cleanup", cleanupReceiptFile), directory);
+    const cleanup = startPowerShell(schedulerArgs("Cleanup", cleanupReceiptFile), path.dirname(directory));
     const cleanupResult = await cleanup.finished;
     assert.equal(cleanupResult.code, 0, cleanupResult.stderr);
     if (managedPid) await eventually(async () => !alive(managedPid!) ? true : undefined, 10_000);
@@ -259,7 +253,7 @@ tick(); setInterval(tick, 75);
         await rmdir(directory);
         return true;
       } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== "EBUSY") throw error;
+        if (!["EBUSY", "EPERM"].includes((error as NodeJS.ErrnoException).code ?? "")) throw error;
         return undefined;
       }
     }, 5_000);

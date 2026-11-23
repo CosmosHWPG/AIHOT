@@ -32,7 +32,7 @@ after(async () => { await sql`DELETE FROM sources WHERE id=${source}`; await clo
 async function article(name: string) {
   const id = `${prefix}-${name}`; ids.push(id); const url = 'https://www.example.com/' + id;
   await sql`INSERT INTO articles(id,source_id,identity_key,url,title,published_at,discovered_at,timeline_at,body_status,processing_state)
-    VALUES(${id},${source},${id},${url},'Cache fixture',now(),now(),now(),'pending','new')`;
+    VALUES(${id},${source},${id},${url},'Cache fixture',now()-interval '1 hour',now()-interval '1 hour',now()-interval '1 hour','pending','new')`;
   return { id,url };
 }
 async function saved(a: { id: string; url: string },text: string,status = 'completed',options: { purpose?: string; subject?: string; url?: string; outerStatus?: number; age?: number } = {}) {

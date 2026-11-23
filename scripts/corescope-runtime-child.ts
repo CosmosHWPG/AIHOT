@@ -1,6 +1,7 @@
 // The native supervisor uses IPC so Windows can run the same graceful SIGTERM handlers as Docker.
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import shutdownTiming from "../packages/contracts/src/runtime-stop.json" with { type: "json" };
 
 /** A watch entry may wait at top level until SIGTERM, while an early disconnect may precede its handler. */
 export function childShutdownController(hooks: {
@@ -33,7 +34,7 @@ export function childShutdownController(hooks: {
     request() {
       if (stopping) return;
       stopping = true;
-      deadline = setTimeout(() => hooks.exit(1), hooks.timeoutMs ?? 205_000);
+      deadline = setTimeout(() => hooks.exit(1), hooks.timeoutMs ?? shutdownTiming.childExitMs);
       deadline.unref();
       deliver();
     },

@@ -53,6 +53,19 @@ export function isWechatArticleAddress(u: URL): boolean {
   return /^https?:$/.test(u.protocol) && u.hostname === "mp.weixin.qq.com" && !u.username && !u.password && /^\/s(?:\/[^/]+)?$/.test(u.pathname);
 }
 
+/** Account selector for a public long link. A short link must first be resolved by its provider. */
+export function wechatAccountBiz(value: string): string | null {
+  let url: URL;
+  try { url = new URL(value); } catch { throw new Error("invalid WeChat article URL"); }
+  if (!/^https?:$/.test(url.protocol) || url.hostname !== "mp.weixin.qq.com" || url.username || url.password || url.port
+    || !/^\/s(?:\/|$)/.test(url.pathname)) throw new Error("expected a public WeChat article URL");
+  const biz = url.searchParams.get("__biz");
+  if (!biz) return null;
+  const numeric = Buffer.from(biz, "base64").toString("ascii");
+  if (!/^\d{8,10}$/.test(numeric) || Buffer.from(numeric).toString("base64") !== biz) throw new Error("invalid WeChat biz");
+  return biz;
+}
+
 /** Page-confirmed account and post identifiers, independent of the signature or short access path. */
 export function wechatPostUrl(url: string): string | null {
   let u: URL;

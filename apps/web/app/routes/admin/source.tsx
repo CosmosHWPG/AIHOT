@@ -296,11 +296,11 @@ export default function SourceDetail({ loaderData }: Route.ComponentProps) {
                 ["冷却至", x.profile.cooldownUntil ? bj(x.profile.cooldownUntil, true) : null],
               ] as Array<[string, string | null]> : []),
             ]} />
-            {x.gap && <div className="mt-3 rounded-card bg-hot-soft p-3 text-[12px] text-hot">
+            {x.gap && <div className="mt-3 rounded-card bg-hot-soft p-3 text-ui-caption text-hot">
               覆盖缺口：{bj(x.gap.from, true)} 至 {bj(x.gap.to, true)}<br />
               {x.gap.reason === "provider_switch_backlog" ? "切换前存在未完成区间，旧续读游标已归档。" : `原因：${x.gap.reason}`}
             </div>}
-            {x.provider === "bird" && <p className="mt-3 text-[12px] text-ink-3">验证记录来自本机，不保证会话当前仍有效；抓取成功与区间完整覆盖分别记录。Bird 的额度统计为 CLI 调用次数。</p>}
+            {x.provider === "bird" && <p className="mt-3 text-ui-caption text-ink-3">验证记录来自本机，不保证会话当前仍有效；抓取成功与区间完整覆盖分别记录。Bird 的额度统计为 CLI 调用次数。</p>}
           </Card>}
           <Card title="状态">
             <KV

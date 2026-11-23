@@ -8,6 +8,7 @@ import { upsertMaterial } from "@aihot/backend/content/materials";
 import { QUEUES, stopBoss } from "@aihot/backend/jobs/queue";
 import { publishArticle, republishSource } from "@aihot/backend/publication/publish";
 import { listedCondition } from "@aihot/backend/publication/scope";
+import { loadStoryDetail } from "@aihot/backend/publication/stories";
 import { updateSource } from "@aihot/backend/admin/sources";
 import { upgradeSources, managedKey, UPGRADE_ACTOR, type UpgradeSource, type SourceProfileManifest } from "../scripts/corescope-source-upgrade.ts";
 import { tag } from "./setup.ts";
@@ -40,7 +41,7 @@ const ledger = async (id: string) => (await sql`SELECT value,updated_at FROM set
 
 async function material(sourceId: string) {
   return (await upsertMaterial({ sourceId, url: `https://example.org/upgrade-material-${sourceId}`, title: "Original model release",
-    bodyText: BODY, bodyStatus: "ok", via: "ingest", publishedAt: new Date() })).articleId;
+    bodyText: BODY, bodyStatus: "ok", via: "ingest", publishedAt: new Date(Date.now() - 120_000) })).articleId;
 }
 
 test("default dry run reports reviewed route changes and writes no source, ledger, audit or queue state", async () => {
@@ -220,13 +221,18 @@ test("invalid profile policy, unverified native route and non-article editorial 
 test("non-article isolation hides public scope immediately and queues normal republishing without changing evidence", async () => {
   const s = await source("catalog", { enabled: true });
   const articleId = await material(s.id);
+  const survivor = await material((await source("verified-report", { enabled: true })).id);
+  const releasedAt = new Date(Date.now() - 60_000);
   await sql`INSERT INTO analyses (article_id,input_revision,origin,relevance,title_zh,summary_zh,score,selected)
-    VALUES (${articleId},1,'rule','pass','目录误入新闻夹具','原始技术证据摘要',90,true)`;
-  await publishArticle(articleId, { releasedAt: new Date(Date.now() - 60_000) });
+    VALUES (${articleId},1,'rule','pass','目录误入新闻夹具','原始技术证据摘要',90,true),
+           (${survivor},1,'rule','pass','已核实的独立报道','可公开的独立报道摘要',85,true)`;
+  await publishArticle(articleId, { releasedAt });
+  await publishArticle(survivor, { releasedAt });
   const [story] = await sql<{ id: number }[]>`INSERT INTO stories (public_id,title,summary,first_report_at,latest_at)
     VALUES (${randomUUID()},'Old catalog story','Old source-dependent story summary',now(),now()) RETURNING id`;
   const [fact] = await sql<{ id: number }[]>`INSERT INTO facts (public_id,story_id,title) VALUES (${randomUUID()},${story!.id},'Old source-dependent fact') RETURNING id`;
-  await sql`INSERT INTO fact_articles (fact_id,article_id,role) VALUES (${fact!.id},${articleId},'report')`;
+  await sql`INSERT INTO fact_articles (fact_id,article_id,role)
+    VALUES (${fact!.id},${articleId},'report'),(${fact!.id},${survivor},'report')`;
   const beforeArticle = (await sql`SELECT * FROM articles WHERE id=${articleId}`)[0];
   const visible = () => sql`SELECT 1 FROM publications p JOIN sources s ON s.id=p.source_id WHERE p.article_id=${articleId} AND ${listedCondition(new Date())}`;
   assert.equal((await visible()).length, 1);
@@ -236,6 +242,10 @@ test("non-article isolation hides public scope immediately and queues normal rep
   assert.equal((await sql`SELECT 1 FROM pgboss.job WHERE name=${QUEUES.republishSource} AND data->>'sourceId'=${s.id}`).length, 1);
   assert.deepEqual((await sql`SELECT * FROM articles WHERE id=${articleId}`)[0], beforeArticle);
   assert.equal((await sql`SELECT summary FROM stories WHERE id=${story!.id}`)[0]!.summary, null);
+  const detail = await loadStoryDetail(story!.id);
+  assert.equal(detail?.title, "已核实的独立报道");
+  assert.deepEqual(detail?.timeline.map(report => report.id), [survivor]);
+  assert.equal(detail?.excerpt?.text, "可公开的独立报道摘要");
   assert.equal((await sql`SELECT visibility FROM publications WHERE article_id=${articleId}`)[0]!.visibility, "withdrawn");
   await republishSource(s.id);
   assert.equal((await sql`SELECT visibility FROM publications WHERE article_id=${articleId}`)[0]!.visibility, "withdrawn");

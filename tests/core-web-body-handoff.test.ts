@@ -45,7 +45,7 @@ async function article(name: string) {
   const id = `${prefix}-${name}`; ids.push(id);
   await sql`INSERT INTO articles(id,source_id,identity_key,url,title,published_at,discovered_at,timeline_at,body_status,
     processing_state,processing_attempts,processing_attempt_tag)
-    VALUES(${id},${source},${id},${'https://www.example.com/' + id},'Body handoff',now()-interval '1 hour',now(),now(),
+    VALUES(${id},${source},${id},${'https://www.example.com/' + id},'Body handoff',now()-interval '1 hour',now()-interval '1 second',now()-interval '1 second',
       'unconfirmed','analyzed',2,'existing-evaluation')`;
   return id;
 }

@@ -64,28 +64,31 @@ after(async () => {
 const receipts = () => sql<{ status: string; attempts: number; text: string | null }[]>`
   SELECT status, attempts, response->>'text' AS text FROM receipts WHERE subject = ${`source:${SOURCE}`} ORDER BY id`;
 
-test("a listing read whose outcome is unknown is not sent again; each later fetch is a paid read of its own", async () => {
+test("an unknown listing waits for its authorized release, then later rounds read afresh", async () => {
   const lost = await collectSource(SOURCE, { force: true });
   assert.equal(lost.status, "failed");
   assert.equal(hits, 1);
   assert.deepEqual((await receipts()).map((r) => r.status), ["unknown"]);
 
-  // The next fetch does not wait for that receipt: it is a new request with a receipt of its own.
   mode = "page";
+  const held = await collectSource(SOURCE, { force: true });
+  assert.equal(held.status, "failed");
+  assert.match(held.error ?? "", /unknown outcome/);
+  assert.equal(hits, 1);
+  // Only the ordinary release permits retrying this same receipt.
+  await autoReleaseUnknownReceipts(Date.now() + 31 * 60_000);
   const next = await collectSource(SOURCE, { force: true });
   assert.equal(next.status, "ok", next.error ?? "");
   assert.equal(next.created, 1);
   assert.equal(hits, 2);
-  assert.deepEqual((await receipts()).map((r) => r.status), ["unknown", "received"], "the unknown receipt is left to ops.recover");
+  assert.deepEqual((await receipts()).map((r) => [r.status, r.attempts]), [["received", 2]]);
 
-  // ops.recover releases it once and nothing sends it again; the fetch after a received page reads the
-  // listing afresh instead of that page.
-  await autoReleaseUnknownReceipts(Date.now() + 31 * 60_000);
+  // A committed listing releases its cursor round; the next scheduled round is a new read.
   const again = await collectSource(SOURCE, { force: true });
   assert.equal(again.status, "ok", again.error ?? "");
   assert.equal(again.created, 1);
   assert.equal(hits, 3);
-  assert.deepEqual((await receipts()).map((r) => [r.status, r.attempts]), [["failed", 1], ["received", 1], ["received", 1]]);
+  assert.deepEqual((await receipts()).map((r) => [r.status, r.attempts]), [["received", 2], ["received", 1]]);
 });
 
 test("a listing parsed with selectors is read from Jina as rendered HTML, dates included", async () => {
@@ -135,7 +138,7 @@ test("a read keyed by its caller's round is paid once a round: a retry reuses it
 });
 
 // A paid page can arrive before a database error: it is saved on the fetch's receipt before anything is
-// stored, so the failure loses nothing that was paid for, and the next fetch reads the listing as usual.
+// stored, so the next fetch can retry storage without rebuying that listing.
 test("a listing page received before a storage failure stays on its receipt", async () => {
   mode = "page";
   const before = hits;
@@ -152,17 +155,20 @@ test("a listing page received before a storage failure stays on its receipt", as
   const next = await collectSource(SOURCE);
   assert.equal(next.status, "ok", next.error ?? "");
   assert.equal(next.created, 1);
-  assert.equal(hits, before + 2);
+  assert.equal(hits, before + 1);
 });
 
 // Two reads can see the same clock reading: a CI VM's clock steps back (Check run 39178263522 reused one
 // preview's receipt for the next).
 test("each admin preview is a paid read of its own, even at the same clock reading", async (t) => {
   t.mock.timers.enable({ apis: ["Date"], now: Date.now() });
+  await sql`UPDATE sources SET cursor=cursor||jsonb_build_object('jinaListingRound','pending-collector-round') WHERE id=${SOURCE}`;
   const before = hits;
   assert.equal((await previewStoredSource(SOURCE))!.count, 1);
   assert.equal((await previewStoredSource(SOURCE))!.count, 1);
   assert.equal(hits, before + 2);
+  const [source] = await sql`SELECT cursor->>'jinaListingRound' AS round FROM sources WHERE id=${SOURCE}`;
+  assert.equal(source!.round, "pending-collector-round");
 });
 
 test("a received Jina page with NUL persists its receipt and reuses it without another paid call", async () => {

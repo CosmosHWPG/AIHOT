@@ -359,14 +359,18 @@ test("an editor's regroup asks the judge again about a fact it said no to; group
   const takeId = await post("regroup-take", `A take ${take}`, 1);
   const offered = async () => (await sql<{ candidates: Array<{ id: number }> }[]>`
     SELECT candidates FROM grouping_decisions WHERE article_id = ${takeId} ORDER BY id DESC LIMIT 1`)[0]!.candidates.map((c) => c.id);
+  const decisionCount = async () => (await sql`SELECT id FROM grouping_decisions WHERE article_id=${takeId}`).length;
   assert.equal((await groupArticle(takeId, { signalOnly: true })).verdict, "signal-unmatched");
   assert.deepEqual(await offered(), [launch.factId], "the judge said no to the launch");
+  const calls = postJudgements;
   assert.equal((await groupArticle(takeId, { signalOnly: true })).verdict, "signal-unmatched");
-  assert.deepEqual(await offered(), [], "grouped again on its own, it is not asked again");
+  assert.equal(postJudgements, calls, "unchanged evidence does not buy another judgement");
+  assert.equal(await decisionCount(), 1, "unchanged evidence does not append an empty negative");
 
   await requestRegroup(takeId, `regroup-${T}`);
   const [queued] = await sql<{ data: { regroup?: boolean } }[]>`SELECT data FROM pgboss.job WHERE singleton_key = ${`manual:group:${takeId}:regroup-${T}`}`;
   assert.equal(queued?.data.regroup, true);
   assert.equal((await groupArticle(takeId, { regroup: queued!.data.regroup })).verdict, "signal-unmatched");
+  assert.equal(await decisionCount(), 2, "the explicit regroup records a decision");
   assert.deepEqual(await offered(), [launch.factId], "the editor's regroup offers the launch again");
 });

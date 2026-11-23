@@ -61,7 +61,7 @@ after(async () => {
 });
 async function material() {
   const url = `${base}/${tag()}`;
-  const { articleId } = await upsertMaterial({ sourceId, url, title: "Unicode research report", publishedAt: new Date(), via: "fetch" });
+  const { articleId } = await upsertMaterial({ sourceId, url, title: "Unicode research report", publishedAt: new Date(Date.now() - 60 * 60_000), via: "fetch" });
   ids.push(articleId);
   return { articleId, url, opts: { purpose: "body_fallback", subject: `article:${articleId}` } };
 }

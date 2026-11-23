@@ -4,7 +4,7 @@ CoreScope 使用独立 PostgreSQL、API、网页、worker 和 V2 只读桥。它
 
 ## Windows 一键运行
 
-需要 Node.js 24.22.1 或更新版本。本机运行不需要 Docker，也不安装 Windows 数据库服务。
+需要 Node.js 24.22.1 或更新版本及其自带的 npm。本机运行不需要 Docker，也不安装 Windows 数据库服务。可将该版本 Windows 压缩包解压至 `.data/runtime/node`，使 `node.exe` 与 `node_modules/npm/bin/npm-cli.js` 位于同一套本机运行目录。三个 `.cmd` 入口优先使用这套 CoreScope 专用运行时，安装和构建也使用同一版本。现有任务更换 Node 路径前，先用现有运行版本完成正常停止，确认两个宿主模式都已写入停止意图并且端口已释放。只有任务的原定义属于该项目和当前用户时，启动器才更新其 Node 路径。
 
 1. 在项目根目录准备私有 `.env`。当前交付已按授权复用 V2 模型服务配置，管理员密码和各个签名密钥另行随机生成；所有秘密仅在本机文件内，未提交 Git。
 2. 双击 `Start-CoreScope.cmd`，等待最后的 **[READY]**。
@@ -48,7 +48,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/corescope-runtime.ps
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/corescope-runtime.ps1 -Action Stop
 ```
 
-`-Action Database` 只准备并启动独立数据库，适合迁移和测试。停止应用时，启动器先核验 PID、创建时间和项目入口，通过项目专属命名管道及 IPC 请求正常退出，等待 worker 已开始的付费请求和回执收尾，最后正常停止 PostgreSQL。收尾最多等待约 205 秒。监督进程异常丢失且仍有已确认归属的子进程时，脚本报错并要求先排查日志，避免直接关数据库。
+`-Action Database` 只准备并启动独立数据库，适合迁移和测试。停止应用时，启动器先核验 PID、创建时间和项目入口，通过项目专属命名管道及 IPC 请求正常退出，等待 worker 已开始的付费请求和回执收尾，最后正常停止 PostgreSQL。队列排空可用 470 秒，Windows 应用包装和控制命令在此后另留资源清理时间。监督进程异常丢失且仍有已确认归属的子进程时，脚本报错并要求先排查日志，避免直接关数据库。
 
 支持的持久停止入口是 `Stop-CoreScope.cmd` / `-Action Stop`。内部Node `stop --reason recovery|failure_cleanup|explicit_stop`只控制一次应用排空，并不修改宿主意图；不要将它代替停止脚本。审计记录关闭原因、目标PID、调用进程与父PID、关联请求ID；Node控制消息中的调用者声明另标为 `declared_unverified`，不冒充操作系统认证的对端身份。详见[2026-10-23停止事故与修复记录](CORESCOPE_RUNTIME_INCIDENT_20261023.md)。
 
@@ -59,8 +59,6 @@ SITE_URL=http://localhost:8780
 WEB_PORT=8780
 API_PORT=8781
 API_BASE_URL=http://127.0.0.1:8781
-POSTGRES_USER=corescope
-POSTGRES_PORT=5448
 DATABASE_URL=postgres://corescope:<本机随机密码>@127.0.0.1:5448/corescope
 V2_DATABASE=<现有V2 SQLite完整路径>
 CORESCOPE_V2_BATCH_LIMIT=6

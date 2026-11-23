@@ -256,7 +256,7 @@ export async function recallSelectedBackground(queryId: string, queryText: strin
  * What the judge sees of a candidate fact: its representative report (first-party first, else the
  * earliest), its size, and whether it started its story (rootFactOf).
  */
-export async function candidateViews(recalled: Recalled[]): Promise<CandidateView[]> {
+export async function candidateViews<T extends Pick<Recalled, "factId" | "score">>(recalled: T[]): Promise<CandidateView[]> {
   if (recalled.length === 0) return [];
   const ids = recalled.map((r) => r.factId);
   type SelectedRow = RepresentativeRow & RepresentativeIdentity & {

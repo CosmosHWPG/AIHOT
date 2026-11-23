@@ -19,7 +19,7 @@ const provider = await stub(async () => {
     await held.answer.promise;
     return new Reply(503, { error: "temporarily overloaded" });
   }
-  return { choices: [{ message: { content: JSON.stringify({ title: "周报", leadParagraph: "导语", highlights: [1], headline: "本期进展", overview: "总述", themes: [{ heading: "主题", summary: "摘要", refs: [1] }] }) } }] };
+  return { choices: [{ message: { content: JSON.stringify({ overview: "本期汇总已核实的技术进展。", sections: {} }) } }] };
 });
 process.env.DEEPSEEK_BASE_URL = `${provider.url}/v1`;
 process.env.DEEPSEEK_API_KEY = "test-key";

@@ -98,9 +98,11 @@ test("a missing target stays unconfirmed and its paid response is reused, not bo
   const [article] = await sql`SELECT body_status,body_text,body_html,excerpt FROM articles WHERE id=${articleId}`;
   assert.deepEqual({ ...article }, { body_status: "unconfirmed", body_text: null, body_html: null, excerpt });
   const [receipt] = await sql`SELECT status,attempts,usage FROM receipts WHERE subject=${`article:${articleId}`}`;
-  assert.equal(receipt!.status, "received");
+  assert.equal(receipt!.status, "completed");
   assert.equal(receipt!.attempts, 1);
   assert.equal(receipt!.usage.tokens, 100);
+  const [failure] = await sql`SELECT reason FROM article_body_failure_cache WHERE article_id=${articleId} AND event_kind='failure'`;
+  assert.equal(failure?.reason, "target_http_error");
 });
 
 test("a body read through the reader leaves out the page's consent banner", async () => {

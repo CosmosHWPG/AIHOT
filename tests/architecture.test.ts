@@ -167,10 +167,24 @@ const moduleWeb = (kind?: RegExp) => modules(kind).filter(({ file }) => /^module
 const production = () => [...PRODUCTION.flatMap((dir) => sources(dir)), { file: "apps/web/server.ts", text: readFileSync(path.join(ROOT, "apps/web/server.ts"), "utf8") }, ...modules()];
 const words = (text: string) => new Set(text.match(/[A-Za-z_][A-Za-z0-9_]*/g));
 
+// The upgrade retains these legacy fields for rollback, historical evidence and operations.
+// See docs/CORESCOPE_AIHOT_MIGRATION_20261122.md for the SQL holds that preserve them.
+const RETAINED_SCHEMA = new Set([
+  "event_capacity_recoveries.recovered_at",
+  "table stored_files", "table regroup_pending", "sources.imported_from", "admin_users.role",
+  "topics.grp", "topics.entity_id", "selected_ledger.visible_at",
+  "monitor_posts.collected_at", "table lb_calibrations",
+  "lb_models.input_price_usd", "lb_models.output_price_usd", "lb_models.metadata_updated_at",
+  "service_prices.note", "service_prices.per_request", "service_prices.verified_on", "service_prices.source_url",
+]);
+
 test("every table and column is used by the code that reads and writes the database", async () => {
   const files = [...["packages/backend/src", "apps/api/src", "apps/worker/src"].flatMap((dir) => sources(dir)), ...modules()].map(({ text }) => words(text));
+  for (const file of ["scripts/corescope-v2-core.ts", "scripts/migrate.ts"]) files.push(words(readFileSync(path.join(ROOT, file), "utf8")));
   const columns = await sql<{ table_name: string; column_name: string }[]>`
     SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name <> 'schema_migrations'`;
+  const present = new Set(columns.flatMap(({ table_name, column_name }) => [`table ${table_name}`, `${table_name}.${column_name}`]));
+  assert.deepEqual([...RETAINED_SCHEMA].filter((name) => !present.has(name)), [], "preserve the compatibility schema during upgrade");
   const unused = new Set<string>();
   for (const { table_name: table, column_name: column } of columns) {
     const users = files.filter((names) => names.has(table));
@@ -178,7 +192,7 @@ test("every table and column is used by the code that reads and writes the datab
     // created_at is the row's own timestamp, kept on every table for operations.
     else if (column !== "created_at" && !users.some((names) => names.has(column))) unused.add(`${table}.${column}`);
   }
-  assert.deepEqual([...unused], [], "drop it with a migration in the same change");
+  assert.deepEqual([...unused].filter((name) => !RETAINED_SCHEMA.has(name)), [], "review the deployed schema before removing unused state");
 });
 
 // import.meta.env.DEV and the like are the web build's own flags, not environment variables.

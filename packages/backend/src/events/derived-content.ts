@@ -57,7 +57,7 @@ export async function invalidateStoryInputs(db: Db, articleIds: string[], now = 
     const affected = facts.filter(f => f.story_id === story.id);
     await audit("system", "story.inputs_invalidated", `story:${story.id}`, "公开报道权限或文字改变",
       { ...story, facts: affected }, { title, version: story.version + 1 }, { db });
-    await db`UPDATE stories SET title=${title},summary=NULL,digest=NULL,latest=NULL,digest_updated_at=NULL,
+    await db`UPDATE stories SET title=${title},summary=NULL,digest=NULL,latest=NULL,digest_updated_at=NULL,digest_version=NULL,
       version=version+1,updated_at=now() WHERE id=${story.id}`;
     for (const fact of affected) {
       const safeTitle = reports.find(r => r.fact_id === fact.id)?.title ?? "事件更新中";

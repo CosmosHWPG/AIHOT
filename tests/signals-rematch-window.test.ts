@@ -1,8 +1,9 @@
 // Late discussion matching keeps the heat window and never pays repeatedly for unchanged negatives.
 import { stub, tag } from "./setup.ts";
 import assert from "node:assert/strict";
-import { after, before, test } from "node:test";
+import { after, afterEach, before, test } from "node:test";
 import { closeDb, sql } from "@aihot/backend/db";
+import { overrideFields } from "@aihot/backend/admin/content";
 import { upsertMaterial } from "@aihot/backend/content/materials";
 import { groupArticle, rematchRecentSignals } from "@aihot/backend/events/group";
 import { settleNonEditorial } from "@aihot/backend/jobs/content";
@@ -34,6 +35,7 @@ const provider = await stub((_hit, req) => {
   const ids = [...user.matchAll(/【候选 (C\d+)】/g)].map(m => m[1]!);
   return { id: "stub", choices: [{ message: { content: JSON.stringify({
     query: "发布", decisions: ids.map(id => ({ id, relation, confidence: 0.95, note: "" })),
+    selection: { addsValue: true, reason: "夹具包含新增事实" },
   }) } }] };
 });
 for (const prefix of ["DASHSCOPE", "DEEPSEEK"]) {
@@ -49,6 +51,7 @@ before(async () => {
     (${SIGNAL}, 'Rematch discussion', 'rss', 'T2', 'hot_signal', '2100-01-01')`;
 });
 after(async () => { await provider.close(); await stopBoss(); await closeDb(); });
+afterEach(() => { relation = "SAME_OCCURRENCE"; });
 
 async function report(name: string, title: string, hours = 0) {
   const publishedAt = new Date(Date.now() - hours * 3_600_000);
@@ -81,7 +84,9 @@ test("an 18-hour earlier discussion gets the ordinary judge when the delayed rep
   const { grouped } = await report("eighteen", topic("eighteen"));
   assert.equal(grouped.rematched, 1);
   assert.ok(await queued(post));
-  assert.deepEqual(await groupArticle(post, { signalOnly: true }), { verdict: "signal", storyId: grouped.storyId });
+  const attached = await groupArticle(post, { signalOnly: true });
+  assert.equal(attached.verdict, "signal");
+  assert.equal(attached.storyId, grouped.storyId);
 });
 
 test("discussion outside the 48-hour publication window is not queued by a recent report", async () => {
@@ -151,13 +156,22 @@ test("changed candidate facts are judged once, while their unchanged negative is
   const post = await discussion("candidates", topic("candidates"));
   relation = "UNRELATED";
   await groupArticle(post, { signalOnly: true });
-  await report("candidatestwo", `${topic("candidates")} separate occurrence`);
+  const changed = await report("candidatestwo", `${topic("candidates")} separate occurrence`);
   const before = chatCalls;
   await groupArticle(post, { signalOnly: true });
   assert.equal(chatCalls, before + 1);
   await groupArticle(post, { signalOnly: true });
   assert.equal(chatCalls, before + 1);
   assert.equal((await sql`SELECT 1 FROM grouping_decisions WHERE article_id = ${post}`).length, 2);
+  await overrideFields(changed.articleId, { fields: { summary: "包含新增的核实证据" }, version: 0, reason: "核实新增证据" }, "test");
+  await sql`DELETE FROM pgboss.job WHERE name='events.group' AND singleton_key=${post}`;
+  assert.equal((await groupArticle(changed.articleId)).rematched, 1);
+  assert.ok(await queued(post), "current evidence changes wake a previously judged, unchanged post");
+  await groupArticle(post, { signalOnly: true });
+  assert.equal(chatCalls, before + 2, "changed representative evidence is compared even with the same post revision");
+  await groupArticle(post, { signalOnly: true });
+  assert.equal(chatCalls, before + 2);
+  assert.equal((await sql`SELECT 1 FROM grouping_decisions WHERE article_id = ${post}`).length, 3);
   relation = "SAME_OCCURRENCE";
 });
 

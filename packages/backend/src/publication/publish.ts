@@ -7,6 +7,7 @@ import { collapseWhitespace, isChineseText } from "../lib/text.ts";
 import { withDomainTags } from "../lib/domain-tags.ts";
 import type { XPostData } from "../content/materials.ts";
 import { originalPostCopy } from "../content/posts.ts";
+import { invalidateStoryInputs } from "../events/derived-content.ts";
 import { API_ITEM_COLUMNS, API_ITEM_FROM, rowToV1, type ApiItemRow, type V1ItemPayload } from "./items.ts";
 import { pickRepresentative, REPRESENTATIVE_COLUMNS, type RepresentativeIdentity } from "./representative.ts";
 import { enqueue, QUEUES, shutdownSignal } from "../jobs/queue.ts";
@@ -398,6 +399,12 @@ export async function publishArticleTx(tx: Tx, articleId: string, options: Publi
       (previous!.selected && !selected) ||
       (previous!.body_mode === "full" && bodyMode !== "full") ||
       (!previous!.suppress_original && suppressOriginal));
+  // Revoking or correcting an input must withdraw its derived event copy in the same transaction.
+  if (previous && (previous.visibility === "public" || visibility === "public") &&
+      (previous.visibility !== visibility || previous.eligible !== eligible || previous.title !== next.title || previous.summary !== summary)) {
+    const formerFact = previous.fact_id && previous.fact_id !== membership?.fact_id ? [previous.fact_id] : [];
+    await invalidateStoryInputs(tx, [articleId], now, formerFact);
+  }
   return { articleId, changed, changeKind, selected, visibility, ledger, reduced };
 }
 

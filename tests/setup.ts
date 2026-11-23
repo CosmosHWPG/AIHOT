@@ -5,6 +5,8 @@
 // the database (databases.ts).
 import { createHash } from "node:crypto";
 import http from "node:http";
+import type { TestContext } from "node:test";
+import type { Dispatcher, MockAgent } from "undici";
 import { beijingAt } from "@aihot/contracts/time";
 import { EDITION_TIMES } from "@aihot/site";
 import { DEFAULTS, PRESETS } from "@aihot/site/models";
@@ -102,6 +104,21 @@ export function gate<T = void>() {
   let open!: (value: T) => void;
   const promise = new Promise<T>((resolve) => (open = resolve));
   return { promise, open };
+}
+
+/** An exact local HTTP request starts before a test edits stored state and releases its response. */
+export function holdMockRequest(t: TestContext, mock: MockAgent, endpoint: URL) {
+  const entered = gate(), release = gate();
+  const dispatch = mock.dispatch.bind(mock);
+  t.mock.method(mock, "dispatch", (options: Dispatcher.DispatchOptions, handler: Dispatcher.DispatchHandler) => {
+    if (String(options.origin) !== endpoint.origin || options.path !== endpoint.pathname + endpoint.search) {
+      return dispatch(options, handler);
+    }
+    entered.open();
+    void release.promise.then(() => dispatch(options, handler)).catch((error: Error) => handler.onError?.(error));
+    return true;
+  });
+  return { entered, release };
 }
 
 /** A short unique tag for the rows a test creates. */

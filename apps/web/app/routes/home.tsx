@@ -67,14 +67,14 @@ export default function Home() {
       {recentNews.length > 0 && (
         <section aria-label="最新公开动态" className="mb-7 mt-5">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-[19px] font-semibold text-ink">最新公开动态</h2>
-            <Link to={allHref} className="shrink-0 text-[12.5px] text-ink-3 hover:text-accent">查看全部动态 →</Link>
+            <h2 className="text-ui-heading-md font-semibold text-ink">最新公开动态</h2>
+            <Link to={allHref} className="shrink-0 text-ui-caption-lg text-ink-3 hover:text-accent">查看全部动态 →</Link>
           </div>
-          <p className="mb-2 mt-1 text-[12.5px] leading-6 text-ink-3">近48小时已分析公开的动态，按发布时间排列。下方保留精选洞察。</p>
+          <p className="mb-2 mt-1 text-ui-caption-lg leading-6 text-ink-3">近48小时已分析公开的动态，按发布时间排列。下方保留精选洞察。</p>
           <DayList items={recentNews} timeBy="published" />
         </section>
       )}
-      {recentNews.length > 0 && <h2 className="mb-1 text-[19px] font-semibold text-ink">精选洞察</h2>}
+      {recentNews.length > 0 && <h2 className="mb-1 text-ui-heading-md font-semibold text-ink">精选洞察</h2>}
       <Timeline initial={data} filters={data.filters} />
     </div>
   );

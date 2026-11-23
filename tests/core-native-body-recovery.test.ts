@@ -1,5 +1,5 @@
 // Only local MockAgent responses and a disposable *_test database are used.
-import { gate, tag } from './setup.ts';
+import { holdMockRequest, tag } from './setup.ts';
 import assert from 'node:assert/strict';
 import { after, afterEach, before, test } from 'node:test';
 import { MockAgent, getGlobalDispatcher, setGlobalDispatcher } from 'undici';
@@ -94,18 +94,20 @@ test('native proof mismatch leaves the same empty body and never calls Jina', as
   assert.equal(await extractArticleBody(f.id, true), 'unconfirmed');
   assert.equal((await sql`SELECT revision FROM articles WHERE id=${f.id}`)[0]!.revision, 1);
 });
-for (const change of ['config', 'revision', 'url', 'revoke'] as const) test(`a ${change} change during native HTTP prevents a stale body write`, async () => {
+for (const change of ['config', 'revision', 'url', 'revoke'] as const) test(`a ${change} change during native HTTP prevents a stale body write`, async t => {
   const f = await fixture(), manifest = await plan(f); await applyRecoveryBatch(manifest, 'offline-test', 'Exact native identity');
-  const entered = gate(), endpoint = new URL(f.endpoint);
-  mock.get(endpoint.origin).intercept({ path: endpoint.pathname + endpoint.search }).reply(() => {
-    entered.open(); return { statusCode: 200, data: JSON.stringify(f.response), responseOptions: { headers: { 'content-type': 'application/json' } } };
-  }).delay(150);
+  const endpoint = new URL(f.endpoint);
+  const { entered, release } = holdMockRequest(t, mock, endpoint);
+  mock.get(endpoint.origin).intercept({ path: endpoint.pathname + endpoint.search }).reply(200, JSON.stringify(f.response),
+    { headers: { 'content-type': 'application/json' } });
   const pending = extractArticleBody(f.id, true);
-  await Promise.race([entered.promise, new Promise<never>((_, reject) => { const t = setTimeout(() => reject(Error('No local native dispatch')), 5000); t.unref(); })]);
-  if (change === 'config') await sql`UPDATE sources SET config='{"changed":true}' WHERE id=${sourceId}`;
-  if (change === 'revision') await sql`UPDATE articles SET revision=revision+1 WHERE id=${f.id}`;
-  if (change === 'url') await sql`UPDATE articles SET url=${f.url + '?different=1'} WHERE id=${f.id}`;
-  if (change === 'revoke') await stopRecoveryBatch(manifest.id, 'revoked', 'offline-test', 'Revoke in flight');
+  try {
+    await Promise.race([entered.promise, pending.then(() => { throw Error('No local native dispatch'); })]);
+    if (change === 'config') await sql`UPDATE sources SET config='{"changed":true}' WHERE id=${sourceId}`;
+    if (change === 'revision') await sql`UPDATE articles SET revision=revision+1 WHERE id=${f.id}`;
+    if (change === 'url') await sql`UPDATE articles SET url=${f.url + '?different=1'} WHERE id=${f.id}`;
+    if (change === 'revoke') await stopRecoveryBatch(manifest.id, 'revoked', 'offline-test', 'Revoke in flight');
+  } finally { release.open(); }
   assert.equal(await pending, 'skipped');
   const [row] = await sql`SELECT body_text,body_status FROM articles WHERE id=${f.id}`;
   assert.equal(row!.body_text, null); assert.equal(row!.body_status, 'unconfirmed');
@@ -126,14 +128,17 @@ for (const terminal of ['complete', 'revoked'] as const) test(`${terminal} remov
   const [audit] = await sql`SELECT after FROM audit_log WHERE action='content.body-restored' AND subject=${'content:' + f.id} ORDER BY id DESC LIMIT 1`;
   assert.equal(audit!.after.scope, 'routine'); assert.equal(audit!.after.batchId, undefined);
 });
-test('a rejected native response cannot mark a changed URL unconfirmed', async () => {
+test('a rejected native response cannot mark a changed URL unconfirmed', async t => {
   const f = await fixture(), manifest = await plan(f); await applyRecoveryBatch(manifest, 'offline-test', 'Fixed native identity');
-  const entered = gate(), endpoint = new URL(f.endpoint);
-  mock.get(endpoint.origin).intercept({ path: endpoint.pathname + endpoint.search }).reply(() => {
-    entered.open(); return { statusCode: 200, data: '{}', responseOptions: { headers: { 'content-type': 'application/json' } } };
-  }).delay(150);
-  const pending = extractArticleBody(f.id, true); await entered.promise;
-  await sql`UPDATE articles SET url=${f.url + '?changed=1'},body_status='pending' WHERE id=${f.id}`;
+  const endpoint = new URL(f.endpoint);
+  const { entered, release } = holdMockRequest(t, mock, endpoint);
+  mock.get(endpoint.origin).intercept({ path: endpoint.pathname + endpoint.search }).reply(200, '{}',
+    { headers: { 'content-type': 'application/json' } });
+  const pending = extractArticleBody(f.id, true);
+  try {
+    await Promise.race([entered.promise, pending.then(() => { throw Error('No local native dispatch'); })]);
+    await sql`UPDATE articles SET url=${f.url + '?changed=1'},body_status='pending' WHERE id=${f.id}`;
+  } finally { release.open(); }
   assert.equal(await pending, 'skipped');
   assert.equal((await sql`SELECT body_status FROM articles WHERE id=${f.id}`)[0]!.body_status, 'pending');
 });

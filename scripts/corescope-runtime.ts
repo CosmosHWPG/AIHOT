@@ -4,6 +4,7 @@ import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypt
 import { appendFileSync, existsSync, mkdirSync, openSync, closeSync, readFileSync, writeFileSync } from "node:fs";
 import net from "node:net";
 import path from "node:path";
+import shutdownTiming from "../packages/contracts/src/runtime-stop.json" with { type: "json" };
 import { launchDetached, loadLaunchEnvironment } from "./corescope-runtime-launch.ts";
 
 const root = path.resolve(import.meta.dirname, "..");
@@ -57,7 +58,7 @@ function requestControl(command: "status" | "stop"): Promise<unknown> {
   }
   return new Promise((resolve, reject) => {
     const client = net.connect(pipe);
-    const timer = setTimeout(() => { client.destroy(); reject(new Error("Runtime control timed out")); }, command === "stop" ? 220_000 : 10_000);
+    const timer = setTimeout(() => { client.destroy(); reject(new Error("Runtime control timed out")); }, command === "stop" ? shutdownTiming.controlWaitMs : 10_000);
     let body = "";
     client.on("connect", () => client.write(JSON.stringify({ action: command, token: saved.token, ...(stopRequest ?? {}) }) + "\n"));
     client.on("data", (data) => { body += data.toString(); });
@@ -213,7 +214,7 @@ if (action === "launch-supervisor" || action === "launch-postgres") {
     restartTimers.clear();
     stopPromise = Promise.all([...children.values()].map((child) => new Promise<void>((resolve) => {
       if (!child.pid || child.exitCode !== null || child.signalCode !== null) return resolve();
-      const timer = setTimeout(() => { child.kill("SIGKILL"); resolve(); }, 205_000);
+      const timer = setTimeout(() => { child.kill("SIGKILL"); resolve(); }, shutdownTiming.supervisorExitMs);
       child.once("exit", () => { clearTimeout(timer); resolve(); });
       if (child.connected) child.send({ action: "shutdown" }, () => { /* A lost IPC peer handles disconnect itself. */ });
       // With IPC already lost, the child wrapper drains itself; preserve its graceful deadline.

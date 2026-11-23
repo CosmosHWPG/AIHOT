@@ -76,7 +76,7 @@ async function fixture(options: {
   await publishArticle(id, { releasedAt: minuteAgo });
   const [publication] = await sql`SELECT body_mode, eligible FROM publications WHERE article_id = ${id}`;
   assert.equal(publication!.body_mode, options.full && (!options.bodyStatus || options.bodyStatus === "ok") ? "full" : "summary");
-  assert.equal(publication!.eligible, (!!summary || options.shape === "quote-only") && (!options.mode || options.mode === "editorial"));
+  assert.equal(publication!.eligible, !!summary && (!options.mode || options.mode === "editorial"));
   return { id, source, key, fact, story, url, summary, main, zh, quoted, quotedZh, media, markers: [main, zh, quoted, quotedZh, media] };
 }
 

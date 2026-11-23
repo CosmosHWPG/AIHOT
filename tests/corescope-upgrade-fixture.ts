@@ -68,14 +68,16 @@ export function legacyMigrationRoot(root: string, output: string): string {
 /** A few dozen synthetic rows spanning the exact legacy data the upstream deletes. All sources are paused. */
 export async function seedUpgradeFixture(db: postgres.Sql): Promise<void> {
   await db.begin(async tx => {
+    const [clock] = await tx<{ recent: Date }[]>`SELECT now()-interval '1 second' AS recent`;
+    const recent = clock!.recent;
     await tx`INSERT INTO sources (id,name,kind,config,enabled,first_party,participation_mode,imported_from)
       VALUES ('upgrade-editorial','升级合成报道','rss','{"feedUrl":"https://example.invalid/feed"}',false,true,'editorial','synthetic legacy'),
              ('upgrade-signal','升级合成热度','x_search','{"query":"from:fixture -filter:replies","provider":"bird"}',false,false,'hot_signal','synthetic legacy'),
              ('upgrade-isolated','升级合成资料','external','{}',false,false,'isolated','synthetic legacy')`;
     await tx`INSERT INTO articles (id,source_id,identity_key,url,title,published_at,discovered_at,timeline_at,body_text,body_status,processing_state,grouped_at)
-      VALUES ('upgrade-report','upgrade-editorial','url:upgrade-report','https://example.invalid/report','升级合成报道',now()-interval '1 hour',now(),now(),'Synthetic confirmed body','ok','analyzed',now()),
-             ('upgrade-signal-item','upgrade-signal','x:upgrade-signal','https://x.com/fixture/status/1','Synthetic signal',now()-interval '1 hour',now(),now(),'Synthetic signal body','ok','analyzed',NULL),
-             ('upgrade-unknown','upgrade-editorial','url:upgrade-unknown','https://example.invalid/unknown','Synthetic unresolved body',now()-interval '1 hour',now(),now(),NULL,'unconfirmed','failed',NULL)`;
+      VALUES ('upgrade-report','upgrade-editorial','url:upgrade-report','https://example.invalid/report','升级合成报道',now()-interval '1 hour',${recent},${recent},'Synthetic confirmed body','ok','analyzed',${recent}),
+             ('upgrade-signal-item','upgrade-signal','x:upgrade-signal','https://x.com/fixture/status/1','Synthetic signal',now()-interval '1 hour',${recent},${recent},'Synthetic signal body','ok','analyzed',NULL),
+             ('upgrade-unknown','upgrade-editorial','url:upgrade-unknown','https://example.invalid/unknown','Synthetic unresolved body',now()-interval '1 hour',${recent},${recent},NULL,'unconfirmed','failed',NULL)`;
     await tx`UPDATE articles SET processing_attempts=3,processing_retry_at=now()+interval '1 hour' WHERE id='upgrade-unknown'`;
     for (const [key,status] of [['completed','completed'],['unknown','unknown'],['failed','failed']] as const) {
       const [receipt] = await tx`INSERT INTO receipts (logical_key,service,purpose,subject,status,attempts,origin,request,response,usage,cost,currency,cost_basis)
@@ -87,11 +89,11 @@ export async function seedUpgradeFixture(db: postgres.Sql): Promise<void> {
     await tx`INSERT INTO facts (id,public_id,story_id,title,version) VALUES (91001,'upgrade-fact',91001,'升级合成事实',7)`;
     await tx`INSERT INTO fact_articles (fact_id,article_id,role) VALUES (91001,'upgrade-report','primary')`;
     await tx`INSERT INTO story_signals (story_id,article_id,participant_key,source_id,kind,observed_at)
-      VALUES (91001,'upgrade-signal-item','author:fixture','upgrade-signal','signal',now())`;
+      VALUES (91001,'upgrade-signal-item','author:fixture','upgrade-signal','signal',${recent})`;
     await tx`INSERT INTO story_digests (story_id,version,digest,latest,context_article_ids) VALUES (91001,1,'Synthetic digest','Legacy digest latest',ARRAY['upgrade-report'])`;
     await tx`INSERT INTO publications (article_id,visibility,eligible,selected,title,summary,score,source_id,channel,first_party,url,published_at,discovered_at,timeline_at,sort_at,visible_after,story_id,fact_id)
-      VALUES ('upgrade-report','public',true,true,'升级合成报道','合成摘要',90,'upgrade-editorial','news',true,'https://example.invalid/report',now()-interval '1 hour',now(),now(),now(),now()-interval '1 minute',91001,91001),
-             ('upgrade-signal-item','public',false,false,'Synthetic signal',NULL,NULL,'upgrade-signal','x',false,'https://x.com/fixture/status/1',now()-interval '1 hour',now(),now(),now(),NULL,91001,NULL)`;
+      VALUES ('upgrade-report','public',true,true,'升级合成报道','合成摘要',90,'upgrade-editorial','news',true,'https://example.invalid/report',now()-interval '1 hour',${recent},${recent},${recent},now()-interval '1 minute',91001,91001),
+             ('upgrade-signal-item','public',false,false,'Synthetic signal',NULL,NULL,'upgrade-signal','x',false,'https://x.com/fixture/status/1',now()-interval '1 hour',${recent},${recent},${recent},NULL,91001,NULL)`;
     await tx`INSERT INTO embeddings (kind,ref_id,model,text_hash,vector) VALUES ('article','upgrade-report','synthetic-only','fixture-hash',ARRAY[1,0,0]::real[])`;
     await tx`INSERT INTO topics (slug,name,grp,tags,definition,position) VALUES ('upgrade-topic','Legacy topic','field',ARRAY['synthetic'],'Preserve topic data',1)`;
     await tx`INSERT INTO reports (kind,key,window_start,window_end,content,generated_at,model,origin)
@@ -99,7 +101,7 @@ export async function seedUpgradeFixture(db: postgres.Sql): Promise<void> {
     await tx`INSERT INTO selected_ledger (seq,article_id,op,payload) VALUES (91001,'upgrade-report','upsert','{"synthetic":true}')`;
     await tx`INSERT INTO lb_models (id,slug,name,provider_slug,input_price_usd,output_price_usd)
       VALUES ('upgrade-model','qwen-3-4-b','Operator-owned legacy name','operator-owned',1.25,2.5)`;
-    await tx`INSERT INTO monitor_posts (id,author,published_at,text,url) VALUES ('upgrade-monitor','synthetic',now(),'Synthetic monitor evidence','https://example.invalid/monitor')`;
+    await tx`INSERT INTO monitor_posts (id,author,published_at,text,url) VALUES ('upgrade-monitor','synthetic',${recent},'Synthetic monitor evidence','https://example.invalid/monitor')`;
     await tx`INSERT INTO monitor_state (key,value) VALUES ('upgrade-monitor-state','{"offset":123}')`;
     await tx`INSERT INTO settings (key,value,updated_by) VALUES ('leaderboard.fetch','{"enabled":false}','synthetic'),('models.monitor','{"model":"preserved"}','synthetic')`;
     await tx`UPDATE settings SET value='{"enabled":true,"windowHours":48,"maxRecords":2000,"participationModes":["editorial","hot_signal"]}' WHERE key='content.recent-processing'`;

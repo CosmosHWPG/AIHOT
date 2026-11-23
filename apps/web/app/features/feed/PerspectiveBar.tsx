@@ -1,4 +1,5 @@
-import { Link, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
+import { IntentLink } from "../../components/ui/IntentLink";
 import { isCrossPerspective, perspectiveFilters, PERSPECTIVES } from "@aihot/industry/perspectives";
 import { PillTabs } from "../../components/ui/Tabs";
 import { hrefWith } from "./Filters";
@@ -11,7 +12,7 @@ export function PerspectiveBar({ base, tag, topic }: { base: "/" | "/all"; tag: 
   return (
     <div className="mb-5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line-soft pb-3 pt-1">
       <div className="flex min-w-0 items-center gap-2.5">
-        <span className="shrink-0 text-[12px] text-ink-4">阅读视角</span>
+        <span className="shrink-0 text-ui-caption text-ink-4">阅读视角</span>
         <PillTabs
           label="领域视角"
           size="xs"
@@ -24,10 +25,10 @@ export function PerspectiveBar({ base, tag, topic }: { base: "/" | "/all"; tag: 
           ]}
         />
       </div>
-      {cross && <span className="text-[12px] text-ink-4">核心网 × AI</span>}
-      <Link to={perspective ? `/topics?focus=${perspective.key}` : "/topics"} prefetch="intent" className="text-[12px] text-ink-3 transition-colors hover:text-accent">
+      {cross && <span className="text-ui-caption text-ink-4">核心网 × AI</span>}
+      <IntentLink to={perspective ? `/topics?focus=${perspective.key}` : "/topics"} className="text-ui-caption text-ink-3 transition-colors hover:text-accent">
         {perspective ? `${perspective.label}主题` : "技术主题"} <span aria-hidden="true">→</span>
-      </Link>
+      </IntentLink>
     </div>
   );
 }

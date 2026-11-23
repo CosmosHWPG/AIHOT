@@ -1,5 +1,6 @@
 // Throwaway PostgreSQL and a local fake CLI only; no real session, X or model call.
 import { tag } from "./setup.ts";
+import { pollFor } from "./poll.ts";
 import assert from "node:assert/strict";
 import { after, before, beforeEach, test } from "node:test";
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync } from "node:fs";
@@ -19,6 +20,7 @@ const profile = `offline-bird-${T}`;
 const root = mkdtempSync(path.join(tmpdir(), "corescope-bird-collection-"));
 const fixtureFile = path.join(root, "fixture.json");
 const startedFile = path.join(root, "started.json");
+const releaseFile = path.join(root, "release");
 const names = ["BIRD_ENABLED", "BIRD_CLI_PATH", "BIRD_NODE_PATH", "BIRD_CREDENTIAL_MODE", "BIRD_ACCOUNT_PROFILE", "BIRD_AUTH_TOKEN", "BIRD_CT0", "BIRD_CLI_SHA256", "BIRD_EXPECTED_USER_ID", "BIRD_EXPECTED_USERNAME", "COLLECT_KINDS"];
 const original = Object.fromEntries(names.map(name => [name, process.env[name]]));
 const sourceConfig = { provider: "bird", query: `from:${handle} -filter:replies`, searchType: "Latest",
@@ -35,10 +37,14 @@ before(async () => {
   await getBoss(); // Each file now has an independent database; initialize the queue before fixture cleanup.
   mkdirSync(path.join(root, "dist"));
   writeFileSync(path.join(root, "package.json"), JSON.stringify({ name: "@steipete/bird", version: "0.8.0", type: "module" }));
-  writeFileSync(path.join(root, "dist/cli.js"), `import {readFileSync,writeFileSync} from 'node:fs';
+  writeFileSync(path.join(root, "dist/cli.js"), `import {existsSync,readFileSync,writeFileSync} from 'node:fs';
+import {pollFor} from ${JSON.stringify(new URL('./poll.ts', import.meta.url).href)};
 const data=JSON.parse(readFileSync(new URL('../fixture.json',import.meta.url),'utf8'));
 const command=process.argv.slice(2)[4];
-if(data.delayMs){writeFileSync(new URL('../started.json',import.meta.url),'started');await new Promise(r=>setTimeout(r,data.delayMs));}
+if(data.hold){
+  writeFileSync(new URL('../started.json',import.meta.url),'started');
+  await pollFor(() => existsSync(new URL('../release',import.meta.url)), 'Bird fixture release', 15000);
+}
 if(command==='user-tweets')process.stdout.write(JSON.stringify(data.timeline));
 else if(command==='read')process.stdout.write(JSON.stringify(data.read));
 else {process.stderr.write('offline unsupported command');process.exit(1);}`);
@@ -55,6 +61,7 @@ else {process.stderr.write('offline unsupported command');process.exit(1);}`);
 });
 beforeEach(async () => {
   if (existsSync(startedFile)) rmSync(startedFile);
+  if (existsSync(releaseFile)) rmSync(releaseFile);
   await sql`DELETE FROM receipts WHERE service='bird' AND subject LIKE ${`%${T}%`}`;
   await sql`DELETE FROM pgboss.job WHERE name='sources.fetch' AND data->>'sourceId'=${sourceId}`;
   await sql`UPDATE bird_profile_gate SET cooldown_until=NULL,lease_until=NULL,lease_owner=NULL WHERE profile=${profile}`;
@@ -115,12 +122,13 @@ test("a Bird-specific operation cannot switch to a paid provider while waiting f
 });
 
 test("a changed source route cannot acknowledge an old in-flight Bird page or overwrite its cursor", async () => {
-  const t = raw(); fixture({ timeline: { tweets: [t], nextCursor: null }, delayMs: 700 });
+  const t = raw(); fixture({ timeline: { tweets: [t], nextCursor: null }, hold: true });
   const running = collectSource(sourceId);
-  for (let i = 0; i < 60 && !existsSync(startedFile); i++) await new Promise(resolve => setTimeout(resolve, 25));
-  assert.ok(existsSync(startedFile));
-  const moved = { provider: "xquik", query: sourceConfig.query, searchType: "Latest" };
-  await sql`UPDATE sources SET config=${sql.json(moved)},cursor=${sql.json({ lastTweetId: "111", initializedAt: "2026-10-01T00:00:00Z" })} WHERE id=${sourceId}`;
+  try {
+    await pollFor(() => existsSync(startedFile), "Bird fixture to start");
+    const moved = { provider: "xquik", query: sourceConfig.query, searchType: "Latest" };
+    await sql`UPDATE sources SET config=${sql.json(moved)},cursor=${sql.json({ lastTweetId: "111", initializedAt: "2026-10-01T00:00:00Z" })} WHERE id=${sourceId}`;
+  } finally { writeFileSync(releaseFile, "release"); }
   const result = await running;
   assert.equal(result.status, "skipped"); assert.equal((await cursor())!.lastTweetId, "111");
   assert.equal((await sql`SELECT id FROM articles WHERE identity_key=${`x:${t.id}`}`).length, 0);

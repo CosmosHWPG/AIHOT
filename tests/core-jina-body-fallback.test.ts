@@ -1,6 +1,7 @@
 // Paid body answers settle with the material decision. Capacity waits and failed persistence
 // must retain pending/reusable evidence rather than buy another answer or confirm an empty body.
 import { gate, tag } from "./setup.ts";
+import { pollFor } from "./poll.ts";
 import assert from "node:assert/strict";
 import http from "node:http";
 import { after, before, test } from "node:test";
@@ -70,7 +71,7 @@ after(async () => {
 
 function reset(answer = markdown) { reply = answer; warning = ""; readerTitle = "Original article"; drop = false; hold = null; }
 async function material(extra: { url?: string; bodyText?: string; bodyHtml?: string; bodyStatus?: "pending"; excerpt?: string } = {}) {
-  const input = { sourceId, url: `${base}/${tag()}`, title: "Original article", publishedAt: new Date(), via: "fetch" as const, ...extra };
+  const input = { sourceId, url: `${base}/${tag()}`, title: "Original article", publishedAt: new Date(Date.now() - 60 * 60_000), via: "fetch" as const, ...extra };
   const { articleId } = await upsertMaterial(input);
   return { articleId, input };
 }
@@ -101,14 +102,10 @@ test("three Jina budget waits retain the pending body and prior extraction attem
     for (let attempt = 0; attempt < 3; attempt++) {
       const job = await queueProcessing(articleId, { step: "extract" });
       assert.ok(job);
-      const deadline = Date.now() + 12_000;
-      let output: { state?: string } | null = null;
-      for (;;) {
+      const output = await pollFor(async () => {
         const [row] = await sql`SELECT state,output FROM pgboss.job WHERE id=${job}`;
-        if (row?.state === "completed") { output = row.output; break; }
-        assert.ok(Date.now() < deadline, "Jina capacity wait did not finish");
-        await new Promise(resolve => setTimeout(resolve, 20));
-      }
+        return row?.state === "completed" ? row.output ?? {} : null;
+      }, "Jina capacity wait", 12_000);
       assert.equal(output?.state, "waiting");
       const saved = await state(articleId);
       assert.equal(saved.body_status, "pending");
@@ -306,7 +303,7 @@ for (const instruction of ["", "Prove your humanity.", "Complete the challenge."
 
 for (const host of ["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"]) test(`an exact YouTube consent title and cookies with both buttons reject ${host}'s interstitial`, async () => {
   reset(youtubeConsentMarkdown); readerTitle = "Before you continue to YouTube";
-  const url = `https://${host}/watch?v=${tag()}`;
+  const url = `https://${host}/resources/${tag()}`;
   await withStubbedPublicPage(url, async () => {
     const { articleId } = await material({ url });
     const beforeHits = hits;
@@ -321,10 +318,10 @@ for (const host of ["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be
   });
 });
 
-test("a real YouTube video description discussing cookie choices keeps its normal title and body", async () => {
+test("a non-player YouTube page discussing cookie choices keeps its normal title and body", async () => {
   reset("# Mobile app updates\n\nThe video discusses cookies and the Accept all and Reject all buttons.\n\n" + markdown);
   readerTitle = "Claude's new mobile app updates are here";
-  const url = `https://www.youtube.com/shorts/${tag()}`;
+  const url = `https://www.youtube.com/resources/${tag()}`;
   await withStubbedPublicPage(url, async () => {
     const { articleId } = await material({ url });
     assert.equal(await extractArticleBody(articleId, true), "ok");
@@ -334,7 +331,7 @@ test("a real YouTube video description discussing cookie choices keeps its norma
 
 for (const instructions of ["cookies and Accept all", "cookies and Reject all", "Accept all and Reject all"]) test(`the exact YouTube title without all consent markers is accepted: ${instructions}`, async () => {
   reset(instructions + "\n\n" + markdown); readerTitle = "Before you continue to YouTube";
-  const url = `https://www.youtube.com/shorts/${tag()}`;
+  const url = `https://www.youtube.com/resources/${tag()}`;
   await withStubbedPublicPage(url, async () => {
     const { articleId } = await material({ url });
     assert.equal(await extractArticleBody(articleId, true), "ok");
@@ -354,7 +351,7 @@ test("a different site discussing the exact YouTube consent page is not rejected
 
 test("YouTube consent markers quoted beyond the bounded beginning do not reject substantive content", async () => {
   reset(markdown.repeat(6) + "\n\n" + youtubeConsentMarkdown); readerTitle = "Before you continue to YouTube";
-  const url = `https://www.youtube.com/watch?v=${tag()}`;
+  const url = `https://www.youtube.com/resources/${tag()}`;
   await withStubbedPublicPage(url, async () => {
     const { articleId } = await material({ url });
     assert.equal(await extractArticleBody(articleId, true), "ok");
@@ -406,7 +403,7 @@ for (const kind of ["target-error", "verification", "reddit-verification"] as co
   await upsertMaterial({ ...input, bodyText: badText, bodyHtml: badHtml, bodyStatus: "pending" });
   assert.equal((await state(articleId)).revision, 2);
   const beforeHits = hits;
-  const cached = await jinaRead(input.url, { purpose: "body_fallback", subject: `article:${articleId}` });
+  const cached = await jinaRead(input.url, { purpose: "body_fallback", subject: `article:${articleId}`, acceptUnavailable: true });
   await completeReceipt(sql, cached.receiptId); // The legacy request was already paid and settled.
   assert.equal(await extractArticleBody(articleId, true), "unconfirmed");
   const saved = await state(articleId);

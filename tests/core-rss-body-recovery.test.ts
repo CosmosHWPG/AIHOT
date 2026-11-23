@@ -24,7 +24,16 @@ const sockets = new Set<Duplex>();
 const feedReplies = new Map<string, { xml: string; hold?: { entered: ReturnType<typeof gate<void>>; release: ReturnType<typeof gate<void>> } }>();
 let feedHits = 0, articleHits = 0, jinaHits = 0;
 const proxy = http.createServer(async (req, res) => {
-  const path = new URL(req.url ?? "/", "http://stub.example.com").pathname;
+  const url = new URL(req.url ?? "/", "http://stub.example.com");
+  const path = url.pathname;
+  if (path === "/dns-query") {
+    const host = url.searchParams.get("name");
+    const address = host === "feeds.example.com" ? "1.1.1.1" : host === "articles.example.com" ? "1.0.0.1" : null;
+    const answer = address && url.searchParams.get("type") === "A" ? [{ type: 1, data: address, TTL: 60 }] : [];
+    res.writeHead(200, { "content-type": "application/dns-json" });
+    res.end(JSON.stringify({ Status: address ? 0 : 3, Answer: answer }));
+    return;
+  }
   const feed = feedReplies.get(path);
   if (feed) {
     feedHits++;
@@ -39,8 +48,11 @@ const proxy = http.createServer(async (req, res) => {
 });
 proxy.on("connection", socket => { sockets.add(socket); socket.on("close", () => sockets.delete(socket)); });
 proxy.on("connect", (req, socket, head) => {
-  // The CONNECT target remains a structurally public URL, but is never dialled.
-  if (!/^(?:articles|feeds)\.example\.com:80$/.test(req.url ?? "")) { socket.destroy(); return; }
+  // The local proxy serves both DNS-over-HTTP and the checked, pinned addresses without dialing either.
+  if (!["resolver.example.com:80", "1.1.1.1:80", "1.0.0.1:80", "articles.example.com:80", "feeds.example.com:80"].includes(req.url ?? "")) {
+    socket.destroy();
+    return;
+  }
   socket.write("HTTP/1.1 200 Connection Established\r\n\r\n");
   if (head.length) socket.unshift(head);
   proxy.emit("connection", socket);
@@ -51,7 +63,7 @@ const jina = http.createServer((_req, res) => {
   res.writeHead(200, { "content-type": "text/plain" });
   res.end("Title: Unexpected paid fallback\nMarkdown Content:\n" + "A paid fallback must never run for this fixed article policy. ".repeat(12));
 });
-let originalProxy: string | null, originalPrivate: boolean;
+let originalProxy: string | null, originalPrivate: boolean, originalDnsUpstreams: string[];
 let savedPolicy: Array<{ value: unknown; updated_by: string | null; updated_at: Date }> = [];
 const hash = (text: string) => createHash("sha256").update(text).digest("hex");
 const articleHtml = "<p>Anthropic Claude developer security research covers a remote access trojan and its safeguards. "
@@ -59,8 +71,9 @@ const articleHtml = "<p>Anthropic Claude developer security research covers a re
 
 before(async () => {
   await Promise.all([proxy, jina].map(server => new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))));
-  originalProxy = config.egressProxyUrl; originalPrivate = config.allowPrivateNetworkFetch;
+  originalProxy = config.egressProxyUrl; originalPrivate = config.allowPrivateNetworkFetch; originalDnsUpstreams = config.egressDnsUpstreams;
   config.egressProxyUrl = `http://127.0.0.1:${(proxy.address() as { port: number }).port}`;
+  config.egressDnsUpstreams = ["http://resolver.example.com/dns-query"];
   config.allowPrivateNetworkFetch = true;
   process.env.JINA_BASE_URL = `http://127.0.0.1:${(jina.address() as { port: number }).port}`;
   process.env.JINA_API_KEY = "offline-rss-body-key";
@@ -87,7 +100,7 @@ after(async () => {
   for (const row of savedPolicy) await sql`INSERT INTO settings(key,value,updated_by,updated_at)
     VALUES(${RECENT_CONTENT_POLICY_KEY},${sql.json(row.value as never)},${row.updated_by},${row.updated_at})`;
   await stopBoss(); await closeDb();
-  config.egressProxyUrl = originalProxy; config.allowPrivateNetworkFetch = originalPrivate;
+  config.egressProxyUrl = originalProxy; config.allowPrivateNetworkFetch = originalPrivate; config.egressDnsUpstreams = originalDnsUpstreams;
   for (const socket of sockets) socket.destroy();
   await Promise.all([proxy, jina].map(server => new Promise<void>(resolve => server.close(() => resolve()))));
 });
@@ -216,9 +229,8 @@ for (const change of ["config", "revision", "url", "revoke"] as const) test(`a $
   const held = { entered: gate<void>(), release: gate<void>() };
   feedReplies.get(new URL(f.feedUrl).pathname)!.hold = held;
   const pending = extractArticleBody(f.id, true);
-  const deadline = setTimeout(() => held.entered.open(), 5000);
-  await held.entered.promise; clearTimeout(deadline);
   try {
+    await Promise.race([held.entered.promise, pending.then(() => { throw Error("No local RSS dispatch"); })]);
     if (change === "config") await sql`UPDATE sources SET config='{"changed":true}'::jsonb WHERE id=${sourceIds[0]!}`;
     if (change === "revision") await sql`UPDATE articles SET revision=2 WHERE id=${f.id}`;
     if (change === "url") await sql`UPDATE articles SET url=${f.url + '-new'} WHERE id=${f.id}`;

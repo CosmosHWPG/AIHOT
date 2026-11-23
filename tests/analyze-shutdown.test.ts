@@ -3,7 +3,7 @@
 import { gate, Reply, stub, tag } from "./setup.ts";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { setTimeout as delay } from "node:timers/promises";
+import { pollFor } from "./poll.ts";
 import { after, before, test } from "node:test";
 import { sql, closeDb } from "@aihot/backend/db";
 import { getBoss, QUEUES, stopBoss } from "@aihot/backend/jobs/queue";
@@ -86,10 +86,7 @@ function requestShutdown(child: ReturnType<typeof spawn>) {
   if (process.platform === "win32") child.send({ action: "shutdown" });
   else child.kill("SIGTERM");
 }
-async function until(check: () => Promise<boolean>, label: string) {
-  const deadline = Date.now() + 12_000;
-  while (!(await check())) { if (Date.now() > deadline) assert.fail(`timeout waiting for ${label}`); await delay(20); }
-}
+const until = (check: () => Promise<boolean>, label: string) => pollFor(check, label, 12_000);
 
 before(async () => {
   await sql`INSERT INTO sources (id,name,kind,tier,participation_mode,next_fetch_at)
@@ -109,7 +106,7 @@ test("SIGTERM during the final paid writing call still commits the complete anal
   await boss.createQueue(queue, { policy: "short", retryLimit: 4, retryDelay: 1, expireInSeconds: 120 });
   const { articleId } = await upsertMaterial({ sourceId: SOURCE, url: `https://example.org/analyze-stop-${T}/final`, title: `Final model release ${T}`,
     bodyText: `A lab released a new AI model with benchmarks and prices. ${T} ` + "The release explains model capabilities and evaluation results. ".repeat(10),
-    bodyStatus: "ok", language: "en", via: "fetch", publishedAt: new Date() });
+    bodyStatus: "ok", language: "en", via: "fetch", publishedAt: new Date(Date.now() - 1_000) });
   const jobId = await boss.send(queue, { articleId }, { singletonKey: articleId });
   const running = worker(queue);
   await Promise.race([Promise.all([running.ready, active.writingAsked!.promise]), running.done.then(() => assert.fail("worker exited before writing"))]);
@@ -136,7 +133,7 @@ for (const failScore of [false, true]) test(`SIGTERM during ${failScore ? "faile
   await boss.createQueue(queue, { policy: "short", retryLimit: 4, retryDelay: 1, expireInSeconds: 120 });
   const { articleId } = await upsertMaterial({ sourceId: SOURCE, url: `https://example.org/analyze-stop-${T}/${failScore}`, title: `A new model released ${T} ${failScore}`,
     bodyText: `A lab released a new AI model with benchmarks and prices. ${T} ${failScore} ` + "The release explains model capabilities and evaluation results. ".repeat(10),
-    bodyStatus: "ok", language: "en", via: "fetch", publishedAt: new Date() });
+    bodyStatus: "ok", language: "en", via: "fetch", publishedAt: new Date(Date.now() - 1_000) });
   await sql`UPDATE articles SET processing_attempts=2,processing_error='prior temporary failure',processing_queued_at=now() WHERE id=${articleId}`;
   const jobId = await boss.send(queue, { articleId }, { singletonKey: articleId });
   const first = worker(queue);

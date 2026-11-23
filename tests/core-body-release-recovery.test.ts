@@ -46,7 +46,7 @@ async function fixture(name: string, options: { state?: string; body?: string; r
   const url = 'https://www.example.com/' + id;
   await sql`INSERT INTO articles(id,source_id,identity_key,url,title,published_at,discovered_at,timeline_at,body_status,
     processing_state,processing_attempts,processing_attempt_tag,processing_error)
-    VALUES(${id},${source},${id},${url},'Body release fixture',now()-${options.minutes ?? 1}*interval '1 minute',now(),now(),
+    VALUES(${id},${source},${id},${url},'Body release fixture',now()-${options.minutes ?? 1}*interval '1 minute',now()-interval '1 second',now()-interval '1 second',
       ${options.body ?? 'unconfirmed'},${options.state ?? 'analyzed'},2,'original-evaluation','receipt outcome unknown')`;
   const [r] = await sql<{ id: number }[]>`INSERT INTO receipts(logical_key,service,purpose,subject,status,attempts,request,created_at,updated_at)
     VALUES(${id},${options.service ?? 'jina'},'body_fallback',${'article:' + id},${options.receiptState ?? 'unknown'},1,

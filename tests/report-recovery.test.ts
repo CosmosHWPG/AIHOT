@@ -10,9 +10,9 @@ import { composeDaily, composeDueReports, composeWeekly, composeMonthly } from "
 
 const T = tag();
 const SOURCE = `report-recovery-${T}`;
-const answer = async (user: string) => ({ title: user.slice(0, 100), leadParagraph: "导语", highlights: [1], headline: "本期进展", overview: "总述", themes: [{ heading: "主题", summary: "摘要", refs: [1] }] });
-const provider = await stub(async (_hit, request) => ({
-  choices: [{ message: { content: JSON.stringify(await answer(JSON.parse(request.body).messages.at(-1).content)) } }],
+const writtenOverview = "本期汇总已核实的技术进展。";
+const provider = await stub(() => ({
+  choices: [{ message: { content: JSON.stringify({ overview: writtenOverview, sections: {} }) } }],
 }));
 process.env.DEEPSEEK_BASE_URL = `${provider.url}/v1`;
 process.env.DEEPSEEK_API_KEY = "test-key";
@@ -85,7 +85,9 @@ test("report publication and its receipt commit together and recovery reuses the
   const calls = provider.hits();
   await composeWeekly("2024-W18");
   assert.equal(provider.hits(), calls);
-  assert.equal((await report("weekly", "2024-W18")).revision, 1);
+  const issue = await report("weekly", "2024-W18");
+  assert.equal(issue.revision, 1);
+  assert.equal(issue.content.overview, writtenOverview);
   assert.equal((await sql`SELECT status FROM receipts WHERE subject = 'report:weekly:2024-W18'`)[0]!.status, "completed");
 });
 

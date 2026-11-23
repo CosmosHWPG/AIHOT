@@ -59,15 +59,15 @@ function BudgetRow({ b }: { b: AdminSettings["budgets"][number] }) {
   const saving = pending === "budget";
   return (
     <tr className="border-b border-line/70 last:border-0">
-      <td className="px-3 py-2 font-mono text-[12.5px]">{b.service}</td>
+      <td className="px-3 py-2 font-mono text-ui-caption-lg">{b.service}</td>
       <td className="px-3 py-2">
-        <label className="flex items-center gap-2 whitespace-nowrap text-[12.5px] text-ink">
+        <label className="flex items-center gap-2 whitespace-nowrap text-ui-caption-lg text-ink">
           <input type="checkbox" checked={v.enabled} disabled={saving} className="size-4 accent-accent"
             aria-label={`${b.service} 启用额度限制`}
             onChange={(event) => setV({ ...v, enabled: event.target.checked })} />
           启用额度限制
         </label>
-        <div className="mt-1 max-w-52 text-[11.5px] text-ink-4">
+        <div className="mt-1 max-w-52 text-ui-caption-md text-ink-4">
           {v.enabled ? "超过上限后等待窗口恢复；0 会暂停服务。" : "请求照常计费，使用次数继续记录。"}
         </div>
       </td>
@@ -140,11 +140,11 @@ export default function SettingsAdmin({ loaderData: s }: Route.ComponentProps) {
         </Card>
       </div>
       <Card className="mt-5" title="付费请求预算" right={<span>已用：滚动 1 小时 / 滚动 24 小时</span>} pad={false}>
-        <p className="border-b border-line px-4 py-3 text-[12.5px] text-ink-3">
+        <p className="border-b border-line px-4 py-3 text-ui-caption-lg text-ink-3">
           各服务独立设置。关闭额度限制后继续记录使用次数，请求仍会产生费用；保留的上限在重新启用后生效。
         </p>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1024px] text-[13px]">
+          <table className="w-full min-w-[1024px] text-ui-label">
             <thead>
               <tr className="border-b border-line text-left text-ui-caption text-ink-3">
                 <th className="px-3 py-2 font-medium">服务</th>

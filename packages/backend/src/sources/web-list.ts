@@ -1,4 +1,5 @@
 // Web list pages: HTML with selectors, Markdown through Jina Reader, and dated changelog sections.
+import { randomUUID } from "node:crypto";
 import * as cheerio from "cheerio";
 import { marked } from "marked";
 import { sql } from "../db.ts";
@@ -74,18 +75,24 @@ function absolute(href: string | undefined, base: string): string | null {
   }
 }
 
-async function fetchListingText(source: SourceRow): Promise<{ text: string; viaJina: boolean; base: string; round?: string }> {
+async function fetchListingText(source: SourceRow, preview = false): Promise<{ text: string; viaJina: boolean; base: string; round?: string }> {
   const url = String(source.config.url ?? "");
   if (!url) throw new FetchError("url missing");
   if (url.startsWith(JINA_PREFIX)) {
     const target = url.slice(JINA_PREFIX.length);
-    const pending = source.cursor?.jinaListingRound;
-    const round = typeof pending === "string" ? pending : new Date().toISOString();
-    if (round !== pending) await sql`UPDATE sources SET cursor=coalesce(cursor,'{}'::jsonb)||jsonb_build_object('jinaListingRound',${round}::text) WHERE id=${source.id}`;
+    let round: string | undefined;
+    if (!preview) {
+      const [row] = await sql<{ round: string }[]>`UPDATE sources SET cursor=coalesce(cursor,'{}'::jsonb)||
+        jsonb_build_object('jinaListingRound',coalesce(cursor->>'jinaListingRound',${randomUUID()}::text))
+        WHERE id=${source.id} AND config=${sql.json(source.config)} RETURNING cursor->>'jinaListingRound' AS round`;
+      if (!row) throw new FetchError("source changed before listing read");
+      round = row.round;
+    }
     // A listing parsed with selectors asks Jina for the rendered HTML (a site our resolver cannot reach
     // still gets its dates and titles from the markup); otherwise Jina's Markdown.
     const format = source.config.parseMode === "html" ? "html" : undefined;
-    const page = await jinaRead(target, { purpose: "source_listing", subject: `source:${source.id}`, cacheToleranceSeconds: source.config.cacheToleranceSeconds, format, round });
+    const page = await jinaRead(target, { purpose: "source_listing", subject: `source:${source.id}`,
+      cacheToleranceSeconds: source.config.cacheToleranceSeconds, format, round, perRead: preview });
     return { text: page.markdown, viaJina: true, base: source.config.baseUrl ?? target, round };
   }
   const res = requireOk(await fetchListing(url, { headers: { accept: "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8", ...languageHeaders(source.config.acceptLanguage) }, timeoutMs: 25_000 }));
@@ -422,7 +429,7 @@ async function fromMimoHome(html: string, base: string, source: SourceRow): Prom
 }
 
 export async function fetchWebList(source: SourceRow, opts: { preview?: boolean } = {}): Promise<Candidate[]> {
-  const { text, viaJina, base, round } = await fetchListingText(source);
+  const { text, viaJina, base, round } = await fetchListingText(source, opts.preview);
   const mode = source.config.adapter ?? source.config.parseMode ?? (viaJina ? "markdown" : "html");
   try {
   let out: Candidate[];
@@ -435,7 +442,6 @@ export async function fetchWebList(source: SourceRow, opts: { preview?: boolean 
   else if (mode === "intercom_changelog") out = fromIntercomChangelog(text, base, source);
   else out = fromHtml(text, base, source);
   if (out.length === 0) throw new FetchError(`no items matched (${mode})`);
-  if (round && opts.preview) await sql`UPDATE sources SET cursor=cursor-'jinaListingRound' WHERE id=${source.id} AND cursor->>'jinaListingRound'=${round}`;
   return out;
   } catch(error) {
     if (round) await sql`UPDATE sources SET cursor=cursor-'jinaListingRound' WHERE id=${source.id} AND cursor->>'jinaListingRound'=${round}`;

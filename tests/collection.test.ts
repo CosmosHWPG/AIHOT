@@ -100,7 +100,7 @@ test("finishing an in-flight collection cannot overwrite a source's paused state
       await entered.promise;
       await sql`UPDATE sources SET enabled=false,health='paused' WHERE id=${id}`;
       release.open();
-      assert.equal((await collecting).status,failed?'failed':'ok');
+      assert.equal((await collecting).status,failed?'failed':'skipped');
       assert.equal((await sql`SELECT health FROM sources WHERE id=${id}`)[0]!.health,'paused');
     } finally {release.open();heldResponse=null;}
   }

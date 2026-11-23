@@ -11,8 +11,10 @@ test("native IPC shutdown waits for the application's graceful handler and forwa
   const entry = path.join(directory, "app.mjs");
   const marker = path.join(directory, "closed.json");
   await writeFile(entry, `import { writeFile } from "node:fs/promises";
+import { once } from "node:events";
 process.on("SIGTERM", async () => {
-  await new Promise((resolve) => setTimeout(resolve, 50));
+  process.send({ draining: true });
+  await once(process, 'message');
   await writeFile(process.argv[2], JSON.stringify({ stopped: true, argument: process.argv[3] }));
   process.exit(0);
 });
@@ -27,7 +29,11 @@ setInterval(() => {}, 1000);
     assert.equal(message.ready, true);
     assert.equal(message.pid, child.pid);
     const exited = once(child, "exit");
+    const draining = once(child, "message");
     child.send({ action: "shutdown" });
+    assert.equal((await draining)[0].draining, true);
+    assert.equal(child.exitCode, null);
+    child.send({ action: "finish-fixture-drain" });
     const [code, signal] = await exited;
     assert.equal(code, 0);
     assert.equal(signal, null);

@@ -62,7 +62,7 @@ after(async () => {
 function reset(answer = profileMarkdown) { reply = answer; warning = ""; hold = null; }
 async function material() {
   const input = { sourceId, url: `${base}/${tag()}`, title: "Original status about a code editor extension",
-    excerpt: "The publisher's original partial status remains evidence.", publishedAt: new Date(), via: "fetch" as const };
+    excerpt: "The publisher's original partial status remains evidence.", publishedAt: new Date(Date.now() - 60 * 60_000), via: "fetch" as const };
   const { articleId } = await upsertMaterial(input);
   ids.push(articleId);
   return { articleId, input };

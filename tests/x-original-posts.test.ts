@@ -61,7 +61,7 @@ test("empty and link-only posts preserve originals without calling either writer
     assert.equal(analysis!.relevance, "pass");
     await publishArticle(id, released());
     const [p] = await sql`SELECT eligible,summary,title,body_mode FROM publications WHERE article_id=${id}`;
-    assert.equal(p!.eligible, true, `${name}: original content stays in the public pool`);
+    assert.equal(p!.eligible, !!text!.trim(), `${name}: the pool requires a summary`);
     assert.equal(p!.summary, text!.trim() ? text : null);
     assert.equal(p!.body_mode, "full", "a source's full-text permission includes confirmed post media");
     const detail = (await app.inject({ method: "GET", url: `/api/site/items/${id}` })).json();
@@ -88,19 +88,16 @@ test("rebuilding an image-only post replaces historical model replies across pub
   assert.equal(detail.x.media.length, 1);
   assert.equal(detail.links.original, url);
   const feed = (await app.inject({ method: "GET", url: "/api/site/pool" })).json();
-  assert.ok(JSON.stringify(feed).includes(id), "image-only post stays in the website feed");
+  assert.ok(!JSON.stringify(feed).includes(id), "a post without a summary stays out of the website feed");
   for (const path of ["/api/v1/items?mode=all&window=7d&limit=100", `/items/${id}/markdown`, "/feed/full.xml"]) {
     const res = await app.inject({ method: "GET", url: path });
     assert.equal(res.statusCode, 200, path);
-    assert.ok(res.body.includes(url), `${path}: original address survives`);
     assert.ok(!/请补充正文|错误译文|没有推文文字内容/.test(res.body), `${path}: no model reply survives`);
     if (path.endsWith("markdown")) {
+      assert.ok(res.body.includes(url), "the direct export preserves the original address");
       assert.ok(res.body.includes("screenshot.png"), "the image survives export");
       assert.match(res.body, /!\[\]\(https?:\/\//, "the downloaded image link works outside the website");
-    }
-    if (path === "/feed/full.xml") {
-      assert.ok(res.body.includes("content:encoded") && res.body.includes("screenshot.png"), "the licensed image survives full RSS");
-    }
+    } else assert.ok(!res.body.includes(url), `${path}: a post without a summary is not listed`);
   }
 });
 
