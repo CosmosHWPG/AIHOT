@@ -12,6 +12,7 @@ import { bindHistoricXProviders, routeProvider, transitionXCursor } from "../sou
 import { credential } from "../config.ts";
 import { groupingReset } from "../content/provenance.ts";
 import { sql, type Db } from "../db.ts";
+import { resumeSourceArticles } from "../jobs/content.ts";
 import { enqueue, QUEUES } from "../jobs/queue.ts";
 import { republishKey, requestRepublish } from "../jobs/publication.ts";
 import { normalizeUrl } from "../lib/url.ts";
@@ -238,12 +239,13 @@ async function saveSource(id: string, patch: z.infer<typeof EDITABLE>, input: { 
       last_error = CASE WHEN ${changedRoute} THEN NULL ELSE last_error END,
       next_fetch_at = CASE WHEN ${patch.enabled ?? null}::boolean IS TRUE OR ${kindChanged || changedRoute} AND enabled THEN now() ELSE next_fetch_at END
       WHERE id = ${id} RETURNING *`;
-    if (before.participation_mode !== "editorial" && patch.participation_mode === "editorial") {
+    if (before.participation_mode !== "editorial" && after!.participation_mode === "editorial") {
       // A heat-only decision cannot admit the first editorial judgement to selection. Previously
-      // judged revisions remain reusable; this mode edit still does not buy analysis for old material.
+      // judged revisions remain reusable. Unfinished articles resume through normal processing.
       await tx`UPDATE articles a SET ${groupingReset()}
         WHERE a.source_id = ${id} AND NOT EXISTS (
           SELECT 1 FROM analyses an WHERE an.article_id = a.id AND an.input_revision = a.revision AND an.relevance IS NOT NULL)`;
+      await resumeSourceArticles(id, tx);
     }
     await audit(actor, "source.update", `source:${id}`, input.reason ?? null,
       { ...Object.fromEntries(keys.map((k) => [k, before[k]])), ...(kindChanged ? { cursor: before.cursor } : {}) },

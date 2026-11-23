@@ -80,7 +80,7 @@ export async function resumeReleasedBodyHandoffs(): Promise<{ resumed: number }>
       AND (a.processing_retry_at IS NULL OR a.processing_retry_at<=now())
       AND s.enabled AND s.participation_mode='editorial' AND s.kind NOT IN ('x_search','mp_account')
       AND a.x_post->>'tweetId' IS NULL
-      AND (coalesce(NOT(r.request?'url'),true) OR (jsonb_typeof(r.request->'url')='string' AND r.request->>'url'=a.url))
+      AND jsonb_typeof(r.request->'url')='string' AND r.request->>'url'=a.url
       AND a.id=ANY(${scope.articleIds}::text[])
       AND NOT EXISTS(SELECT 1 FROM active_articles j WHERE j.id=a.id)
       AND NOT EXISTS(SELECT 1 FROM unresolved u WHERE u.article_id=a.id OR (u.service='jina' AND u.url=a.url))

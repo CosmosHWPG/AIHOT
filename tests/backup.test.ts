@@ -5,10 +5,11 @@ import { pollFor } from "./poll.ts";
 // reports tar's own words, not the command line in front of them.
 import { tag } from "./setup.ts";
 import assert from "node:assert/strict";
-import { execFile, spawn } from "node:child_process";
+import childProcess, { execFile, spawn } from "node:child_process";
 import { once } from "node:events";
 import { createHash, randomBytes } from "node:crypto";
-import { chmod, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import fs, { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { syncBuiltinESMExports } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { after, beforeEach, test } from "node:test";
@@ -16,10 +17,22 @@ import { promisify } from "node:util";
 import sharp from "sharp";
 import { config } from "@aihot/backend/config";
 import { closeDb, sql } from "@aihot/backend/db";
-import { runBackup } from "@aihot/backend/operations/backup";
 import { submitFeedback } from "@aihot/backend/operations/feedback";
 
 const run = promisify(execFile);
+const originalExecFile = execFile;
+const commandName = (file: string) => path.basename(file, ".exe");
+type BackupCommand = (file: string, args: string[], options?: childProcess.ExecFileOptions) => ReturnType<typeof run>;
+let runBackupCommand: BackupCommand = run;
+// Capture a real executor with a controllable subprocess boundary, without shell scripts on PATH.
+childProcess.execFile = Object.assign(originalExecFile.bind(childProcess), {
+  [promisify.custom]: (file: string, args: string[], options?: childProcess.ExecFileOptions) => runBackupCommand(file, args, options),
+});
+syncBuiltinESMExports();
+const { runBackup } = await import("@aihot/backend/operations/backup").finally(() => {
+  childProcess.execFile = originalExecFile;
+  syncBuiltinESMExports();
+});
 const T = tag();
 const originalDataDir = config.dataDir;
 const originalFetch = globalThis.fetch;
@@ -72,7 +85,7 @@ async function extractSavedFiles() {
   await writeFile(archivePath, archive);
   const data = path.join(destination, "data");
   await mkdir(data);
-  await run("tar", ["-xzf", archivePath, "-C", data]);
+  await run("tar", ["-xzf", path.basename(archivePath), "-C", path.basename(data)], { cwd: destination });
   return { destination, data };
 }
 
@@ -172,21 +185,27 @@ for (const dirs of [[], ["uploads", "feedback-screenshots"], ["uploads/empty/nes
   });
 }
 
-test("an unreadable upload directory cannot become a successful empty backup", async () => {
+test("an invalid upload root cannot become a successful empty backup", async () => {
   assert.equal((await runBackup(NOW)).uploaded, true);
   const shipped = objects.size;
-  await symlink("uploads", path.join(config.dataDir, "uploads")); // ELOOP, without depending on root/permission behavior
-  await assert.rejects(runBackup(new Date("2026-11-01T04:01:00Z")), /ELOOP/);
-  assert.equal(objects.size, shipped + 1, "ship the new database without an empty replacement for unreadable files");
+  await save("uploads");
+  await assert.rejects(runBackup(new Date("2026-11-01T04:01:00Z")), /uploads path is not a directory/);
+  assert.equal(objects.size, shipped + 1, "ship the new database without an empty replacement for the attachments");
   const [after] = await sql`SELECT value FROM settings WHERE key = 'backup.last'`;
-  assert.equal(after!.value.uploaded, false, "unreadable attachments cannot count as a successful backup");
-  assert.match(after!.value.filesError, /ELOOP/);
+  assert.equal(after!.value.uploaded, false, "an invalid attachment path cannot count as a successful backup");
+  assert.match(after!.value.filesError, /uploads path is not a directory/);
 });
 
-test("unreadable nested directories still ship the database and fail the attachment backup", { skip: process.getuid?.() === 0 }, async () => {
+test("unreadable nested directories still ship the database and fail the attachment backup", async (t) => {
   await save("uploads/restricted/file.txt", Buffer.from("fixture"));
-  const directory = path.join(config.dataDir, "uploads/restricted");
-  await chmod(directory, 0);
+  const uploads = path.join(config.dataDir, "uploads");
+  const read = fs.readdir;
+  // Windows chmod cannot make the directory unreadable, and CI can run as root.
+  const mock = t.mock.method(fs, "readdir", async (dir: string, options?: { recursive?: boolean }) => {
+    if (dir === uploads && options?.recursive) throw new Error("EACCES: permission denied reading uploads/restricted");
+    return read(dir, options);
+  });
+  syncBuiltinESMExports();
   try {
     await assert.rejects(runBackup(NOW), /database backed up, but the file archive failed:.*EACCES/);
     assert.equal(objects.size, 1);
@@ -194,38 +213,26 @@ test("unreadable nested directories still ship the database and fail the attachm
     const [row] = await sql`SELECT value FROM settings WHERE key = 'backup.last'`;
     assert.equal(row!.value.uploaded, false);
     assert.match(row!.value.filesError, /EACCES/);
-  } finally { await chmod(directory, 0o700); }
+  } finally { mock.mock.restore(); syncBuiltinESMExports(); }
 });
 
-async function withPackingFailures(failures: number, action: (count: () => Promise<number>) => Promise<void>) {
-  const bin = path.join(config.dataDir, "test-bin");
-  await mkdir(bin);
-  const countFile = path.join(bin, "count");
-  const realTar = (await run("sh", ["-c", "command -v tar"])).stdout.trim();
-  assert.ok(path.isAbsolute(realTar));
-  // Only this process's command lookup changes: restoring and the successful attempts run the real tar.
-  await writeFile(path.join(bin, "tar"), `#!/bin/sh
-n=0
-if [ -f "$BACKUP_TEST_COUNT" ]; then n=$(cat "$BACKUP_TEST_COUNT"); fi
-n=$((n+1))
-printf '%s' "$n" > "$BACKUP_TEST_COUNT"
-if [ "$n" -le "$BACKUP_TEST_FAILURES" ]; then echo 'fictional packing failure' >&2; exit 2; fi
-exec "$BACKUP_TEST_TAR" "$@"
-`, { mode: 0o755 });
-  const replacement = { PATH: `${bin}:${process.env.PATH}`, BACKUP_TEST_COUNT: countFile, BACKUP_TEST_FAILURES: String(failures), BACKUP_TEST_TAR: realTar };
-  const previous = Object.fromEntries(Object.keys(replacement).map(key => [key, process.env[key]]));
-  Object.assign(process.env, replacement);
-  try { await action(async () => Number(await readFile(countFile, "utf8"))); }
-  finally {
-    for (const [key, value] of Object.entries(previous)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }
-  }
+async function withPackingFailures(failures: number, action: (count: () => number) => Promise<void>) {
+  let count = 0;
+  runBackupCommand = (file, args, options) => {
+    if (commandName(file) === "tar" && ++count <= failures) {
+      return run(process.execPath, ["--eval", "console.error('fictional packing failure'); process.exit(2)"], options);
+    }
+    return run(file, args, options);
+  };
+  try { await action(() => count); }
+  finally { runBackupCommand = run; }
 }
 
 test("packing retries once and a successful retry preserves the screenshot", async () => {
   await save("feedback-screenshots/retry.png");
   await withPackingFailures(1, async count => {
     assert.equal((await runBackup(NOW)).uploaded, true);
-    assert.equal(await count(), 2);
+    assert.equal(count(), 2);
   });
   const { data } = await extractSavedFiles();
   assert.deepEqual(await readFile(path.join(data, "feedback-screenshots/retry.png")), PNG);
@@ -235,7 +242,7 @@ test("persistent packing failure still sends the database and reports incomplete
   await save("feedback-screenshots/failure.png");
   await withPackingFailures(2, async count => {
     await assert.rejects(runBackup(NOW), /database backed up, but the file archive failed: fictional packing failure/);
-    assert.equal(await count(), 2);
+    assert.equal(count(), 2);
   });
   assert.equal(objects.size, 1);
   assert.ok([...objects.keys()].every(key => key.endsWith(".dump")));
@@ -255,22 +262,20 @@ test("local retention keeps three dump/archive pairs without deleting source att
 });
 
 test("a failed database dump keeps connection credentials out of argv and the reported error", async () => {
-  const bin = path.join(config.dataDir, "dump-bin");
-  await mkdir(bin);
-  const captured = path.join(bin, "invocation.json");
-  await writeFile(path.join(bin, "pg_dump"), `#!${process.execPath}
-import { writeFileSync } from "node:fs";
-writeFileSync(${JSON.stringify(captured)}, JSON.stringify({ args: process.argv.slice(2), user: process.env.PGUSER, password: process.env.PGPASSWORD }));
-console.error("fictional dump refusal");
-process.exit(2);
-`, { mode: 0o755 });
   const originalUrl = config.databaseUrl;
-  const originalPath = process.env.PATH;
   const connection = new URL(originalUrl);
   connection.username = "fictional-backup-user";
   connection.password = "fictional-p@ss:word";
   config.databaseUrl = connection.href;
-  process.env.PATH = `${bin}:${originalPath}`;
+  let invocations = 0;
+  runBackupCommand = (file, args, options) => {
+    if (commandName(file) !== "pg_dump") return run(file, args, options);
+    invocations += 1;
+    assert.doesNotMatch(JSON.stringify(args), /fictional-backup-user|fictional-p|p%40ss|word@/);
+    assert.equal(options?.env?.PGUSER, "fictional-backup-user");
+    assert.equal(options?.env?.PGPASSWORD, "fictional-p@ss:word");
+    return run(process.execPath, ["--eval", "console.error('fictional dump refusal'); process.exit(2)", "--", ...args], options);
+  };
   try {
     for (const queryCredentials of [false, true]) {
       if (queryCredentials) {
@@ -284,15 +289,12 @@ process.exit(2);
         assert.doesNotMatch(error.message, /fictional-backup-user|fictional-p|p%40ss|word@/);
         return true;
       });
-      const invocation = JSON.parse(await readFile(captured, "utf8"));
-      assert.doesNotMatch(JSON.stringify(invocation.args), /fictional-backup-user|fictional-p|p%40ss|word@/);
-      assert.equal(invocation.user, "fictional-backup-user");
-      assert.equal(invocation.password, "fictional-p@ss:word");
     }
+    assert.equal(invocations, 2);
     assert.equal(objects.size, 0);
   } finally {
     config.databaseUrl = originalUrl;
-    process.env.PATH = originalPath;
+    runBackupCommand = run;
   }
 });
 
@@ -301,20 +303,27 @@ process.exit(2);
 // Killing every process with SIGTERM used to interrupt pg_dump (and make tar need a second attempt).
 for (const phase of ["pg_dump", "tar"] as const) {
   test(`worker stop drains a real ${phase} without terminating or restarting it`, { timeout: 30_000 }, async () => {
-    const locked = await sql.reserve();
-    await sql`CREATE TABLE IF NOT EXISTS backup_shutdown_probe (id integer)`;
-    await locked`BEGIN`;
-    if (phase === "pg_dump") await locked`LOCK TABLE backup_shutdown_probe IN ACCESS EXCLUSIVE MODE`;
-    if (phase === "tar") await save("uploads/synthetic.bin", randomBytes(16 * 1024 * 1024));
-    const messages: Array<{ cmd?: string; pid?: number; completed?: boolean; error?: string }> = [];
+    if (phase === "pg_dump") await sql`CREATE TABLE IF NOT EXISTS backup_shutdown_probe (id integer)`;
+    else await save("uploads/synthetic.bin", randomBytes(16 * 1024 * 1024));
+    const windows = process.platform === "win32";
+    const messages: Array<{ cmd?: string; pid?: number; ready?: boolean; stopping?: boolean; completed?: boolean; error?: string }> = [];
     const child = spawn(process.execPath, ["--input-type=module", "--eval", `
       import assert from "node:assert/strict";
       import cp from "node:child_process";
       import { syncBuiltinESMExports } from "node:module";
+      import path from "node:path";
       const exec = cp.execFile;
-      cp.execFile = (...args) => {
-        const child = exec(...args);
-        process.send({ cmd: args[0], pid: child.pid });
+      const tarRelease = Promise.withResolvers();
+      cp.execFile = (file, args, options, callback) => {
+        if (typeof options === "function") { callback = options; options = undefined; }
+        const cmd = path.basename(file, ".exe");
+        const child = exec(file, args, options, (...result) => {
+          if (process.platform === "win32" && cmd === "tar") {
+            // Windows has no SIGSTOP. Run the real archive and hold its result at the worker boundary.
+            void tarRelease.promise.then(() => callback(...result));
+          } else callback(...result);
+        });
+        process.send({ cmd, pid: child.pid });
         return child;
       };
       syncBuiltinESMExports();
@@ -327,15 +336,34 @@ for (const phase of ["pg_dump", "tar"] as const) {
         return new Response(null, { status: 200 });
       };
       const boss = await getBoss();
-      const name = "test.backup.shutdown";
+      const name = process.env.BACKUP_TEST_QUEUE;
       await boss.createQueue(name, { retryLimit: 0 });
       await boss.work(name, { pollingIntervalSeconds: 0.5 }, async () => {
         try { await runBackup(); process.send({ completed: true }); }
         catch (error) { process.send({ error: error.message }); throw error; }
       });
-      process.once("SIGTERM", async () => { await stopBoss(); await closeDb(); process.exit(0); });
-      await boss.send(name, {});
-    `], { cwd: path.resolve(import.meta.dirname, ".."), env: { ...process.env, AIHOT_DATA_DIR: config.dataDir }, detached: true, stdio: ["ignore", "ignore", "pipe", "ipc"] });
+      process.once("SIGTERM", async () => {
+        process.send({ stopping: true });
+        await stopBoss();
+        await closeDb();
+        process.exit(0);
+      });
+      if (process.platform === "win32") {
+        const { childShutdownController } = await import("./scripts/corescope-runtime-child.ts");
+        const shutdown = childShutdownController({
+          hasHandler: () => process.listenerCount("SIGTERM") > 0,
+          signal: () => process.emit("SIGTERM", "SIGTERM"),
+          exit: (code) => process.exit(code),
+        });
+        shutdown.loaded();
+        process.on("message", (message) => {
+          if (message?.action === "shutdown") shutdown.request();
+          if (message?.action === "release-tar") tarRelease.resolve();
+        });
+      }
+      process.once("message", async () => { await boss.send(name, {}); });
+      process.send({ ready: true });
+    `], { cwd: path.resolve(import.meta.dirname, ".."), env: { ...process.env, AIHOT_DATA_DIR: config.dataDir, BACKUP_TEST_QUEUE: `test.backup.shutdown.${phase}` }, detached: true, windowsHide: true, stdio: ["ignore", "ignore", "pipe", "ipc"] });
     let stderr = "";
     child.stderr!.on("data", chunk => { stderr += String(chunk); });
     child.on("message", message => messages.push(message as typeof messages[number]));
@@ -347,28 +375,47 @@ for (const phase of ["pg_dump", "tar"] as const) {
       }, "backup phase", 15_000);
     };
     let held: number | undefined;
+    let locked: Awaited<ReturnType<typeof sql.reserve>> | undefined;
     try {
+      if (phase === "pg_dump") {
+        locked = await sql.reserve();
+        await locked`BEGIN`;
+        await locked`LOCK TABLE backup_shutdown_probe IN ACCESS EXCLUSIVE MODE`;
+      }
+      await wait(() => messages.some(message => message.ready));
+      child.send({ action: "backup" });
       await wait(() => messages.some(message => message.cmd === phase));
       if (phase === "pg_dump") {
         await wait(async () => (await sql`SELECT 1 FROM pg_stat_activity WHERE datname = current_database() AND application_name = 'pg_dump' AND wait_event_type = 'Lock'`).length > 0);
-      } else {
+      } else if (!windows) {
         held = messages.find(message => message.cmd === phase)!.pid!;
         process.kill(held, "SIGSTOP");
       }
       // The supervisor sends the graceful signal to the worker, which owns its child lifetimes.
-      process.kill(child.pid!, "SIGTERM");
-      await locked`ROLLBACK`;
+      if (windows) child.send({ action: "shutdown" });
+      else process.kill(child.pid!, "SIGTERM");
+      await wait(() => messages.some(message => message.stopping));
+      assert.ok(!messages.some(message => message.completed), "stop must wait for the active backup");
+      if (locked) await locked`ROLLBACK`;
       if (held) { process.kill(held, "SIGCONT"); held = undefined; }
+      if (windows && phase === "tar") child.send({ action: "release-tar" });
+      await pollFor(() => child.exitCode !== null || child.signalCode !== null, "backup worker exit", 8000);
       const [code, signal] = await exited;
       assert.equal(signal, null, stderr);
       assert.equal(code, 0, stderr);
       assert.ok(messages.some(message => message.completed), JSON.stringify(messages));
       assert.equal(messages.filter(message => message.cmd === phase).length, 1, "shutdown must not restart a killed backup subprocess");
     } finally {
-      await locked`ROLLBACK`;
-      locked.release();
-      if (held) process.kill(held, "SIGCONT");
-      if (child.exitCode === null && child.signalCode === null) { process.kill(-child.pid!, "SIGKILL"); await exited; }
+      try {
+        if (locked) await locked`ROLLBACK`;
+      } finally {
+        locked?.release();
+        if (held) process.kill(held, "SIGCONT");
+        if (child.exitCode === null && child.signalCode === null) {
+          process.kill(windows ? child.pid! : -child.pid!, "SIGKILL");
+          await exited;
+        }
+      }
     }
   });
 }

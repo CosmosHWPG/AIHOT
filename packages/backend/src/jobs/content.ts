@@ -399,7 +399,7 @@ export async function sweepRecoveryBatches(): Promise<{ enqueued: number }> {
  */
 const ARTICLE_STEPS = new Set(["prefilter_article", "score_article", "structure_article", "understand_article", "summarize_article", "mend_wording"]);
 
-type BodyHandoff = { kind: 'release'; hasUrl: boolean; url: unknown; respectRetry?: boolean }
+type BodyHandoff = { kind: 'release'; url: string; respectRetry?: boolean }
   | { kind: 'web-recovery'; batchId: string; storyIds: number[] };
 
 /** Both durable entry points use the normal extraction queue after source/article/scope checks. */
@@ -415,7 +415,7 @@ async function queueBodyHandoff(article: string,db: Db,context: BodyHandoff): Pr
   if (!a || !a.enabled || a.participation_mode !== 'editorial' || !pageFetchable(a.url,a.kind) || a.has_tweet) return false;
   if (context.kind === 'release') {
     if (!['pending','unconfirmed'].includes(a.body_status) || !['new','failed','analyzed'].includes(a.processing_state)
-      || (context.hasUrl && context.url !== a.url) || (context.respectRetry && !a.retry_due)) return false;
+      || context.url !== a.url || (context.respectRetry && !a.retry_due)) return false;
   } else {
     if (a.body_status !== 'pending' || a.processing_state !== 'analyzed' || !a.retry_due
       || !(await getAdmittedRecoveryMembers(db)).some(m => m.articleId === article && m.batchId === context.batchId)) return false;
@@ -448,14 +448,17 @@ async function queueBodyHandoff(article: string,db: Db,context: BodyHandoff): Pr
  * back to processing: one action, not two. Returns whether it was queued.
  */
 export async function resumeAfterRelease(receipt: { purpose: string; subject: string | null; receiptId?: number; respectRetry?: boolean }, db: Db): Promise<boolean> {
-  const article = ARTICLE_STEPS.has(receipt.purpose) ? /^article:([^@:#]+)/.exec(receipt.subject ?? "")?.[1] : undefined;
+  const bodyFallback = receipt.purpose === "body_fallback";
+  if (!bodyFallback && !ARTICLE_STEPS.has(receipt.purpose)) return false;
+  const article = /^article:([^@:#]+)/.exec(receipt.subject ?? "")?.[1];
   if (!article) return false;
-  if (receipt.purpose === "body_fallback") {
+  if (bodyFallback) {
     if (receipt.receiptId === undefined) return false;
-    const [released] = await db<{ url: unknown; has_url: boolean }[]>`SELECT request->'url' AS url,request?'url' AS has_url
-      FROM receipts WHERE id=${receipt.receiptId} AND status='failed' AND purpose='body_fallback' AND subject=${receipt.subject}`;
+    const [released] = await db<{ url: string }[]>`SELECT request->>'url' AS url FROM receipts
+      WHERE id=${receipt.receiptId} AND status='failed' AND service='jina' AND purpose='body_fallback'
+        AND subject=${receipt.subject} AND jsonb_typeof(request->'url')='string'`;
     if (!released) return false;
-    return queueBodyHandoff(article,db,{ kind: 'release',hasUrl: released.has_url,url: released.url,respectRetry: receipt.respectRetry });
+    return queueBodyHandoff(article,db,{ kind: 'release',url: released.url,respectRetry: receipt.respectRetry });
   }
   const [a] = await db`UPDATE articles SET processing_state = 'new', processing_attempts = 0, processing_retry_at = NULL, processing_error = NULL
                         WHERE id = ${article} AND processing_state = 'failed' RETURNING id`;

@@ -46,6 +46,7 @@ const page = http.createServer(async (_req, res) => {
 await new Promise<void>(resolve => page.listen(0, "127.0.0.1", resolve));
 const base = `http://127.0.0.1:${(page.address() as { port: number }).port}`;
 const socialdata = await stub(async () => {
+  hold.count = 0;
   hold.entered.open();
   await hold.release.promise;
   if (hold.failed) return new Reply(503, { error: "Temporary extraction failure" });
@@ -84,10 +85,10 @@ for (const x of [false, true]) for (const empty of [false, true]) {
     reset(1, empty);
     const tweetId = `${Date.now()}${empty ? 2 : 1}`;
     const material = { sourceId, url: `${base}/${tag()}`, title: "Original", via: "fetch" as const,
-      ...(x ? { xPost: { tweetId, authorName: "Author", handle: "author", text: "https://x.com/i/article/123" } } : {}) };
+      ...(x ? { xPost: { tweetId, authorName: "Author", handle: "author", text: "https://x.com/i/article/123", provider: "socialdata" as const } } : {}) };
     const { articleId } = await upsertMaterial(material);
-    const pending = extractArticleBody(articleId);
-    await hold.entered.promise;
+    const pending = extractArticleBody(articleId, false);
+    await Promise.race([hold.entered.promise, pending.then(() => assert.fail("extraction finished before reaching the fixture origin"))]);
     let expected;
     try {
       await upsertMaterial({ ...material, title: "Corrected report", ...(empty ? {} : { bodyText: "The corrected body supplied by the publisher." }) });
@@ -180,11 +181,11 @@ test("an obsolete extraction failure cannot penalize a newer complete report", a
   await sql`INSERT INTO sources(id,name,kind) VALUES (${source},'Extraction worker','x_search')`;
   const postIdForFixture = "90000000000059";
   const material = { sourceId: source, url: `https://x.com/author/status/${postIdForFixture}`, title: "Original", via: "fetch" as const,
-    xPost: { tweetId: postIdForFixture, authorName: "Author", handle: "author", text: "https://x.com/i/article/123" } };
+    xPost: { tweetId: postIdForFixture, authorName: "Author", handle: "author", text: "https://x.com/i/article/123", provider: "socialdata" as const } };
   const { articleId } = await upsertMaterial(material);
   const job = await queueProcessing(articleId);
   await registerExtractionJobs(await getBoss());
-  await hold.entered.promise;
+  await pollFor(() => hold.count === 0, "X extraction request", 12_000);
   try { await upsertMaterial({ ...material, title: "Corrected", bodyText: "Complete corrected body" }); }
   finally { hold.release.open(); }
   await pollFor(async () => (await sql`SELECT state FROM pgboss.job WHERE id=${job!}`)[0]?.state === "completed", "extraction worker completion", 12_000);

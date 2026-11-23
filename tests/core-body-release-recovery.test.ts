@@ -41,7 +41,7 @@ after(async () => {
     VALUES(${RECENT_CONTENT_POLICY_KEY},${sql.json(row.value as never)},${row.updated_by},${row.updated_at})`;
   await stopBoss(); await closeDb();
 });
-async function fixture(name: string, options: { state?: string; body?: string; receiptState?: string; minutes?: number; receiptUrl?: string | null } = {}) {
+async function fixture(name: string, options: { state?: string; body?: string; receiptState?: string; minutes?: number; receiptUrl?: string | null; omitReceiptUrl?: boolean; service?: string } = {}) {
   const id = `${prefix}-${name}`; ids.push(id);
   const url = 'https://www.example.com/' + id;
   await sql`INSERT INTO articles(id,source_id,identity_key,url,title,published_at,discovered_at,timeline_at,body_status,
@@ -49,11 +49,11 @@ async function fixture(name: string, options: { state?: string; body?: string; r
     VALUES(${id},${source},${id},${url},'Body release fixture',now()-${options.minutes ?? 1}*interval '1 minute',now(),now(),
       ${options.body ?? 'unconfirmed'},${options.state ?? 'analyzed'},2,'original-evaluation','receipt outcome unknown')`;
   const [r] = await sql<{ id: number }[]>`INSERT INTO receipts(logical_key,service,purpose,subject,status,attempts,request,created_at,updated_at)
-    VALUES(${id},'jina','body_fallback',${'article:' + id},${options.receiptState ?? 'unknown'},1,
-      ${sql.json({ url: options.receiptUrl === undefined ? url : options.receiptUrl })},now()-interval '2 hours',now()-interval '1 hour') RETURNING id`;
+    VALUES(${id},${options.service ?? 'jina'},'body_fallback',${'article:' + id},${options.receiptState ?? 'unknown'},1,
+      ${sql.json(options.omitReceiptUrl ? {} : { url: options.receiptUrl === undefined ? url : options.receiptUrl })},now()-interval '2 hours',now()-interval '1 hour') RETURNING id`;
   receiptIds.push(r.id);
   await sql`INSERT INTO receipt_attempts(receipt_id,attempt,service,status,started_at,finished_at)
-    VALUES(${r.id},1,'jina',${options.receiptState === 'failed' ? 'failed' : 'unknown'},now()-interval '2 hours',now()-interval '1 hour')`;
+    VALUES(${r.id},1,${options.service ?? 'jina'},${options.receiptState === 'failed' ? 'failed' : 'unknown'},now()-interval '2 hours',now()-interval '1 hour')`;
   return { id,url,receiptId: r.id };
 }
 const state = async (id: string) => (await sql`SELECT revision,body_status,processing_state,processing_attempts,processing_attempt_tag,
@@ -82,10 +82,11 @@ test("release resumes analyzed/unconfirmed and failed/pending bodies through ext
   }
 });
 
-test("active work, blocked/complete bodies, wrong URL and another unresolved receipt leave article state untouched", async () => {
-  for (const kind of ['active','retry','created','blocked','skipped','ok','none','url','null-url','unknown']) {
+test("active work, blocked/complete bodies, missing or wrong receipt identity and unresolved work leave article state untouched", async () => {
+  for (const kind of ['active','retry','created','blocked','skipped','ok','none','url','null-url','missing-url','other-service','unknown']) {
     const f = await fixture('guard-' + kind,{ state: ['blocked','skipped'].includes(kind) ? kind : 'analyzed',
-      body: ['ok','none'].includes(kind) ? kind : 'unconfirmed',receiptUrl: kind === 'url' ? 'https://www.example.com/different' : kind === 'null-url' ? null : undefined });
+      body: ['ok','none'].includes(kind) ? kind : 'unconfirmed',receiptUrl: kind === 'url' ? 'https://www.example.com/different' : kind === 'null-url' ? null : undefined,
+      omitReceiptUrl: kind === 'missing-url', service: kind === 'other-service' ? 'llm' : undefined });
     if (['active','retry','created'].includes(kind)) {
       const job = await enqueue(QUEUES.analyze,{ articleId: f.id },{ singletonKey: f.id });
       await sql`UPDATE pgboss.job SET state=${kind} WHERE id=${job}`;
@@ -168,13 +169,21 @@ test("a handoff audit failure rolls the resumed body and queue back without cons
   assert.equal((await sql`SELECT after->>'releaseAuditId' AS id FROM audit_log WHERE action='receipt.body-resumed' AND subject=${'receipt:' + f.receiptId}`)[0].id,String(releaseAuditId));
 });
 
-test("200 nonfetchable old releases cannot starve a later fetchable body handoff", async () => {
-  const paused = Array.from({ length: 200 },(_,i) => `${prefix}-nonfetch-${i}`); ids.push(...paused);
+test("old releases for nonfetchable or unproven targets cannot starve a valid handoff", async () => {
+  const nonfetch = `${prefix}-nonfetch-`;
+  const paused = [
+    ...Array.from({ length: 200 }, (_, i) => nonfetch + i),
+    ...Array.from({ length: 200 }, (_, i) => `${prefix}-no-url-${i}`),
+  ];
+  ids.push(...paused);
   await sql`INSERT INTO articles(id,source_id,identity_key,url,title,published_at,discovered_at,timeline_at,body_status,processing_state)
-    SELECT x.id,${source},x.id,'https://x.com/example/status/'||x.id,'Nonfetchable body',now()-interval '1 minute',now(),now(),
+    SELECT x.id,${source},x.id,(CASE WHEN starts_with(x.id,${nonfetch}) THEN 'https://x.com/example/status/' ELSE 'https://www.example.com/' END)||x.id,
+      'Paused body handoff',now()-interval '1 minute',now(),now(),
       'unconfirmed','analyzed' FROM unnest(${paused}::text[]) AS x(id)`;
   const saved = await sql<{ id: number }[]>`INSERT INTO receipts(logical_key,service,purpose,subject,status,attempts,request,created_at,updated_at)
-    SELECT a.id,'jina','body_fallback','article:'||a.id,'failed',1,jsonb_build_object('url',a.url),now()-interval '2 hours',now()-interval '1 hour'
+    SELECT a.id,'jina','body_fallback','article:'||a.id,'failed',1,
+      CASE WHEN starts_with(a.id,${nonfetch}) THEN jsonb_build_object('url',a.url) ELSE '{}'::jsonb END,
+      now()-interval '2 hours',now()-interval '1 hour'
     FROM articles a WHERE a.id=ANY(${paused}::text[]) RETURNING id`;
   receiptIds.push(...saved.map(r => r.id));
   await sql`INSERT INTO receipt_attempts(receipt_id,attempt,service,status,started_at,finished_at)

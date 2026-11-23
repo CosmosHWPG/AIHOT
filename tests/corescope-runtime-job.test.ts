@@ -254,6 +254,14 @@ tick(); setInterval(tick, 75);
     assert.equal(path.dirname(path.resolve(directory)).toLowerCase(), path.resolve(os.tmpdir()).toLowerCase());
     assert.match(path.basename(directory), /^corescope-job-test /);
     for (const name of await readdir(directory)) await unlink(path.join(directory, name));
-    await rmdir(directory);
+    await eventually(async () => {
+      try {
+        await rmdir(directory);
+        return true;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "EBUSY") throw error;
+        return undefined;
+      }
+    }, 5_000);
   }
 });

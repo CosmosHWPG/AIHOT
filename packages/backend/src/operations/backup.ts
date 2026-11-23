@@ -16,6 +16,10 @@ import { screenshotsForwarded } from "./feedback.ts";
 
 const run = promisify(execFile);
 const KEEP_LOCAL = 3;
+// Git's GNU tar treats a Windows drive letter as a remote archive host. Use Windows' own tar.
+const tar = process.platform === "win32"
+  ? path.join(process.env["SystemRoot"] ?? "C:\\Windows", "System32", "tar.exe")
+  : "tar";
 
 export interface Store {
   secretId: string;
@@ -220,7 +224,7 @@ export async function runBackup(now = new Date()) {
       if ((await readdir(path.join(config.dataDir, d), { recursive: true, withFileTypes: true })).some(entry => !entry.isDirectory())) kept.push(d);
     }
     if (kept.length) {
-      const pack = () => run("tar", ["-czf", files, "-C", config.dataDir, ...kept]);
+      const pack = () => run(tar, ["-czf", files, "-C", config.dataDir, ...kept]);
       await pack().catch(() => pack());
     }
   } catch (error: unknown) {

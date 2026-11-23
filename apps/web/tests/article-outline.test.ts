@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { chromium, webkit, expect } from "@playwright/test";
-import { fakeApi, itemDetail, startWebServer, visit, type WebServer } from "./web-server.ts";
+import { FIXTURE_AT, fakeApi, itemDetail, startWebServer, visit, type WebServer } from "./web-server.ts";
 
 // Failure mode (#182 left half-fixed): between lg and 2xl the outline sits under the right rail's other
 // blocks; on a 1366x657 laptop window only one entry was visible, and a little shorter the rail grew
@@ -43,27 +43,43 @@ test("outline keyboard scrolling stays inside its boundary in WebKit", async () 
   const item = itemDetail({ id: "outline-keys", title: "键盘目录检查", outline,
     body: { zh: outline.map(o => `<h2 id="${o.id}">${o.text}</h2><p>${"固定正文。".repeat(100)}</p>`).join(""), original: null, zhKind: "original", complete: true },
   });
-  const web = await startWebServer(fakeApi(url => url.pathname === "/api/site/items/outline-keys" ? item : undefined));
+  const web = await startWebServer(fakeApi(url => {
+    if (url.pathname === "/api/site/items/outline-keys") return item;
+    if (url.pathname === "/api/site/timeline") return {
+      filters: { channel: "all", category: null, tag: null }, nextCursor: null, hot: null,
+      cards: [{ key: item.id, anchorAt: FIXTURE_AT, item, group: null }], dayCounts: {},
+    };
+  }));
   const browser = await webkit.launch();
   try {
     const page = await browser.newPage({ viewport: { width: 1366, height: 768 }, reducedMotion: "reduce" });
-    await visit(page, web.origin + "/items/outline-keys");
+    // Open from the hydrated feed so that scroll restoration during initial document hydration
+    // cannot reset the test's scroll position while it is exercising the outline.
+    await visit(page, web.origin + "/");
+    await page.waitForFunction(() => history.scrollRestoration === "manual");
+    await page.getByRole("link", { name: item.title, exact: true }).click();
     const nav = page.getByRole("navigation", { name: "本文目录" });
-    await expect(nav).toBeVisible();
+    await expect(nav).toHaveAttribute("tabindex", "0");
+    const pageOffset = 800;
+    await page.evaluate(y => window.scrollTo(0, y), pageOffset);
     for (const [boundary, keys] of [["end", ["End", "PageDown", "ArrowDown", "Space"]], ["start", ["Home", "PageUp", "ArrowUp", "Shift+Space"]]] as const) {
+      const link = boundary === "end" ? nav.getByRole("link").last() : nav.getByRole("link").first();
+      await link.evaluate((a, boundary) => {
+        a.focus({ preventScroll: true });
+        const n = a.closest("nav")!;
+        n.scrollTop = boundary === "end" ? n.scrollHeight : 0;
+      }, boundary);
+      await expect(link).toBeFocused();
+      assert.ok(await nav.evaluate((n, boundary) => boundary === "end"
+        ? n.scrollTop + n.clientHeight >= n.scrollHeight - 1
+        : n.scrollTop === 0, boundary), `the outline starts at its ${boundary}`);
       for (const key of keys) {
-        await page.evaluate(() => window.scrollTo(0, 800));
-        await nav.evaluate((n, boundary) => {
-          n.scrollTop = boundary === "end" ? n.scrollHeight : 0;
-          n.querySelector<HTMLElement>(boundary === "end" ? "li:last-child a" : "li:first-child a")!.focus({ preventScroll: true });
-        }, boundary);
-        const before = await page.evaluate(() => scrollY);
+        assert.equal(await page.evaluate(() => scrollY), pageOffset, `the page is scrolled before pressing ${key}`);
         await page.keyboard.press(key);
         await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
-        assert.equal(await page.evaluate(() => scrollY), before, `${key} stays inside the outline at its ${boundary}`);
+        assert.equal(await page.evaluate(() => scrollY), pageOffset, `${key} stays inside the outline at its ${boundary}`);
       }
     }
-    await expect(nav).toHaveAttribute("tabindex", "0");
     await nav.evaluate(n => { n.scrollTop = 0; n.focus({ preventScroll: true }); });
     await page.keyboard.press("PageDown");
     await expect.poll(() => nav.evaluate(n => n.scrollTop)).toBeGreaterThan(0);

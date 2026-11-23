@@ -29,6 +29,8 @@ const pages: Record<string, string> = {
   "/": article("Home", "/brand/og.png?v=4"),
   "/news/story": article("Story", "/images/story.jpg"),
   "/news/logo": article("Logo", "/brand/og.png?v=3"),
+  "/news/partner-reference": article("Partner reference", "/images/partner.jpg"),
+  "/news/partner-story": article("Partner story", "/images/partner.jpg"),
   "/news/pictured": article("Pictured", "/images/pictured.jpg", `<p>${prose}</p><figure><img src="/images/chart.png" alt="Chart"></figure><p>${prose}</p>`),
   "/news/fed": article("Fed", "/images/fed.jpg"),
   "/news/detail": article("Detail", "/images/detail.jpg"),
@@ -94,7 +96,10 @@ test("the site's own share picture, a section's or another article's, and a chan
 
 test("body extraction keeps the page's cover apart from the body, and not the site's own picture", async () => {
   const sourceId = `cover-extract-${T}`;
-  await sql`INSERT INTO sources (id, name, kind, tier, participation_mode, next_fetch_at) VALUES (${sourceId}, 'Cover extraction', 'rss', 'T1', 'editorial', '2100-01-01')`;
+  const otherSourceId = `cover-extract-other-${T}`;
+  await sql`INSERT INTO sources (id, name, kind, tier, participation_mode, next_fetch_at) VALUES
+    (${sourceId}, 'Cover extraction', 'rss', 'T1', 'editorial', '2100-01-01'),
+    (${otherSourceId}, 'Other source on shared host', 'rss', 'T1', 'editorial', '2100-01-01')`;
   const extracted = async (path: string) => {
     const { articleId } = await upsertMaterial({ sourceId, url: `${base}${path}`, title: path, bodyStatus: "pending", via: "fetch" });
     assert.equal(await extractArticleBody(articleId), "ok");
@@ -106,6 +111,8 @@ test("body extraction keeps the page's cover apart from the body, and not the si
   assert.doesNotMatch(stored!.body_html, /story\.jpg/);
   assert.deepEqual(stored!.media, []);
   assert.equal(await coverOf(await extracted("/news/logo")), null, "the home page's picture in another version");
+  await upsertMaterial({ sourceId: otherSourceId, url: `${base}/news/partner-reference`, title: "Partner reference", bodyStatus: "pending", via: "fetch" });
+  assert.equal(await coverOf(await extracted("/news/partner-story")), `${base}/images/partner.jpg`, "another source's picture does not make an article cover generic");
   assert.equal(await coverOf(await extracted("/news/pictured")), null, "a body with a picture of its own");
 });
 
@@ -170,7 +177,9 @@ test("a failure of the store while checking a cover is not taken for a page that
   // fail and be retried, not fall back to the paid renderer nor give up the body it already read.
   const lone = await site({ "/nul/story": "/images/unstored.jpg" });
   try {
-    await assert.rejects(extractFromUrl(`${lone.url}/nul/story?ref=\u0000`, "cover-store-failure", {}, { paidFallback: false }));
+    const url = `${lone.url}/nul/story?ref=\u0000`;
+    await assert.rejects(extractFromUrl(url, "cover-store-failure", {}, { paidFallback: false }));
+    await assert.rejects(extractFromUrl(url, { subject: "cover-store-failure", allowJina: false }));
   } finally {
     await lone.close();
   }

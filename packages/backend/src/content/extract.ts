@@ -872,16 +872,22 @@ async function extractAuditedUrl(url: string, opts: AuditedUrlOptions): Promise<
   if (isVideoPageUrl(url)) return { body: null };
   const target = new URL(url);
   if (opts.rules?.bodyUrlSuffix) target.pathname += opts.rules.bodyUrlSuffix;
+  let read: { body: ExtractedBody; pageUrl: string } | null = null;
   try {
     const res = await guardedFetch(target.href, { headers: languageHeaders(opts.rules?.acceptLanguage), timeoutMs: 20_000, maxBytes: 16 * 1024 * 1024 });
     if (isSignInRedirect(url, res.url) || isVideoPageUrl(res.url)) return { body: null };
     const type = res.headers.get("content-type") ?? "";
     if (res.status === 200 && /html/.test(type)) {
       const got = readable(res.text(), res.url, opts.rules);
-      if (got) return { body: got };
+      if (got) read = { body: got, pageUrl: res.url };
     }
   } catch {
     // fall through to Jina
+  }
+  // A store failure while checking a cover must not send a readable body to the paid fallback.
+  if (read) {
+    const cover = await articleCover(read.body.cover ?? null, url, read.pageUrl, opts.sourceId);
+    return { body: { ...read.body, cover } };
   }
   const articleId = /^article:([^@:#]+)/.exec(opts.subject)?.[1];
   if (articleId) {

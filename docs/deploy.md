@@ -256,6 +256,8 @@ MCP 的 `subscriptions/listen` 现在立即返回 HTTP 404 和 JSON-RPC `-32601 
 
 恢复时同时取回这一对文件（只有 `.dump` 的就只恢复数据库）：使用与数据库版本兼容的 `pg_restore` 将 `.dump` 恢复到空数据库，再把文件包解压到数据目录根目录（Docker 中为 `/data`，非 Docker 使用 `AIHOT_DATA_DIR`，默认 `.data`），保留包内的子目录结构，并确保运行进程可读取这些文件。只恢复数据库不能找回仍由 `local:` 引用的反馈截图；旧备份中没有包含的文件也无法凭数据库引用恢复。
 
+Windows 本机备份使用系统自带的 `System32\tar.exe`。恢复时也可用 PowerShell 调用 `& "$env:SystemRoot\System32\tar.exe" -xzf $archive -C $restoreDir`，其中 `$archive` 是备份文件包的完整路径，`$restoreDir` 是已创建的恢复数据目录。验证恢复时，在该目录检查上传文件，并用恢复的数据库查看本地反馈截图。
+
 下面的手动导出只包含数据库，不包含上述附件目录：
 
 ```bash

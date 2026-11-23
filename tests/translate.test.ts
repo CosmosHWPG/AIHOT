@@ -584,12 +584,15 @@ function runTranslation() {
     import { shutdownSignal } from '@aihot/backend/jobs/queue';
     import { closeDb } from '@aihot/backend/db';
     process.on('SIGTERM', () => { shutdownSignal.abort(); process.send({ stopped: true }); });
+    process.on('message', message => {
+      if (message?.action === 'shutdown') process.emit('SIGTERM');
+    });
     try { process.send({ result: await translatePending({ limit: 1 }) }); }
     finally { await closeDb(); process.disconnect(); }
   `;
   const child = spawn(process.execPath, ['--input-type=module', '-e', script], {
     cwd: process.cwd(), env: { ...process.env, MODEL_CALLS_ENABLED: 'true', DEEPSEEK_BASE_URL: `${shutdownProvider.url}/v1`, DEEPSEEK_API_KEY: 'test-key', AIHOT_CREDENTIALS_DIR: '/nonexistent-test-credentials' },
-    stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
+    windowsHide: true, stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
   });
   let result: any;
   let stderr = '';
@@ -601,6 +604,16 @@ function runTranslation() {
     child.once('exit', code => code === 0 ? resolve(result) : reject(new Error(`translation child exited ${code}: ${stderr}`)));
   });
   return { child, done, stopped: stopped.promise };
+}
+
+async function stopTranslation(run: ReturnType<typeof runTranslation>) {
+  try {
+    if (process.platform === 'win32') run.child.send({ action: 'shutdown' });
+    else run.child.kill('SIGTERM');
+    await Promise.race([run.stopped, run.done.then(() => assert.fail('translation exited without a shutdown acknowledgement'))]);
+  } finally {
+    active.hold.open();
+  }
 }
 
 before(async () => {
@@ -618,9 +631,7 @@ for (const misaligned of [false, true]) test(`SIGTERM finishes the sent ${misali
   await publishArticle(articleId, { releasedAt: new Date(Date.now() - 60_000) });
   const interrupted = runTranslation();
   await Promise.race([active.asked.promise, interrupted.done.then(() => assert.fail('translation ended before a request'))]);
-  interrupted.child.kill('SIGTERM');
-  await interrupted.stopped;
-  active.hold.open();
+  await stopTranslation(interrupted);
   assert.deepEqual(await interrupted.done, { done: [], quotes: 0 });
   assert.equal(active.calls, 1, 'no later fragment or half-batch starts after shutdown');
   const receiptRows = await sql`SELECT status,response FROM receipts WHERE purpose='translate_body' AND subject LIKE ${`article:${articleId}@1#%`}`;
@@ -647,9 +658,7 @@ test('a batch the provider refuses after SIGTERM is an interruption, not a trans
   await publishArticle(articleId, { releasedAt: new Date(Date.now() - 60_000) });
   const interrupted = runTranslation();
   await Promise.race([active.asked.promise, interrupted.done.then((r) => assert.fail(`translation ended before a request: ${JSON.stringify(r)}`))]);
-  interrupted.child.kill('SIGTERM');
-  await interrupted.stopped;
-  active.hold.open();
+  await stopTranslation(interrupted);
   assert.deepEqual(await interrupted.done, { done: [], quotes: 0 }, 'the run returns normally without reporting the interrupted article');
   assert.equal(active.calls, 1);
   assert.equal((await sql`SELECT 1 FROM translation_attempts WHERE article_id=${articleId}`).length, 0, 'the stop consumes no translation attempt');
