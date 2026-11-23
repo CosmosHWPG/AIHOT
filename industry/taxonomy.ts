@@ -73,6 +73,21 @@ export const CATEGORY_BY_ITEM_TYPE: Readonly<Record<string, string>> = {
   industry_event: "行业动态", opinion_analysis: "大佬观点", tutorial_explainer: "教程/实践",
 };
 
+/** 网页前端展示的标签名：把内部斜杠写法换成自然短词，null 表示不对读者展示（存储、接口与后台仍保留原标签）。 */
+export const TAG_DISPLAY: Readonly<Record<string, string | null>> = {
+  "论文/研究": "论文",
+  "开源/仓库": "开源",
+  "教程/实践": "教程",
+  "现象/趋势": "趋势",
+  "评测/基准": "评测",
+  "安全/对齐": "安全",
+  "政策/监管": "政策",
+  "数据/训练": "数据与训练",
+  "部署/工程": "工程部署",
+  "MCP/工具调用": "MCP 与工具调用",
+  "非AI/通用工具": null,
+};
+
 // ── 公司与主体 ──────────────────────────────────────────────────────────────────────────
 
 /** 公司主题：id → 显示名、卡片上显示的标签（null 表示只用 entity:<id> 归类）、别名。 */

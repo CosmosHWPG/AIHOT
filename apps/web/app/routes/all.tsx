@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Link, redirect, useLoaderData, useNavigation, useSearchParams } from "react-router";
 import type { Route } from "./+types/all";
 import type { PoolResponse } from "@aihot/contracts/site";
+import { displayTag } from "@aihot/contracts/taxonomy";
 import { SEO_TITLES, SITE, subjectAfter } from "@aihot/site";
 import { beijingTime } from "@aihot/contracts/time";
 import { cachedPage, loadOr404 } from "../lib/api.server";
@@ -86,7 +87,10 @@ export default function AllPage() {
     else sp.delete("tab");
     return `/all?${sp}`;
   };
-  const title = f.q ? `搜索“${f.q}”` : isCrossPerspective(f.tag, f.topic) ? "核心网 × AI 动态" : f.tag ? `#${f.tag}` : null;
+  const shownTag = f.tag ? displayTag(f.tag) : null;
+  const title = f.q ? `搜索“${f.q}”`
+    : isCrossPerspective(f.tag, f.topic) ? "核心网 × AI 动态"
+    : shownTag ? `#${shownTag}` : f.tag ? "标签筛选" : null;
   const updated = beijingTime(data.freshness);
   // Searches are remembered in this browser for the phone search (listed in the privacy notice).
   useEffect(() => {

@@ -4,6 +4,7 @@ import { Link, redirect, useLoaderData } from "react-router";
 import { SITE } from "@aihot/site";
 import type { Route } from "./+types/home";
 import type { PoolResponse, TimelineResponse } from "@aihot/contracts/site";
+import { displayTag } from "@aihot/contracts/taxonomy";
 import { apiGet, cachedPage, loadOr404 } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
 import { filterParams, hasFeedFilters, itemListLd, listPath, pageMeta, readFilters, siteLd } from "../lib/seo";
@@ -44,7 +45,9 @@ export function meta({ loaderData }: Route.MetaArgs) {
 
 export default function Home() {
   const { data, filters, recentNews, allHref } = useLoaderData<typeof loader>();
-  const title = isCrossPerspective(filters.tag, filters.topic) ? "核心网 × AI 精选" : filters.tag ? `${filters.tag}精选` : "精选洞察";
+  const shownTag = filters.tag ? displayTag(filters.tag) : null;
+  const title = isCrossPerspective(filters.tag, filters.topic) ? "核心网 × AI 精选"
+    : shownTag ? `${shownTag}精选` : filters.tag ? "标签筛选" : "精选洞察";
   return (
     <div className="pb-6">
       {/* Phones: the bar (精选 | 全部, filter, search), the filter in use, today's hot topics, the feed. */}
