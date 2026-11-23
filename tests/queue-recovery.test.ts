@@ -36,7 +36,7 @@ test("a run stopped by a paid-call budget is recorded as skipped, not failed", a
   await sql`DELETE FROM job_runs WHERE job IN (${job}, ${failedJob})`;
 });
 
-test("recovery closes a killed process's runs, preserves live and foreign owners and retains evidence", { skip: !["linux", "darwin"].includes(process.platform) }, async (t) => {
+test("recovery closes a killed process's runs, preserves live and foreign owners and retains evidence", { skip: !["linux", "darwin", "win32"].includes(process.platform) }, async (t) => {
   const timezone = process.env.TZ;
   process.env.TZ = "Pacific/Honolulu";
   t.after(() => { if (timezone === undefined) delete process.env.TZ; else process.env.TZ = timezone; });
@@ -67,6 +67,7 @@ test("recovery closes a killed process's runs, preserves live and foreign owners
     const [running] = await sql`SELECT detail FROM job_runs WHERE job = ${id}`;
     assert.equal(running!.detail.owner.pid, child.pid);
     assert.equal(running!.detail.owner.host, (await runOwner()).host);
+    assert.ok(running!.detail.owner.birth, "the real process has a recorded birth identity");
     await closeInterruptedRuns();
     assert.equal((await sql`SELECT status FROM job_runs WHERE job=${id}`)[0]!.status, "running");
     assert.equal((await sql`SELECT status FROM fetch_runs WHERE source_id=${id}`)[0]!.status, "running");
@@ -76,7 +77,9 @@ test("recovery closes a killed process's runs, preserves live and foreign owners
     const owner = await runOwner();
     const [foreign] = await sql`INSERT INTO job_runs(job,detail) VALUES(${id + "-foreign"},${sql.json({ owner: { ...owner, host: "another-host" } })}) RETURNING id`;
     const [unknown] = await sql`INSERT INTO job_runs(job) VALUES(${id + "-unknown"}) RETURNING id`;
-    const [reused] = await sql`INSERT INTO job_runs(job,detail) VALUES(${id + "-reused"},${sql.json({ owner: { ...owner, birth: "previous-process" } })}) RETURNING id`;
+    const [legacy] = await sql`INSERT INTO job_runs(job,detail) VALUES(${id + "-legacy"},${sql.json({ owner: { ...owner, birth: null } })}) RETURNING id`;
+    assert.notEqual(owner.birth, running!.detail.owner.birth);
+    const [reused] = await sql`INSERT INTO job_runs(job,detail) VALUES(${id + "-reused"},${sql.json({ owner: { ...owner, birth: running!.detail.owner.birth } })}) RETURNING id`;
     const [finished] = await sql`INSERT INTO job_runs(job,status,finished_at,detail) VALUES(${id + "-done"},'ok',now(),${sql.json(running!.detail)}) RETURNING id`;
     assert.deepEqual(await closeInterruptedRuns(), { jobs: 2, fetches: 1 });
     for (const table of ["job_runs", "fetch_runs"]) {
@@ -89,8 +92,8 @@ test("recovery closes a killed process's runs, preserves live and foreign owners
       assert.equal(audit!.after.status, "skipped");
       assert.equal(audit!.before.detail.owner.pid, child.pid);
     }
-    const unchanged = await sql`SELECT id,status FROM job_runs WHERE id IN ${sql([foreign!.id,unknown!.id,reused!.id,finished!.id])} ORDER BY id`;
-    assert.deepEqual(unchanged.map(row => row.status), ["running", "running", "skipped", "ok"]);
+    const unchanged = await sql`SELECT id,status FROM job_runs WHERE id IN ${sql([foreign!.id,unknown!.id,legacy!.id,reused!.id,finished!.id])} ORDER BY id`;
+    assert.deepEqual(unchanged.map(row => row.status), ["running", "running", "running", "skipped", "ok"]);
     assert.deepEqual(await closeInterruptedRuns(), { jobs: 0, fetches: 0 });
   } finally {
     if (child.exitCode === null && child.signalCode === null) { const exit = once(child,"exit"); child.kill("SIGKILL"); await exit; }

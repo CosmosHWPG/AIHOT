@@ -3,12 +3,51 @@
 import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { hostname } from "node:os";
+import path from "node:path";
 import { promisify } from "node:util";
 import { audit } from "../audit.ts";
 import { sql } from "../db.ts";
 
 type RunOwner = { host: string; platform: string; pid: number; birth: string | null };
 const exec = promisify(execFile);
+const windowsBirth = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{7}Z$/;
+
+/** Probe with native process handles, in batches to avoid starting PowerShell per stale PID. */
+async function windowsProcessBirths(pids: number[]): Promise<Map<number, string | null>> {
+  const ids = [...new Set(pids.filter(pid => Number.isSafeInteger(pid) && pid > 0 && pid <= 0x7fffffff))];
+  const births = new Map<number, string | null>();
+  const systemRoot = process.env["SystemRoot"] ?? "C:\\Windows";
+  const executable = path.join(systemRoot, "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
+  for (let i = 0; i < ids.length; i += 256) {
+    // Only validated integers enter the script; no shell, configured paths or private data.
+    const batch = ids.slice(i, i + 256);
+    const requested = new Set(batch);
+    const script = `$ErrorActionPreference='Stop'
+foreach ($processId in @(${batch.join(",")})) {
+  $process = $null
+  try { $process = [Diagnostics.Process]::GetProcessById($processId) }
+  catch [ArgumentException] { "$processId gone"; continue }
+  catch { continue }
+  try {
+    if ($process.HasExited) { "$processId gone" }
+    else { "$processId " + $process.StartTime.ToUniversalTime().ToString('o', [Globalization.CultureInfo]::InvariantCulture) }
+  } catch { } finally { $process.Dispose() }
+}`;
+    try {
+      const { stdout } = await exec(executable, ["-NoProfile", "-NonInteractive", "-Command", script], {
+        env: { SystemRoot: systemRoot }, windowsHide: true, timeout: 10_000, maxBuffer: 64 * 1024,
+      });
+      for (const line of stdout.trim().split(/\r?\n/)) {
+        const [id, birth] = line.trim().split(" ");
+        const pid = Number(id);
+        if (!requested.has(pid) || !birth || (birth !== "gone" && !windowsBirth.test(birth))) continue;
+        // A rejected snapshot omits the PID, so access or process-query failures never close a run.
+        births.set(pid, birth === "gone" ? null : birth);
+      }
+    } catch { /* A failed or timed-out probe cannot establish any identity in this batch. */ }
+  }
+  return births;
+}
 
 function processGone(pid: number): boolean {
   try { process.kill(pid, 0); return false; }
@@ -22,6 +61,8 @@ function processGone(pid: number): boolean {
 
 /** null means the process exited; undefined means this host cannot establish its identity. */
 async function processBirth(pid: number): Promise<string | null | undefined> {
+  if (!Number.isSafeInteger(pid) || pid <= 0) return undefined;
+  if (process.platform === "win32") return (await windowsProcessBirths([pid])).get(pid);
   if (process.platform === "linux") {
     let boot: string;
     try { boot = await readFile("/proc/sys/kernel/random/boot_id", "utf8"); }
@@ -73,8 +114,10 @@ export async function closeInterruptedRuns(): Promise<{ jobs: number; fetches: n
     ) r WHERE detail->'owner'->>'host' = ${local.host} AND detail->'owner'->>'platform' = ${local.platform}
       AND detail->'owner'->>'birth' IS NOT NULL`;
   const result = { jobs: 0, fetches: 0 };
+  const windows = process.platform === "win32" ? await windowsProcessBirths(owners.map(row => row.owner.pid)) : null;
   for (const { owner } of owners) {
-    const birth = await processBirth(owner.pid);
+    if (windows && (typeof owner.birth !== "string" || !windowsBirth.test(owner.birth))) continue;
+    const birth = windows ? windows.get(owner.pid) : await processBirth(owner.pid);
     if (birth === undefined || birth === owner.birth) continue;
     const reason = "执行进程已退出，未记录完成；仅结束运行记录，不重跑业务";
     await sql.begin(async tx => {
