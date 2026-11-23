@@ -5,7 +5,14 @@ import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import type postgres from "postgres";
 import { FIRST_ONLINE_MIGRATION, migrationPlan, type MigrationPlan } from "./migration-safety.ts";
-import { coreScopeMigrationHold, CORESCOPE_MIGRATION_UPSTREAM } from "./corescope-migration-holds.ts";
+import { coreScopeMigrationHold, CORESCOPE_MIGRATION_UPSTREAM, migrationSqlHash } from "./corescope-migration-holds.ts";
+
+// These two historical files rewrite existing rows. Both exceeded the ordinary DDL deadline in a
+// full CoreScope rehearsal. Match the published bytes before granting a longer transaction timeout.
+const HISTORICAL_REWRITES: Readonly<Record<string, string>> = {
+  "0046_grouping_reliability.sql": "5719ea696d7c7ab448623ed56720e3b1a59af2d0068ebf621af03e9d9dac9022",
+  "0047_selection_candidate.sql": "c762ac140b4beac6212211f7094f47f9cb7709f8c9383f1a41fa9b97a98e432c",
+};
 
 /**
  * The daily backup's pg_dump holds ACCESS SHARE on every table and one snapshot for minutes, so DDL hits
@@ -99,6 +106,10 @@ export async function runMigrations(sql: postgres.Sql, root: string, { backupWai
         } else {
           await session`BEGIN`;
           try {
+            const historicalRewrite = HISTORICAL_REWRITES[name];
+            if (historicalRewrite && migrationSqlHash(text) === historicalRewrite) {
+              await session`SET LOCAL statement_timeout = '5min'`;
+            }
             await session.unsafe(text);
             await session`INSERT INTO schema_migrations (name) VALUES (${name})`;
             await session`COMMIT`;
