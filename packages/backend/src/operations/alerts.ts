@@ -19,7 +19,7 @@ import { ALERTS, EDITION_TIMES } from "@aihot/site";
 import { audit } from "../audit.ts";
 import { sql } from "../db.ts";
 import { agentConfigured, agentTransportFindings, flushAgentEvents, handoffs, wakeAgent, wakeDigest } from "../notify/agent.ts";
-import { duration, formatAlert, formatRecovery, formatReturn, sendAlert, type Finding, type Level } from "../notify/feishu.ts";
+import { duration, feishuInternalEnabled, formatAlert, formatRecovery, formatReturn, sendAlert, type Finding, type Level } from "../notify/feishu.ts";
 import { stepsOnService } from "../editorial/models.ts";
 import { backupConfigured } from "./backup.ts";
 import { GROUPING_WARN_AFTER_MS, waitingSelectedNews } from "./grouping.ts";
@@ -270,16 +270,19 @@ async function refusedDeliveries(now: number, open: AlertState): Promise<Finding
 
 async function backupAge(now: number): Promise<Finding[]> {
   if (!backupConfigured()) return [];
-  const [b] = await sql<{ value: { at: string; uploaded: boolean; filesError?: string } }[]>`SELECT value FROM settings WHERE key = 'backup.last'`;
+  const [b] = await sql<{ value: { at: string; uploaded: boolean; destination?: string; verified?: boolean; filesError?: string } }[]>`SELECT value FROM settings WHERE key = 'backup.last'`;
   // A failed archive updates backup.last too. Reuse the run history so repeated failures cannot
   // reset the age; before the first success, count from the first attempt rather than from now.
   const [runs] = await sql<{ last_ok: Date | null; first_attempt: Date | null }[]>`
     SELECT max(finished_at) FILTER (WHERE status = 'ok') AS last_ok, min(started_at) AS first_attempt
     FROM job_runs WHERE job = 'ops.backup'`;
-  const lastOk = Math.max(runs?.last_ok?.getTime() ?? 0, b?.value.uploaded ? Date.parse(b.value.at) : 0);
+  const saved = !!b && (b.value.uploaded || b.value.destination === 'local' && b.value.verified === true);
+  const lastOk = Math.max(runs?.last_ok?.getTime() ?? 0, saved ? Date.parse(b!.value.at) : 0);
   const since = lastOk || runs?.first_attempt?.getTime() || now;
   const age = now - since;
-  const state = b?.value.filesError ? `数据库已上传，附件打包失败：${b.value.filesError}` : b?.value.uploaded === false ? "未上传" : "";
+  const state = b?.value.filesError ? `附件打包失败：${b.value.filesError}`
+    : saved && b?.value.destination === 'local' ? "本机备份已验证"
+    : b?.value.uploaded === false ? "未完成备份" : "";
   if (age > 50 * 3600_000) {
     return [{
       key: "backup.failed",
@@ -292,7 +295,7 @@ async function backupAge(now: number): Promise<Finding[]> {
       since: new Date(since),
     }];
   }
-  if (!b || !b.value.uploaded || age > 30 * 3600_000) {
+  if (!saved || age > 30 * 3600_000) {
     return [{ key: "backup.stale", level: "later", title: "数据库备份超过一天没成功", detail: b ? `最近一次 ${beijingStamp(b.value.at)}${state ? `（${state}）` : ""}；看 ops.backup` : "还没有成功的备份记录" }];
   }
   return [];
@@ -558,8 +561,7 @@ async function settleDailies(open: AlertState, found: Set<string>, now: number):
       missing.add(key);
       continue;
     }
-    await sendAlert(`${date} 的日报没能补出，停止提醒`, [`读者看不到 ${date} 的日报；缺期从 ${beijingStamp(new Date(open[key]!.since))} 起，已超出七天的检查范围`]);
-    sent.push(`${key}:expired`);
+    if (await sendAlert(`${date} 的日报没能补出，停止提醒`, [`读者看不到 ${date} 的日报；缺期从 ${beijingStamp(new Date(open[key]!.since))} 起，已超出七天的检查范围`]) === "sent") sent.push(`${key}:expired`);
     delete open[key];
   }
   return { missing, sent };
@@ -576,6 +578,10 @@ export async function checkAlerts(now = Date.now()) {
   const holds = await savedHolds();
   const sent: string[] = [];
   async function tellPrivate(key: string, entry: AlertEntry, message: ReturnType<typeof formatAlert>, recovery = false) {
+    if (!feishuInternalEnabled() && !entry.privateNotice) {
+      state[key] = entry;
+      return;
+    }
     const notice = entry.privateNotice ?? { ...message, id: `alert-private-${randomUUID()}`, recovery };
     if (!entry.privateNotice) {
       // The hub may accept a notice before its response is lost. Keep its exact key and text across runs.
@@ -583,7 +589,7 @@ export async function checkAlerts(now = Date.now()) {
       await saveAlertEntry(key, entry);
       state[key] = entry;
     }
-    if (await sendAlert(notice.title, notice.lines, notice.id) === "pending") return;
+    if (await sendAlert(notice.title, notice.lines, notice.id) !== "sent") return;
     if (notice.recovery) delete state[key];
     else state[key] = { ...entry, sentAt: new Date(now).toISOString(), privateNotice: undefined };
     sent.push(notice.recovery ? `${key}:recovered` : key);
@@ -613,9 +619,10 @@ export async function checkAlerts(now = Date.now()) {
         const earlier = open || returns[f.key] ? 0 : await handoffs(f.key, new Date(now - DAY_MS));
         if (earlier >= RETURNS - 1) {
           const msg = formatReturn(f, earlier + 1);
-          await sendAlert(msg.title, msg.lines);
-          returns[f.key] = new Date(now).toISOString();
-          sent.push(`${f.key}:repeated`);
+          if (await sendAlert(msg.title, msg.lines) === "sent") {
+            returns[f.key] = new Date(now).toISOString();
+            sent.push(`${f.key}:repeated`);
+          }
         }
         state[f.key] = { title: f.title, since: open?.since ?? (f.since ?? new Date(now)).toISOString(), handedAt };
         continue;
@@ -646,9 +653,11 @@ export async function checkAlerts(now = Date.now()) {
       await tellPrivate(f.key, { ...entry, privateOwner: true }, msg);
       continue;
     }
-    await sendAlert(msg.title, msg.lines);
-    state[f.key] = { ...entry, sentAt: new Date(now).toISOString() };
-    sent.push(f.key);
+    state[f.key] = entry;
+    if (await sendAlert(msg.title, msg.lines) === "sent") {
+      state[f.key] = { ...entry, sentAt: new Date(now).toISOString() };
+      sent.push(f.key);
+    }
   }
   const found = new Set(all.map((f) => f.key));
   const dailies = await settleDailies(state, found, now);
@@ -668,8 +677,10 @@ export async function checkAlerts(now = Date.now()) {
     const [dropped] = key === "deliveries.failed" ? await sql`SELECT count(*)::int AS n FROM deliveries d
       WHERE d.status IN ('failed','skipped') AND d.updated_at>${new Date(Date.parse(open.since)-86400_000)}
         AND EXISTS(SELECT 1 FROM audit_log a WHERE a.action='delivery.drop' AND a.subject='delivery:' || d.id AND a.created_at>=d.updated_at)` : [];
-    if (dropped?.n) await sendAlert(`已结束跟进：${open.title}`, [`${dropped.n} 条旧通知已决定不再补发，未确认送达`]);
-    else await sendAlert(msg.title, msg.lines);
+    const result = dropped?.n
+      ? await sendAlert(`已结束跟进：${open.title}`, [`${dropped.n} 条旧通知已决定不再补发，未确认送达`])
+      : await sendAlert(msg.title, msg.lines);
+    if (result !== "sent") continue;
     sent.push(`${key}:${dropped?.n ? "closed" : "recovered"}`);
     delete state[key];
   }
@@ -762,8 +773,8 @@ export async function sendDigest(now = Date.now()) {
   // Once the hub has the list, the agent works through it alone and passes on what is still the owner's. Without
   // an agent, or when the list did not get through, the owner gets it as before.
   const taken = found.some(f => !dismissed[f.key]) && await wakeDigest(beijingDate(now), lines.length || found.length);
-  const toldOwner = lines.length > 0 && !taken;
-  if (toldOwner) await sendAlert(`📋 系统日报 · ${beijingDay(now)}`, ["以下事项需要跟进，具体影响见各条说明；可把整条转给 AI 处理。", ...lines]);
+  const toldOwner = lines.length > 0 && !taken
+    && await sendAlert(`📋 系统日报 · ${beijingDay(now)}`, ["以下事项需要跟进，具体影响见各条说明；可把整条转给 AI 处理。", ...lines]) === "sent";
   await flushAgentEvents();
   return { items: lines.length, toldOwner };
 }

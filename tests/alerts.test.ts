@@ -1,6 +1,6 @@
 // Ops alerts reach the site's operators: a problem is announced once, repeated no more than its level
 // allows (hourly for reader impact), closed with one recovery message.
-import { tag } from "./setup.ts";
+import { stub, tag } from "./setup.ts";
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { closeDb, sql } from "@aihot/backend/db";
@@ -21,6 +21,9 @@ process.env.MODEL_CALLS_ENABLED = "false";
 const T = tag();
 const SOURCE = `test-alerts-${T}`;
 const stuckIds: string[] = [];
+const alertReceiver = await stub(() => ({ code: 0 }));
+process.env.FEISHU_INTERNAL_ENABLED = "true";
+process.env.FEISHU_ALERT_WEBHOOK_URL = alertReceiver.url;
 before(async () => {
   await getBoss(); // collectFindings reads the job tables
   await sql`INSERT INTO sources (id, name, kind, next_fetch_at) VALUES (${SOURCE}, 'Test alerts', 'rss', '2100-01-01')`;
@@ -36,6 +39,7 @@ before(async () => {
   await sql`UPDATE articles SET discovered_at = now() - interval '40 hours' WHERE id = ${straggler}`;
 });
 after(async () => {
+  await alertReceiver.close();
   await stopBoss();
   await closeDb();
 });
@@ -249,6 +253,10 @@ test("backup failures still escalate after fifty hours without a success", async
     assert.equal((await backup())[0]?.level, "today", "never-successful backups must also escalate");
     await sql`UPDATE job_runs SET started_at = ${new Date(now)}, finished_at = ${new Date(now)} WHERE job = 'ops.backup'`;
     assert.equal((await backup())[0]?.level, "later", "a first failed attempt does not claim two days of failure");
+    await sql`INSERT INTO settings (key, value) VALUES ('backup.last', ${sql.json({ at: new Date(now).toISOString(), destination: "local", verified: true, uploaded: false })})`;
+    assert.deepEqual(await backup(), [], "a verified paired local backup is complete without claiming an upload");
+    await sql`UPDATE settings SET value = value || '{"verified":false}'::jsonb WHERE key = 'backup.last'`;
+    assert.equal((await backup())[0]?.level, "later", "an unverified local archive is not complete");
   } finally {
     for (const key of Object.keys(process.env)) if (key.startsWith("DB_BACKUP_STORE_")) delete process.env[key];
   }
@@ -360,7 +368,7 @@ test("the ops digest does not describe unknown paid work as harmless or already 
   try {
     await sql`INSERT INTO receipts(logical_key,service,purpose,status) VALUES('digest-unknown-impact','deepseek','event_identity','unknown')`;
     console.log = (value: unknown) => { lines.push(String(value)); };
-    await sendDigest();
+    assert.equal((await sendDigest()).toldOwner, false, "disabled delivery does not claim the owner was told");
     const message = lines.join("\n");
     assert.match(message, /结果.*未知|结果.*确认/);
     assert.doesNotMatch(message, /以下事项不影响读者|自动重试过一次/);

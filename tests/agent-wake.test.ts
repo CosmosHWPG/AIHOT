@@ -88,6 +88,42 @@ test('outward valve and missing credentials cannot send wakes',async()=>{
  process.env.FEISHU_INTERNAL_ENABLED='true';delete process.env.WEBHOOK_HUB_KEY;await checkAlerts();assert.equal(hits.length,0);
 });
 
+test('private alerts retain one notice through disabled and pending delivery, including recovery', async () => {
+ const now=Date.now();
+ const privateFinding:Finding={key:'account.verify',level:'today',title:'账号需要核验',owner:'private'};
+ found=[privateFinding];process.env.FEISHU_INTERNAL_ENABLED='false';
+ assert.ok(!(await checkAlerts(now)).sent.includes(privateFinding.key));
+ const saved=async()=>((await sql`SELECT value FROM settings WHERE key = 'alerts.state'`)[0]!.value[privateFinding.key]);
+ const disabled=await saved();assert.equal(disabled.sentAt,undefined);assert.equal(disabled.privateNotice,undefined);
+ process.env.FEISHU_INTERNAL_ENABLED='true';tellStatus=500;
+ assert.ok(!(await checkAlerts(now+60_000)).sent.includes(privateFinding.key));
+ const id=(await saved()).privateNotice.id;
+ assert.ok(!(await checkAlerts(now+90_000)).sent.includes(privateFinding.key));
+ assert.equal((await saved()).privateNotice.id,id);
+ tellStatus=200;
+ assert.ok((await checkAlerts(now+120_000)).sent.includes(privateFinding.key));
+ assert.ok(told.filter(t=>t.body.key===`${id}-0`).length>=2,'the exact notice identity is reused');
+ found=[];process.env.FEISHU_INTERNAL_ENABLED='false';
+ assert.ok((await checkAlerts(now+180_000)).open.includes(privateFinding.key));
+ assert.equal((await saved()).privateNotice,undefined,'disabled recovery has not been attempted');
+ process.env.FEISHU_INTERNAL_ENABLED='true';
+ assert.ok((await checkAlerts(now+240_000)).sent.includes(`${privateFinding.key}:recovered`));
+ assert.equal(await saved(),undefined);
+});
+
+test('a private incident resolved before sending is enabled closes quietly', async () => {
+ const now=Date.now();const key='account.never-sent';
+ found=[{key,level:'today',title:'暂时需要核验',owner:'private'}];
+ process.env.FEISHU_INTERNAL_ENABLED='false';
+ assert.ok((await checkAlerts(now)).open.includes(key));
+ found=[];
+ const closed=await checkAlerts(now+60_000);
+ assert.ok(!closed.open.includes(key));assert.deepEqual(closed.sent,[]);
+ process.env.FEISHU_INTERNAL_ENABLED='true';
+ assert.deepEqual((await checkAlerts(now+120_000)).sent,[]);
+ assert.equal(told.length,0,'there is no late original notice or unsolicited recovery');
+});
+
 test('the 09:00 digest dispatches follow-ups once per Beijing day, including agent-only work',async()=>{
  const now=Date.parse('2026-10-18T01:00:00Z');found=[quiet];await sendDigest(now);await sendDigest(now+60_000);
  assert.deepEqual(hits.map(h=>h.body.type),['alert.digest']);assert.equal(hits[0]!.body.subject,'digest:2026-10-18');
@@ -100,9 +136,13 @@ test('the 09:00 follow-ups go to the agent alone while it takes them, and to the
  assert.equal((await sendDigest(now)).toldOwner,false);
  assert.deepEqual(hits.map(h=>h.body.type),['alert.digest']);
  status=401;
- assert.equal((await sendDigest(now+86400_000)).toldOwner,true,'the list did not get through to the agent: the owner gets it');
+ assert.equal((await sendDigest(now+86400_000)).toldOwner,false,'the failed hub and absent owner channel cannot claim delivery');
  status=200;delete process.env.WEBHOOK_HUB_KEY;
- assert.equal((await sendDigest(now+2*86400_000)).toldOwner,true,'no agent: as before');
+ assert.equal((await sendDigest(now+2*86400_000)).toldOwner,false,'without an owner channel nothing was delivered');
+ process.env.FEISHU_ALERT_WEBHOOK_URL=`http://127.0.0.1:${(server.address() as any).port}/webhook`;
+ try {
+  assert.equal((await sendDigest(now+3*86400_000)).toldOwner,true,'an accepting owner channel confirms delivery');
+ } finally { delete process.env.FEISHU_ALERT_WEBHOOK_URL; }
 });
 
 test('an agent-only review stays off the owner alerts and every digest',async()=>{
@@ -178,7 +218,11 @@ test('the summary that a problem keeps coming back goes out at most once a day, 
 
 test('without the agent, the owner hears every incident as before',async()=>{
  delete process.env.WEBHOOK_HUB_URL;found=[stuck];
- assert.deepEqual((await checkAlerts()).sent,['content.process']);
+ process.env.FEISHU_INTERNAL_ENABLED='true';
+ process.env.FEISHU_ALERT_WEBHOOK_URL=`http://127.0.0.1:${(server.address() as any).port}/webhook`;
+ try {
+  assert.deepEqual((await checkAlerts()).sent,['content.process']);
+ } finally { delete process.env.FEISHU_ALERT_WEBHOOK_URL; }
 });
 
 // 10-25 a quiet Saturday morning: the agent found collection healthy at 07:34, and the owner still got 🔴 at 08:30.

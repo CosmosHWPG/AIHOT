@@ -105,6 +105,28 @@ test("a failed send is tried again at the next check", async () => {
   assert.ok(attempts.every((text) => text.includes("后台处理服务停了")));
 });
 
+test("disabled and unconfigured watchdog notifications do not consume the outage or recovery", async () => {
+  await heartbeat(true);
+  process.env.FEISHU_INTERNAL_ENABLED = "false";
+  await checkWorkerHeartbeat();
+  assert.equal((await sql`SELECT value FROM settings WHERE key = 'watchdog.worker'`).length, 0);
+  process.env.FEISHU_INTERNAL_ENABLED = "true";
+  delete process.env.FEISHU_ALERT_CHAT_ID;
+  await checkWorkerHeartbeat();
+  assert.equal((await sql`SELECT value FROM settings WHERE key = 'watchdog.worker'`).length, 0);
+  process.env.FEISHU_ALERT_CHAT_ID = `oc_test_${T}`;
+  await checkWorkerHeartbeat();
+  assert.equal(attempts.length, 1);
+  await heartbeat(false);
+  process.env.FEISHU_INTERNAL_ENABLED = "false";
+  await checkWorkerHeartbeat();
+  assert.equal((await sql`SELECT value FROM settings WHERE key = 'watchdog.worker'`)[0]!.value.state, "down");
+  process.env.FEISHU_INTERNAL_ENABLED = "true";
+  await checkWorkerHeartbeat();
+  assert.equal(attempts.length, 2);
+  assert.match(attempts[1]!, /已恢复/);
+});
+
 test("with an alert webhook, alerts go to the group bot alone and need no message app", async () => {
   process.env.FEISHU_ALERT_WEBHOOK_URL = `https://open.feishu.cn/open-apis/bot/v2/hook/test-${T}`;
   delete process.env.FEISHU_APP_ID;

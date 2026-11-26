@@ -9,7 +9,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { after, before, test } from "node:test";
 import { closeDb, sql } from "@aihot/backend/db";
 import { upsertMaterial } from "@aihot/backend/content/materials";
-import { analyzeArticle, buildMaterial, loadAnalyzeInput, normalizeAnalysis, normalizeStructure, runAnalysis, selectionThreshold, StructureSchema, type AnalyzeInputArticle, UNDERSTAND_FLOOR } from "@aihot/backend/editorial/analyze";
+import { analyzeArticle, buildMaterial, loadAnalyzeInput, normalizeAnalysis, normalizeStructure, runAnalysis, selectionThreshold, StructureSchema, STRUCTURE_SYSTEM, type AnalyzeInputArticle, UNDERSTAND_FLOOR } from "@aihot/backend/editorial/analyze";
 import { createSource, updateSource } from "@aihot/backend/admin/sources";
 import { processArticle, queueProcessing } from "@aihot/backend/jobs/content";
 import { isPoolEligible } from "@aihot/backend/publication/rules";
@@ -118,6 +118,26 @@ test("every prompt in the pack renders, and the site's name replaces AIHOT's", (
     assert.ok(text.trim().length > 0 && !/\{\{/.test(text), file);
   }
   assert.ok(PREFILTER_SYSTEM.startsWith(`为${SITE.name}做宽召回`));
+});
+
+test("the shipped structure prompt requests scope and grounded fact fields without schema defaults filling omissions", () => {
+  const format = JSON.parse(STRUCTURE_SYSTEM.slice(STRUCTURE_SYSTEM.lastIndexOf("\n{")).trim());
+  const check = (requested: typeof format) => {
+    assert.deepEqual(Object.keys(requested).sort(), ["category", "fact", "scope", "subjects", "tags"]);
+    assert.deepEqual(Object.keys(requested.fact).sort(), ["action", "conditions", "evidence", "object", "occurredAt", "subject", "title"]);
+    assert.deepEqual(StructureSchema.parse(requested), requested, "compatibility defaults must not conceal fields absent from the requested output");
+  };
+  check(format);
+  for (const field of ["scope", "evidence", "conditions"]) {
+    const incomplete = structuredClone(format);
+    if (field === "scope") delete incomplete.scope;
+    else delete incomplete.fact[field];
+    assert.throws(() => check(incomplete), `${field} cannot disappear from the requested contract while old receipts remain compatible`);
+  }
+  assert.deepEqual(Object.keys(format.fact.conditions[0]), ["quote"], "new conditions request original quotations, not generated paraphrases");
+  for (const scope of ["single", "composite", "unknown"]) {
+    assert.match(STRUCTURE_SYSTEM, new RegExp(`- ${scope}：`), `${scope} has an extraction rule`);
+  }
 });
 
 test("a selected item: prefilter, two scores, the content understanding and the structure", async () => {

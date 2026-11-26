@@ -386,6 +386,35 @@ test("a TPM throttle does not stop the service", async () => {
     await sql`DELETE FROM receipts WHERE service = ${service}`;
   }
 });
+
+test("only one request probes an expired refusal while saved answers remain reusable", async () => {
+  const service = `invariant-probe-${tag()}`;
+  const sent = gate(), release = gate();
+  let hits = 0;
+  try {
+    const saved = await paidRequest({ service, purpose: "invariant_test", identity: "saved" }, async () => ({ response: { ok: true } }));
+    await assert.rejects(paidRequest({ service, purpose: "invariant_test", identity: "refused" }, async () => {
+      assertAccepted(service, 402, "insufficient balance"); return { response: null };
+    }), ProviderRejectedError);
+    await sql`UPDATE settings SET value=jsonb_set(value,'{until}',to_jsonb(${new Date(Date.now()-1000).toISOString()}::text)) WHERE key=${providerStopKey(service)}`;
+    const probe = paidRequest({ service, purpose: "invariant_test", identity: "probe" }, async () => {
+      hits += 1; sent.open(); await release.promise; throw new Error("connection closed after sending");
+    });
+    const checked = assert.rejects(probe, ReceiptUnknownError);
+    await sent.promise;
+    await assert.rejects(paidRequest({ service, purpose: "invariant_test", identity: "second" }, async () => { hits += 1; return { response: null }; }), BudgetExceededError);
+    const reused = await paidRequest({ service, purpose: "invariant_test", identity: "saved" }, async () => { hits += 1; return { response: null }; });
+    assert.equal(reused.receiptId, saved.receiptId); assert.equal(reused.reused, true);
+    release.open(); await checked;
+    await assert.rejects(paidRequest({ service, purpose: "invariant_test", identity: "after-unknown" }, async () => { hits += 1; return { response: null }; }), BudgetExceededError);
+    await assert.rejects(paidRequest({ service, purpose: "invariant_test", identity: "probe" }, async () => { hits += 1; return { response: null }; }), ReceiptUnknownError);
+    assert.equal(hits, 1, "an unknown probe never fans out or replays");
+  } finally {
+    release.open();
+    await sql`DELETE FROM receipts WHERE service=${service}`;
+    await sql`DELETE FROM settings WHERE key=${providerStopKey(service)}`;
+  }
+});
 test("a resource-level 403 (a private account) stops nothing", async () => {
   const service = `invariant-private-${tag()}`;
   try {

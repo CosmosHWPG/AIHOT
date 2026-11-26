@@ -38,6 +38,13 @@ process.env.DEEPSEEK_BASE_URL = `${provider.url}/v1`;
 process.env.DEEPSEEK_API_KEY = "test-key";
 after(async () => { await provider.close(); await stopBoss(); await closeDb(); });
 
+test("the shipped digest prompt requests only persisted overview fields", () => {
+  const format = JSON.parse(DIGEST_SYSTEM.split("只输出 JSON：").at(-1)!);
+  assert.deepEqual(Object.keys(format).sort(), ["digest", "title"], "latest progress comes from a current public report, not a discarded generated field");
+  const sample = { ...format, digest: "足够长度的事件概览格式校验文本" };
+  assert.deepEqual(DigestSchema.parse(sample), sample, "all requested output fields are consumed");
+});
+
 async function source(suffix: string, tier: string, owner: string | null = null, role: string | null = null, firstParty = false) {
   const id = `${key}-${suffix}`;
   await sql`INSERT INTO sources (id,name,kind,tier,participation_mode,owner_entity_id,config,next_fetch_at,first_party)

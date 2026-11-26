@@ -50,7 +50,7 @@ async function savedReport(kind: ReportKind, key: string) {
  * it is. With a reason (an explicit regeneration) the issue is replaced and the edition it replaces is
  * kept as a revision. Says whether the issue was written.
  */
-async function saveReport(kind: ReportKind, key: string, start: Date, end: Date, content: Record<string, unknown>, reason: string | undefined, receiptIds: number[]): Promise<boolean> {
+async function saveReport(kind: ReportKind, key: string, start: Date, end: Date, content: Record<string, unknown>, reason: string | undefined, receiptIds: number[], expectedRevision?: number): Promise<boolean> {
   return sql.begin(async (tx) => {
     // Serialize issue_number allocation per report kind so concurrent compositions never collide.
     const insert = async () => {
@@ -65,6 +65,7 @@ async function saveReport(kind: ReportKind, key: string, start: Date, end: Date,
     else {
       const [existing] = await tx<{ id: number; revision: number; content: unknown; generated_at: Date }[]>`
         SELECT id, revision, content, generated_at FROM reports WHERE kind = ${kind} AND key = ${key} FOR UPDATE`;
+      if (expectedRevision !== undefined && existing?.revision !== expectedRevision) throw new Error(`report ${kind}:${key}: revision changed`);
       if (existing) {
         await tx`INSERT INTO report_revisions (report_id, revision, content, generated_at, reason)
                  VALUES (${existing.id}, ${existing.revision}, ${tx.json(existing.content as never)}, ${existing.generated_at}, ${reason}) ON CONFLICT DO NOTHING`;
@@ -78,6 +79,19 @@ async function saveReport(kind: ReportKind, key: string, start: Date, end: Date,
     for (const id of receiptIds) await completeReceipt(tx, id);
     return written;
   });
+}
+
+/** Correct an empty issue's misleading quiet-day notice without changing its cutoff or adding late reports. */
+export async function correctDailyNotice(date: string, notice: { title: string; leadParagraph: string }, reason: string, expectedRevision: number) {
+  if (!reason.trim() || !notice.title.trim() || !notice.leadParagraph.trim()) throw new Error("a notice and correction reason are required");
+  if (!Number.isInteger(expectedRevision) || expectedRevision < 1) throw new Error("the current report revision is required");
+  const [row] = await sql<{ window_start: Date; window_end: Date; content: Record<string, any> }[]>`
+    SELECT window_start, window_end, content FROM reports WHERE kind = 'daily' AND key = ${date}`;
+  if (!row) throw new Error(`daily ${date}: issue does not exist`);
+  if ((row.content.sections ?? []).some((section: any) => section.items?.length) || row.content.flashes?.length || row.content.leadItemId || row.content.highlights?.length || row.content.picks?.length) {
+    throw new Error(`daily ${date}: only an empty issue's notice can be corrected`);
+  }
+  await saveReport("daily", date, row.window_start, row.window_end, { ...row.content, lead: notice }, reason.trim(), [], expectedRevision);
 }
 
 /** "10 月 4 日 08:00": one end of a quiet issue's window, as its lead paragraph names it. */
@@ -104,6 +118,15 @@ export async function composeDaily(date: string, reason?: string): Promise<{ key
   const edition = await dailyEdition(date, start, end);
   // Nothing judged in the window is a failure upstream, not a quiet day: the run fails and is caught up later.
   if (edition.entries.length === 0 && edition.stats.judgedReports === 0) throw new Error(`daily ${date}: nothing judged in its window`);
+  if (edition.entries.length === 0) {
+    const [waiting] = await sql<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM publications p JOIN articles a ON a.id = p.article_id
+      JOIN sources s ON s.id = p.source_id
+      WHERE p.selection_candidate AND p.eligible AND p.visibility = 'public' AND NOT p.backfill
+        AND s.enabled AND s.participation_mode = 'editorial' AND a.grouping_status <> 'complete'
+        AND p.timeline_at >= ${start} AND p.timeline_at < ${end}`;
+    if (waiting!.n > 0) throw new Error(`daily ${date}: ${waiting!.n} selected reports are awaiting news confirmation`);
+  }
   const issue = arrangeDaily(edition.entries);
   const [lead, ...rest] = issue.main;
   const highlights = rest.slice(0, DAILY_HIGHLIGHTS).map((e) => e.entry.itemId);
@@ -312,7 +335,9 @@ const nextMonth = (label: string) => {
 /**
  * The scheduled run (every half hour): every issue due by `now` that does not exist yet, oldest first.
  * The newest one appears at the first run after it falls due (above); a long stop or an older gap is
- * filled too. A kind with no issue yet only gets its latest due one. An issue that fails does not hold
+ * filled too. Automatic daily catch-up follows the same seven-calendar-day window as missing-edition
+ * alerts; older unresolved gaps require an explicit correction rather than failing every half hour forever.
+ * A kind with no issue yet only gets its latest due one. An issue that fails does not hold
  * up the others; at most `limit` issues are written per run, the next run continues.
  */
 export async function composeDueReports(now = new Date(), limit = 8): Promise<{ generated: string[]; failed: string[] }> {
@@ -328,7 +353,8 @@ export async function composeDueReports(now = new Date(), limit = 8): Promise<{ 
   const [{ first: firstDaily }] = await sql<{ first: string | null }[]>`SELECT min(key) AS first FROM reports WHERE kind = 'daily'`;
   kinds: for (const k of kinds) {
     const have = new Set((await sql<{ key: string }[]>`SELECT key FROM reports WHERE kind = ${k.kind}`).map((r) => r.key));
-    const first = [...have].sort()[0] ?? k.due;
+    const earliest = [...have].sort()[0] ?? k.due;
+    const first = k.kind === "daily" && earliest < addDays(k.due, -6) ? addDays(k.due, -6) : earliest;
     for (let key = first; key <= k.due; key = k.next(key)) {
       if (have.has(key)) continue;
       if (k.kind !== "daily" && (!firstDaily || k.end(key) < firstDaily)) continue;

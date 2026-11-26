@@ -39,10 +39,10 @@ export async function checkWorkerHeartbeat(): Promise<void> {
         ? { ...WORKER_DOWN, action: "已自动通知 AI 排查重启；如果半小时还没收到“已恢复”再问 AI" }
         : WORKER_DOWN;
       const msg = formatAlert(shown, hb.updated_at, now);
-      await sendAlert(msg.title, msg.lines);
+      if (await sendAlert(msg.title, msg.lines) !== "sent") return { since: hb.updated_at };
     } else if (prior) {
       const msg = formatRecovery(WORKER_DOWN.title, new Date(prior.value.since), now);
-      await sendAlert(msg.title, msg.lines);
+      if (await sendAlert(msg.title, msg.lines) !== "sent") return null;
     }
     // "since" of a down state is the last heartbeat, so the recovery can say how long it lasted.
     const since = stale ? hb.updated_at : new Date(now);

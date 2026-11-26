@@ -8,6 +8,7 @@
 import "./setup.ts";
 import assert from "node:assert/strict";
 import http from "node:http";
+import { readFileSync } from "node:fs";
 import { after, test } from "node:test";
 import { config } from "@aihot/backend/config";
 import { extractFromUrl, pageRules } from "@aihot/backend/content/extract";
@@ -373,4 +374,38 @@ test("generic detail metadata does not promote modified or unlabelled time eleme
   }
   const published = await fetchDetail(site + "/date-published", detailSource, { date: true, title: false, summary: false });
   assert.equal(published.publishedAt?.toISOString(), "2020-02-15T00:00:00.000Z");
+});
+
+test("configured publisher listings retain headlines and real dates after their card markup changes", () => {
+  const pack = JSON.parse(readFileSync(new URL("../industry/sources.json", import.meta.url), "utf8"));
+  const rows = [
+    ["v2-source-124", '<a class="cmp-teaser__link" href="/content/www/us/en/newsroom/news/artificial-intelligence/new-model.html"><p class="cmp-teaser__pretitle">Artificial Intelligence (AI)</p><h2 class="cmp-teaser__title">A new inference model</h2><div class="cmp-teaser__description"><p>November 24, 2026</p></div></a>', "A new inference model"],
+    ["corescope-web-list-anthropic-com-5ab5dc8b", '<article data-listing-row="one"><header><time>Nov 24, 2026</time></header><h3><a href="/research/new-model">A new inference model</a></h3></article>', "A new inference model"],
+    ["corescope-web-list-goodfire-com-eca9a77c", '<a class="index-item" href="/research/new-model"><h2>A new inference model</h2><div class="index-meta"><span>Research team</span><span>·</span><span>November 24, 2026</span></div></a>', "A new inference model"],
+    ["corescope-web-list-llamaindex-ai-edc405fb", '<a href="/blog/new-model"><span class="bpost__meta"><time datetime="2026-11-24">Nov 24, 2026</time></span><span class="bpost__title">A new inference model</span><span>Read more</span></a>', "A new inference model"],
+    ["corescope-web-list-mastra-ai-a993d77f", '<a data-testid="post-card" href="/blog/new-model"><span data-testid="post-date">Nov 24, 2026</span><h3 data-testid="post-title">A new inference model</h3></a>', "A new inference model"],
+    ["v2-source-149", '<main><div class="latest-news_container"><article class="post-default"><div class="post-date">24 November 2026</div><h3 class="post-title">A new inference model</h3><a href="https://press.orange-business.com/new-model/?lang=eng" aria-describedby="title-one">Read more</a></article></div><a href="https://press.orange-business.com/person/?lang=eng">An unrelated expert</a></main>', "A new inference model"],
+    ["corescope-web-list-alignment-openai-com-3ef47766", '<a href="/safety-alignment/misalignment-reports/new-model/"><span class="text-h5">A new inference model</span><span>Incident date: <time datetime="2026-11-01">Nov 1, 2026</time></span><span>Discovered: <time datetime="2026-11-02">Nov 2, 2026</time></span><span>First posted: <time datetime="2026-11-24">Nov 24, 2026</time></span><span>Last updated: <time datetime="2026-11-25">Nov 25, 2026</time></span></a>', "A new inference model"],
+  ];
+  for (const [id, html, title] of rows) {
+    const configured = pack.sources.find((item: { id: string }) => item.id === id);
+    const items = fromHtml(html!, configured.config.url, configured);
+    assert.equal(items.length, 1, id);
+    assert.equal(items[0]!.title, title, id);
+    assert.equal(items[0]!.publishedAt?.toISOString(), "2026-11-24T00:00:00.000Z", id);
+    assert.equal(fromHtml(html!.replace(/November 24, 2026|24 November 2026|Nov 24, 2026|datetime="2026-11-24"/g, "undated"), configured.config.url, configured).some(item => item.publishedAt), false, "missing publication dates never become today's date, an incident date or a modification date");
+  }
+});
+
+test("a moved product blog keeps its explicit publication byline instead of an unrelated updated time", async () => {
+  const pack = JSON.parse(readFileSync(new URL("../industry/sources.json", import.meta.url), "utf8"));
+  const configured = pack.sources.find((item: { id: string }) => item.id === "corescope-web-qoder-blog");
+  const html = '<h1>A new inference model</h1><time datetime="2026-11-25">Last updated</time><article><time class="qb-date" datetime="2026-11-24">2026-11-24 · 8 minutes</time></article>';
+  pages["/moved-product-blog"] = () => html;
+  const detail = await fetchDetail(site + "/moved-product-blog", configured, { date: true, title: true, summary: false });
+  assert.equal(detail.title, "A new inference model");
+  assert.equal(detail.publishedAt?.toISOString(), "2026-11-24T00:00:00.000Z");
+  pages["/moved-product-blog"] = () => html.replace('<time class="qb-date" datetime="2026-11-24">2026-11-24 · 8 minutes</time>', "");
+  const missing = await fetchDetail(site + "/moved-product-blog", configured, { date: true, title: false, summary: false });
+  assert.equal(missing.publishedAt, null, "the modified time cannot replace a missing authoritative publication date");
 });

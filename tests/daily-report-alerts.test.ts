@@ -1,4 +1,4 @@
-import "./setup.ts";
+import { stub } from "./setup.ts";
 import assert from "node:assert/strict";
 import { after, before, beforeEach, test } from "node:test";
 import { beijingAt } from "@aihot/contracts/time";
@@ -9,17 +9,38 @@ import { checkAlerts, collectFindings } from "@aihot/backend/operations/alerts";
 const at = (date: string, time = "10:00") => beijingAt(date, time).getTime();
 const key = (date: string) => `report.daily:${date}`;
 const daily = (keys: string[]) => keys.filter(k => k.startsWith("report.daily"));
+const alertReceiver = await stub(() => ({ code: 0 }));
+process.env.FEISHU_ALERT_WEBHOOK_URL = alertReceiver.url;
 async function report(date: string) {
   await sql`INSERT INTO reports(kind,key,window_start,window_end,content,generated_at) VALUES('daily',${date},${new Date(at(date))},${new Date(at(date))},'{}',${new Date(at(date))})`;
 }
 before(async () => { await getBoss(); });
 beforeEach(async () => {
-  Object.assign(process.env, { COLLECT_ENABLED: "true", MODEL_CALLS_ENABLED: "true", FEISHU_INTERNAL_ENABLED: "false" });
+  Object.assign(process.env, { COLLECT_ENABLED: "true", MODEL_CALLS_ENABLED: "true", FEISHU_INTERNAL_ENABLED: "true" });
   await sql`DELETE FROM reports`;
   await sql`DELETE FROM job_runs WHERE job='reports.compose'`;
   await sql`DELETE FROM settings WHERE key IN ('alerts.state','heartbeat.worker')`;
 });
-after(async () => { await stopBoss(); await closeDb(); });
+after(async () => { await alertReceiver.close(); await stopBoss(); await closeDb(); });
+
+test("disabled alerts retain the incident without recording delivery, and resume when enabled", async () => {
+  process.env.FEISHU_INTERNAL_ENABLED = "false";
+  const now = at("2026-10-06");
+  for (const offset of [0, 60_000]) {
+    const result = await checkAlerts(now + offset);
+    assert.deepEqual(daily(result.sent), []);
+    assert.ok(result.open.includes(key("2026-10-06")));
+    const [saved] = await sql`SELECT value FROM settings WHERE key = 'alerts.state'`;
+    assert.equal(saved!.value[key("2026-10-06")].sentAt, undefined);
+  }
+  process.env.FEISHU_INTERNAL_ENABLED = "true";
+  assert.deepEqual(daily((await checkAlerts(now + 120_000)).sent), [key("2026-10-06")]);
+  await report("2026-10-06");
+  process.env.FEISHU_INTERNAL_ENABLED = "false";
+  assert.ok((await checkAlerts(now + 180_000)).open.includes(key("2026-10-06")), "a disabled recovery send remains pending");
+  process.env.FEISHU_INTERNAL_ENABLED = "true";
+  assert.deepEqual(daily((await checkAlerts(now + 240_000)).sent), [`${key("2026-10-06")}:recovered`]);
+});
 
 test("midnight preserves a missing edition; each date recovers only when its report exists", async () => {
   let result = await checkAlerts(at("2026-10-06", "23:30"));

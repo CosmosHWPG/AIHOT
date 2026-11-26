@@ -22,14 +22,14 @@ import { submitFeedback } from "@aihot/backend/operations/feedback";
 const run = promisify(execFile);
 const originalExecFile = execFile;
 const commandName = (file: string) => path.basename(file, ".exe");
-type BackupCommand = (file: string, args: string[], options?: childProcess.ExecFileOptions) => ReturnType<typeof run>;
+type BackupCommand = (file: string, args: string[], options?: childProcess.ExecFileOptions) => Promise<{ stdout: string | Buffer; stderr: string | Buffer }>;
 let runBackupCommand: BackupCommand = run;
 // Capture a real executor with a controllable subprocess boundary, without shell scripts on PATH.
 childProcess.execFile = Object.assign(originalExecFile.bind(childProcess), {
   [promisify.custom]: (file: string, args: string[], options?: childProcess.ExecFileOptions) => runBackupCommand(file, args, options),
 });
 syncBuiltinESMExports();
-const { runBackup } = await import("@aihot/backend/operations/backup").finally(() => {
+const { runBackup, backupConfigured } = await import("@aihot/backend/operations/backup").finally(() => {
   childProcess.execFile = originalExecFile;
   syncBuiltinESMExports();
 });
@@ -155,6 +155,114 @@ test("raw analytics events stay out of the dump, every other table's rows go in"
   assert.doesNotMatch(stdout, / TABLE DATA public analytics_events /);
   assert.match(stdout, / TABLE DATA public feedback /);
   if (visitors) assert.match(stdout, / TABLE DATA public visitor_states /);
+});
+
+test("an explicitly configured local backup restores real data and attachments without a cloud request", async () => {
+  const local = await mkdtemp(path.join(tmpdir(), "corescope-local-backup-"));
+  roots.push(local);
+  const saved = process.env.DB_BACKUP_LOCAL_DIR;
+  const cloud = Object.fromEntries(Object.keys(env).filter(key => key.startsWith("DB_BACKUP_STORE_")).map(key => [key, process.env[key]]));
+  for (const key of Object.keys(cloud)) delete process.env[key];
+  process.env.DB_BACKUP_LOCAL_DIR = local;
+  try {
+    assert.equal(backupConfigured(), true);
+    const marker = `local-backup-${T}`;
+    await sql`INSERT INTO settings(key,value) VALUES (${marker},'{"restored":true}')`;
+    await save("uploads/nested/local.txt", Buffer.from("local restore fixture"));
+    const summary = await runBackup(NOW);
+    assert.equal(summary.uploaded, false);
+    assert.equal(summary.destination, "local");
+    assert.equal(summary.verified, true);
+    assert.equal(objects.size, 0);
+    const manifest = JSON.parse(await readFile(path.join(local, `${stem}-manifest-202611010400.json`), "utf8"));
+    assert.deepEqual(manifest, summary);
+    for (const object of summary.objects) {
+      const file = path.join(local, object.key.replace(/^local-only:/, ""));
+      assert.equal(createHash("sha256").update(await readFile(file)).digest("hex"), object.sha256);
+    }
+    const destination = await mkdtemp(path.join(tmpdir(), "corescope-local-restored-"));
+    roots.push(destination);
+    const restoreTar = process.platform === "win32" ? path.join(process.env.SystemRoot ?? "C:\\Windows", "System32", "tar.exe") : "tar";
+    await run(restoreTar, ["-xzf", `${stem}-files-202611010400.tar.gz`, "-C", destination], { cwd: local });
+    assert.equal(await readFile(path.join(destination, "uploads/nested/local.txt"), "utf8"), "local restore fixture");
+    const name = `${new URL(config.databaseUrl).pathname.slice(1)}_local_restore_test`;
+    assert.match(name, /^[a-z0-9_]+_test$/);
+    await sql.unsafe(`CREATE DATABASE "${name}"`);
+    databases.add(name);
+    const restoredUrl = new URL(config.databaseUrl);
+    restoredUrl.pathname = `/${name}`;
+    await run("pg_restore", ["--exit-on-error", "--no-owner", "--dbname", restoredUrl.href, path.join(local, `${stem}-202611010400.dump`)], { maxBuffer: 16 * 1024 * 1024 });
+    await run(process.execPath, ["--input-type=module", "--eval", `
+      import { sql, closeDb } from "@aihot/backend/db";
+      import assert from "node:assert/strict";
+      try { assert.equal((await sql\`SELECT value->>'restored' AS restored FROM settings WHERE key=\${process.env.RESTORE_MARKER}\`)[0].restored, 'true'); }
+      finally { await closeDb(); }
+    `], { env: { ...process.env, DATABASE_URL: restoredUrl.href, RESTORE_MARKER: marker } });
+  } finally {
+    if (saved === undefined) delete process.env.DB_BACKUP_LOCAL_DIR; else process.env.DB_BACKUP_LOCAL_DIR = saved;
+    for (const [key, value] of Object.entries(cloud)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }
+  }
+});
+
+test("a local backup cannot write inside the files it archives", async () => {
+  const saved = process.env.DB_BACKUP_LOCAL_DIR;
+  try {
+    process.env.DB_BACKUP_LOCAL_DIR = path.join(config.dataDir, "uploads", "backups");
+    await assert.rejects(runBackup(NOW), /cannot be inside an attachment directory/);
+    process.env.DB_BACKUP_LOCAL_DIR = "relative-backups";
+    await assert.rejects(runBackup(NOW), /absolute directory/);
+  } finally { if (saved === undefined) delete process.env.DB_BACKUP_LOCAL_DIR; else process.env.DB_BACKUP_LOCAL_DIR = saved; }
+});
+
+test("Windows scheduled backups use the project's portable PostgreSQL tools without a global installation", { skip: process.platform !== "win32" }, async () => {
+  const directory = path.join(config.dataDir, "runtime", "pgsql", "bin");
+  await mkdir(directory, { recursive: true });
+  for (const name of ["pg_dump", "pg_restore"]) await writeFile(path.join(directory, `${name}.exe`), "fixture tool boundary");
+  const commands: string[] = [];
+  runBackupCommand = (file, args, options) => {
+    if (["pg_dump", "pg_restore"].includes(commandName(file))) {
+      assert.equal(path.dirname(file), directory);
+      commands.push(commandName(file));
+      return run(commandName(file), args, options);
+    }
+    return run(file, args, options);
+  };
+  try {
+    assert.equal((await runBackup(NOW)).verified, true);
+    assert.deepEqual(commands, ["pg_dump", "pg_restore"]);
+  } finally { runBackupCommand = run; }
+});
+
+test("failed local generations cannot evict an older complete database and attachment pair", async () => {
+  const local = await mkdtemp(path.join(tmpdir(), "corescope-local-retention-"));
+  roots.push(local);
+  const saved = process.env.DB_BACKUP_LOCAL_DIR;
+  process.env.DB_BACKUP_LOCAL_DIR = local;
+  try {
+    await save("uploads/retained.txt", Buffer.from("retained pair"));
+    await runBackup(NOW);
+    for (const day of [2, 3]) {
+      runBackupCommand = (file, args, options) => {
+        if (commandName(file) === "tar" && args.includes("-czf")) return Promise.reject(new Error("fictional local packing failure"));
+        return run(file, args, options);
+      };
+      try { await assert.rejects(runBackup(new Date(`2026-11-0${day}T04:00:00Z`)), /fictional local packing failure/); }
+      finally { runBackupCommand = run; }
+    }
+    const legacy = `${stem}-202610010400.dump`;
+    await writeFile(path.join(local, legacy), "preexisting unmanaged restore point");
+    await runBackup(new Date("2026-11-04T04:00:00Z"));
+    let files = await readdir(local);
+    assert.ok(files.includes(`${stem}-202611010400.dump`));
+    assert.ok(files.includes(`${stem}-files-202611010400.tar.gz`));
+    assert.ok(!files.includes(`${stem}-202611020400.dump`));
+    assert.ok(!files.includes(`${stem}-202611030400.dump`));
+    assert.equal(await readFile(path.join(local, legacy), "utf8"), "preexisting unmanaged restore point");
+    for (const day of [5, 6]) await runBackup(new Date(`2026-11-0${day}T04:00:00Z`));
+    files = await readdir(local);
+    assert.ok(!files.some(file => file.includes("202611010400")));
+    for (const day of [4, 5, 6]) for (const suffix of [`${stem}-2026110${day}0400.dump`, `${stem}-files-2026110${day}0400.tar.gz`, `${stem}-manifest-2026110${day}0400.json`]) assert.ok(files.includes(suffix));
+  } finally { if (saved === undefined) delete process.env.DB_BACKUP_LOCAL_DIR; else process.env.DB_BACKUP_LOCAL_DIR = saved; }
 });
 
 test("both attachment roots restore nested paths and bytes, without caches or previous backups", async () => {

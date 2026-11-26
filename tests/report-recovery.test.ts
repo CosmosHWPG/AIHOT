@@ -6,7 +6,7 @@ import { after, before, beforeEach, test } from "node:test";
 import { closeDb, sql } from "@aihot/backend/db";
 import { addDays } from "@aihot/contracts/time";
 import { stopBoss } from "@aihot/backend/jobs/queue";
-import { composeDaily, composeDueReports, composeWeekly, composeMonthly } from "@aihot/backend/reports/compose";
+import { composeDaily, composeDueReports, composeWeekly, composeMonthly, correctDailyNotice } from "@aihot/backend/reports/compose";
 
 const T = tag();
 const SOURCE = `report-recovery-${T}`;
@@ -97,10 +97,52 @@ test("empty older gaps cannot starve a later daily, weekly or monthly, and failu
   await sql`INSERT INTO reports (kind, key, window_start, window_end, content, generated_at)
     VALUES ('daily', '2024-01-23', now(), now(), ${sql.json({ sections: [{ label: "行业动态", items: [{ itemId: early, title: early }] }] })}, now())`;
   await item("2024-02-02");
-  await assert.rejects(composeDueReports(editionAt("daily", "2024-02-02", 3600)), /reports:/);
+  await assert.rejects(composeDueReports(editionAt("daily", "2024-02-02", 3600)), (error: Error) => {
+    assert.match(error.message, /reports:/);
+    assert.doesNotMatch(error.message, /daily:2024-01-2[4-6]/, "old gaps stay visible as gaps, outside automatic catch-up");
+    assert.match(error.message, /daily:2024-01-27/, "recent gaps are still retried");
+    return true;
+  });
   for (const [kind, key] of [["daily", "2024-02-02"], ["weekly", "2024-W04"], ["monthly", "2024-01"]]) {
     assert.ok(await report(kind!, key!), `${kind} ${key} was recovered past the empty gaps`);
   }
+});
+
+test("unconfirmed selected news prevents a false quiet edition; its actual late release stays in the next issue", async () => {
+  const date = "2024-06-05";
+  const id = await item(date);
+  const judged = await item(date);
+  await sql`UPDATE publications SET selected = false, score = 70 WHERE article_id = ${judged}`;
+  await sql`UPDATE publications SET selected = false, selection_candidate = true WHERE article_id = ${id}`;
+  await sql`UPDATE articles SET grouping_status = 'failed' WHERE id = ${id}`;
+  await assert.rejects(composeDaily(date), /awaiting news confirmation/);
+  assert.equal(await report("daily", date), undefined);
+  const released = editionAt("daily", date, 3600);
+  await sql`UPDATE publications SET selected = true, visible_after = ${released} WHERE article_id = ${id}`;
+  await sql`UPDATE articles SET grouping_status = 'complete' WHERE id = ${id}`;
+  await composeDaily(date);
+  assert.equal((await report("daily", date)).content.metrics.totalEvents, 0, "the original cutoff is preserved");
+  await composeDaily(addDays(date, 1));
+  assert.equal((await report("daily", addDays(date, 1))).content.metrics.totalEvents, 1);
+});
+
+test("an empty issue's incident notice is corrected as a revision without inventing historical entries", async () => {
+  const date = "2024-06-12";
+  const id = await item(date);
+  await sql`UPDATE publications SET selected = false WHERE article_id = ${id}`;
+  await composeDaily(date);
+  const previous = await report("daily", date);
+  const notice = { title: "本期处理异常", leadParagraph: "截止时间内的精选确认受阻，修复后发布的内容按真实时间进入后续期次。" };
+  await correctDailyNotice(date, notice, "correct misleading quiet-day notice", 1);
+  const corrected = await report("daily", date);
+  assert.equal(corrected.revision, 2);
+  assert.deepEqual(corrected.content, { ...previous.content, lead: notice });
+  assert.deepEqual((await sql`SELECT content FROM report_revisions WHERE report_id = (SELECT id FROM reports WHERE kind = 'daily' AND key = ${date})`)[0]!.content, previous.content);
+  await assert.rejects(correctDailyNotice(date, notice, "stale correction", 1), /revision changed/);
+  const fullDate = "2024-06-13";
+  await item(fullDate);
+  await composeDaily(fullDate);
+  await assert.rejects(correctDailyNotice(fullDate, notice, "not an empty issue", 1), /only an empty/);
 });
 
 test("a week or month that ended before the first daily is not due, so a site started mid-month runs clean", async () => {

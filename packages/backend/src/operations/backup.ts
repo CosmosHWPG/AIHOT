@@ -5,8 +5,8 @@
 // without a second cleanup schedule in the framework.
 import { execFile } from "node:child_process";
 import { createHash, createHmac } from "node:crypto";
-import { createReadStream } from "node:fs";
-import { mkdir, readdir, rm, stat } from "node:fs/promises";
+import { createReadStream, existsSync } from "node:fs";
+import { mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { beijingDate, beijingWeekday } from "@aihot/contracts/time";
@@ -21,6 +21,11 @@ const tar = process.platform === "win32"
   ? path.join(process.env["SystemRoot"] ?? "C:\\Windows", "System32", "tar.exe")
   : "tar";
 
+function pgTool(name: "pg_dump" | "pg_restore"): string {
+  const portable = path.join(config.dataDir, "runtime", "pgsql", "bin", `${name}.exe`);
+  return process.platform === "win32" && existsSync(portable) ? portable : name;
+}
+
 export interface Store {
   secretId: string;
   secretKey: string;
@@ -29,9 +34,24 @@ export interface Store {
   endpoint: string;
 }
 
-/** Backups run where the object store is configured (production); development never uploads. */
+/** Explicitly configured storage only; development does not start backups by default. */
 export function backupConfigured(): boolean {
-  return store() !== null;
+  return store() !== null || localDirectory() !== null;
+}
+
+function localDirectory(): string | null {
+  const directory = process.env.DB_BACKUP_LOCAL_DIR?.trim();
+  if (!directory) return null;
+  if (!path.isAbsolute(directory)) throw new Error("DB_BACKUP_LOCAL_DIR must be an absolute directory");
+  const resolved = path.resolve(directory);
+  // An archive inside its own input grows while tar reads it.
+  for (const root of ["uploads", "feedback-screenshots"]) {
+    const relative = path.relative(path.join(config.dataDir, root), resolved);
+    if (!relative || (!relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative))) {
+      throw new Error("DB_BACKUP_LOCAL_DIR cannot be inside an attachment directory");
+    }
+  }
+  return resolved;
 }
 
 /** The object store, from the environment (backend.env); named one by one so the template check sees them. */
@@ -179,7 +199,8 @@ export async function upload(
 
 export async function runBackup(now = new Date()) {
   const s = store();
-  const dir = path.join(config.dataDir, "backups");
+  const local = localDirectory();
+  const dir = local ?? path.join(config.dataDir, "backups");
   await mkdir(dir, { recursive: true });
   const stamp = now.toISOString().slice(0, 16).replace(/[-:T]/g, "");
   // Named after the database ("news_db" → news-db-…), so two databases backed up into one store stay apart.
@@ -188,7 +209,7 @@ export async function runBackup(now = new Date()) {
   // execFile includes argv in failures. Give libpq credentials through its environment so neither
   // process listings nor a failed job's stored error contain them; keep other connection options.
   const connection = new URL(config.databaseUrl);
-  const env = { ...process.env,
+  const env = { ...process.env, PGCONNECT_TIMEOUT: process.env.PGCONNECT_TIMEOUT || "30",
     ...(connection.username ? { PGUSER: decodeURIComponent(connection.username) } : {}),
     ...(connection.password ? { PGPASSWORD: decodeURIComponent(connection.password) } : {}),
   };
@@ -203,9 +224,14 @@ export async function runBackup(now = new Date()) {
   }).join("&");
   // Raw analytics events keep their table but not their rows: the privacy notice keeps them 30 days, a backup
   // lives up to 100, and their daily aggregates and visitor states are tables of their own.
-  await run("pg_dump", ["--format=custom", "--compress=6", "--no-owner", "--exclude-table-data=analytics_events", "--file", dump, connection.href], { env, maxBuffer: 16 * 1024 * 1024 });
-  // Verify before shipping: the archive must list cleanly.
-  await run("pg_restore", ["--list", dump], { maxBuffer: 64 * 1024 * 1024 });
+  try {
+    await run(pgTool("pg_dump"), ["--no-password", "--format=custom", "--compress=6", "--no-owner", "--exclude-table-data=analytics_events", "--file", dump, connection.href], { env, maxBuffer: 16 * 1024 * 1024 });
+    // Verify before shipping: the archive must list cleanly.
+    await run(pgTool("pg_restore"), ["--list", dump], { maxBuffer: 64 * 1024 * 1024 });
+  } catch (error) {
+    if (local) await rm(dump, { force: true });
+    throw error;
+  }
   const files = path.join(dir, `${name}-files-${stamp}.tar.gz`);
   // No archive when there are no attachments. A failure to read or pack existing files is
   // tried once more and otherwise reported: the database dump still ships, but the run fails.
@@ -226,6 +252,7 @@ export async function runBackup(now = new Date()) {
     if (kept.length) {
       const pack = () => run(tar, ["-czf", files, "-C", config.dataDir, ...kept]);
       await pack().catch(() => pack());
+      if (local) await run(tar, ["-tzf", files], { maxBuffer: 64 * 1024 * 1024 });
     }
   } catch (error: unknown) {
     // tar's own words: the message starts with the whole command line, which can fill the excerpt.
@@ -243,15 +270,47 @@ export async function runBackup(now = new Date()) {
     if (s) await upload(s, key, file, sha, size);
     out.push({ key: s ? key : `local-only:${path.basename(file)}`, bytes: size, sha256: sha });
   }
-  // Local copies: keep the newest few of each kind.
-  for (const kind of [`${name}-2`, `${name}-files-`]) {
+  const summary = { at: now.toISOString(), uploaded: !!s && !filesError,
+    destination: s ? "object-store" : "local", verified: !filesError, objects: out, ...(filesError ? { filesError } : {}) };
+  // A local destination needs a portable checksum manifest as well as the database's run history.
+  if (local && !filesError) await writeFile(path.join(dir, `${name}-manifest-${stamp}.json`), `${JSON.stringify(summary, null, 2)}\n`);
+  // Failed partial dumps are not complete generations and must not displace older pairs.
+  if (local && !filesError) {
+    const entries = await readdir(dir);
+    const manifests = entries.filter(file => file.startsWith(`${name}-manifest-`) && /^\d{12}\.json$/.test(file.slice(`${name}-manifest-`.length))).sort().reverse();
+    const keep = new Set<string>();
+    const owned = new Set<string>();
+    let complete = 0;
+    for (const file of manifests) {
+      let saved: { verified?: boolean; objects?: Array<{ key: string; bytes: number }> };
+      try { saved = JSON.parse(await readFile(path.join(dir, file), "utf8")); } catch { continue; }
+      const stamp = file.slice(`${name}-manifest-`.length, -5);
+      const objects = saved.objects;
+      if (!saved.verified || !Array.isArray(objects) || !objects.length) continue;
+      const files = objects.map(object => path.posix.basename(object.key.replace(/^local-only:/, "")));
+      if (!files.includes(`${name}-${stamp}.dump`) || files.some(file => ![`${name}-${stamp}.dump`, `${name}-files-${stamp}.tar.gz`].includes(file))) continue;
+      const valid = await Promise.all(files.map(async (file, index) => (await stat(path.join(dir, file)).catch(() => null))?.size === objects[index]!.bytes));
+      if (!valid.every(Boolean)) continue;
+      owned.add(file);
+      for (const object of files) owned.add(object);
+      if (complete++ >= KEEP_LOCAL) continue;
+      keep.add(file);
+      for (const object of files) keep.add(object);
+    }
+    // Legacy/unmanifested files are not owned by this policy, even when their names look similar.
+    for (const file of owned) if (!keep.has(file)) await rm(path.join(dir, file));
+  } else if (!filesError) for (const kind of [`${name}-2`, `${name}-files-`]) {
     const list = (await readdir(dir)).filter((f) => f.startsWith(kind)).sort().reverse();
     for (const f of list.slice(KEEP_LOCAL)) await rm(path.join(dir, f), { force: true });
   }
-  const summary = { at: now.toISOString(), uploaded: !!s && !filesError, objects: out, ...(filesError ? { filesError } : {}) };
   await sql`INSERT INTO settings (key, value, updated_by) VALUES ('backup.last', ${sql.json(summary as never)}, 'backup')
             ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`;
-  if (!s) throw new Error("backup made locally but not uploaded: object store credentials are not configured");
+  if (local && filesError) {
+    // A failed pair is not a local restore point. Keep the failure receipt, not a daily multi-GB partial.
+    await rm(dump, { force: true });
+    await rm(files, { force: true });
+  }
+  if (!s && !local) throw new Error("backup made locally but not uploaded: object store credentials are not configured");
   if (filesError) throw new Error(`database backed up, but the file archive failed: ${filesError}`);
   return summary;
 }

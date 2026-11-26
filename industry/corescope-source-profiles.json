@@ -1963,7 +1963,7 @@
         "config": {
           "url": "https://www.intel.com/content/www/us/en/newsroom/home.html",
           "adapter": "article_links",
-          "itemSelector": "#artificial-intelligence-ai-tabpanel a.cmp-teaser__link",
+          "itemSelector": "a.cmp-teaser__link:has(.cmp-teaser__pretitle:contains(\"Artificial Intelligence (AI)\"))",
           "linkSelector": "a.cmp-teaser__link",
           "titleSelector": ".cmp-teaser__title",
           "publishedAtSelector": ".cmp-teaser__description",
@@ -9431,14 +9431,20 @@
       "adapter": {
         "kind": "web_list",
         "config": {
-          "url": "https://www.orange-business.com/en/press",
+          "url": "https://press.orange-business.com/en/",
           "adapter": "article_links",
-          "itemUrlPattern": "^/en/press/[^/?#]+",
+          "itemUrlPattern": "^/[^/?#]+/\\?lang=eng$",
           "minTitleLength": 8,
           "requirePublishedAt": false,
           "_aihot": {
             "initialBackfillLimit": 2
-          }
+          },
+          "itemSelector": "main .latest-news_container article.post-default",
+          "linkSelector": "a[aria-describedby]",
+          "titleSelector": ".post-title",
+          "publishedAtSelector": ".post-date",
+          "publishedAtUtcOffset": "+00:00",
+          "summarySelector": ".post-subtitle"
         }
       },
       "verification": {

@@ -1091,7 +1091,7 @@
       "config": {
         "url": "https://www.intel.com/content/www/us/en/newsroom/home.html",
         "adapter": "article_links",
-        "itemSelector": "#artificial-intelligence-ai-tabpanel a.cmp-teaser__link",
+        "itemSelector": "a.cmp-teaser__link:has(.cmp-teaser__pretitle:contains(\"Artificial Intelligence (AI)\"))",
         "linkSelector": "a.cmp-teaser__link",
         "titleSelector": ".cmp-teaser__title",
         "publishedAtSelector": ".cmp-teaser__description",
@@ -5956,14 +5956,20 @@
       "name": "Orange Business Press",
       "kind": "web_list",
       "config": {
-        "url": "https://www.orange-business.com/en/press",
+        "url": "https://press.orange-business.com/en/",
         "adapter": "article_links",
-        "itemUrlPattern": "^/en/press/[^/?#]+",
+        "itemUrlPattern": "^/[^/?#]+/\\?lang=eng$",
         "minTitleLength": 8,
         "requirePublishedAt": false,
         "_aihot": {
           "initialBackfillLimit": 2
-        }
+        },
+        "itemSelector": "main .latest-news_container article.post-default",
+        "linkSelector": "a[aria-describedby]",
+        "titleSelector": ".post-title",
+        "publishedAtSelector": ".post-date",
+        "publishedAtUtcOffset": "+00:00",
+        "summarySelector": ".post-subtitle"
       },
       "tier": "T2",
       "first_party": false,
@@ -10399,9 +10405,9 @@
       "name": "OpenAI：失准报告与通报",
       "kind": "web_list",
       "config": {
-        "url": "https://alignment.openai.com/misalignment-reports/",
+        "url": "https://openai.com/safety-alignment/misalignment-reports/",
         "adapter": "article_links",
-        "itemUrlPattern": "^/misalignment-reports/[^/?#]+/?$",
+        "itemUrlPattern": "^/safety-alignment/misalignment-reports/[^/?#]+/?$",
         "minTitleLength": 8,
         "requirePublishedAt": false,
         "detail": {
@@ -10409,11 +10415,14 @@
           "titleSelector": "h1",
           "summarySelector": "meta[name=\"description\"]"
         },
-        "itemSelector": "a.report-title",
+        "itemSelector": "a[href^=\"/safety-alignment/misalignment-reports/\"]:has(time)",
         "_aihot": {
           "initialBackfillLimit": 2
         },
-        "sortByPublishedAt": true
+        "sortByPublishedAt": true,
+        "titleSelector": ".text-h5",
+        "publishedAtSelector": "span:contains(\"First posted:\") > time",
+        "publishedAtUtcOffset": "+00:00"
       },
       "tier": "T1",
       "first_party": true,
@@ -10494,14 +10503,16 @@
           "titleSelector": "h1",
           "summarySelector": "meta[name=\"description\"]"
         },
-        "itemSelector": "a[class*=\"PublicationList\"][href]",
-        "titleSelector": "[class*=\"__title\"]",
+        "itemSelector": "article[data-listing-row]:has(h3 a[href^=\"/research/\"])",
+        "titleSelector": "h3",
         "publishedAtSelector": "time",
         "publishedAtUtcOffset": "+00:00",
         "_aihot": {
           "initialBackfillLimit": 2
         },
-        "sortByPublishedAt": true
+        "sortByPublishedAt": true,
+        "linkSelector": "h3 a[href^=\"/research/\"]",
+        "summarySelector": "[class*=\"_metaDescription\"]"
       },
       "tier": "T1",
       "first_party": true,
@@ -11317,10 +11328,10 @@
           "summarySelector": "meta[name=\"description\"]",
           "publishedAtSelector": ".PostDate"
         },
-        "itemSelector": ".Post",
-        "linkSelector": ".PostTitle a",
-        "titleSelector": ".PostTitle",
-        "publishedAtSelector": ".PostDate",
+        "itemSelector": "a[href^=\"/blog/\"]:has(.bpost__title):has(time)",
+        "linkSelector": "a[href^=\"/blog/\"]",
+        "titleSelector": ".bpost__title",
+        "publishedAtSelector": "time",
         "publishedAtUtcOffset": "+00:00",
         "_aihot": {
           "initialBackfillLimit": 2
@@ -11359,13 +11370,15 @@
           "publishedAtAuthoritative": true,
           "publishedAtUtcOffset": "+00:00"
         },
-        "itemSelector": ".blog-c-item",
-        "linkSelector": "a.link-block",
-        "titleSelector": "h2,h3",
+        "itemSelector": "a.index-item[href^=\"/research/\"]",
+        "linkSelector": "a.index-item",
+        "titleSelector": "h2",
         "_aihot": {
           "initialBackfillLimit": 2
         },
-        "sortByPublishedAt": true
+        "sortByPublishedAt": true,
+        "publishedAtSelector": ".index-meta span:last-child",
+        "publishedAtUtcOffset": "+00:00"
       },
       "tier": "T2",
       "first_party": false,
@@ -11555,14 +11568,15 @@
           "titleSelector": "h1",
           "summarySelector": "meta[name=\"description\"]"
         },
-        "itemSelector": "a[href^=\"/blog/\"]",
-        "titleSelector": "h2",
-        "publishedAtSelector": "span.shrink-0",
+        "itemSelector": "a[data-testid=\"post-card\"][href^=\"/blog/\"]",
+        "titleSelector": "[data-testid=\"post-title\"]",
+        "publishedAtSelector": "[data-testid=\"post-date\"]",
         "publishedAtUtcOffset": "+00:00",
         "_aihot": {
           "initialBackfillLimit": 2
         },
-        "sortByPublishedAt": true
+        "sortByPublishedAt": true,
+        "summarySelector": "[data-testid=\"post-excerpt\"]"
       },
       "tier": "T1",
       "first_party": true,
@@ -17320,20 +17334,20 @@
       "name": "Qoder 产品与技术博客",
       "kind": "web_list",
       "config": {
-        "url": "https://qoder.com/zh/blog",
-        "itemSelector": "a[href^=\"/zh/blog/\"][class*=\"Content_cardBox\"]",
-        "titleSelector": "[class*=\"Card_card-title\"]",
-        "summarySelector": "[class*=\"Card_card-description\"]",
+        "url": "https://blog.qoder.com/zh",
+        "itemSelector": "a.qb-card[href^=\"/zh/\"]",
+        "titleSelector": "h2",
+        "summarySelector": "p",
         "allowUrlPrefixes": [
-          "https://qoder.com/zh/blog/"
+          "https://blog.qoder.com/zh/"
         ],
         "detail": {
           "maxFetches": 2,
-          "publishedAtRegex": "<meta[^>]*property=[\"']article:published_time[\"'][^>]*content=[\"']([^\"']+)",
           "publishedAtUtcOffset": "+00:00",
           "publishedAtAuthoritative": true,
           "requirePublishedAt": true,
-          "titleSelector": "h1"
+          "titleSelector": "h1",
+          "publishedAtSelector": "time.qb-date[datetime]"
         },
         "_aihot": {
           "initialBackfillLimit": 2

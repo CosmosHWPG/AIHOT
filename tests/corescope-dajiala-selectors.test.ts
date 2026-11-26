@@ -7,7 +7,7 @@ import { stopBoss } from "@aihot/backend/jobs/queue";
 import { upsertMaterial } from "@aihot/backend/content/materials";
 import { identityKeyForUrl, normalizeUrl } from "@aihot/backend/lib/url";
 import { mpHistory, mpArticle, resolveMpAccountSelector, MpIdentityError } from "@aihot/backend/providers/dajiala";
-import { ProviderRejectedError } from "@aihot/backend/providers/receipts";
+import { ProviderRejectedError, BudgetExceededError, providerStopKey, providerAccessRefused } from "@aihot/backend/providers/receipts";
 import { checkMpAccount } from "@aihot/backend/sources/mp";
 
 const T = tag();
@@ -127,6 +127,15 @@ test("authentication, balance and transient failures are distinguished without c
     });
     const [receipt] = await sql<{ error: string }[]>`SELECT error FROM receipts WHERE subject=${`${T}-${code}`} ORDER BY id DESC LIMIT 1`;
     assert.ok(!receipt!.error.includes(key));
+    assert.equal(providerAccessRefused("dajiala", receipt!.error), code !== 2005);
+    if (code === 20001) {
+      const hits = provider.hits();
+      const other = account();
+      await assert.rejects(mpHistory({ articleUrl: article(other) }, { subject: `${T}-other`, window: T }), BudgetExceededError);
+      await assert.rejects(mpArticle(article(other), { subject: `${T}-body`, identity: `${T}-body` }), BudgetExceededError);
+      assert.equal(provider.hits(), hits, "balance refusal holds other accounts and body calls before dispatch");
+    }
+    await sql`DELETE FROM settings WHERE key=${providerStopKey("dajiala")}`;
   }
 });
 

@@ -107,6 +107,7 @@ function rejectionDetail(body: string): { code: string; message: string } {
 // https://github.com/anomalyco/opencode/blob/8c173a8f3805d8e749d44311054b07e37a1b2ce1/packages/ai/src/provider-error.ts (GoUsageLimitError).
 /** Account or spending refusals, shared by live requests and their saved alert evidence. */
 export function providerAccessRefused(service: string, error: string): boolean {
+  if (service === "dajiala" && /^dajiala (?:post_history|article_detail): (?:insufficient balance \(code 20001\)|authentication failed \(code 10002\))$/.test(error)) return true;
   const http = /(?:^| )HTTP (\d{3})(?:: ?| )([\s\S]*)$/.exec(error);
   if (!http) return false;
   const status = Number(http[1]);
@@ -130,6 +131,7 @@ export function providerAccessRefused(service: string, error: string): boolean {
  * stops anything; the alert layer still reports them.
  */
 export function providerSpendingRefused(service: string, error: string): boolean {
+  if (service === "dajiala" && /^dajiala (?:post_history|article_detail): insufficient balance \(code 20001\)$/.test(error)) return true;
   const http = /(?:^| )HTTP (\d{3})(?:: ?| )([\s\S]*)$/.exec(error);
   if (!http) return false;
   const status = Number(http[1]);
@@ -229,6 +231,15 @@ async function clearStop(tx: Db, key: string, attemptId: number): Promise<void> 
            AND coalesce((value->>'refusedAt')::timestamptz, 'epoch') < (SELECT started_at FROM receipt_attempts WHERE id = ${attemptId})`;
 }
 
+/** Reserve the expired provider stop for one probe, under the same service budget lock as the claim.
+ * Otherwise all waiting articles enter together before the first probe can record another refusal.
+ * An unknown outcome keeps this cooldown; its own receipt is still protected from replay. */
+async function claimProviderProbe(tx: Db, service: string, model?: string | null): Promise<void> {
+  const until = new Date(Date.now() + PROVIDER_STOP_SECONDS * 1000).toISOString();
+  await tx`UPDATE settings SET value=jsonb_set(value,'{until}',to_jsonb(${until}::text)),updated_at=now()
+    WHERE key=${providerStopKey(service, model)}`;
+}
+
 async function checkBudget(tx: Db, service: string, model?: string | null, required = false): Promise<void> {
   const [stop] = await tx<{ value: { until?: string } }[]>`SELECT value FROM settings WHERE key = ${providerStopKey(service, model)}`;
   const until = Date.parse(stop?.value.until ?? "");
@@ -312,6 +323,7 @@ export async function paidRequest(req: ReceiptRequest, call: () => Promise<CallO
       await checkBudget(tx, req.service, req.model, req.requireBudget);
       await checkCredits(tx, req);
       await beforeRequest?.(tx);
+      await claimProviderProbe(tx, req.service, req.model);
       const [r] = await tx<{ attempts: number }[]>`
         UPDATE receipts SET status = 'pending', attempts = attempts + 1, error = NULL, updated_at = now() WHERE id = ${existing.id} RETURNING attempts`;
       const attemptId = await startAttempt(tx, existing.id, r!.attempts, req);
@@ -320,6 +332,7 @@ export async function paidRequest(req: ReceiptRequest, call: () => Promise<CallO
     await checkBudget(tx, req.service, req.model, req.requireBudget);
     await checkCredits(tx, req);
     await beforeRequest?.(tx);
+    await claimProviderProbe(tx, req.service, req.model);
     const [row] = await tx<{ id: number }[]>`
       INSERT INTO receipts (logical_key, service, model, purpose, subject, status, request, attempts)
       VALUES (${logicalKey}, ${req.service}, ${req.model ?? null}, ${req.purpose}, ${req.subject ?? null}, 'pending',
