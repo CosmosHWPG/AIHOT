@@ -97,6 +97,35 @@ test('stories spanning multiple sources are listed and notified; single-source s
   assert.ok(listed.some(e => e.loc === `/story/${several}`));
 });
 
+test('story discovery tracks member names and roles while retaining public evidence and distinct-source requirements', async () => {
+  await material('members-primary', { source: 'members-editorial-a' });
+  await material('members-mention', { source: 'members-editorial-b' });
+  const publicId = randomUUID();
+  const [story] = await sql<{ id: number }[]>`INSERT INTO stories(public_id,title) VALUES(${publicId},'成员变化') RETURNING id`;
+  const [fact] = await sql<{ id: number }[]>`INSERT INTO facts(public_id,story_id,title) VALUES(${randomUUID()},${story!.id},'事实') RETURNING id`;
+  await sql`INSERT INTO fact_articles(fact_id,article_id,role) VALUES
+    (${fact!.id},'members-primary','primary'),(${fact!.id},'members-mention','mention')`;
+  const at = new Date('2026-10-09');
+  const read = async () => (await loadDiscoveryEntries(at)).find(e => e.loc === `/story/${publicId}`);
+  const first = await read();
+  assert.ok(first, 'two public editorial sources and actual evidence allow the story, including its mentions');
+  await sql`UPDATE sources SET name='Renamed member publisher' WHERE id='members-editorial-b'`;
+  const renamed = await read();
+  assert.notEqual(renamed!.revision, first.revision, 'a visible member publisher rename changes the discovery identity');
+  await sql`UPDATE fact_articles SET role='report' WHERE fact_id=${fact!.id} AND article_id='members-mention'`;
+  const reported = await read();
+  assert.notEqual(reported!.revision, renamed!.revision, 'membership roles remain part of the discovery identity');
+  await sql`UPDATE publications SET visibility='withdrawn' WHERE article_id='members-mention'`;
+  assert.equal(await read(), undefined, 'withdrawing one publisher leaves only one public source');
+  await sql`UPDATE publications SET visibility='public' WHERE article_id='members-mention'`;
+  assert.ok(await read());
+  await sql`UPDATE fact_articles SET role='mention' WHERE fact_id=${fact!.id}`;
+  assert.equal(await read(), undefined, 'multiple mentions do not replace listed fact evidence');
+  await sql`UPDATE fact_articles SET role='primary' WHERE fact_id=${fact!.id} AND article_id='members-primary'`;
+  await sql`UPDATE sources SET participation_mode='hot_signal' WHERE id='members-editorial-b'`;
+  assert.equal(await read(), undefined, 'a non-editorial publisher cannot satisfy the member source count');
+});
+
 test('dry runs leave changes pending, corrections and disappeared URLs are submitted again', async () => {
   await material('changed-story-item');
   await material('changed-story-other', { source: 'discovery-editorial-b' });

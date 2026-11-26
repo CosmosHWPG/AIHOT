@@ -119,15 +119,16 @@ export async function loadDiscoveryEntries(at = new Date(), limits?: { urls: num
   // identity follows current readable reports as well as the digest, so a correction or regrouping is visible
   // even when latest_at does not advance.
   const stories = await sql<{ id: number; public_id: string; title: string; revision: string }[]>`
-    SELECT st.id, st.public_id::text, st.title, md5(concat_ws('|', st.title, st.summary, st.digest, st.digest_updated_at::text,
-      st.version::text, members.revision)) AS revision
-    FROM stories st JOIN LATERAL (
-      SELECT md5(string_agg(concat_ws(':', p.article_id, p.revision::text, fa.role, f.updated_at::text, p.source_id, regexp_replace(s.name, '（[^（）]*）', '', 'g')),
+    WITH members AS MATERIALIZED (
+      SELECT f.story_id, md5(string_agg(concat_ws(':', p.article_id, p.revision::text, fa.role, f.updated_at::text, p.source_id, regexp_replace(s.name, '（[^（）]*）', '', 'g')),
         ',' ORDER BY p.article_id, f.id)) AS revision, count(DISTINCT p.source_id) AS sources
       FROM facts f JOIN fact_articles fa ON fa.fact_id = f.id JOIN publications p ON p.article_id = fa.article_id
       JOIN sources s ON s.id = p.source_id
-      WHERE f.story_id = st.id AND ${storyReportCondition(at)}
-    ) members ON true
+      WHERE ${storyReportCondition(at)} GROUP BY f.story_id
+    )
+    SELECT st.id, st.public_id::text, st.title, md5(concat_ws('|', st.title, st.summary, st.digest, st.digest_updated_at::text,
+      st.version::text, members.revision)) AS revision
+    FROM stories st JOIN members ON members.story_id = st.id
     WHERE st.merged_into IS NULL AND EXISTS (
       SELECT 1 FROM facts f JOIN fact_articles fa ON fa.fact_id = f.id JOIN publications p ON p.article_id = fa.article_id
       WHERE f.story_id = st.id AND ${evidenceCondition()} AND ${listedCondition(at)})
