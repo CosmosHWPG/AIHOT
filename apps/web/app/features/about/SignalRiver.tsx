@@ -6,9 +6,11 @@
 // the canvas, and `focus` lights one of them. On first sight the river flows in from the left once.
 // Theme-aware, paused off screen; reduced motion draws it still. The canvas only illustrates: what it
 // says is also written in the page.
-import { SITE, withSubject } from "@aihot/industry/site";
 import { useEffect, useRef, type ReactNode } from "react";
-import { shortSourceName } from "../../lib/format";
+import { withSubject } from "@aihot/site";
+import { EDITION } from "../report/format";
+import { watchAppearance } from "../../lib/local-state";
+import { reducedMotion, seededRandom } from "../../lib/motion";
 
 export interface RiverSource {
   name: string;
@@ -29,15 +31,6 @@ const easeInOut = (u: number) => (1 - Math.cos(Math.PI * Math.min(1, Math.max(0,
 type RGB = [number, number, number];
 const rgba = (c: RGB, a: number) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
 const smooth = (u: number) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
-
-function prng(seed: number) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 interface Strand {
   /** y at x = i * STEP. */
@@ -70,7 +63,7 @@ interface Layout {
 }
 
 function layout(w: number, h: number, sources: RiverSource[]): Layout {
-  const rand = prng(20260928 + sources.length);
+  const rand = seededRandom(20260928 + sources.length);
   const n = Math.max(40, Math.min(160, Math.round(w / 7.5)));
   const B = w >= 900 ? 9 : w >= 560 ? 7 : 5;
   const K = B >= 9 ? 3 : 2;
@@ -312,7 +305,7 @@ export function SignalRiver({
     const probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true })!;
     const layer = document.createElement("canvas");
     const lctx = layer.getContext("2d")!;
-    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const still = reducedMotion();
 
     let L: Layout | null = null;
     let col = readColors(probe);
@@ -482,7 +475,7 @@ export function SignalRiver({
       const p = L.paper;
       if (x >= p.x - 8 && x <= p.x + p.w + 8 && y >= p.y - 8 && y <= p.y + p.h + 8) {
         hover = { s: null, bundle: null, paper: true };
-        place(x, y, withSubject("日报"), "每天 08:00 出刊");
+        place(x, y, withSubject("日报"), EDITION.daily);
         redraw();
         return;
       }
@@ -506,7 +499,7 @@ export function SignalRiver({
       if (x < L.x2) {
         hover = { s: best, bundle: null, paper: false };
         const kind = s.source ? (KIND[s.source.kind] ?? "信源") : "信源";
-        place(x, y, s.source ? shortSourceName(s.source.name) : "一个信源", s.source?.heatOnly ? `${kind} · 只计入热度` : kind);
+        place(x, y, s.source ? s.source.name : "一个信源", s.source?.heatOnly ? `${kind} · 只计入热度` : kind);
       } else {
         hover = { s: null, bundle: s.bundle, paper: false };
         if (x < L.gate) place(x, y, "同一件事", `${b.n} 个来源的报道合成一条`);
@@ -530,8 +523,6 @@ export function SignalRiver({
       if (L) paintStatic(lctx, L, col);
       redraw();
     };
-    const theme = new MutationObserver(recolour);
-    const scheme = matchMedia("(prefers-color-scheme: dark)");
     const seen = new IntersectionObserver(([entry]) => {
       visible = !!entry?.isIntersecting;
       last = 0;
@@ -547,8 +538,7 @@ export function SignalRiver({
     schedule();
     resize.observe(wrap);
     seen.observe(wrap);
-    theme.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "class"] });
-    scheme.addEventListener("change", recolour);
+    const unwatch = watchAppearance((change) => change === "theme" && recolour());
     document.addEventListener("visibilitychange", onVisibility);
     wrap.addEventListener("pointermove", onMove);
     wrap.addEventListener("pointerleave", onLeave);
@@ -558,8 +548,7 @@ export function SignalRiver({
       redrawRef.current = () => {};
       resize.disconnect();
       seen.disconnect();
-      theme.disconnect();
-      scheme.removeEventListener("change", recolour);
+      unwatch();
       document.removeEventListener("visibilitychange", onVisibility);
       wrap.removeEventListener("pointermove", onMove);
       wrap.removeEventListener("pointerleave", onLeave);
@@ -570,8 +559,8 @@ export function SignalRiver({
     <div ref={wrapRef} className={`relative ${className}`}>
       <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 size-full" />
       <div ref={labelRef} hidden className="pointer-events-none absolute left-0 top-0 z-10 max-w-[240px] rounded-control bg-surface px-2.5 py-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.08)] ring-1 ring-line">
-        <div className="truncate text-[12.5px] font-semibold text-ink" />
-        <div className="mt-0.5 truncate text-[11.5px] text-ink-4" />
+        <div className="truncate text-ui-caption-lg font-semibold text-ink" />
+        <div className="mt-0.5 truncate text-ui-caption-md text-ink-4" />
       </div>
       {children}
     </div>

@@ -1,24 +1,31 @@
+import { describePublicationTime } from "../sources/dates.ts";
 // analyzeArticle: the judging and writing steps, each with its own prompt from the industry pack
 // (industry/prompts/):
+// Without material (only a title) or a displayable original post, the item waits for a new material
+// revision before any step.
 //   1. prefilter: does the material belong to this industry at all (wide recall). Only BLOCK stops an
-//      item; UNKNOWN goes on like PASS (a BLOCK given while material is missing counts as UNKNOWN);
-//   2. score: two independent scores against the source tier's threshold (industry/selection.ts) decide 精选;
-//   3. writing: the Chinese title, summary and reason by the content understanding for selected and
-//      near-selected items, by the cheaper title/summary prompts for the rest;
-//   4. structure (no reader-facing text): category, tags, subject companies and the fact frame the
-//      topics and the event grouping need; it runs beside the scoring.
+//      item; a BLOCK on an original post without text counts as UNKNOWN;
+//   2. score: two independent scores against the source's threshold (tier and class, industry/selection.ts) decide 精选;
+//   3. structure: category, tags, subjects and the current news fact, beside scoring;
+//   4. writing, once the structure is in: the Chinese title, summary and reason by the content
+//      understanding for selected and near-selected items, by the cheaper title/summary prompts for the rest;
+//      copy that uses a word the site keeps from readers (industry/wording.ts) goes back once to change only those.
 // Material with only a title or a feed summary has its article page fetched before it is judged.
 import { z } from "zod";
 import { CATEGORY_KEYS } from "@aihot/contracts/taxonomy";
 import { CATEGORIES } from "@aihot/industry/taxonomy";
 import { SELECTION } from "@aihot/industry/selection";
+import { ITEM_COPY } from "@aihot/site";
 import { sql } from "../db.ts";
-import { chatJson, MODELS, ModelOutputError, type ContentPart } from "../providers/llm.ts";
-import { completeReceipt, ProviderRejectedError, ReceiptUnknownError } from "../providers/receipts.ts";
+import { editorialPolicy } from "../modules.ts";
+import { chatJson, MODELS, type ContentPart } from "../providers/llm.ts";
+import { completeReceipt, failedReceiptId, failureKind, providerContentRefused } from "../providers/receipts.ts";
 import { collapseWhitespace } from "../lib/text.ts";
-import { modelFor } from "./models.ts";
-import { buildMaterial, firstImagePart, loadAnalyzeInput, type AnalyzeInputArticle } from "./input.ts";
+import { withDomainTags } from "../lib/domain-tags.ts";
+import { modelFor, modelRoute, modelSupportsVision } from "./models.ts";
+import { buildMaterial, firstImagePart, loadAnalyzeInput, loadArticleImageParts, type AnalyzeInputArticle } from "./input.ts";
 import { pageFetchable } from "../content/extract.ts";
+import { syncArticleEventCopyTx } from "../events/group.ts";
 import { shutdownSignal } from "../jobs/queue.ts";
 import {
   buildArticlePrompt, buildLongTweetPrompt, buildShortTweetPrompt, finalizeCopy, isShortTweetInput, looksZh, MAX_BODY_CHARS, missingEvidence,
@@ -27,6 +34,8 @@ import {
 } from "./writing.ts";
 import { CATEGORY_BY_ITEM_TYPE, CATEGORY_GUIDE, CATEGORY_TAGS, ENTITIES, ENTITY_TAGS, ITEM_TYPES, normalizeTags, TOPIC_TAGS } from "./vocabulary.ts";
 import { promptText, promptVersion } from "./prompts.ts";
+import { originalPostCopy } from "../content/posts.ts";
+import { wordingProblems } from "./wording.ts";
 
 export { buildMaterial, loadAnalyzeInput, type AnalyzeInputArticle };
 
@@ -36,22 +45,26 @@ export const PROMPT_VERSIONS = {
   understand: promptVersion("understand"),
   summarize: promptVersion("summarize-article", "summarize-article-empty", "summarize-short-post", "summarize-short-post-quoted", "summarize-long-post", "summarize-long-post-quoted", "identity-context"),
   structure: promptVersion("structure"),
+  wording: promptVersion("mend-wording"),
 } as const;
 /** Every step's prompt, as stored on each judgement. */
 export const SELECTION_PROMPT_VERSION = [PROMPT_VERSIONS.prefilter, PROMPT_VERSIONS.score].join("+");
 export const ANALYZE_PROMPT_VERSION = Object.values(PROMPT_VERSIONS).join("+");
 
-// ── Scoring ───────────────────────────────────────────────────────────────────────────────
+// Scoring
 
 /** Independent score calls per article; their sum decides, their mean (floored) is shown. */
 export const SCORE_CALLS = 2;
 
 /**
- * The thresholds on the mean score, per source tier (industry/selection.ts): selected when
- * score1 + score2 >= 2 × threshold. Tiers without a threshold are not scored for 精选.
+ * The threshold on the mean score for a source (industry/selection.ts): its tier's, raised to its
+ * class's floor; a class never lowers it. Selected when score1 + score2 >= 2 × threshold. Tiers
+ * without a threshold are not scored for 精选.
  */
-export function tierThreshold(tier: string): number | null {
-  return SELECTION.thresholds[tier] ?? null;
+export function selectionThreshold(source: { tier: string; selectionClass?: string | null }): number | null {
+  const tier = SELECTION.thresholds[source.tier];
+  if (tier === undefined) return null;
+  return Math.max(tier, (source.selectionClass && SELECTION.classes[source.selectionClass]?.threshold) || 0);
 }
 
 /** Unselected items above this mean are written like selected ones. */
@@ -61,10 +74,18 @@ export const UNDERSTAND_FLOOR = SELECTION.understandFloor;
  * Call parameters per score model. The GLM scorer runs at temperature 1 with high reasoning (the model
  * registry adds top_p and thinking) and up to 180 s per call.
  */
-const SCORE_CALL: Record<string, { temperature: number; maxTokens: number; timeoutMs: number }> = {
+interface ScoreCall { temperature: number; maxTokens: number; timeoutMs: number; reusePreviousMaxTokens?: number }
+const SCORE_CALL: Record<string, ScoreCall> = {
   "glm-5.3-flash-selection": { temperature: 1, maxTokens: 65_536, timeoutMs: 180_000 },
 };
-const scoreCall = (model: string) => SCORE_CALL[model] ?? { temperature: 0.2, maxTokens: 1024, timeoutMs: 120_000 };
+const scoreCall = (model: string): ScoreCall => {
+  // This deployment's DeepSeek route has spent all 1024 tokens on reasoning despite reasoning=false.
+  // Leave other models alone; preserve valid prior scores before buying an answer with more room.
+  if (model === "default" && MODELS.default!.model === "deepseek/deepseek-v4.1-flash") {
+    return { temperature: 0.2, maxTokens: 4096, timeoutMs: 120_000, reusePreviousMaxTokens: 1024 };
+  }
+  return SCORE_CALL[model] ?? { temperature: 0.2, maxTokens: 1024, timeoutMs: 120_000 };
+};
 
 /** The score prompt: the industry's taste (industry/prompts/selection-score.md). */
 export const SCORE_SYSTEM = promptText("selection-score");
@@ -94,16 +115,16 @@ export function buildScoreInput(a: AnalyzeInputArticle): string {
     body = (a.bodyText ?? a.excerpt ?? "").trim();
   }
   if (!body) body = a.title;
-  const at = a.publishedAt ?? a.discoveredAt ?? null;
+  const at = a.publishedAt;
   return [
     "请按系统规则评估以下单篇材料所代表的事件。只输出 attentionScore。",
-    `【发布时间（北京时间）】\n${at ? scoreInputTime(at) : ""}`,
+    `【发布时间（北京时间）】\n${at ? a.publicationTime === undefined || a.publicationTime?.includes("T") ? scoreInputTime(at) : describePublicationTime(at, a.publicationTime) : "未知（收录时间不代表发布时间）"}`,
     `【标题】\n${a.title.trim()}`,
-    `【完整正文】\n${body.length > MAX_BODY_CHARS ? body.slice(0, MAX_BODY_CHARS) : body}`,
+    `【${a.bodyStatus === "unconfirmed" ? "来源文本（完整性未确认，不推断缺失内容）" : a.bodyStatus === "pending" ? "现有文本（正文待获取）" : "完整正文"}】\n${body.length > MAX_BODY_CHARS ? body.slice(0, MAX_BODY_CHARS) : body}`,
   ].join("\n\n");
 }
 
-// ── Step outputs ──────────────────────────────────────────────────────────────────────────
+// Step outputs
 
 const PrefilterSchema = z.object({
   label: z.preprocess((v) => String(v ?? "").trim().toUpperCase(), z.enum(["PASS", "BLOCK", "UNKNOWN"])),
@@ -117,11 +138,18 @@ const FactSchema = z
     action: z.string().max(80).nullable().optional(),
     object: z.string().max(160).nullable().optional(),
     occurredAt: z.string().nullable().optional(),
+    evidence: z.string().trim().max(600).nullable().catch(null),
+    conditions: z.array(z.object({
+      // Older reusable receipts may also contain a paraphrase. New extraction only copies evidence.
+      text: z.string().trim().min(1).max(200).optional().catch(undefined),
+      quote: z.string().trim().min(1).max(400),
+    }).nullable().catch(null)).catch([]),
   })
   .nullable()
   .catch(null);
 
-const StructureSchema = z.object({
+export const StructureSchema = z.object({
+  scope: z.enum(["single", "composite", "unknown"]).catch("unknown"),
   category: z.enum(CATEGORY_KEYS).nullable().catch(null),
   tags: z.array(z.string()).max(12).catch([]),
   subjects: z.array(z.string()).max(6).catch([]),
@@ -141,8 +169,8 @@ const SummarizeSchema = z.object({ titleZh: z.string(), summaryZh: z.string(), b
 
 const ZH_COUNT = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二"];
 
-/** The structure step's prompt (it writes nothing a reader sees), filled from the pack's vocabulary. */
-const STRUCTURE_SYSTEM = promptText("structure", {
+/** The structure step owns the public category and tags, as well as grouping evidence (filled from the pack's vocabulary). */
+export const STRUCTURE_SYSTEM = promptText("structure", {
   categoryCount: ZH_COUNT[CATEGORIES.length] ?? String(CATEGORIES.length),
   categoryGuide: CATEGORY_GUIDE,
   categoryTags: CATEGORY_TAGS.join("、"),
@@ -151,10 +179,39 @@ const STRUCTURE_SYSTEM = promptText("structure", {
   entities: Object.entries(ENTITIES).map(([id, e]) => `${id}（${e.aliases.slice(0, 3).join("/")}）`).join("，"),
 });
 
+/** Keep only quotes present both in the original material and in the text the structure model saw. */
+export function normalizeStructure(data: z.infer<typeof StructureSchema>, a: AnalyzeInputArticle) {
+  const visible = collapseWhitespace(buildMaterial(a));
+  const originals = (a.xPost
+    ? [String(a.xPost.text ?? a.title), String(a.xPost.quoted?.text ?? "")]
+    : [a.bodyText ?? a.excerpt ?? ""]).map(collapseWhitespace);
+  // A title is not the unseen contents of a video/article, regardless of the model's confidence.
+  const scope = originals.some(Boolean) ? data.scope : "unknown";
+  const grounded = (quote: string | null | undefined) => {
+    const text = collapseWhitespace(quote ?? "");
+    return text && visible.includes(text) && originals.some((original) => original.includes(text)) ? text : null;
+  };
+  const fact = !originals.some(Boolean) || scope === "composite" || !data.fact ? null : {
+    ...data.fact,
+    evidence: grounded(data.fact.evidence),
+    conditions: data.fact.conditions.flatMap((c) => {
+      if (!c) return [];
+      const quote = grounded(c.quote);
+      return quote ? [{ text: c.text ?? quote, quote }] : [];
+    }).slice(0, 4),
+  };
+  return {
+    category: data.category, tags: normalizeTags(data.tags),
+    subjects: [...new Set(data.subjects.map((s) => s.trim().toLowerCase()).filter((s) => s in ENTITIES))],
+    scope, fact,
+  };
+}
+
 export interface AnalysisRun {
-  prefilter: { label: "PASS" | "BLOCK" | "UNKNOWN"; reason: string; model: string; receiptId: number; reused: boolean };
+  /** Absent when there is nothing to judge yet: only a title, and no displayable original post. */
+  prefilter: { label: "PASS" | "BLOCK" | "UNKNOWN"; reason: string; model: string; receiptId: number; reused: boolean } | null;
   /**
-   * The independent score calls and the tier threshold they are held against; absent when the material
+   * The independent score calls and the source's threshold they are held against; absent when the material
    * is not scored. `refused`: the model's content filter declined it, so it is not selected.
    */
   scores: { model: string; threshold: number; values: number[]; receiptIds: number[]; reused: boolean; refused?: boolean } | null;
@@ -165,17 +222,16 @@ export interface AnalysisRun {
     titleZh: string;
     summaryZh: string;
     reasonZh: string | null;
-    tags: string[] | null;
     itemType?: string;
     authorRole?: string;
     identityGuard?: IdentityGuard;
+    tags?: string[];
+    understandRefused?: boolean;
     receiptIds: number[];
     reused: boolean;
   } | null;
-  structure: { model: string; category: string | null; tags: string[]; subjects: string[]; fact: z.infer<typeof FactSchema>; receiptId: number; reused: boolean } | null;
+  structure: (ReturnType<typeof normalizeStructure> & { model: string; receiptId: number; reused: boolean }) | null;
 }
-
-const isContentFilter = (error: unknown) => error instanceof ProviderRejectedError && !error.retryable && /contentFilter|"1301"/.test(error.message);
 
 /** Only a title or a feed summary, and a page to fetch: the article is judged on the page. */
 export function waitsForPage(a: AnalyzeInputArticle): boolean {
@@ -184,10 +240,9 @@ export function waitsForPage(a: AnalyzeInputArticle): boolean {
 
 type StepOpts = { attemptTag?: string; scoreModel?: string };
 type ReceiptObserver = (receiptId: number) => void;
-export class AnalysisInterruptedError extends Error {}
 
-const observableReceiptId = (error: unknown): number | null =>
-  error instanceof ModelOutputError || error instanceof ReceiptUnknownError ? error.receiptId : null;
+/** A stopping worker finishes the stage it is in, never starts the next. */
+export class AnalysisInterruptedError extends Error {}
 
 function checkAnalysisRunning() {
   if (shutdownSignal.signal.aborted) throw new AnalysisInterruptedError("worker shutting down between analysis stages");
@@ -196,7 +251,7 @@ function checkAnalysisRunning() {
 const subjectOf = (a: AnalyzeInputArticle) => `article:${a.id}@${a.revision}`;
 const tagged = (attemptTag: string | undefined, step: string) => [attemptTag, step].filter(Boolean).join(":") || undefined;
 
-async function runPrefilter(a: AnalyzeInputArticle, opts: StepOpts): Promise<AnalysisRun["prefilter"]> {
+async function runPrefilter(a: AnalyzeInputArticle, opts: StepOpts): Promise<NonNullable<AnalysisRun["prefilter"]>> {
   const model = await modelFor("prefilter");
   checkAnalysisRunning();
   const res = await chatJson({
@@ -211,7 +266,7 @@ async function runPrefilter(a: AnalyzeInputArticle, opts: StepOpts): Promise<Ana
     maxTokens: 512,
     attemptTag: opts.attemptTag,
   });
-  // A BLOCK without material to back it counts as UNKNOWN (which goes on).
+  // A BLOCK without text to back it (an original post that is only media or a link) counts as UNKNOWN (which goes on).
   const label = res.data.label === "BLOCK" && missingEvidence(a) ? "UNKNOWN" : res.data.label;
   return { label, reason: res.data.reason, model: res.model, receiptId: res.receiptId, reused: res.reused };
 }
@@ -221,13 +276,13 @@ export async function runSelectionPrefilter(
   a: AnalyzeInputArticle,
   opts: StepOpts = {},
   onReceipt?: ReceiptObserver,
-): Promise<AnalysisRun["prefilter"]> {
+): Promise<NonNullable<AnalysisRun["prefilter"]>> {
   try {
     const result = await runPrefilter(a, opts);
     onReceipt?.(result.receiptId);
     return result;
   } catch (error) {
-    const receiptId = observableReceiptId(error);
+    const receiptId = failedReceiptId(error);
     if (receiptId !== null) onReceipt?.(receiptId);
     throw error;
   }
@@ -252,6 +307,7 @@ async function runScores(
       const res = await chatJson({
         model, purpose: "score_article", subject: subjectOf(a), promptVersion: PROMPT_VERSIONS.score, system: SCORE_SYSTEM, user: input,
         schema: ScoreSchema, temperature: call.temperature, maxTokens: call.maxTokens, timeoutMs: call.timeoutMs,
+        reusePreviousMaxTokens: call.reusePreviousMaxTokens,
         // Each call is its own paid request; an explicit re-evaluation gets new ones.
         attemptTag: tagged(opts.attemptTag, `score-${i + 1}`),
       });
@@ -260,10 +316,10 @@ async function runScores(
       receiptIds.push(res.receiptId);
       reused &&= res.reused;
     } catch (error) {
-      const receiptId = observableReceiptId(error);
+      const receiptId = failedReceiptId(error);
       if (receiptId !== null) onReceipt?.(receiptId);
       // The model's content filter declines the material (Zhipu 1301): not scored, so not selected.
-      if (isContentFilter(error)) return { model, threshold, values, receiptIds, reused: false, refused: true };
+      if (providerContentRefused(error)) return { model, threshold, values, receiptIds, reused: false, refused: true };
       throw error;
     }
   }
@@ -276,11 +332,11 @@ export async function runSelectionScores(
   opts: StepOpts = {},
   onReceipt?: ReceiptObserver,
 ): Promise<AnalysisRun["scores"]> {
-  const threshold = tierThreshold(a.source.tier);
+  const threshold = selectionThreshold(a.source);
   return threshold === null ? null : runScores(a, threshold, opts, onReceipt);
 }
 
-async function runStructure(a: AnalyzeInputArticle, opts: StepOpts): Promise<NonNullable<AnalysisRun["structure"]>> {
+export async function runStructure(a: AnalyzeInputArticle, opts: StepOpts = {}): Promise<NonNullable<AnalysisRun["structure"]>> {
   const model = await modelFor("structure");
   checkAnalysisRunning();
   const res = await chatJson({
@@ -292,15 +348,14 @@ async function runStructure(a: AnalyzeInputArticle, opts: StepOpts): Promise<Non
     user: buildMaterial(a),
     schema: StructureSchema,
     temperature: 0.2,
-    maxTokens: 800,
+    maxTokens: 1200,
     attemptTag: tagged(opts.attemptTag, "structure"),
   });
-  const subjects = [...new Set(res.data.subjects.map((s) => s.trim().toLowerCase()).filter((s) => s in ENTITIES))];
-  return { model: res.model, category: res.data.category, tags: normalizeTags(res.data.tags), subjects, fact: res.data.fact, receiptId: res.receiptId, reused: res.reused };
+  return { ...normalizeStructure(res.data, a), model: res.model, receiptId: res.receiptId, reused: res.reused };
 }
 
-/** The content understanding; null when the model's content filter declines the material. */
-async function runUnderstand(a: AnalyzeInputArticle, opts: StepOpts): Promise<AnalysisRun["writing"]> {
+/** Content understanding grounded in the original; null on a content-filter refusal. */
+export async function runUnderstand(a: AnalyzeInputArticle, opts: StepOpts = {}): Promise<AnalysisRun["writing"]> {
   const model = await modelFor("understand");
   const text = understandUser(a);
   const call = (image: ContentPart | null) => {
@@ -311,19 +366,19 @@ async function runUnderstand(a: AnalyzeInputArticle, opts: StepOpts): Promise<An
       timeoutMs: 180_000, attemptTag: tagged(opts.attemptTag, "understand"),
     });
   };
-  // A model that is known not to read images gets the text only.
-  const image = MODELS[model]?.vision === false ? null : await firstImagePart(a);
+  // Image input is opt-in: an unspecified capability must not become a paid provider probe.
+  const image = modelSupportsVision(model) ? await firstImagePart(a) : null;
   let res: Awaited<ReturnType<typeof call>>;
   try {
     res = await call(image);
   } catch (error) {
-    if (isContentFilter(error)) return null;
+    if (providerContentRefused(error)) return null;
     // The model refused the image (download, format): the text is written without it.
-    if (!image || !(error instanceof ProviderRejectedError) || error.retryable) throw error;
+    if (!image || failureKind(error) !== "refused") throw error;
     try {
       res = await call(null);
     } catch (retryError) {
-      if (isContentFilter(retryError)) return null;
+      if (providerContentRefused(retryError)) return null;
       throw retryError;
     }
   }
@@ -331,9 +386,56 @@ async function runUnderstand(a: AnalyzeInputArticle, opts: StepOpts): Promise<An
   const copy = finalizeCopy(translateInputOf(a), { titleZh: d.titleZh, summaryZh: d.summaryZh });
   return {
     kind: "understand", model: res.model, titleZh: copy.titleZh, summaryZh: copy.summaryZh, reasonZh: d.editorialJudgment.trim() || null,
-    tags: normalizeTags(d.tags, { fallbackCategory: CATEGORY_BY_ITEM_TYPE[d.itemType] }), itemType: d.itemType, authorRole: d.authorRole,
-    identityGuard: copy.identityGuard, receiptIds: [res.receiptId], reused: res.reused,
+    tags: normalizeTags(d.tags, { fallbackCategory: CATEGORY_BY_ITEM_TYPE[d.itemType] }),
+    itemType: d.itemType, authorRole: d.authorRole, identityGuard: copy.identityGuard, receiptIds: [res.receiptId], reused: res.reused,
   };
+}
+
+export const MEND_SYSTEM = promptText("mend-wording", { reasonLabel: ITEM_COPY.reasonLabel });
+const MendSchema = z.object({ titleZh: z.string().trim().min(1), summaryZh: z.string().trim().min(1), reasonZh: z.string().trim().nullable().catch(null) });
+
+/**
+ * Written copy that uses a word the site keeps from its readers (industry/wording.ts) goes back once, those words
+ * named, to change only them: a site's writing prompts can ask the same, but a model keeps drifting back to the
+ * words it uses most. The mended copy keeps the
+ * identity guard and is used only when it leaves fewer such words and the same numbers.
+ */
+async function mendWording(a: AnalyzeInputArticle, w: NonNullable<AnalysisRun["writing"]>, opts: StepOpts): Promise<NonNullable<AnalysisRun["writing"]>> {
+  // A copy missing its title or summary waits for a whole one (normalizeAnalysis): nothing to mend, and no text to
+  // let a model without the material fill in.
+  if ((w.kind !== "understand" && w.kind !== "summarize") || !w.titleZh || !w.summaryZh) return w;
+  const problems = wordingProblems(w);
+  if (!problems.length) return w;
+  const t = translateInputOf(a);
+  checkAnalysisRunning();
+  let res;
+  try {
+    res = await chatJson({
+      model: await modelFor("wording"), purpose: "mend_wording", subject: subjectOf(a), promptVersion: PROMPT_VERSIONS.wording, system: MEND_SYSTEM,
+      user: [
+        `来源：${t.sourceName ?? "（未注明）"}`, `原题：${t.title}`,
+        `中文稿：\n${JSON.stringify({ titleZh: w.titleZh, summaryZh: w.summaryZh, reasonZh: w.reasonZh })}`,
+        `问题：\n${problems.map((p) => `- ${p}`).join("\n")}`,
+      ].join("\n\n"),
+      schema: MendSchema, temperature: 0.1, maxTokens: 2048, attemptTag: tagged(opts.attemptTag, "wording"),
+    });
+  } catch (error) {
+    // An answer that is not the copy asked for, or a refusal the same request would meet again (each provider words
+    // its own), leaves the first copy: a mend that cannot be had must not hold the item back. Its receipt stays failed
+    // (seen on the runs page, and asked again the next time the item is analysed); a busy provider is tried again later.
+    if (editorialPolicy().reviewAnalysis && providerContentRefused(error)) throw error;
+    const kind = failureKind(error);
+    if (kind === "unusable" || kind === "refused") return w;
+    throw error;
+  }
+  const copy = finalizeCopy(t, { titleZh: res.data.titleZh, summaryZh: res.data.summaryZh });
+  const mended = { titleZh: copy.titleZh, summaryZh: copy.summaryZh, reasonZh: w.reasonZh === null ? null : res.data.reasonZh || w.reasonZh };
+  const paid = { receiptIds: [...w.receiptIds, res.receiptId], reused: w.reused && res.reused };
+  // A guard that emptied the title or summary (a company the input does not name), a number changed or dropped, or
+  // no fewer such words: the first copy stands.
+  const numbers = (c: { titleZh: string; summaryZh: string; reasonZh: string | null }) => (`${c.titleZh} ${c.summaryZh} ${c.reasonZh ?? ""}`.match(/\d+(?:[.,]\d+)*/g) ?? []).sort().join(" ");
+  if (!mended.titleZh || !mended.summaryZh || numbers(mended) !== numbers(w) || wordingProblems(mended).length >= problems.length) return { ...w, ...paid };
+  return { ...w, ...mended, identityGuard: copy.identityGuard ?? w.identityGuard, ...paid };
 }
 
 /** The title/summary prompts (articles, long and short posts). */
@@ -342,14 +444,14 @@ async function runSummarize(a: AnalyzeInputArticle, opts: StepOpts): Promise<Non
   const isX = t.sourceKind === "x_search";
   const short = isShortTweetInput(t);
   const main = collapseWhitespace(t.mainText || t.title);
-  const plain = { reasonZh: null, tags: null, receiptIds: [] as number[], reused: true };
+  const plain = { reasonZh: null, receiptIds: [] as number[], reused: true };
   // A short post already in Chinese is its own copy, and too little text is not written up from a title.
   if (short && !needsShortTweetTranslation(main)) return { kind: "verbatim", model: null, titleZh: main, summaryZh: main, ...plain };
   if (!short && t.text.trim().length < 20) return { kind: "none", model: null, titleZh: looksZh(t.title) ? t.title : "", summaryZh: "", ...plain };
-  const model = await modelFor("summarize");
+  const route = await modelRoute("summarize");
   checkAnalysisRunning();
   const res = await chatJson({
-    model,
+    ...route,
     purpose: "summarize_article",
     subject: subjectOf(a),
     promptVersion: PROMPT_VERSIONS.summarize,
@@ -369,31 +471,78 @@ async function runSummarize(a: AnalyzeInputArticle, opts: StepOpts): Promise<Non
       ? { titleZh: p.titleZh, summaryZh: p.summaryZh || p.bodyZh }
       : { titleZh: p.titleZh || (looksZh(t.title) ? t.title : ""), summaryZh: p.summaryZh };
   const copy = finalizeCopy(t, draft);
-  return { kind: "summarize", model: res.model, titleZh: copy.titleZh, summaryZh: copy.summaryZh, reasonZh: null, tags: null, identityGuard: copy.identityGuard, receiptIds: [res.receiptId], reused: res.reused };
+  return { kind: "summarize", model: res.model, titleZh: copy.titleZh, summaryZh: copy.summaryZh, reasonZh: null, identityGuard: copy.identityGuard, receiptIds: [res.receiptId], reused: res.reused };
+}
+
+/** Only a title, and no displayable original post: nothing to judge until a material revision arrives. */
+export function awaitsMaterial(a: AnalyzeInputArticle): boolean {
+  return missingEvidence(a) && !originalPostCopy(a.xPost, a.url);
+}
+
+/** The two scores' sum; null when the scoring was refused or is incomplete. */
+function scoreSum(scores: AnalysisRun["scores"]): number | null {
+  return scores && !scores.refused && scores.values.length === SCORE_CALLS ? scores.values.reduce((total, v) => total + v, 0) : null;
+}
+
+/** The score shown: the two scores' mean, floored (it never decides a half point on its own). */
+export function shownScore(scores: AnalysisRun["scores"]): number | null {
+  const sum = scoreSum(scores);
+  return sum === null ? null : Math.floor(sum / SCORE_CALLS);
 }
 
 /**
- * Runs the steps on the material as it is (or reuses their receipts) without writing business results.
- * `stages: "selection"` stops after the scores (SelectBench).
+ * The selection rule on the scores: they add up to twice the source's threshold (or `threshold`,
+ * when an evaluation sweeps it). The item must also pass relevance (normalizeAnalysis).
  */
-export async function runAnalysis(a: AnalyzeInputArticle, opts: StepOpts & { stages?: "selection" | "all" } = {}): Promise<AnalysisRun> {
+export function scoresSelect(scores: AnalysisRun["scores"], threshold = scores?.threshold ?? null): boolean {
+  const sum = scoreSum(scores);
+  return sum !== null && threshold !== null && sum >= threshold * SCORE_CALLS;
+}
+
+/** Runs the steps on the material as it is (or reuses their receipts) without writing business results. */
+export async function runAnalysis(a: AnalyzeInputArticle, opts: StepOpts = {}): Promise<AnalysisRun> {
   checkAnalysisRunning();
+  // Missing article text waits for a later revision, before any paid step; displayable original posts keep their judgement.
+  if (awaitsMaterial(a)) return { prefilter: null, scores: null, writing: null, structure: null };
   const prefilter = await runSelectionPrefilter(a, opts);
-  // UNKNOWN is let through (its material is as complete as it will get); BLOCK stops here.
   if (prefilter.label === "BLOCK") return { prefilter, scores: null, writing: null, structure: null };
-  if (opts.stages === "selection") {
-    const scores = await runSelectionScores(a, opts);
-    return { prefilter, scores, writing: null, structure: null };
-  }
+  const original = originalPostCopy(a.xPost, a.url);
+  const failClosedRefusal = Boolean(editorialPolicy().reviewAnalysis);
   // The structure step needs nothing from the scores: it runs beside them.
   const structure = runStructure(a, opts).then((value) => ({ value }), (error: unknown) => ({ error }));
   try {
-    const scores = await runSelectionScores(a, opts);
-    const sum = scores && !scores.refused && scores.values.length === SCORE_CALLS ? scores.values.reduce((total, v) => total + v, 0) : null;
-    const near = sum !== null && (sum >= scores!.threshold * SCORE_CALLS || sum > UNDERSTAND_FLOOR * SCORE_CALLS);
-    const writing = (near ? await runUnderstand(a, opts) : null) ?? (await runSummarize(a, opts));
+    let scores: AnalysisRun["scores"];
+    try {
+      scores = await runSelectionScores(a, opts);
+    } catch (scoreError) {
+      if (failClosedRefusal) {
+        const s = await structure;
+        if ("error" in s && providerContentRefused(s.error)) throw s.error;
+      }
+      throw scoreError;
+    }
     const s = await structure;
+    if (failClosedRefusal && scores?.refused) {
+      return { prefilter, scores, writing: null, structure: "error" in s ? null : s.value };
+    }
     if ("error" in s) throw s.error;
+    const sum = scoreSum(scores);
+    const near = scoresSelect(scores) || (sum !== null && sum > UNDERSTAND_FLOOR * SCORE_CALLS);
+    // Writing checks the material itself and is never handed the structure's fact: given those
+    // extracted conclusions, it rewrote copy that had been right.
+    const understood = !original && near ? await runUnderstand(a, opts) : undefined;
+    if (failClosedRefusal && understood === null) {
+      return {
+        prefilter,
+        scores,
+        writing: { kind: "none", model: null, titleZh: "", summaryZh: "", reasonZh: null, understandRefused: true, receiptIds: [], reused: false },
+        structure: s.value,
+      };
+    }
+    const baseWriting: NonNullable<AnalysisRun["writing"]> = original
+      ? { kind: "verbatim", model: null, titleZh: original.title, summaryZh: original.summary ?? "", reasonZh: null, receiptIds: [], reused: true }
+      : await mendWording(a, understood ?? (await runSummarize(a, opts)), opts);
+    const writing = understood === null ? { ...baseWriting, understandRefused: true } : baseWriting;
     return { prefilter, scores, writing, structure: s.value };
   } finally {
     // A score/writing error or deploy must not let the job finish while a paid structure request
@@ -404,21 +553,17 @@ export async function runAnalysis(a: AnalyzeInputArticle, opts: StepOpts & { sta
 
 /** One judgement from the steps: the selection rule, the reader-facing copy and the structure. */
 export function normalizeAnalysis(run: AnalysisRun) {
-  const label = run.prefilter.label;
+  const label = run.prefilter?.label;
   const titleZh = collapseWhitespace(run.writing?.titleZh ?? "");
   const summaryZh = (run.writing?.summaryZh ?? "").trim();
-  // Past the prefilter (PASS or UNKNOWN) an item is relevant, but without a usable Chinese title and
-  // summary it cannot be published: it waits.
-  const relevance = label === "BLOCK" ? "block" : run.writing && (!titleZh || !summaryZh) ? "unknown" : "pass";
-  // Selected when the two scores add up to twice the tier threshold; the mean, floored,
-  // is the score shown (it never decides a half point on its own).
+  // Original posts can consist entirely of media. Model-written copy still needs a title and summary.
+  const relevance = label === "BLOCK" ? "block" : !run.writing || !titleZh || (!summaryZh && run.writing.kind !== "verbatim") ? "unknown" : "pass";
   const values = run.scores && !run.scores.refused ? run.scores.values : null;
-  const sum = values?.length === SCORE_CALLS ? values.reduce((total, v) => total + v, 0) : null;
-  const score = sum === null ? null : Math.floor(sum / SCORE_CALLS);
+  const score = shownScore(run.scores);
   const threshold = run.scores?.threshold ?? null;
-  const selected = relevance === "pass" && sum !== null && threshold !== null && sum >= threshold * SCORE_CALLS;
+  const selected = relevance === "pass" && scoresSelect(run.scores);
   const subjects = run.structure?.subjects ?? [];
-  const tags = [...(run.writing?.tags ?? run.structure?.tags ?? [])];
+  const tags = withDomainTags(run.writing?.tags ?? run.structure?.tags ?? [], run.structure?.tags ?? []);
   for (const s of subjects) {
     const display = ENTITIES[s]?.displayTag;
     if (display && !tags.includes(display)) tags.push(display);
@@ -430,6 +575,7 @@ export function normalizeAnalysis(run: AnalysisRun) {
     scores: values,
     scoreModel: run.scores?.model ?? null,
     scoreRefused: run.scores?.refused ?? false,
+    understandRefused: run.writing?.understandRefused ?? false,
     threshold,
     category: run.structure?.category ?? null,
     tags,
@@ -437,7 +583,10 @@ export function normalizeAnalysis(run: AnalysisRun) {
     titleZh,
     summaryZh,
     reasonZh: run.writing?.reasonZh ?? null,
+    scope: run.structure?.scope ?? "unknown",
     fact: run.structure?.fact ?? null,
+    suppressOriginal: false,
+    withdrawn: false,
   };
 }
 
@@ -460,18 +609,76 @@ export async function analyzeArticle(articleId: string, opts: StepOpts = {}): Pr
   if (!input) return null;
   // Its page first; extraction queues the analysis again (normally the queue already routed it there).
   if (waitsForPage(input)) return { analysisId: null, stale: false, needsBody: true, output: null, receiptIds: [], reused: true };
-  const run = await runAnalysis(input, opts);
+  const reviewer = editorialPolicy().reviewAnalysis;
+  let stepRefused = false;
+  let run: AnalysisRun;
+  try {
+    run = await runAnalysis(input, opts);
+  } catch (error) {
+    if (!reviewer || !providerContentRefused(error)) throw error;
+    stepRefused = true;
+    run = { prefilter: null, scores: null, writing: null, structure: null };
+  }
   const out = normalizeAnalysis(run);
+  const contentRefused = stepRefused || out.scoreRefused || out.understandRefused;
+  let reviewMeta: Record<string, unknown> | undefined;
+  let reviewReceipts: number[] = [];
+  let reviewReused = true;
+  if (reviewer) {
+    const imageUrls = input.imageUrls ?? [];
+    const reviewed = await reviewer({
+      articleId,
+      revision: input.revision,
+      attemptTag: opts.attemptTag,
+      title: input.title,
+      url: input.url,
+      excerpt: input.excerpt ?? "",
+      bodyText: input.fullBodyText ?? input.bodyText ?? "",
+      xPostText: input.rawXPostText ?? String(input.xPost?.text ?? ""),
+      xQuotedText: input.rawXQuotedText ?? String(input.xPost?.quoted?.text ?? ""),
+      xArticleText: input.xArticleText ?? "",
+      imageCount: imageUrls.length,
+      loadImages: () => loadArticleImageParts(imageUrls),
+      relevance: out.relevance as "pass" | "block" | "unknown",
+      selected: out.selected,
+      score: out.score,
+      titleZh: out.titleZh || null,
+      summaryZh: out.summaryZh || null,
+      reasonZh: out.reasonZh,
+      fact: out.fact,
+      contentRefused,
+    });
+    if (reviewed) {
+      if (reviewed.relevance !== undefined) out.relevance = reviewed.relevance;
+      if (reviewed.selected !== undefined) out.selected = reviewed.selected;
+      if (reviewed.score !== undefined) out.score = reviewed.score;
+      if (reviewed.titleZh !== undefined) out.titleZh = collapseWhitespace(reviewed.titleZh ?? "");
+      if (reviewed.summaryZh !== undefined) out.summaryZh = (reviewed.summaryZh ?? "").trim();
+      if (reviewed.reasonZh !== undefined) out.reasonZh = reviewed.reasonZh;
+      if (reviewed.fact !== undefined) out.fact = reviewed.fact;
+      if (reviewed.suppressOriginal !== undefined) out.suppressOriginal = reviewed.suppressOriginal;
+      if (reviewed.withdrawn !== undefined) out.withdrawn = reviewed.withdrawn;
+      reviewMeta = reviewed.review;
+      reviewReceipts = reviewed.receiptIds ?? [];
+      reviewReused = reviewed.reused ?? (reviewReceipts.length === 0);
+    }
+  }
   const receiptIds = [
-    run.prefilter.receiptId, ...(run.scores?.receiptIds ?? []), ...(run.writing?.receiptIds ?? []), ...(run.structure ? [run.structure.receiptId] : []),
+    ...(run.prefilter ? [run.prefilter.receiptId] : []), ...(run.scores?.receiptIds ?? []), ...(run.writing?.receiptIds ?? []),
+    ...(run.structure ? [run.structure.receiptId] : []), ...reviewReceipts,
   ];
   const w = run.writing;
   const detail = {
-    prefilter: { label: run.prefilter.label, reason: run.prefilter.reason },
+    prefilter: run.prefilter && { label: run.prefilter.label, reason: run.prefilter.reason },
     scores: out.scores, scoreModel: out.scoreModel, threshold: out.threshold, ...(out.scoreRefused ? { scoreRefused: true } : {}),
+    ...(out.understandRefused ? { understandRefused: true } : {}),
+    ...(stepRefused ? { stepRefused: true } : {}),
     ...(w ? { writer: w.kind, writerModel: w.model, itemType: w.itemType ?? null, authorRole: w.authorRole ?? null } : {}),
     ...(w?.identityGuard?.outcome === "fallback" ? { identityGuard: w.identityGuard } : {}),
-    fact: out.fact,
+    scope: out.scope, fact: out.fact,
+    ...(out.suppressOriginal ? { suppressOriginal: true } : {}),
+    ...(out.withdrawn ? { withdrawn: true } : {}),
+    ...(reviewMeta ? { review: reviewMeta } : {}),
   };
   const committed = await sql.begin(async (tx) => {
     const [current] = await tx<{ revision: number }[]>`SELECT revision FROM articles WHERE id = ${articleId} FOR UPDATE`;
@@ -479,16 +686,17 @@ export async function analyzeArticle(articleId: string, opts: StepOpts = {}): Pr
     const [row] = await tx<{ id: number }[]>`
       INSERT INTO analyses (article_id, input_revision, origin, model, prompt_version, receipt_ids, relevance, category, tags,
         subjects, title_zh, summary_zh, reason_zh, score, selected, output)
-      VALUES (${articleId}, ${input.revision}, 'model', ${w?.model ?? run.prefilter.model}, ${ANALYZE_PROMPT_VERSION}, ${receiptIds},
+      VALUES (${articleId}, ${input.revision}, 'model', ${w?.model ?? run.prefilter?.model ?? null}, ${ANALYZE_PROMPT_VERSION}, ${receiptIds},
         ${out.relevance}, ${out.category}, ${out.tags}, ${out.subjects}, ${out.titleZh}, ${out.summaryZh}, ${out.reasonZh},
         ${out.score}, ${out.selected}, ${tx.json(detail as never)})
       RETURNING id`;
     for (const id of receiptIds) await completeReceipt(tx, id);
     if (!stale) {
       await tx`UPDATE articles SET processing_state = ${out.relevance === "block" ? "blocked" : "analyzed"}, processing_error = NULL WHERE id = ${articleId}`;
+      await syncArticleEventCopyTx(tx, articleId);
     }
     return { analysisId: row!.id, stale };
   });
-  const reused = run.prefilter.reused && (run.scores?.reused ?? true) && (w?.reused ?? true) && (run.structure?.reused ?? true);
+  const reused = (run.prefilter?.reused ?? true) && (run.scores?.reused ?? true) && (w?.reused ?? true) && (run.structure?.reused ?? true) && reviewReused;
   return { analysisId: committed.analysisId, stale: committed.stale, output: out, receiptIds, reused };
 }

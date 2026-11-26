@@ -1,0 +1,4473 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-12T10:20:33.421Z",
+  "publicVerified": 75,
+  "newPublicSources": 72,
+  "reusedPublicAliases": 3,
+  "mpMetadataOnly": 10,
+  "verifications": {
+    "corescope-rss-ithome-com-5479b994": {
+      "originalArticleUrl": "https://www.ithome.com/1/011/891.htm",
+      "checks": [
+        {
+          "url": "https://www.ithome.com/",
+          "status": 200
+        },
+        {
+          "url": "https://www.ithome.com/rss/",
+          "status": 200,
+          "items": 60,
+          "datedItems": 60
+        }
+      ],
+      "items": 60,
+      "samples": [
+        {
+          "title": "网传鸿蒙智行尊界超豪华 SUV 考虑给赛力斯做，江淮汽车内部人士否认",
+          "url": "https://www.ithome.com/1/012/045.htm",
+          "publishedAt": "2026-10-12T10:16:27.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "索尼 PlayStation 之父久多良木健：现在的 PS 主机正在失去技术创新，已经快变得和 PC 一样了",
+          "url": "https://www.ithome.com/1/012/043.htm",
+          "publishedAt": "2026-10-12T10:14:54.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "鸿蒙智行 9 月细分销量曝光：问界 M9 破万位列第一、尊界 V800 百万级 MPV 交付首月就超 2000 台",
+          "url": "https://www.ithome.com/1/012/041.htm",
+          "publishedAt": "2026-10-12T10:08:25.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:08.058Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 60,
+      "responseSha256": "6293c15f9a17b34c5d2f9414f1bfe13657f1768ce511e2686cb011c078a095a0",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/cyji7m6eeuf4xo7nwmv7gocbc",
+      "scopeNote": "Full-site official RSS, not a verified AI-only feed; selection uses the normal CoreScope analysis gate."
+    },
+    "corescope-rss-browser-use-com-b05a52d6": {
+      "originalArticleUrl": "https://browser-use.com/posts/what-is-browser-fingerprinting",
+      "checks": [
+        {
+          "url": "https://browser-use.com/posts",
+          "status": 200
+        },
+        {
+          "url": "https://browser-use.com/feed",
+          "status": 200,
+          "items": 49,
+          "datedItems": 49
+        }
+      ],
+      "items": 49,
+      "samples": [
+        {
+          "title": "What Is Browser Fingerprinting? How It Works and Its Limits",
+          "url": "https://browser-use.com/posts/what-is-browser-fingerprinting",
+          "publishedAt": "2026-10-12T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "How to Automate Job Applications with Python",
+          "url": "https://browser-use.com/posts/automate-job-applications-with-python",
+          "publishedAt": "2026-10-07T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "The Best AI Agent Frameworks (2026)",
+          "url": "https://browser-use.com/posts/best-ai-agent-frameworks",
+          "publishedAt": "2026-10-06T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:08.065Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 49,
+      "responseSha256": "2f437e705b2ac812d4083b30e1dca72367d4bb64dd523e9c65ee3fc824c96458",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/joqmchs0wkslh0qmnrk7gpy3a"
+    },
+    "corescope-rss-marktechpost-com-7d33969b": {
+      "originalArticleUrl": "https://www.marktechpost.com/2026/10/11/tii-falcon-asr-arabic-speech-recognition/",
+      "checks": [
+        {
+          "url": "https://www.marktechpost.com/",
+          "status": 403
+        },
+        {
+          "url": "https://www.marktechpost.com/feed/",
+          "status": 200,
+          "items": 10,
+          "datedItems": 10
+        }
+      ],
+      "items": 10,
+      "samples": [
+        {
+          "title": "Top 12 AI Live Translation Tools in 2026: Latency, Languages, Pricing",
+          "url": "https://www.marktechpost.com/2026/10/12/top-12-ai-live-translation-tools-2026/",
+          "publishedAt": "2026-10-12T08:20:49.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "TII Releases Falcon-ASR: 1.6B Arabic Speech Model Hits 20.92% WER",
+          "url": "https://www.marktechpost.com/2026/10/11/tii-falcon-asr-arabic-speech-recognition/",
+          "publishedAt": "2026-10-12T03:16:09.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Meet Cloudflare Clef-omni: A 30B-A3B Multimodal Decision Model for Audio, Video, Image and Text",
+          "url": "https://www.marktechpost.com/2026/10/11/cloudflare-clef-omni-multimodal-decision-model/",
+          "publishedAt": "2026-10-11T23:15:52.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:08.065Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 10,
+      "responseSha256": "f6d5fb4884173f18f79aa1c03ed3a6a43260c788ddc8348ae684dcfc73774bfa",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/zxgmv8zghigmfkoy91icvpdsl"
+    },
+    "corescope-web-list-cartesia-ai-03bf92a2": {
+      "originalArticleUrl": "https://www.cartesia.ai/blog/raise-financial-services",
+      "checks": [
+        {
+          "url": "https://www.cartesia.ai/blog",
+          "status": 200
+        },
+        {
+          "url": "https://www.cartesia.ai/feed",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.cartesia.ai/rss",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.cartesia.ai/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.cartesia.ai/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.cartesia.ai/blog/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.cartesia.ai/blog/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 32,
+      "samples": [
+        {
+          "title": "Raise Financial Services x Cartesia: Voice AI for Financial Access in India",
+          "url": "https://www.cartesia.ai/blog/raise-financial-services",
+          "publishedAt": "2026-10-12T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Introducing Multilingual Voices",
+          "url": "https://www.cartesia.ai/blog/multilingual-voices",
+          "publishedAt": "2026-09-23T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "TTS Model vs. Voice: They're Not the Same",
+          "url": "https://www.cartesia.ai/blog/tts-model-vs-voice",
+          "publishedAt": "2026-09-14T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:08.065Z",
+      "httpStatus": 200,
+      "datedItems": 0,
+      "responseSha256": "915d640fe80231714d800c36723e6febf8b3ddc03783e766342d4e7025f5a63a",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/wiasy7s8odihuh7v5n1qn09yi"
+    },
+    "corescope-rss-sakana-ai-08bc6298": {
+      "originalArticleUrl": "https://sakana.ai/mass/",
+      "checks": [
+        {
+          "url": "https://sakana.ai/blog/",
+          "status": 200
+        },
+        {
+          "url": "https://sakana.ai/feed.xml",
+          "status": 200,
+          "items": 10,
+          "datedItems": 10
+        }
+      ],
+      "items": 10,
+      "samples": [
+        {
+          "title": "Recursive Self-Improvement through Collective Intelligence",
+          "url": "https://sakana.ai/mass/",
+          "publishedAt": "2026-10-11T15:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "医師向け検索ツール「Evidence Finder」にSakana Namazuを導入：日本仕様のAIを、医療の現場へ",
+          "url": "https://sakana.ai/namazu-aillis/",
+          "publishedAt": "2026-10-08T15:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "研究、産業実装、プロダクトの最前線へ―Sakana AIニュースレター「Sakana AI Insider」―",
+          "url": "https://sakana.ai/sakana-ai-insider/",
+          "publishedAt": "2026-10-07T15:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:08.066Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 10,
+      "responseSha256": "94158ab205c964dac83eb0369740657ae195738477d40d984705d6125d77c654",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/q4ldwa9zmnm1qrrv16ijfdq2w"
+    },
+    "corescope-rss-recodechinaai-com-04fbdf26": {
+      "originalArticleUrl": "https://www.recodechinaai.com/p/deepseek-raises-12b-manus-lands-500m",
+      "checks": [
+        {
+          "url": "https://www.recodechinaai.com",
+          "status": 200
+        },
+        {
+          "url": "https://www.recodechinaai.com/feed",
+          "status": 200,
+          "items": 20,
+          "datedItems": 20
+        }
+      ],
+      "items": 20,
+      "samples": [
+        {
+          "title": "🗞️DeepSeek Raises $12B+, Manus Lands $500M After Its Meta Split, and Kling Eyes $1B IPO",
+          "url": "https://www.recodechinaai.com/p/deepseek-raises-12b-manus-lands-500m",
+          "publishedAt": "2026-10-11T14:54:12.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "🗞️DeepSeek and Huawei Target Nvidia's CUDA Moat, and Manus Relaunches as the Agent Wars Heat Up",
+          "url": "https://www.recodechinaai.com/p/deepseek-and-huawei-target-nvidias",
+          "publishedAt": "2026-10-04T14:38:11.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "🤠Why Meta’s Muse Has Chinese Tech Companies on High Alert",
+          "url": "https://www.recodechinaai.com/p/why-metas-muse-has-chinese-tech-companies",
+          "publishedAt": "2026-09-28T14:34:24.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:08.262Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 20,
+      "responseSha256": "4c20b916f56928959a50f5d85dd881a1a16123a7f779c49cc94693a7665db584",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/s9u5ybnxaszwusfscizt3gze7"
+    },
+    "corescope-web-list-every-to-20907bfd": {
+      "originalArticleUrl": "https://every.to/context-window/one-agent-for-the-whole-company",
+      "checks": [
+        {
+          "url": "https://every.to/",
+          "status": 200
+        },
+        {
+          "url": "https://every.to/feed.xml",
+          "status": 200,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://every.to/feed",
+          "status": 200,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 7,
+      "samples": [
+        {
+          "title": "You Already Signed This Off (In the Simulation)",
+          "url": "https://every.to/also-true-for-humans/you-already-signed-this-off-in-the-simulation",
+          "publishedAt": "2026-10-09T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "One Agent for the Whole Company",
+          "url": "https://every.to/context-window/one-agent-for-the-whole-company",
+          "publishedAt": "2026-10-11T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Building a More Efficient Agent",
+          "url": "https://every.to/context-window/building-a-more-efficient-agent",
+          "publishedAt": "2026-10-07T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:08.990Z",
+      "httpStatus": 200,
+      "datedItems": 0,
+      "responseSha256": "7ae0732e07cbec53f54d6038556f0d181980584be5583a7b4e7bffad54c57b69",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/jsw1vps9io4ze1nc3d4qi72lz"
+    },
+    "corescope-rss-chinatalk-media-2a38e59e": {
+      "originalArticleUrl": "https://www.chinatalk.media/p/10-takeaways-from-q3",
+      "checks": [
+        {
+          "url": "https://www.chinatalk.media",
+          "status": 200
+        },
+        {
+          "url": "https://www.chinatalk.media/feed",
+          "status": 200,
+          "items": 20,
+          "datedItems": 20
+        }
+      ],
+      "items": 20,
+      "samples": [
+        {
+          "title": "10 Takeaways from Q3",
+          "url": "https://www.chinatalk.media/p/10-takeaways-from-q3",
+          "publishedAt": "2026-10-11T11:08:09.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Kevin Roose on the AGI Believers: Oppenheimer with Equity",
+          "url": "https://www.chinatalk.media/p/the-agi-chronicles",
+          "publishedAt": "2026-10-09T10:03:10.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "The Spice Trader vs. the Tariffs",
+          "url": "https://www.chinatalk.media/p/the-spice-trader-vs-the-tariffs",
+          "publishedAt": "2026-10-08T11:04:16.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:09.103Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 20,
+      "responseSha256": "58ea938b8b7d0c3fb1a96bb33cb99979da86268f5ee9aefa32f671deb1a41a71",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/kgwhhemu328kjmkgn49koc3zt"
+    },
+    "corescope-rss-exponentialview-co-b912a3c2": {
+      "originalArticleUrl": "https://www.exponentialview.co/p/ev-605",
+      "checks": [
+        {
+          "url": "https://www.exponentialview.co",
+          "status": 200
+        },
+        {
+          "url": "https://www.exponentialview.co/feed",
+          "status": 200,
+          "items": 20,
+          "datedItems": 20
+        }
+      ],
+      "items": 20,
+      "samples": [
+        {
+          "title": "🔮 AI & Math 2.0, Pakistan’s solar hedge & who controls computing++",
+          "url": "https://www.exponentialview.co/p/ev-605",
+          "publishedAt": "2026-10-11T04:44:15.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "🔮 The end of screen time",
+          "url": "https://www.exponentialview.co/p/the-end-of-screen-time",
+          "publishedAt": "2026-10-10T06:02:50.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "🔮 What is left to do",
+          "url": "https://www.exponentialview.co/p/what-is-left-to-do",
+          "publishedAt": "2026-10-07T13:50:46.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:09.105Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 20,
+      "responseSha256": "690385d600df3d59c9698befcfe18f6c917f6cc9f6086fe83ebd7f633cf51eee",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/io1cwdflknsgjnkfj4z798xog"
+    },
+    "corescope-json-list-api-github-com-c7fe6a79": {
+      "originalArticleUrl": "https://github.com/inclusionAI/PolyOCR-Venus",
+      "checks": [
+        {
+          "url": "https://api.github.com/orgs/inclusionAI/repos?sort=created&per_page=30",
+          "status": 200
+        }
+      ],
+      "items": 28,
+      "samples": [
+        {
+          "title": "PolyOCR-Venus",
+          "url": "https://github.com/inclusionAI/PolyOCR-Venus",
+          "publishedAt": "2026-10-10T06:12:41.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Ming-Image",
+          "url": "https://github.com/inclusionAI/Ming-Image",
+          "publishedAt": "2026-09-17T11:17:49.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Realtime-Venus",
+          "url": "https://github.com/inclusionAI/Realtime-Venus",
+          "publishedAt": "2026-09-16T07:57:55.000Z",
+          "identityKey": null
+        }
+      ],
+      "checkedAt": "2026-10-12T10:20:09.535Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 28,
+      "responseSha256": "08e5df6bc629a832a623152e76e53732b3375b9e9a61b0131b923ef20477588c",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/tqhez136e3xyympqescozaa5f"
+    },
+    "corescope-web-list-agibot-com-cn-614f4b07": {
+      "originalArticleUrl": "https://www.agibot.com.cn/article/315/detail/242.html",
+      "checks": [
+        {
+          "url": "https://www.agibot.com.cn/",
+          "status": 200
+        },
+        {
+          "url": "https://www.agibot.com.cn/feed",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.agibot.com.cn/rss",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.agibot.com.cn/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.agibot.com.cn/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 3,
+      "samples": [
+        {
+          "title": "智元灵犀X2携手爱仕达，交出百店零售增长答卷",
+          "url": "https://www.agibot.com.cn/article/315/detail/243.html",
+          "publishedAt": "2026-10-09T16:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "深耕港澳、联结全球：智元香港办公室正式启用",
+          "url": "https://www.agibot.com.cn/article/315/detail/242.html",
+          "publishedAt": "2026-10-09T16:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "智元携手越南国家创新中心，共推具身智能产业与人才生态落地",
+          "url": "https://www.agibot.com.cn/article/315/detail/241.html",
+          "publishedAt": "2026-10-07T16:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:09.739Z",
+      "httpStatus": 200,
+      "datedItems": 3,
+      "responseSha256": "ddb7cfa2cea7a95b561b4ae520895c353a25080dbc4a274a88abb7d1ab72b062",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/wryqgdcyjk3hb0qu8ppgn21np"
+    },
+    "corescope-web-list-ampcode-com-1319cadb": {
+      "originalArticleUrl": "https://ampcode.com/news/use-your-claude-plan",
+      "checks": [
+        {
+          "url": "https://ampcode.com/news",
+          "status": 200
+        },
+        {
+          "url": "https://ampcode.com/podcast.rss",
+          "status": 200,
+          "items": 15,
+          "datedItems": 15
+        }
+      ],
+      "items": 148,
+      "samples": [
+        {
+          "title": "Shared Runners",
+          "url": "https://ampcode.com/news/shared-runners",
+          "publishedAt": "2026-09-24T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Use Your Claude Plan in Amp",
+          "url": "https://ampcode.com/news/use-your-claude-plan",
+          "publishedAt": "2026-10-10T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Many, Many Pucks",
+          "url": "https://ampcode.com/news/many-many-pucks",
+          "publishedAt": "2026-10-06T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:10.236Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 0,
+      "responseSha256": "ef867b21485b9b0e22efc2d236d3b57adb14f8f9dbd60e03a9e5f242e4dea672",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/cq4i3xydxk3hqvesxzuzujbl8"
+    },
+    "corescope-rss-garymarcus-substack-com-94c28c84": {
+      "originalArticleUrl": "https://garymarcus.substack.com/p/we-must-recall-open-ended-ai-agents",
+      "checks": [
+        {
+          "url": "https://garymarcus.substack.com",
+          "status": 200
+        },
+        {
+          "url": "https://garymarcus.substack.com/feed",
+          "status": 200,
+          "items": 20,
+          "datedItems": 20
+        }
+      ],
+      "items": 20,
+      "samples": [
+        {
+          "title": "We must recall open-ended AI agents with internet access from the market, now",
+          "url": "https://garymarcus.substack.com/p/we-must-recall-open-ended-ai-agents",
+          "publishedAt": "2026-10-10T03:40:18.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Complementary remarks from Gary Marcus and Terence Tao on OpenAI’s giant math drop",
+          "url": "https://garymarcus.substack.com/p/complementary-remarks-from-gary-marcus",
+          "publishedAt": "2026-10-07T17:16:44.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Coming soon: New York City’s hearing on AI risks",
+          "url": "https://garymarcus.substack.com/p/coming-soon-new-york-citys-hearing",
+          "publishedAt": "2026-10-05T02:35:22.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:10.763Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 20,
+      "responseSha256": "7594e352ff9c52331bbdc671b7eb0bae0196d8f41090ab74654bb0d1c835ba5b",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/p4diwkmt7l3e99qkquizes1ck"
+    },
+    "corescope-web-list-alignment-openai-com-3ef47766": {
+      "originalArticleUrl": "https://alignment.openai.com/misalignment-reports/damaging-the-task-environment-to-trigger-a-reset/",
+      "checks": [
+        {
+          "url": "https://alignment.openai.com/misalignment-reports/",
+          "status": 200
+        },
+        {
+          "url": "https://alignment.openai.com/rss.xml",
+          "status": 200,
+          "items": 20,
+          "datedItems": 20
+        }
+      ],
+      "items": 15,
+      "samples": [
+        {
+          "title": "Damaging the task environment to trigger a reset",
+          "url": "https://alignment.openai.com/misalignment-reports/damaging-the-task-environment-to-trigger-a-reset/",
+          "publishedAt": null,
+          "identityKey": null
+        },
+        {
+          "title": "An agent used DNS to reach an external chatbot",
+          "url": "https://alignment.openai.com/misalignment-reports/an-agent-used-dns-to-reach-an-external-chatbot/",
+          "publishedAt": null,
+          "identityKey": null
+        },
+        {
+          "title": "Self-generated prompt injections in compaction summaries",
+          "url": "https://alignment.openai.com/misalignment-reports/self-generated-prompt-injections-in-compaction-summaries/",
+          "publishedAt": null,
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:10.954Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 0,
+      "responseSha256": "1b6587db766680dc2738b3a630bb9c4b375a6c750dc344b3f97276f02ebc3a92",
+      "reason": "Actual collector found original reports; publisher does not provide a publication day. Event months and discovery time are not substituted.",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/pm6txddenju3yf0pynkwo8t44"
+    },
+    "corescope-rss-figma-com-0ebdc311": {
+      "originalArticleUrl": "https://www.figma.com/blog/4-team-rituals-that-drive-ai-adoption/",
+      "checks": [
+        {
+          "url": "https://www.figma.com/blog",
+          "status": 200
+        },
+        {
+          "url": "https://www.figma.com/blog/feed/atom.xml",
+          "status": 200,
+          "items": 757,
+          "datedItems": 757
+        }
+      ],
+      "items": 757,
+      "samples": [
+        {
+          "title": "4 team rituals that drive AI adoption",
+          "url": "https://www.figma.com/blog/4-team-rituals-that-drive-ai-adoption/",
+          "publishedAt": "2026-10-10T02:12:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Sightlines issue no.3: Raise the bar for how teams use AI",
+          "url": "https://www.figma.com/blog/sightlines-issue-no3/",
+          "publishedAt": "2026-10-09T14:05:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "3 ways product designers use the Figma agent for craft, speed, and creative expression",
+          "url": "https://www.figma.com/blog/3-ways-product-designers-use-the-figma-agent/",
+          "publishedAt": "2026-10-06T14:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:11.309Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 757,
+      "responseSha256": "c00460fa5013f01e2ca85a73199dfe399fdee376cb203abc1226548cb6ac46fd",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/mxx0909fgztwp9oa6vubwido4"
+    },
+    "corescope-rss-allenai-org-27c23a3b": {
+      "originalArticleUrl": "https://allenai.org/blog/colm-2026-recap",
+      "checks": [
+        {
+          "url": "https://allenai.org/blog",
+          "status": 200
+        },
+        {
+          "url": "https://allenai.org/rss.xml",
+          "status": 200,
+          "items": 25,
+          "datedItems": 25
+        }
+      ],
+      "items": 25,
+      "samples": [
+        {
+          "title": "Impactful scheduling for GPU clusters",
+          "url": "https://allenai.org/blog/impactful-scheduling",
+          "publishedAt": "2026-10-09T08:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Ai2 at COLM 2026: Open research, from models to agents for science",
+          "url": "https://allenai.org/blog/colm-2026-recap",
+          "publishedAt": "2026-10-09T08:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Now in Nature: Retrofitting language models to operate over bytes",
+          "url": "https://allenai.org/blog/bolmo-nature",
+          "publishedAt": "2026-10-07T08:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:11.702Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 25,
+      "responseSha256": "fd211a0fcf9122873f5941e125406054d7d82b8d1c52fa1cdf34cee63b2591b9",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/oro8vp4h6ladvvyquwdbg9oxa"
+    },
+    "corescope-web-list-anthropic-com-5ab5dc8b": {
+      "originalArticleUrl": "https://www.anthropic.com/research/investigating-unintended-model-actions",
+      "checks": [
+        {
+          "url": "https://www.anthropic.com/research",
+          "status": 200
+        },
+        {
+          "url": "https://www.anthropic.com/feed",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.anthropic.com/rss",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.anthropic.com/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.anthropic.com/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.anthropic.com/research/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.anthropic.com/research/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 10,
+      "samples": [
+        {
+          "title": "Investigating unintended model actions in our evaluations and internal use",
+          "url": "https://www.anthropic.com/research/investigating-unintended-model-actions",
+          "publishedAt": "2026-10-09T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "The missing map of the sky",
+          "url": "https://www.anthropic.com/research/the-missing-map-of-the-sky",
+          "publishedAt": "2026-10-08T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Launching an opt-in vulnerability-finding service for open-source software",
+          "url": "https://www.anthropic.com/research/launching-opt-in-vuln-finding-service-for-open-source",
+          "publishedAt": "2026-10-08T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:12.164Z",
+      "httpStatus": 200,
+      "datedItems": 10,
+      "responseSha256": "418c46f88fecf14979adfa415a887bbfb3be31a4409f29433c7193a33550bda4",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/q3ceo1fywrayr2cfmjkuu4iaw"
+    },
+    "corescope-rss-blog-redwoodresearch-org-ab832962": {
+      "originalArticleUrl": "https://blog.redwoodresearch.org/p/paper-distillation-for-incrimination",
+      "checks": [
+        {
+          "url": "https://blog.redwoodresearch.org",
+          "status": 200
+        },
+        {
+          "url": "https://blog.redwoodresearch.org/feed",
+          "status": 200,
+          "items": 20,
+          "datedItems": 20
+        }
+      ],
+      "items": 20,
+      "samples": [
+        {
+          "title": "[Paper] Distillation for Incrimination and Distillation for Capabilities",
+          "url": "https://blog.redwoodresearch.org/p/paper-distillation-for-incrimination",
+          "publishedAt": "2026-10-09T22:06:51.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Frontier models state different decision theory preferences depending on who’s asking",
+          "url": "https://blog.redwoodresearch.org/p/frontier-models-state-different-decision",
+          "publishedAt": "2026-10-05T22:04:23.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Capabilities research expands the safety-usefulness Pareto frontier too",
+          "url": "https://blog.redwoodresearch.org/p/capabilities-research-expands-the",
+          "publishedAt": "2026-10-02T18:22:37.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:12.586Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 20,
+      "responseSha256": "a6db6c0baf6e0003bc3144fce70d71360cb1c5f7425db4c3c89c2058f2b3f707",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/dz0806tu82swoo3jh1twrumb6"
+    },
+    "corescope-rss-interconnects-ai-36557ac4": {
+      "originalArticleUrl": "https://www.interconnects.ai/p/i-expect-rapid-progress-but-not-towards",
+      "checks": [
+        {
+          "url": "https://www.interconnects.ai",
+          "status": 200
+        },
+        {
+          "url": "https://www.interconnects.ai/feed",
+          "status": 200,
+          "items": 20,
+          "datedItems": 20
+        }
+      ],
+      "items": 20,
+      "samples": [
+        {
+          "title": "I expect rapid progress but not towards general superintelligence",
+          "url": "https://www.interconnects.ai/p/i-expect-rapid-progress-but-not-towards",
+          "publishedAt": "2026-10-09T21:33:47.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "The Cyber Risk Discourse is Broken",
+          "url": "https://www.interconnects.ai/p/the-cyber-risk-discourse-is-broken",
+          "publishedAt": "2026-10-06T14:22:41.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Debating RSI, the US-China Gap, and Jaggedness with JS Denain of Epoch AI",
+          "url": "https://www.interconnects.ai/p/debating-rsi-the-us-china-gap-and",
+          "publishedAt": "2026-09-22T13:37:45.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:12.934Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 20,
+      "responseSha256": "64cad991399efe885a3ff155fbab06bb591b2c87baebd6994d44e835dcf0f045",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/b8c356snnq00hlq3djeibs2ub"
+    },
+    "corescope-web-list-primeintellect-ai-b7b85f06": {
+      "originalArticleUrl": "https://www.primeintellect.ai/blog/prime-agent-rust",
+      "checks": [
+        {
+          "url": "https://www.primeintellect.ai/blog",
+          "status": 200
+        },
+        {
+          "url": "https://www.primeintellect.ai/feed",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.primeintellect.ai/rss",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.primeintellect.ai/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.primeintellect.ai/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.primeintellect.ai/blog/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.primeintellect.ai/blog/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 48,
+      "samples": [
+        {
+          "title": "Rewriting Prime Agent in Rust",
+          "url": "https://www.primeintellect.ai/blog/prime-agent-rust",
+          "publishedAt": "2026-10-09T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "On the Nature of the Swarm",
+          "url": "https://www.primeintellect.ai/blog/on-the-nature-of-the-swarm",
+          "publishedAt": "2026-10-06T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Prime Inference: Fast, Reliable Serving for Frontier Open Models",
+          "url": "https://www.primeintellect.ai/blog/prime-inference",
+          "publishedAt": "2026-10-02T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:13.095Z",
+      "httpStatus": 200,
+      "datedItems": 0,
+      "responseSha256": "c447dd885780a2b65cb4a6ae7664d9b49b3d1c1046b41e8049e1a49c488c3da8",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/ylhh1z4mnttxgqthrynrkym84"
+    },
+    "corescope-rss-databricks-com-4b0d7518": {
+      "originalArticleUrl": "https://www.databricks.com/blog/how-california-built-its-behavioral-health-public-county-profile-databricks",
+      "checks": [
+        {
+          "url": "https://www.databricks.com/blog",
+          "status": 200
+        },
+        {
+          "url": "https://www.databricks.com/feed",
+          "status": 200,
+          "items": 10,
+          "datedItems": 10
+        }
+      ],
+      "items": 10,
+      "samples": [
+        {
+          "title": "How California built its Behavioral Health Public County Profile on Databricks",
+          "url": "https://www.databricks.com/blog/how-california-built-its-behavioral-health-public-county-profile-databricks",
+          "publishedAt": "2026-10-09T21:30:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Solving defense supply chain visibility through governed data sharing",
+          "url": "https://www.databricks.com/blog/solving-defense-supply-chain-visibility-through-governed-data-sharing",
+          "publishedAt": "2026-10-09T14:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Announcing Workday Data Connect federation in Unity Catalog",
+          "url": "https://www.databricks.com/blog/announcing-workday-data-connect-federation-unity-catalog",
+          "publishedAt": "2026-10-08T23:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:13.747Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 10,
+      "responseSha256": "14988fcd277adab304d32ce91d318ec35a908ce95e4b409717c8476a86b40553",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/yu8jvfdilqdy5ev2c8ct68cxt"
+    },
+    "corescope-rss-sierra-ai-70c04a28": {
+      "originalArticleUrl": "https://sierra.ai/blog/poppy",
+      "checks": [
+        {
+          "url": "https://sierra.ai/blog",
+          "status": 200
+        },
+        {
+          "url": "https://sierra.ai/rss.xml",
+          "status": 200,
+          "items": 132,
+          "datedItems": 132
+        }
+      ],
+      "items": 132,
+      "samples": [
+        {
+          "title": "Sharing a draft of Personal Agent Protocol",
+          "url": "https://sierra.ai/blog/poppy",
+          "publishedAt": "2026-10-09T19:56:06.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Caller ID in the age of agents",
+          "url": "https://sierra.ai/blog/caller-id-in-the-age-of-agents",
+          "publishedAt": "2026-10-08T17:32:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Sierra Summit 2026: Bring us your hardest problems",
+          "url": "https://sierra.ai/blog/summit-recap-2026",
+          "publishedAt": "2026-10-06T18:01:51.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:13.752Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 132,
+      "responseSha256": "841319f5862e7102b4199ad24d4d155bfc40c24af327b721bc8d02e372dd2cc1",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/uh0gkukluk1edn2fz8p8v3ama"
+    },
+    "corescope-rss-youtube-com-ab4c5c34": {
+      "originalArticleUrl": "https://www.youtube.com/watch?v=omihvjf0A2k",
+      "checks": [
+        {
+          "url": "https://www.youtube.com/watch?v=omihvjf0A2k",
+          "status": 200
+        },
+        {
+          "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCV03SRZXJEz-hchIAogeJOg",
+          "status": 200,
+          "items": 15,
+          "datedItems": 15
+        }
+      ],
+      "items": 15,
+      "samples": [
+        {
+          "title": "Getting started with Claude Code Projects",
+          "url": "https://www.youtube.com/watch?v=omihvjf0A2k",
+          "publishedAt": "2026-10-09T19:49:09.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Introducing Claude Dashboards and Claude Motion",
+          "url": "https://www.youtube.com/watch?v=en0GuyhieQk",
+          "publishedAt": "2026-10-08T18:52:44.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Inside Shopify's AI strategy with CTO Mikhail Parakhin",
+          "url": "https://www.youtube.com/watch?v=9GtcbnmldcY",
+          "publishedAt": "2026-10-08T16:30:45.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:14.048Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 15,
+      "responseSha256": "1848854c0db89498ead84eeb8ba282fea1d8b339e61609f65145f2a67be69677",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/wp2q5b9gtgnfajyenc87dnf6r"
+    },
+    "corescope-json-list-api-github-com-5b88ee22": {
+      "originalArticleUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.296",
+      "checks": [
+        {
+          "url": "https://github.com/anthropics/claude-code/releases.atom",
+          "status": 200,
+          "items": 10,
+          "datedItems": 10
+        }
+      ],
+      "items": 20,
+      "samples": [
+        {
+          "title": "v2.1.296",
+          "url": "https://github.com/anthropics/claude-code/releases/tag/v2.1.296",
+          "publishedAt": "2026-10-09T19:28:59.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "v2.1.295",
+          "url": "https://github.com/anthropics/claude-code/releases/tag/v2.1.295",
+          "publishedAt": "2026-10-08T19:48:38.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "v2.1.294",
+          "url": "https://github.com/anthropics/claude-code/releases/tag/v2.1.294",
+          "publishedAt": "2026-10-08T05:03:54.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:14.409Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 20,
+      "responseSha256": "0a1585d3de59acb4724e27145d97fd2b91322ebf25c02f1b054e4bc0f3bd3b55",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/pgorvzw5fjaqen493e5nr2uom"
+    },
+    "corescope-rss-epochai-substack-com-bfc16181": {
+      "originalArticleUrl": "https://epochai.substack.com/p/can-ai-automate-ai-r-and-d-yet",
+      "checks": [
+        {
+          "url": "https://epochai.substack.com",
+          "status": 200
+        },
+        {
+          "url": "https://epochai.substack.com/feed",
+          "status": 200,
+          "items": 20,
+          "datedItems": 20
+        }
+      ],
+      "items": 20,
+      "samples": [
+        {
+          "title": "Can AI automate AI R&D yet?",
+          "url": "https://epochai.substack.com/p/can-ai-automate-ai-r-and-d-yet",
+          "publishedAt": "2026-10-09T18:41:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "The Epoch Brief - October 8, 2026",
+          "url": "https://epochai.substack.com/p/the-epoch-brief-october-8-2026",
+          "publishedAt": "2026-10-08T19:30:49.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Hundreds of millions of AI agents are coming. Is there work for them?",
+          "url": "https://epochai.substack.com/p/hundreds-of-millions-of-ai-agents",
+          "publishedAt": "2026-10-02T19:11:16.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:14.495Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 20,
+      "responseSha256": "ad8a4eb7b5d3ca360db04f1610f3ecc01d9980d581c41f43ea830fb06add9c7d",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/mz4js4r6916dip5ojpett06io"
+    },
+    "corescope-web-list-baseten-co-7f6bc157": {
+      "originalArticleUrl": "https://www.baseten.co/blog/safe-open-models-baseten-goodfire/",
+      "checks": [
+        {
+          "url": "https://www.baseten.co/blog",
+          "status": 200
+        },
+        {
+          "url": "https://www.baseten.co/feed",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.baseten.co/rss",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.baseten.co/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.baseten.co/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.baseten.co/blog/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.baseten.co/blog/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 9,
+      "samples": [
+        {
+          "title": "Project Beacon: Bringing safety signals to open models at scale",
+          "url": "https://www.baseten.co/blog/safe-open-models-baseten-goodfire/",
+          "publishedAt": "2026-10-09T17:01:47.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "What makes a high-quality NVFP4 quantization?",
+          "url": "https://www.baseten.co/blog/what-makes-a-high-quality-nvfp4-quantization/",
+          "publishedAt": "2026-10-09T14:16:52.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Agentic inference optimization: 50-90% faster engines",
+          "url": "https://www.baseten.co/blog/agentic-inference-optimization-faster-than-sota/",
+          "publishedAt": "2026-10-02T21:09:34.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:14.767Z",
+      "httpStatus": 200,
+      "datedItems": 0,
+      "responseSha256": "3490efa49bc76ca8861b2500ccfbdb0c8dbee72f582f87a05223703b9b3ea971",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/c5gzgbqg3nauko129513r6dwl"
+    },
+    "corescope-json-list-api-github-com-7f657830": {
+      "originalArticleUrl": "https://github.com/openai/codex/releases/tag/rust-v0.162.1",
+      "checks": [
+        {
+          "url": "https://github.com/openai/codex/releases.atom",
+          "status": 200,
+          "items": 10,
+          "datedItems": 10
+        }
+      ],
+      "items": 20,
+      "samples": [
+        {
+          "title": "0.163.0-alpha.5",
+          "url": "https://github.com/openai/codex/releases/tag/rust-v0.163.0-alpha.5",
+          "publishedAt": "2026-10-10T00:26:59.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "0.162.1",
+          "url": "https://github.com/openai/codex/releases/tag/rust-v0.162.1",
+          "publishedAt": "2026-10-09T19:44:51.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "0.163.0-alpha.4",
+          "url": "https://github.com/openai/codex/releases/tag/rust-v0.163.0-alpha.4",
+          "publishedAt": "2026-10-09T13:21:04.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:15.526Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 20,
+      "responseSha256": null,
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/y5tiu3k0zzay4kz9grntt38h0"
+    },
+    "corescope-rss-a16z-news-0e9c1ee9": {
+      "originalArticleUrl": "https://www.a16z.news/p/investing-in-typesafe",
+      "checks": [
+        {
+          "url": "https://www.a16z.news",
+          "status": 200
+        },
+        {
+          "url": "https://www.a16z.news/feed",
+          "status": 200,
+          "items": 20,
+          "datedItems": 20
+        }
+      ],
+      "items": 20,
+      "samples": [
+        {
+          "title": "This Week in Charts: Are Prediction Markets Politically Biased?",
+          "url": "https://www.a16z.news/p/this-week-in-charts-are-prediction",
+          "publishedAt": "2026-10-09T16:31:10.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Investing in TypeSafe AI",
+          "url": "https://www.a16z.news/p/investing-in-typesafe",
+          "publishedAt": "2026-10-09T16:28:52.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "You Need a New CFO",
+          "url": "https://www.a16z.news/p/you-need-a-new-cfo",
+          "publishedAt": "2026-10-08T14:02:36.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:15.931Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 20,
+      "responseSha256": "7f536d9172d5bd7fd47ae74463cae45f7813dc1eecc996a1a8774fb9fdf3c39f",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/nop1nw81y2obkwa9apzdu3176"
+    },
+    "corescope-rss-newcomer-co-fbb7e5fc": {
+      "originalArticleUrl": "https://www.newcomer.co/p/competing-arr-estimates-and-fuzzy",
+      "checks": [
+        {
+          "url": "https://www.newcomer.co",
+          "status": 200
+        },
+        {
+          "url": "https://www.newcomer.co/feed",
+          "status": 200,
+          "items": 20,
+          "datedItems": 20
+        }
+      ],
+      "items": 20,
+      "samples": [
+        {
+          "title": "Competing ARR Estimates & Fuzzy Valuation Math in the Spotlight as Markets Get Edgy",
+          "url": "https://www.newcomer.co/p/competing-arr-estimates-and-fuzzy",
+          "publishedAt": "2026-10-09T16:41:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "After Missing AI’s Early Days, Lightspeed Remade Itself. Now It’s Poised to Score with Anthropic.",
+          "url": "https://www.newcomer.co/p/after-missing-ais-early-days-lightspeed",
+          "publishedAt": "2026-10-08T17:09:07.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "9 Videos from Machine Earning: Town’s Jean-Denis Greze, Lead Bank’s Jackie Reses, Chime’s Ryan King & More",
+          "url": "https://www.newcomer.co/p/9-videos-from-machine-earning-towns",
+          "publishedAt": "2026-10-06T16:29:37.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:15.955Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 20,
+      "responseSha256": "ec952422bd4a87641b1483b5d8a7b9be69e1e87ab6f2ced25d5a1e181a9eb832",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/r99zze3wwbcekmwg8rk7xtafw"
+    },
+    "corescope-rss-github-blog-72a225e6": {
+      "originalArticleUrl": "https://github.blog/developer-skills/career-growth/hack-the-world-why-hackathons-are-still-the-best-place-to-learn-to-build/",
+      "checks": [
+        {
+          "url": "https://github.blog/",
+          "status": 200
+        },
+        {
+          "url": "https://github.blog/comments/feed/",
+          "status": 200,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://github.blog/feed/",
+          "status": 200,
+          "items": 10,
+          "datedItems": 10
+        }
+      ],
+      "items": 10,
+      "samples": [
+        {
+          "title": "Hack the World: Why hackathons are still the best place to learn to build",
+          "url": "https://github.blog/developer-skills/career-growth/hack-the-world-why-hackathons-are-still-the-best-place-to-learn-to-build/",
+          "publishedAt": "2026-10-09T16:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "How one bug bounty researcher chooses the features they investigate",
+          "url": "https://github.blog/security/how-one-bug-bounty-researcher-chooses-the-features-they-investigate/",
+          "publishedAt": "2026-10-08T17:02:52.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Secret protection must scale with software",
+          "url": "https://github.blog/ai-and-ml/github-copilot/secret-protection-must-scale-with-software/",
+          "publishedAt": "2026-10-07T17:45:34.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:16.461Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 10,
+      "responseSha256": "55faaae24abff09f6174b85d8753146924fad3cbbbc3c6ecddc0c66edf5add68",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/wmi6dw3nt1jy0yb1yzs4k98fp"
+    },
+    "corescope-rss-404media-co-398bb41e": {
+      "originalArticleUrl": "https://www.404media.co/following-404-media-investigation-senator-demands-info-about-white-houses-license-plate-surveillance-program/",
+      "checks": [
+        {
+          "url": "https://www.404media.co/",
+          "status": 200
+        },
+        {
+          "url": "https://www.404media.co/rss/",
+          "status": 200,
+          "items": 15,
+          "datedItems": 15
+        }
+      ],
+      "items": 15,
+      "samples": [
+        {
+          "title": "Scientists Detect Record-Breaking Radio Signal from the Ancient Universe",
+          "url": "https://www.404media.co/scientists-detect-record-breaking-radio-signal-from-the-ancient-universe/",
+          "publishedAt": "2026-10-10T11:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Following 404 Media Investigation, Senator Demands Info About White House's License Plate Surveillance Program",
+          "url": "https://www.404media.co/following-404-media-investigation-senator-demands-info-about-white-houses-license-plate-surveillance-program/",
+          "publishedAt": "2026-10-09T16:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Behind the Blog: What Would the Pope Do?",
+          "url": "https://www.404media.co/behind-the-blog-what-would-the-pope-do/",
+          "publishedAt": "2026-10-09T15:44:32.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:17.244Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 15,
+      "responseSha256": "70a3dc2ccb836c3dfa06e86c3810df4c852c719276d0679b319208f24cea0204",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/f8e0il7sfivegk8wz42ul4qrs"
+    },
+    "corescope-rss-wheresyoured-at-f7a7c607": {
+      "originalArticleUrl": "https://www.wheresyoured.at/premium-the-haters-guide-to-junk/",
+      "checks": [
+        {
+          "url": "https://www.wheresyoured.at/",
+          "status": 200
+        },
+        {
+          "url": "https://www.wheresyoured.at/rss/",
+          "status": 200,
+          "items": 15,
+          "datedItems": 15
+        }
+      ],
+      "items": 15,
+      "samples": [
+        {
+          "title": "Premium: The Hater's Guide To Junk",
+          "url": "https://www.wheresyoured.at/premium-the-haters-guide-to-junk/",
+          "publishedAt": "2026-10-09T15:53:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Credit Crunch",
+          "url": "https://www.wheresyoured.at/credit-crunch/",
+          "publishedAt": "2026-10-06T14:54:08.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Premium: How Has AI Changed The Economy?",
+          "url": "https://www.wheresyoured.at/premium-how-has-ai-changed-the-economy/",
+          "publishedAt": "2026-10-02T18:46:35.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:17.467Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 15,
+      "responseSha256": "38535afcce644b4bd33c7bf17f2a0e8211c7031803f000626cd6366fc875a9b7",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/tczrfmljc53up4t2phgflbamt"
+    },
+    "corescope-rss-oreilly-com-4d46873e": {
+      "originalArticleUrl": "https://www.oreilly.com/radar/this-week-in-ai-more-capability-more-responsibility/",
+      "checks": [
+        {
+          "url": "https://www.oreilly.com/radar/",
+          "status": 200
+        },
+        {
+          "url": "https://www.oreilly.com/radar/feed/podcast",
+          "status": 200,
+          "items": 15,
+          "datedItems": 15
+        }
+      ],
+      "items": 15,
+      "samples": [
+        {
+          "title": "This Week in AI: More Capability, More Responsibility",
+          "url": "https://www.oreilly.com/radar/this-week-in-ai-more-capability-more-responsibility/",
+          "publishedAt": "2026-10-09T15:55:10.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Intent, Not Identity",
+          "url": "https://www.oreilly.com/radar/intent-not-identity/",
+          "publishedAt": "2026-10-09T10:54:17.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "The Preservation Gap in the AI Stack: Why Capability Is Advancing Faster Than Reconstructability",
+          "url": "https://www.oreilly.com/radar/the-preservation-gap-in-the-ai-stack-why-capability-is-advancing-faster-than-reconstructability/",
+          "publishedAt": "2026-10-08T10:54:41.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:17.777Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 15,
+      "responseSha256": "602dd67791a41d91173d171a6a2d172248613e2481242d8d8715d0e4630de9cd",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/x230fr0n4aed2novd9z5eyskx"
+    },
+    "v2-source-45": {
+      "originalArticleUrl": "https://huggingface.co/blog/allenai/impactful-scheduling",
+      "checks": [
+        {
+          "url": "https://huggingface.co/blog/community",
+          "status": 200
+        },
+        {
+          "url": "https://huggingface.co/blog/feed.xml",
+          "status": 200,
+          "items": 876,
+          "datedItems": 876
+        }
+      ],
+      "items": 876,
+      "samples": [
+        {
+          "title": "Impactful scheduling for GPU clusters",
+          "url": "https://huggingface.co/blog/allenai/impactful-scheduling",
+          "publishedAt": "2026-10-09T15:20:29.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "The model that didn't exist, so you made it yourself",
+          "url": "https://huggingface.co/blog/building-with-ml-intern",
+          "publishedAt": "2026-10-08T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Multimodal open d1 decision models for the edge",
+          "url": "https://huggingface.co/blog/LiquidAI/open-d1",
+          "publishedAt": "2026-10-07T16:54:33.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": "v2-source-45",
+      "checkedAt": "2026-10-12T10:20:18.076Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 876,
+      "responseSha256": "aaa2beda2cef4dcb9252fb7f788e6a0f24fc53f61af4f45a449eeee46ce8e359",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/jvbzq4ew3wdmgqoloktgd9ujl"
+    },
+    "corescope-rss-factory-com-9c3220c0": {
+      "originalArticleUrl": "https://factory.com/news/mentlio",
+      "checks": [
+        {
+          "url": "https://factory.com/news",
+          "status": 200
+        },
+        {
+          "url": "https://factory.com/news/rss",
+          "status": 200,
+          "items": 69,
+          "datedItems": 69
+        }
+      ],
+      "items": 69,
+      "samples": [
+        {
+          "title": "Factory Acquires Mentlio: Building Intelligent Token Allocation for the Software Factory",
+          "url": "https://factory.com/news/mentlio",
+          "publishedAt": "2026-10-09T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Factory Announces Connor Maloney as Head of Federal",
+          "url": "https://factory.com/news/connor-maloney-head-of-federal",
+          "publishedAt": "2026-10-08T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Factory Analytics brings transparency to every session",
+          "url": "https://factory.com/news/factory-analytics-transparency",
+          "publishedAt": "2026-10-02T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:18.642Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 69,
+      "responseSha256": "21c5967142142587ed79f6449b9faebf7deb36cfe46c5568dd0d6128d58c1b1f",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/oxfhjlnatxa76r9khfq2rf9ve"
+    },
+    "corescope-rss-tessl-io-0c7db98b": {
+      "originalArticleUrl": "https://tessl.io/blog/anatomy-of-an-agentic-code-review",
+      "checks": [
+        {
+          "url": "https://tessl.io/blog",
+          "status": 200
+        },
+        {
+          "url": "https://tessl.io/feed",
+          "status": 200,
+          "items": 50,
+          "datedItems": 50
+        }
+      ],
+      "items": 41,
+      "samples": [
+        {
+          "title": "Anatomy of an Agentic Code Review",
+          "url": "https://tessl.io/blog/anatomy-of-an-agentic-code-review",
+          "publishedAt": "2026-10-09T14:38:05.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "One Brain Means Owning Your Organizational Memory",
+          "url": "https://tessl.io/blog/one-brain-means-owning-your-organizational-memory",
+          "publishedAt": "2026-10-08T18:51:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Agent Skills Are Supply Chain Components",
+          "url": "https://tessl.io/blog/agent-skills-are-supply-chain-components",
+          "publishedAt": "2026-10-08T18:50:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:18.716Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 41,
+      "responseSha256": "6df9c2434122c4b3b33b3abc50d2beee0e30e6a4d44bf4c2e1c05d6e888718fd",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/le1ylt1x79hnjo9vbi61ejq9b"
+    },
+    "corescope-web-list-ai-google-dev-e19abb36": {
+      "originalArticleUrl": "https://ai.google.dev/gemini-api/docs/changelog#10-08-2026",
+      "checks": [
+        {
+          "url": "https://ai.google.dev/gemini-api/docs/changelog",
+          "status": 200
+        }
+      ],
+      "sectionHeadings": [
+        {
+          "id": "10-08-2026",
+          "title": "2026 年 10 月 8 日"
+        },
+        {
+          "id": "10-06-2026",
+          "title": "2026 年 10 月 6 日"
+        },
+        {
+          "id": "09-22-2026",
+          "title": "2026 年 9 月 22 日"
+        },
+        {
+          "id": "09-18-2026",
+          "title": "September 18, 2026"
+        },
+        {
+          "id": "09-17-2026",
+          "title": "2026 年 9 月 17 日"
+        },
+        {
+          "id": "09-15-2026",
+          "title": "2026 年 9 月 15 日"
+        },
+        {
+          "id": "09-03-2026",
+          "title": "2026 年 9 月 3 日"
+        },
+        {
+          "id": "09-02-2026",
+          "title": "2026 年 9 月 2 日"
+        },
+        {
+          "id": "09-01-2026",
+          "title": "2026 年 9 月 1 日"
+        },
+        {
+          "id": "08-27-2026",
+          "title": "2026 年 8 月 27 日"
+        },
+        {
+          "id": "08-26-2026",
+          "title": "2026 年 8 月 26 日"
+        },
+        {
+          "id": "08-13-2026",
+          "title": "2026 年 8 月 13 日"
+        },
+        {
+          "id": "07-30-2026",
+          "title": "2026 年 7 月 30 日"
+        },
+        {
+          "id": "07-21-2026",
+          "title": "2026 年 7 月 21 日"
+        },
+        {
+          "id": "07-06-2026",
+          "title": "2026 年 7 月 6 日"
+        },
+        {
+          "id": "06-30-2026",
+          "title": "2026 年 6 月 30 日"
+        },
+        {
+          "id": "06-24-2026",
+          "title": "2026 年 6 月 24 日"
+        },
+        {
+          "id": "06-17-2026",
+          "title": "2026 年 6 月 17 日"
+        },
+        {
+          "id": "06-15-2026",
+          "title": "2026 年 6 月 15 日"
+        },
+        {
+          "id": "06-01-2026",
+          "title": "2026 年 6 月 1 日"
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:19.225Z",
+      "httpStatus": 200,
+      "items": 141,
+      "datedItems": 141,
+      "samples": [
+        {
+          "title": "Gemini 3.7 Flash deprecation (October 8, 2026)",
+          "url": "https://ai.google.dev/gemini-api/docs/changelog?hl=en#10-08-2026",
+          "publishedAt": "2026-10-08T00:00:00.000Z",
+          "identityKey": "url:https://ai.google.dev/gemini-api/docs/changelog?hl=en#10-08-2026"
+        },
+        {
+          "title": "Gemini Nano Banana 2.1 generally available (GA) (October 6, 2026)",
+          "url": "https://ai.google.dev/gemini-api/docs/changelog?hl=en#10-06-2026",
+          "publishedAt": "2026-10-06T00:00:00.000Z",
+          "identityKey": "url:https://ai.google.dev/gemini-api/docs/changelog?hl=en#10-06-2026"
+        },
+        {
+          "title": "Gemini 3.8 Flash TTS and Gemini 3.8 Flash-Lite TTS generally available (GA) (September 22, 2026)",
+          "url": "https://ai.google.dev/gemini-api/docs/changelog?hl=en#09-22-2026",
+          "publishedAt": "2026-09-22T00:00:00.000Z",
+          "identityKey": "url:https://ai.google.dev/gemini-api/docs/changelog?hl=en#09-22-2026"
+        }
+      ],
+      "responseSha256": "53bcafb768b834c641212eaa3e55f4df4fcfefe8d266d6a446d2f62e089c563a",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/e1i255iw9el1bq7bhsqpno6eu"
+    },
+    "corescope-rss-platformer-news-0b2f1c3c": {
+      "originalArticleUrl": "https://www.platformer.news/openai-math-breakthroughs-tao-reaction/",
+      "checks": [
+        {
+          "url": "https://www.platformer.news/",
+          "status": 200
+        },
+        {
+          "url": "https://www.platformer.news/rss/",
+          "status": 200,
+          "items": 15,
+          "datedItems": 15
+        }
+      ],
+      "items": 15,
+      "samples": [
+        {
+          "title": "AI is solving math problems faster than humans can understand the solutions",
+          "url": "https://www.platformer.news/openai-math-breakthroughs-tao-reaction/",
+          "publishedAt": "2026-10-09T00:28:26.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Does intelligence need a hard cap?",
+          "url": "https://www.platformer.news/does-intelligence-need-a-hard-cap/",
+          "publishedAt": "2026-10-07T00:00:16.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "OpenAI connects the Dots",
+          "url": "https://www.platformer.news/openai-dots-agents-devday-2026/",
+          "publishedAt": "2026-09-30T01:20:57.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:19.388Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 15,
+      "responseSha256": "fbd8c7f188e9982639cfa4570fbb74ecd48a662cd9a3fc98680ced75cfa62207",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/jyecccohnjw5byxjvnuk24cnh"
+    },
+    "corescope-web-list-claude-com-417569d6": {
+      "originalArticleUrl": "https://claude.com/blog/how-block-orchestrates-claude-fable-across-thousands-of-pull-requests",
+      "checks": [
+        {
+          "url": "https://claude.com/blog",
+          "status": 200
+        },
+        {
+          "url": "https://claude.com/feed",
+          "status": 403,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://claude.com/rss",
+          "status": 403,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://claude.com/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://claude.com/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://claude.com/blog/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://claude.com/blog/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "checkedAt": "2026-10-12T10:20:19.774Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "items": 6,
+      "datedItems": 6,
+      "samples": [
+        {
+          "title": "Build live dashboards and animate explainers with Claude",
+          "url": "https://claude.com/resources/articles/dashboards-and-motion",
+          "publishedAt": "2026-10-08T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "How Block orchestrates Claude Fable across thousands of pull requests",
+          "url": "https://claude.com/resources/articles/how-block-orchestrates-claude-fable-across-thousands-of-pull-requests",
+          "publishedAt": "2026-10-08T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "How Comcast and Booz Allen use Claude Mythos to find exploit chains and secure their codebases",
+          "url": "https://claude.com/resources/articles/how-comcast-booz-allen-use-claude-mythos-to-secure-their-codebases",
+          "publishedAt": "2026-10-06T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "responseSha256": "b6ebca59b786bbce739900ed40de99c976cbc9b26d57bbdf389c4b323111b989",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/myoe16r78gjt87vu92995zsae"
+    },
+    "corescope-rss-updates-midjourney-com-a0c219c9": {
+      "originalArticleUrl": "https://updates.midjourney.com/alpha-changelog-10-7-26/",
+      "checks": [
+        {
+          "url": "https://updates.midjourney.com/",
+          "status": 200
+        },
+        {
+          "url": "https://updates.midjourney.com/rss/",
+          "status": 200,
+          "items": 15,
+          "datedItems": 15
+        }
+      ],
+      "items": 15,
+      "samples": [
+        {
+          "title": "Testing Thinking Mode",
+          "url": "https://updates.midjourney.com/testing-thinking-mode/",
+          "publishedAt": "2026-10-08T21:17:13.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Alpha Changelog - 10/7/26",
+          "url": "https://updates.midjourney.com/alpha-changelog-10-7-26/",
+          "publishedAt": "2026-10-08T21:16:55.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Alpha Changelog - 10/1/26",
+          "url": "https://updates.midjourney.com/alpha-changelog-10-1-26/",
+          "publishedAt": "2026-10-02T00:57:01.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:20.455Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 15,
+      "responseSha256": "fa8d2ebd3cea1ce07ef2954cb69c1485cf56d01b4a03b93b2a179953ab69cac6",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/q5mwduy6cwytucuajabu2of5l"
+    },
+    "corescope-json-list-runway-com-9bf8b188": {
+      "originalArticleUrl": "https://runwayml.com/news/company-news/runway-claude-motion",
+      "checks": [
+        {
+          "url": "https://runwayml.com/news",
+          "status": 200
+        },
+        {
+          "url": "https://runwayml.com/feed",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://runwayml.com/rss",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://runwayml.com/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://runwayml.com/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://runwayml.com/news/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://runwayml.com/news/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 167,
+      "samples": [
+        {
+          "title": "Runway Joins the Tech Coalition and Lantern",
+          "url": "https://runway.com/news/company-news/runway-tech-coalition-lantern",
+          "publishedAt": "2026-10-08T20:37:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Runway is in Claude Motion",
+          "url": "https://runway.com/news/company-news/runway-claude-motion",
+          "publishedAt": "2026-10-08T17:29:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Introducing Runway Ads",
+          "url": "https://runway.com/news/company-news/introducing-runway-ads",
+          "publishedAt": "2026-09-30T18:32:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:20.707Z",
+      "httpStatus": 200,
+      "datedItems": 167,
+      "responseSha256": "0b599319dad41ce64bd10d044721e29270167eb848b792b3db5bc526545416e5",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/ds9xevj7bhsznldxj1innmy8a"
+    },
+    "corescope-web-list-artificialanalysis-ai-3da9409d": {
+      "originalArticleUrl": "https://artificialanalysis.ai/articles/trusted-access-models-cyber-index",
+      "checks": [
+        {
+          "url": "https://artificialanalysis.ai/articles",
+          "status": 200
+        },
+        {
+          "url": "https://artificialanalysis.ai/feed",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://artificialanalysis.ai/rss",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://artificialanalysis.ai/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://artificialanalysis.ai/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://artificialanalysis.ai/articles/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://artificialanalysis.ai/articles/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 12,
+      "samples": [
+        {
+          "title": "Announcing Harvey LAB-AA v1.1: adding hallucination checks to raise the bar for agentic legal work",
+          "url": "https://artificialanalysis.ai/articles/harvey-lab-aa-v1-1",
+          "publishedAt": "2026-10-08T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Introducing trusted-access models to the Artificial Analysis Cyber Index",
+          "url": "https://artificialanalysis.ai/articles/trusted-access-models-cyber-index",
+          "publishedAt": "2026-10-08T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Anthropic has released Claude Haiku 5.5, scoring 43 on the Artificial Analysis Intelligence Index - up 26 points one year after the last Haiku release",
+          "url": "https://artificialanalysis.ai/articles/claude-haiku-5-5",
+          "publishedAt": "2026-10-07T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:21.067Z",
+      "httpStatus": 200,
+      "datedItems": 0,
+      "responseSha256": "8c9a23866cc76f44c0878570e83f76cd3bf0cb892379abfb2c2e1eea8cfc6d7d",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/ilwqal36uf19pwqg377kycj6u"
+    },
+    "corescope-rss-blog-comfy-org-a9c12e1c": {
+      "originalArticleUrl": "https://blog.comfy.org/p/how-i-generated-live-video-with-minimax",
+      "checks": [
+        {
+          "url": "https://blog.comfy.org",
+          "status": 200
+        },
+        {
+          "url": "https://blog.comfy.org/feed",
+          "status": 200,
+          "items": 20,
+          "datedItems": 20
+        }
+      ],
+      "items": 20,
+      "samples": [
+        {
+          "title": "How I Generated Live Video with MiniMax H3 on a Single GPU",
+          "url": "https://blog.comfy.org/p/how-i-generated-live-video-with-minimax",
+          "publishedAt": "2026-10-08T19:01:22.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Gemini Nano Banana 2.1 is now available via Partner Nodes",
+          "url": "https://blog.comfy.org/p/gemini-nano-banana-21-is-now-available",
+          "publishedAt": "2026-10-06T23:54:49.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Creating the story of YUI with 852話 Hakoniwa and Comfy Agent",
+          "url": "https://blog.comfy.org/p/creating-the-story-of-yui-with-852",
+          "publishedAt": "2026-10-01T18:58:07.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:21.259Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 20,
+      "responseSha256": "10c1791a7f77f15b4fbf76674e42abdbc38aab71e9d8f793ed82a476740a0282",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/xc7shuv3raxyv5xvh59ez8hjf"
+    },
+    "corescope-web-list-developers-googleblog-com-d6fea2bd": {
+      "originalArticleUrl": "https://developers.googleblog.com/ml-drift-next-gen-gpu-aiml-inference-at-the-edge/",
+      "checks": [
+        {
+          "url": "https://developers.googleblog.com/",
+          "status": 200
+        },
+        {
+          "url": "https://developers.googleblog.com/feeds/posts/default?alt=rss",
+          "status": 200,
+          "items": 20,
+          "datedItems": 0
+        }
+      ],
+      "items": 24,
+      "samples": [
+        {
+          "title": "EmbeddingGemma 2: The Developer Guide",
+          "url": "https://developers.googleblog.com/embeddinggemma-2-the-developer-guide/",
+          "publishedAt": "2026-10-06T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Bring multimodal semantic search to the edge with EmbeddingGemma 2",
+          "url": "https://developers.googleblog.com/google-ai-edge-with-embeddinggemma-2/",
+          "publishedAt": "2026-10-06T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "The Outer Loop, Insights First: An Ambient Quality Agent That Diagnoses Your Production Agent",
+          "url": "https://developers.googleblog.com/the-outer-loop-insights-first-an-ambient-quality-agent-that-diagnoses-your-production-agent/",
+          "publishedAt": "2026-10-08T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:21.308Z",
+      "httpStatus": 200,
+      "datedItems": 0,
+      "responseSha256": "2d3e4487fb0ae6797ca4ef43507fd9ff2264abf941d888433a9d977d7391951f",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/vemmtcq70ojxkk343dse8qfuc"
+    },
+    "v2-source-33": {
+      "originalArticleUrl": "https://developer.nvidia.com/blog/building-reliable-data-analytics-agents-lessons-from-the-kdd-cup/",
+      "checks": [
+        {
+          "url": "https://developer.nvidia.com/blog/",
+          "status": 200
+        },
+        {
+          "url": "https://developer.nvidia.com/blog/feed/",
+          "status": 200,
+          "items": 100,
+          "datedItems": 100
+        }
+      ],
+      "items": 100,
+      "samples": [
+        {
+          "title": "5 Steps to Create SimReady Assets for Robotics with Frontier AI Models",
+          "url": "https://developer.nvidia.com/blog/5-steps-to-create-simready-assets-for-robotics-with-frontier-ai-models/",
+          "publishedAt": "2026-10-08T20:57:55.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Building Reliable Data Analytics Agents: Lessons from the KDD Cup",
+          "url": "https://developer.nvidia.com/blog/building-reliable-data-analytics-agents-lessons-from-the-kdd-cup/",
+          "publishedAt": "2026-10-08T18:30:02.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "The Machines that Make the Machines",
+          "url": "https://developer.nvidia.com/blog/the-machines-that-make-the-machines/",
+          "publishedAt": "2026-10-07T18:21:03.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:21.476Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 100,
+      "responseSha256": "45452076d882e7ffa21bcdfc624e4e3f9bf4498cb6077261f4a986e351b63608",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/j6n1853qowosk0pks0y39o3eq"
+    },
+    "corescope-web-list-livekit-com-b9cda020": {
+      "originalArticleUrl": "https://livekit.com/blog/testing-voice-agents-with-agent-simulations",
+      "checks": [
+        {
+          "url": "https://livekit.com/blog",
+          "status": 200
+        },
+        {
+          "url": "https://livekit.com/feed",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://livekit.com/rss",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://livekit.com/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://livekit.com/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://livekit.com/blog/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://livekit.com/blog/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 20,
+      "samples": [
+        {
+          "title": "How Serve AI shipped a better voice agent with Agent Simulations",
+          "url": "https://livekit.com/blog/how-serve-ai-shipped-a-better-voice-agent-with-agent-simulations",
+          "publishedAt": "2026-10-08T17:12:24.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Testing voice agents with Agent Simulations",
+          "url": "https://livekit.com/blog/testing-voice-agents-with-agent-simulations",
+          "publishedAt": "2026-10-08T16:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Retell vs. Vapi vs. LiveKit for voice AI agents: A comparison for developers",
+          "url": "https://livekit.com/blog/retell-vs-vapi-vs-livekit",
+          "publishedAt": "2026-10-06T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:21.722Z",
+      "httpStatus": 200,
+      "datedItems": 0,
+      "responseSha256": "50cd914cd62f88d44e5b43d2a9f5dbc853ccdffb6e1f2c92629354d667fde943",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/mbyexjpejha8mvs5vrc48ev82"
+    },
+    "corescope-web-list-llamaindex-ai-edc405fb": {
+      "originalArticleUrl": "https://www.llamaindex.ai/blog/markdown-is-all-you-need",
+      "checks": [
+        {
+          "url": "https://www.llamaindex.ai/blog",
+          "status": 200
+        },
+        {
+          "url": "https://www.llamaindex.ai/feed",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.llamaindex.ai/rss",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.llamaindex.ai/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.llamaindex.ai/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.llamaindex.ai/blog/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.llamaindex.ai/blog/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 421,
+      "samples": [
+        {
+          "title": "Markdown Is All You Need",
+          "url": "https://www.llamaindex.ai/blog/markdown-is-all-you-need",
+          "publishedAt": "2026-10-08T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Loan Processing Workflow: How to Automate Document Extraction from Application to Approval",
+          "url": "https://www.llamaindex.ai/blog/loan-processing-workflow",
+          "publishedAt": "2026-10-07T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Introducing OpenDocRouter: every document model under one API",
+          "url": "https://www.llamaindex.ai/blog/introducing-opendocrouter",
+          "publishedAt": "2026-10-07T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:22.165Z",
+      "httpStatus": 200,
+      "datedItems": 421,
+      "responseSha256": "c35b4138d5fe5a40de35ebf16d51310da79fd83e07056f0e21ce5df92c2c2d58",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/a9p6yut54p6d9m2akzrpxdjzn"
+    },
+    "v2-source-133": {
+      "originalArticleUrl": "https://about.fb.com/news/2026/10/debunking-the-biggest-data-center-myths/",
+      "checks": [
+        {
+          "url": "https://about.fb.com/news/category/technologies/artificial-intelligence/",
+          "status": 404
+        },
+        {
+          "url": "https://about.fb.com/news/feed/",
+          "status": 200,
+          "items": 10,
+          "datedItems": 10
+        }
+      ],
+      "items": 10,
+      "samples": [
+        {
+          "title": "Debunking the Biggest Data Center Myths",
+          "url": "https://about.fb.com/news/2026/10/debunking-the-biggest-data-center-myths/",
+          "publishedAt": "2026-10-08T16:53:24.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Meta Donates 1,000 AI Glasses to Singapore’s Disability Community",
+          "url": "https://about.fb.com/news/2026/10/meta-donates-1000-ai-glasses-to-singapores-disability-community/",
+          "publishedAt": "2026-10-08T05:49:36.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Why Data Centers Are Such a Big Part of Meta’s AI Approach",
+          "url": "https://about.fb.com/news/2026/10/meta-data-centers-ai-approach/",
+          "publishedAt": "2026-10-07T23:19:30.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": "v2-source-133",
+      "checkedAt": "2026-10-12T10:20:23.324Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 10,
+      "responseSha256": "78cd9a51695a09f1f78129643302d24ac8f0304bb5cf8ee3a69a30db9b2ad675",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/um6zhhmr2i2z2gh2t97r8udal"
+    },
+    "corescope-web-list-goodfire-com-eca9a77c": {
+      "originalArticleUrl": "https://www.goodfire.com/research/production-cyber-monitors-on-kimi-k3",
+      "checks": [
+        {
+          "url": "https://www.goodfire.com/research",
+          "status": 200
+        }
+      ],
+      "checkedAt": "2026-10-12T10:20:23.394Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "items": 42,
+      "datedItems": 0,
+      "samples": [
+        {
+          "title": "Training and Deploying Production Cyber Monitors on Kimi K3",
+          "url": "https://www.goodfire.com/research/production-cyber-monitors-on-kimi-k3",
+          "publishedAt": "2026-10-08T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Better biosecurity monitors for AI agents via protein embeddings",
+          "url": "https://www.goodfire.com/research/better-biosecurity-monitors",
+          "publishedAt": "2026-10-01T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Models know when they’re reward hacking — and we can catch them at scale",
+          "url": "https://www.goodfire.com/research/reward-hacking-activation-monitors",
+          "publishedAt": "2026-09-17T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "responseSha256": "37d6bea6ba89a3b7268c75c97adb87142e8524935cd2f429540ab051ae82c1b9",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/ja19mtm89yojd9w2u67qp1gqv"
+    },
+    "corescope-rss-claude-dev-368e8af0": {
+      "originalArticleUrl": "https://claude.dev/blog/building-effective-agent-automations/",
+      "checks": [
+        {
+          "url": "https://claude.dev/blog",
+          "status": 200
+        },
+        {
+          "url": "https://claude.dev/rss.xml",
+          "status": 200,
+          "items": 15,
+          "datedItems": 15
+        }
+      ],
+      "items": 15,
+      "samples": [
+        {
+          "title": "Building effective agent automations",
+          "url": "https://claude.dev/blog/building-effective-agent-automations/",
+          "publishedAt": "2026-10-08T12:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Claude Code in the cloud: a field guide to cloud sessions",
+          "url": "https://claude.dev/blog/claude-code-in-the-cloud/",
+          "publishedAt": "2026-10-06T12:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Getting started with Claude Code mods",
+          "url": "https://claude.dev/blog/getting-started-with-claude-code-mods/",
+          "publishedAt": "2026-10-01T12:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:23.709Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 15,
+      "responseSha256": "412580107f370914ace311e2d7f00233ac4ced97e3e8611d7c0380daf8301159",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/gq8yjkqlcdbpy0l5uc8ch2sj8"
+    },
+    "corescope-rss-augmentcode-com-078c0707": {
+      "originalArticleUrl": "https://www.augmentcode.com/blog/augment-code-next-chapter",
+      "checks": [
+        {
+          "url": "https://www.augmentcode.com/blog",
+          "status": 200
+        },
+        {
+          "url": "https://www.augmentcode.com/feed",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.augmentcode.com/rss",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.augmentcode.com/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.augmentcode.com/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.augmentcode.com/blog/rss.xml",
+          "status": 200,
+          "items": 50,
+          "datedItems": 50
+        }
+      ],
+      "items": 50,
+      "samples": [
+        {
+          "title": "Augment Code's next chapter",
+          "url": "https://augmentcode.com/blog/augment-code-next-chapter",
+          "publishedAt": "2026-10-08T15:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Beyond AI Coding Agents: How We Built Augment's Software Factory",
+          "url": "https://augmentcode.com/blog/beyond-ai-coding-agents-how-we-built-augments-software-factory",
+          "publishedAt": "2026-09-11T23:58:33.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "We think the FDE should be part of the product, so we built one in",
+          "url": "https://augmentcode.com/blog/we-think-the-fde-should-be-part-of-the-product-so-we-built-one-in",
+          "publishedAt": "2026-08-28T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:23.789Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 50,
+      "responseSha256": "bcac775d72b8c95da31fccd72733ee537f9599c24a8da0493ead5b8eaf5ae3bc",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/o9u4a1iygreqlrqrtha3syyvc"
+    },
+    "corescope-rss-waymo-com-7aa4ca25": {
+      "originalArticleUrl": "https://waymo.com/blog/2026/10/sober-driving-benchmarks",
+      "checks": [
+        {
+          "url": "https://waymo.com/blog",
+          "status": 200
+        },
+        {
+          "url": "https://waymo.com/feed",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://waymo.com/rss",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://waymo.com/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://waymo.com/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://waymo.com/blog/rss.xml",
+          "status": 200,
+          "items": 323,
+          "datedItems": 323
+        }
+      ],
+      "items": 323,
+      "samples": [
+        {
+          "title": "Waymo Closes $5 Billion Debt Financing to Accelerate Business Expansion",
+          "url": "https://waymo.com/blog/2026/10/waymo-closes-5-billion-debt-financing",
+          "publishedAt": "2026-10-08T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Sober Drivers Still Face Nearly 4x Nighttime Risk: Why Road Safety Demands a Safe System Approach",
+          "url": "https://waymo.com/blog/2026/10/sober-driving-benchmarks",
+          "publishedAt": "2026-10-08T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Preparing for the Unexpected: A New Framework for AV Incident Management Exercises",
+          "url": "https://waymo.com/blog/2026/10/incident-management-exercises",
+          "publishedAt": "2026-10-07T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:24.069Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 323,
+      "responseSha256": "9bdd32544089eb1b39ddbc885a53d956250ac5c6469519a1f60317fe169d00c6",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/xl789gpck7k9490b5x5xo2yrg"
+    },
+    "corescope-web-list-zyphra-com-881479c3": {
+      "originalArticleUrl": "https://www.zyphra.com/our-work/expert-coupling-in-moe-pretraining",
+      "checks": [
+        {
+          "url": "https://www.zyphra.com/our-work",
+          "status": 200
+        }
+      ],
+      "items": 41,
+      "samples": [
+        {
+          "title": "Implementing Inference Communication Overlap on AWS Inferentia2",
+          "url": "https://www.zyphra.com/our-work/aws-domino",
+          "publishedAt": "2026-05-29T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Zyphra Announces 15 Megawatts of AMD Instinct MI355X GPU Capacity Through Zyphra Cloud",
+          "url": "https://www.zyphra.com/our-work/zyphra-announces-15-megawatts-of-amd-instinct-mi355x-gpu-capacity-through-zyphra-cloud",
+          "publishedAt": "2026-05-11T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "ZAYA1-74B-Preview: Scaling Pretraining on AMD",
+          "url": "https://www.zyphra.com/our-work/zaya1-74b-preview",
+          "publishedAt": "2026-05-07T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:24.498Z",
+      "httpStatus": 200,
+      "datedItems": 0,
+      "responseSha256": "8f2ea21c2de9975ccbec9d733bff02e84750fde48301ba3a105a2c697957ad85",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/tgn0tyjxb2td7n8gj1unlu2um"
+    },
+    "corescope-rss-understandingai-org-e677c69b": {
+      "originalArticleUrl": "https://www.understandingai.org/p/understanding-jev-the-new-model-everyone",
+      "checks": [
+        {
+          "url": "https://www.understandingai.org",
+          "status": 200
+        },
+        {
+          "url": "https://www.understandingai.org/feed",
+          "status": 200,
+          "items": 20,
+          "datedItems": 20
+        }
+      ],
+      "items": 20,
+      "samples": [
+        {
+          "title": "Understanding Jev, the new model everyone is talking about",
+          "url": "https://www.understandingai.org/p/understanding-jev-the-new-model-everyone",
+          "publishedAt": "2026-10-08T13:14:53.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Introducing Dan Kagan-Kans",
+          "url": "https://www.understandingai.org/p/introducing-dan-kagan-kans",
+          "publishedAt": "2026-10-05T19:11:19.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Why agent swarms could be the next “scaling law”",
+          "url": "https://www.understandingai.org/p/why-agent-swarms-could-be-the-next",
+          "publishedAt": "2026-10-05T17:19:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:24.772Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 20,
+      "responseSha256": "e809d887e04643b95166abf93ac6d3d561c51594ca326f74d17311bc4a8a340b",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/dqelvwbsyncp0e515g1ironxf"
+    },
+    "corescope-rss-press-airstreet-com-597fc296": {
+      "originalArticleUrl": "https://press.airstreet.com/p/state-of-ai-2026",
+      "checks": [
+        {
+          "url": "https://press.airstreet.com",
+          "status": 200
+        },
+        {
+          "url": "https://press.airstreet.com/feed",
+          "status": 200,
+          "items": 20,
+          "datedItems": 20
+        }
+      ],
+      "items": 20,
+      "samples": [
+        {
+          "title": "The State of AI Report 2026",
+          "url": "https://press.airstreet.com/p/state-of-ai-2026",
+          "publishedAt": "2026-10-08T07:39:39.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Join us for the State of AI Report 2026 launch meetups",
+          "url": "https://press.airstreet.com/p/state-of-ai-meetups-2026",
+          "publishedAt": "2026-09-20T13:55:03.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Our investment in Jack & Jill: a job market that works for you",
+          "url": "https://press.airstreet.com/p/jack-and-jill-series-a",
+          "publishedAt": "2026-09-15T13:29:12.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:25.728Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 20,
+      "responseSha256": "173d393d58cb7b773aa81a297cc78fbee65370d0c7864c3e55bb722817d4b25b",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/pqh8cgtpwpuqnk9qhbqy3gflw"
+    },
+    "corescope-web-list-mastra-ai-a993d77f": {
+      "originalArticleUrl": "https://mastra.ai/blog/mastra-agency-program",
+      "checks": [
+        {
+          "url": "https://mastra.ai/blog",
+          "status": 200
+        },
+        {
+          "url": "https://mastra.ai/feed",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://mastra.ai/rss",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://mastra.ai/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://mastra.ai/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://mastra.ai/blog/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://mastra.ai/blog/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 12,
+      "samples": [
+        {
+          "title": "Introducing the Mastra Agency Program",
+          "url": "https://mastra.ai/blog/mastra-agency-program",
+          "publishedAt": "2026-10-08T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Introducing Mastra Connect",
+          "url": "https://mastra.ai/blog/introducing-mastra-connect",
+          "publishedAt": "2026-10-07T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Announcing Agent Controller GA",
+          "url": "https://mastra.ai/blog/announcing-agent-controller-ga",
+          "publishedAt": "2026-10-06T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:25.915Z",
+      "httpStatus": 200,
+      "datedItems": 12,
+      "responseSha256": "cdbea363ad618a23b1012f0db894e1dafae4c71a79a90b5af2a0257a42ab34e2",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/b7vx3v5tlulwyyrj21uptjphn"
+    },
+    "corescope-rss-openrouter-ai-0670d609": {
+      "originalArticleUrl": "https://openrouter.ai/blog/case-studies/how-an-ai-sales-agent-saved-our-sales-team-600-hours-a-month/",
+      "checks": [
+        {
+          "url": "https://openrouter.ai/blog",
+          "status": 200
+        },
+        {
+          "url": "https://openrouter.ai/blog/feed.xml",
+          "status": 200,
+          "items": 153,
+          "datedItems": 153
+        }
+      ],
+      "items": 153,
+      "samples": [
+        {
+          "title": "ElevenLabs is now on OpenRouter",
+          "url": "https://openrouter.ai/blog/announcements/elevenlabs-on-openrouter/",
+          "publishedAt": "2026-10-07T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "How an AI Sales Agent Saved Our Sales Team 600 Hours a Month",
+          "url": "https://openrouter.ai/blog/case-studies/how-an-ai-sales-agent-saved-our-sales-team-600-hours-a-month/",
+          "publishedAt": "2026-10-07T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Server-Side Code Execution Tools for AI Agents, Compared",
+          "url": "https://openrouter.ai/blog/insights/server-side-code-execution-tools-for-ai-agents-compared/",
+          "publishedAt": "2026-10-05T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:25.920Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 153,
+      "responseSha256": "28ad40fd665cf184386231d1505361f07be303a6f286e69b87e638cc1c40f34d",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/r7fae0egqcyrvg4cqhutlckhw"
+    },
+    "corescope-rss-modem-ai-d843a7c9": {
+      "originalArticleUrl": "https://modem.ai/blog/plain-integration",
+      "checks": [
+        {
+          "url": "https://modem.ai/blog",
+          "status": 200
+        },
+        {
+          "url": "https://modem.ai/blog/rss.xml",
+          "status": 200,
+          "items": 13,
+          "datedItems": 13
+        }
+      ],
+      "items": 13,
+      "samples": [
+        {
+          "title": "Modem now connects to Plain",
+          "url": "https://modem.ai/blog/plain-integration",
+          "publishedAt": "2026-10-06T14:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Add Modem to ChatGPT using our new official plugin",
+          "url": "https://modem.ai/blog/modem-in-chatgpt",
+          "publishedAt": "2026-09-25T13:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Your coding agent should know what your customers said",
+          "url": "https://modem.ai/blog/building-with-modem-mcp",
+          "publishedAt": "2026-07-30T12:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:26.042Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 13,
+      "responseSha256": "b5763b7ee49efa6325a5825d7639078b4328b5e5663e461baf43c5d7c203a03e",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/k776espoaz1pe5j9yismxlvil"
+    },
+    "corescope-rss-deploymentsafety-openai-com-3034d880": {
+      "originalArticleUrl": "https://deploymentsafety.openai.com/gpt-6-october",
+      "checks": [
+        {
+          "url": "https://deploymentsafety.openai.com/",
+          "status": 200
+        },
+        {
+          "url": "https://deploymentsafety.openai.com/rss.xml",
+          "status": 200,
+          "items": 26,
+          "datedItems": 26
+        }
+      ],
+      "items": 26,
+      "samples": [
+        {
+          "title": "GPT-6 Sol and GPT-6 Luna: October 2026 update",
+          "url": "https://deploymentsafety.openai.com/gpt-6-october/",
+          "publishedAt": "2026-10-07T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Addendum to GPT-6 Astra System Card: GPT-6.1 Sol",
+          "url": "https://deploymentsafety.openai.com/gpt-6-1-sol/",
+          "publishedAt": "2026-09-29T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "ChatGPT Images 2.5 System Card",
+          "url": "https://deploymentsafety.openai.com/chatgpt-images-2-5/",
+          "publishedAt": "2026-09-08T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:26.773Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 26,
+      "responseSha256": "55ce00a5923db982732bd8f9519508f94b156977dea953ac918b3a9e5515acef",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/g3565gaw1kxdmyno2hxia0iw0"
+    },
+    "corescope-rss-platform-claude-com-3dcc1d09": {
+      "originalArticleUrl": "https://platform.claude.com/docs/en/release-notes/overview#october-6-2026",
+      "checks": [
+        {
+          "url": "https://platform.claude.com/docs/en/release-notes/overview",
+          "status": 200
+        },
+        {
+          "url": "https://platform.claude.com/docs/en/release-notes/feed.xml",
+          "status": 200,
+          "items": 152,
+          "datedItems": 152
+        }
+      ],
+      "items": 152,
+      "samples": [
+        {
+          "title": "Claude Platform release notes — October 9, 2026",
+          "url": "https://platform.claude.com/docs/en/release-notes/overview#october-9-2026",
+          "publishedAt": "2026-10-09T00:00:00.000Z",
+          "identityKey": "url:https://platform.claude.com/docs/en/release-notes/overview#october-9-2026"
+        },
+        {
+          "title": "Claude Platform release notes — October 8, 2026",
+          "url": "https://platform.claude.com/docs/en/release-notes/overview#october-8-2026",
+          "publishedAt": "2026-10-08T00:00:00.000Z",
+          "identityKey": "url:https://platform.claude.com/docs/en/release-notes/overview#october-8-2026"
+        },
+        {
+          "title": "Claude Platform release notes — October 7, 2026",
+          "url": "https://platform.claude.com/docs/en/release-notes/overview#october-7-2026",
+          "publishedAt": "2026-10-07T00:00:00.000Z",
+          "identityKey": "url:https://platform.claude.com/docs/en/release-notes/overview#october-7-2026"
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "sectionHeadings": [
+        {
+          "id": "october-9-2026",
+          "title": "October 9, 2026"
+        },
+        {
+          "id": "october-8-2026",
+          "title": "October 8, 2026"
+        },
+        {
+          "id": "october-7-2026",
+          "title": "October 7, 2026"
+        },
+        {
+          "id": "october-6-2026",
+          "title": "October 6, 2026"
+        },
+        {
+          "id": "october-5-2026",
+          "title": "October 5, 2026"
+        },
+        {
+          "id": "october-1-2026",
+          "title": "October 1, 2026"
+        },
+        {
+          "id": "september-30-2026",
+          "title": "September 30, 2026"
+        },
+        {
+          "id": "september-28-2026",
+          "title": "September 28, 2026"
+        },
+        {
+          "id": "september-24-2026",
+          "title": "September 24, 2026"
+        },
+        {
+          "id": "september-23-2026",
+          "title": "September 23, 2026"
+        },
+        {
+          "id": "september-22-2026",
+          "title": "September 22, 2026"
+        },
+        {
+          "id": "september-18-2026",
+          "title": "September 18, 2026"
+        },
+        {
+          "id": "september-14-2026",
+          "title": "September 14, 2026"
+        },
+        {
+          "id": "september-10-2026",
+          "title": "September 10, 2026"
+        },
+        {
+          "id": "september-9-2026",
+          "title": "September 9, 2026"
+        },
+        {
+          "id": "september-3-2026",
+          "title": "September 3, 2026"
+        },
+        {
+          "id": "september-1-2026",
+          "title": "September 1, 2026"
+        },
+        {
+          "id": "august-27-2026",
+          "title": "August 27, 2026"
+        },
+        {
+          "id": "august-26-2026",
+          "title": "August 26, 2026"
+        },
+        {
+          "id": "august-20-2026",
+          "title": "August 20, 2026"
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:26.842Z",
+      "httpStatus": 200,
+      "datedItems": 152,
+      "responseSha256": "fce1e8892bce1ecf7bc363a48ca820cdfdcb7431f941a50fa0bab99e72e24e62",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/b4at4iz6w5ui5u57bgj3kjctk"
+    },
+    "corescope-rss-dev-to-10f81b7a": {
+      "originalArticleUrl": "https://dev.to/googleai/claude-haiku-55-is-available-on-google-cloud-4gn0",
+      "checks": [
+        {
+          "url": "https://dev.to/googleai",
+          "status": 200
+        },
+        {
+          "url": "https://dev.to/feed/googleai",
+          "status": 200,
+          "items": 12,
+          "datedItems": 12
+        }
+      ],
+      "items": 12,
+      "samples": [
+        {
+          "title": "Claude Haiku 5.5 is available on Google Cloud",
+          "url": "https://dev.to/googleai/claude-haiku-55-is-available-on-google-cloud-4gn0",
+          "publishedAt": "2026-10-07T18:06:52.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "stop-using-complex-urls-for-your-demos.us-central1.run.app",
+          "url": "https://dev.to/googleai/stop-using-complex-urls-for-your-demosus-central1runapp-2efd",
+          "publishedAt": "2026-10-07T01:00:03.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Activating Your Data Layer for Production-Ready AI",
+          "url": "https://dev.to/googleai/activating-your-data-layer-for-production-ready-ai-p3e",
+          "publishedAt": "2026-10-05T19:39:51.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:27.166Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 12,
+      "responseSha256": "d5280ec519261f01b9fd0f201eccdf61d12b24724f8d4aff74f39bef7563806c",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/entdzzjgs1rphqwrvu9ept92v"
+    },
+    "corescope-web-list-support-claude-com-c0236bd6": {
+      "originalArticleUrl": "https://support.claude.com/en/articles/12138966-release-notes#h_90213b2c7a",
+      "checks": [
+        {
+          "url": "https://support.claude.com/en/articles/12138966-release-notes",
+          "status": 200
+        }
+      ],
+      "sectionHeadings": [
+        {
+          "id": "h_931c68c498",
+          "title": "October 2026"
+        },
+        {
+          "id": "h_90213b2c7a",
+          "title": "October 7, 2026"
+        },
+        {
+          "id": "h_e5b0b5ec01",
+          "title": "September 2026"
+        },
+        {
+          "id": "h_2ca93eb100",
+          "title": "September 28, 2026"
+        },
+        {
+          "id": "h_83e7e1a987",
+          "title": "September 25, 2026"
+        },
+        {
+          "id": "h_1ff986cf68",
+          "title": "September 22, 2026"
+        },
+        {
+          "id": "h_92ef318884",
+          "title": "September 16, 2026"
+        },
+        {
+          "id": "h_ac849f55be",
+          "title": "September 15, 2026"
+        },
+        {
+          "id": "h_431d85b345",
+          "title": "September 10, 2026"
+        },
+        {
+          "id": "h_5988563685",
+          "title": "September 1, 2026"
+        },
+        {
+          "id": "h_5f7d8cc693",
+          "title": "August 2026"
+        },
+        {
+          "id": "h_ecececdc99",
+          "title": "August 25, 2026"
+        },
+        {
+          "id": "h_bab3152c35",
+          "title": "August 6, 2026"
+        },
+        {
+          "id": "h_bcd77beae0",
+          "title": "July 2026"
+        },
+        {
+          "id": "h_16265f52ec",
+          "title": "July 24, 2026"
+        },
+        {
+          "id": "h_a90c8544e7",
+          "title": "July 14, 2026"
+        },
+        {
+          "id": "h_85f9018be8",
+          "title": "July 10, 2026"
+        },
+        {
+          "id": "h_881cb4b0e7",
+          "title": "July 9, 2026"
+        },
+        {
+          "id": "h_06f5924d74",
+          "title": "July 7, 2026"
+        },
+        {
+          "id": "h_d6479e5e3e",
+          "title": "July 1, 2026"
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:27.233Z",
+      "httpStatus": 200,
+      "items": 61,
+      "datedItems": 61,
+      "samples": [
+        {
+          "title": "Claude Haiku 5.5 launch (October 7, 2026)",
+          "url": "https://support.claude.com/en/articles/12138966-release-notes#h_90213b2c7a",
+          "publishedAt": "2026-10-07T00:00:00.000Z",
+          "identityKey": "url:https://support.claude.com/en/articles/12138966-release-notes#h_90213b2c7a"
+        },
+        {
+          "title": "Claude Sonnet 5.5 launch (September 28, 2026)",
+          "url": "https://support.claude.com/en/articles/12138966-release-notes#h_2ca93eb100",
+          "publishedAt": "2026-09-28T00:00:00.000Z",
+          "identityKey": "url:https://support.claude.com/en/articles/12138966-release-notes#h_2ca93eb100"
+        },
+        {
+          "title": "Build plugins for Claude (September 25, 2026)",
+          "url": "https://support.claude.com/en/articles/12138966-release-notes#h_83e7e1a987",
+          "publishedAt": "2026-09-25T00:00:00.000Z",
+          "identityKey": "url:https://support.claude.com/en/articles/12138966-release-notes#h_83e7e1a987"
+        }
+      ],
+      "responseSha256": "4dab5c07afbde426939c4fd5c15b57db49d3bdef32a969febdbe467c3bd36eab",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/k0qi1dry2wi1afm7t85baugud"
+    },
+    "corescope-web-list-hai-stanford-edu-3455f777": {
+      "originalArticleUrl": "https://hai.stanford.edu/news/want-employees-to-embrace-ai-stop-selling-it-as-a-productivity-tool",
+      "checks": [
+        {
+          "url": "https://hai.stanford.edu/news",
+          "status": 200
+        },
+        {
+          "url": "https://hai.stanford.edu/news/rss.xml",
+          "status": 200,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 11,
+      "samples": [
+        {
+          "title": "How AI Is Accelerating Scientific Discovery",
+          "url": "https://hai.stanford.edu/news/how-ai-is-accelerating-scientific-discovery",
+          "publishedAt": null,
+          "identityKey": null
+        },
+        {
+          "title": "AI Legal Review Says Millions Live Under Discriminatory Local Laws",
+          "url": "https://hai.stanford.edu/news/ai-legal-review-says-millions-live-under-discriminatory-local-laws",
+          "publishedAt": "2026-09-08T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Your ‘For You’ Algorithm Disagrees With You",
+          "url": "https://hai.stanford.edu/news/your-for-you-algorithm-disagrees-with-you",
+          "publishedAt": "2026-08-18T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:27.524Z",
+      "httpStatus": 200,
+      "datedItems": 0,
+      "responseSha256": "831414cc0b2b650574cf58b8cdd8a4ebaf1fda4cc5a7cdf4f35a449420f6816b",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/kdyctdu2befn8m1jz1wgktb84"
+    },
+    "corescope-web-list-liquid-ai-183a0df6": {
+      "originalArticleUrl": "https://www.liquid.ai/blog/d1-open",
+      "checks": [
+        {
+          "url": "https://www.liquid.ai/blog",
+          "status": 200
+        },
+        {
+          "url": "https://www.liquid.ai/feed",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.liquid.ai/rss",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.liquid.ai/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.liquid.ai/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.liquid.ai/blog/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://www.liquid.ai/blog/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 32,
+      "samples": [
+        {
+          "title": "Open d1: Edge decision models for text, vision, and audio",
+          "url": "https://www.liquid.ai/blog/d1-open",
+          "publishedAt": "2026-10-07T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Introducing d1: The most capable decision model, now with vision",
+          "url": "https://www.liquid.ai/blog/d1-decision-model",
+          "publishedAt": "2026-10-05T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "LFM2.5-VL-DSpark: Accelerating vision-language models on edge and beyond",
+          "url": "https://www.liquid.ai/blog/lfm2-5-vl-dspark",
+          "publishedAt": "2026-09-24T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:28.077Z",
+      "httpStatus": 200,
+      "datedItems": 0,
+      "responseSha256": "515bb01baeacbacf609f3d6b672c02a042bfef1cc3b5c9d70dbb38da4d9443ef",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/qawfhyw1v10hv75bld8ogbjgj"
+    },
+    "corescope-rss-tomtunguz-com-b8913f25": {
+      "originalArticleUrl": "https://tomtunguz.com/what-if-the-models-are-commoditized/",
+      "checks": [
+        {
+          "url": "https://tomtunguz.com/",
+          "status": 200
+        },
+        {
+          "url": "https://tomtunguz.com/index.xml",
+          "status": 200,
+          "items": 2,
+          "datedItems": 2
+        }
+      ],
+      "items": 2,
+      "samples": [
+        {
+          "title": "A Change in AI Strategy",
+          "url": "https://tomtunguz.com/what-if-the-models-are-commoditized/",
+          "publishedAt": "2026-10-07T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "How to Automate Inbound",
+          "url": "https://tomtunguz.com/how-to-automate-inbound/",
+          "publishedAt": "2026-10-06T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:28.486Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 2,
+      "responseSha256": "870197a58353459d60f80ae652c278f189b561599faf159bb6b8a06ca92966de",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/jopz2c0ofgn0rcwc88ug4997o"
+    },
+    "corescope-web-list-aisi-gov-uk-30854c83": {
+      "originalArticleUrl": "https://www.aisi.gov.uk/blog/transect-making-large-scale-agentic-evaluations-easier-to-understand",
+      "checks": [
+        {
+          "url": "https://www.aisi.gov.uk/blog",
+          "status": 200
+        }
+      ],
+      "items": 99,
+      "samples": [
+        {
+          "title": "Transect: Making large-scale agentic evaluations easier to understand",
+          "url": "https://www.aisi.gov.uk/blog/transect-making-large-scale-agentic-evaluations-easier-to-understand",
+          "publishedAt": "2026-10-07T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Building a more secure environment for evaluating dangerous capabilities",
+          "url": "https://www.aisi.gov.uk/blog/building-a-more-secure-environment-for-evaluating-dangerous-capabilities",
+          "publishedAt": "2026-10-01T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "GPT-6 Astra performs unsanctioned supply-chain attacks in simulations",
+          "url": "https://www.aisi.gov.uk/blog/gpt-6-astra-performs-unsanctioned-supply-chain-attacks-in-simulations",
+          "publishedAt": "2026-09-28T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:28.489Z",
+      "httpStatus": 200,
+      "datedItems": 99,
+      "responseSha256": "57f691e19cd2b23ad362e9455646447c1d252888038ec7e486880ae41d309c0f",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/u8w49prh6iemv65q83l00fw6s"
+    },
+    "corescope-json-list-promptarmor-com-f2402342": {
+      "originalArticleUrl": "https://www.promptarmor.com/resources/what-is-webmcp-and-what-are-the-risks",
+      "checks": [
+        {
+          "url": "https://www.promptarmor.com/resources",
+          "status": 200
+        }
+      ],
+      "checkedAt": "2026-10-12T10:20:28.950Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "items": 58,
+      "datedItems": 54,
+      "samples": [
+        {
+          "title": "What is WebMCP and what are the risks?",
+          "url": "https://www.promptarmor.com/resources/what-is-webmcp-and-what-are-the-risks",
+          "publishedAt": "2026-10-06T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Phishing in Databricks Genie",
+          "url": "https://www.promptarmor.com/resources/phishing-in-databricks-genie",
+          "publishedAt": "2026-10-05T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Hijacking Copilot Cowork's AI Gateway to Bypass Sandboxing and Exfiltrate Files",
+          "url": "https://www.promptarmor.com/resources/hijacking-copilot-coworks-ai-gateway-to-exfiltrate-files",
+          "publishedAt": "2026-09-30T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "responseSha256": "547b60a3160ad110372cbf7f8f7089868d0d50676b52fd5050c3a2c89474d6f3",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/i963enslyn3jg06d6uehnmwr9"
+    },
+    "corescope-web-list-preferred-jp-592b7d0a": {
+      "originalArticleUrl": "https://www.preferred.jp/ja/news/pr20261007",
+      "checks": [
+        {
+          "url": "https://www.preferred.jp/ja/news/",
+          "status": 200
+        },
+        {
+          "url": "https://www.preferred.jp/ja/feed/",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 6,
+      "samples": [
+        {
+          "title": "PFN、AI翻訳サービス PLaMo翻訳を大型アップデート、 世界最先端AIモデルと同等の日本語翻訳精度を大幅に低いコストで実現",
+          "url": "https://www.preferred.jp/ja/news/pr20261007",
+          "publishedAt": "2026-10-07T04:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "PFN、Microsoft Foundryで国産生成AI基盤モデル PLaMo 3.0 PrimeおよびPLaMo翻訳を提供開始",
+          "url": "https://www.preferred.jp/ja/news/pr20261006",
+          "publishedAt": "2026-10-06T01:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "PFN、CEATEC2026に出展・登壇",
+          "url": "https://www.preferred.jp/ja/news/pr20260929",
+          "publishedAt": "2026-09-29T01:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:29.319Z",
+      "httpStatus": 200,
+      "datedItems": 0,
+      "responseSha256": "4065e4cd4332e2752314b30d58cca5deb1d7a569c6f9d0758c0e55f70cfbbdaf",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/bbp6jt09bo47hha9qyiwa72u2"
+    },
+    "corescope-rss-alignment-openai-com-6c85baf8": {
+      "originalArticleUrl": "https://alignment.openai.com/metagaming-latents/",
+      "checks": [
+        {
+          "url": "https://alignment.openai.com/",
+          "status": 200
+        },
+        {
+          "url": "https://alignment.openai.com/rss.xml",
+          "status": 200,
+          "items": 20,
+          "datedItems": 20
+        }
+      ],
+      "items": 20,
+      "samples": [
+        {
+          "title": "Studying metagaming latents in language models",
+          "url": "https://alignment.openai.com/metagaming-latents/",
+          "publishedAt": "2026-10-07T03:24:41.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Measuring Reward-Seeking by Instilling Contrastive Beliefs",
+          "url": "https://alignment.openai.com/measuring-reward-seeking/",
+          "publishedAt": "2026-07-21T15:10:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Reinforcement learning towards broadly and persistently beneficial models",
+          "url": "https://alignment.openai.com/beneficial-rl/",
+          "publishedAt": "2026-06-18T18:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:29.417Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 20,
+      "responseSha256": "2799f35c8dc9cdaf00291550dc2dfcaf0598436a4f5d3a115900c2b709f16522",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/taf7dsslau9cekruqv9kk9i2u"
+    },
+    "corescope-rss-cursor-com-20cade3e": {
+      "originalArticleUrl": "https://cursor.com/changelog/remote-control-local-agents",
+      "checks": [
+        {
+          "url": "https://cursor.com/",
+          "status": 200
+        },
+        {
+          "url": "https://cursor.com/feed",
+          "status": 200,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://cursor.com/rss",
+          "status": 200,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://cursor.com/rss.xml",
+          "status": 200,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://cursor.com/feed.xml",
+          "status": 200,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 50,
+      "samples": [
+        {
+          "title": "Remote control for local agents",
+          "url": "https://cursor.com/changelog/remote-control-local-agents",
+          "publishedAt": "2026-10-06T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Rollouts and Security Review",
+          "url": "https://cursor.com/changelog/rollouts-and-security-reviewer",
+          "publishedAt": "2026-09-23T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Cursor Projects",
+          "url": "https://cursor.com/changelog/projects",
+          "publishedAt": "2026-09-10T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:29.692Z",
+      "httpStatus": 200,
+      "datedItems": 50,
+      "responseSha256": "278e0ed687b30467bfbf43f3e4365d3a1243d5748bcc6f77787b020d254b2c38",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/wbd0ik8kqdtpjw5u8kjsudqms"
+    },
+    "corescope-rss-together-ai-4f67f28e": {
+      "originalArticleUrl": "https://www.together.ai/blog/expanding-our-enterprise-inference-capacity-with-ibm-cloud-and-nvidia",
+      "checks": [
+        {
+          "url": "https://www.together.ai/blog",
+          "status": 200
+        },
+        {
+          "url": "https://www.together.ai/blog/rss.xml",
+          "status": 200,
+          "items": 81,
+          "datedItems": 81
+        }
+      ],
+      "items": 81,
+      "samples": [
+        {
+          "title": "Expanding our enterprise inference capacity with IBM Cloud and NVIDIA",
+          "url": "https://www.together.ai/blog/expanding-our-enterprise-inference-capacity-with-ibm-cloud-and-nvidia",
+          "publishedAt": "2026-10-06T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Together Link: open models in the harness you already use. Start with one command today.",
+          "url": "https://www.together.ai/blog/together-link-frontier-quality-open-models-in-the-harness-you-already-use",
+          "publishedAt": "2026-10-05T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "How to train your own Jev for $17",
+          "url": "https://www.together.ai/blog/how-to-train-your-own-jev",
+          "publishedAt": "2026-09-23T00:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:29.775Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 81,
+      "responseSha256": "18ce2acd6ec34e257aa57ca10e75d0e71768028ea3d85c9e6bbf07046c967bc3",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/ik9j335gzxpyirn0lse8jce0x"
+    },
+    "corescope-web-list-metr-org-f8f3e1e7": {
+      "originalArticleUrl": "https://metr.org/blog/2026-10-06-ai-systems-could-cover-up-misbehavior/",
+      "checks": [
+        {
+          "url": "https://metr.org/blog/",
+          "status": 200
+        },
+        {
+          "url": "https://metr.org/feed.xml",
+          "status": null,
+          "error": "Error",
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 26,
+      "samples": [
+        {
+          "title": "AI systems could cover up misbehavior October 6, 2026 As AIs start covering up evidence of misbehavior, observability tools should be treated as security-critical infrastructure. Read more",
+          "url": "https://metr.org/blog/2026-10-06-ai-systems-could-cover-up-misbehavior/",
+          "publishedAt": "2026-10-06T07:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Chris Painter's testimony to the U.S. Senate on AI agent incidents September 30, 2026 Written testimony from METR President Chris Painter to the U.S. Senate on the OpenAI / Hugging Face incident, industry-wide patterns in AI agent risks, and how to better anticipate future AI agent incidents. Read more",
+          "url": "https://metr.org/blog/2026-09-30-chris-painter-senate-testimony/",
+          "publishedAt": "2026-09-30T07:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Summary of METR's predeployment evaluation of Claude Opus 5.5 September 22, 2026 A summary of METR's independent, predeployment evaluation of Claude Opus 5.5 Read more",
+          "url": "https://metr.org/blog/2026-09-22-claude-opus-5-5/",
+          "publishedAt": "2026-09-22T07:00:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:29.929Z",
+      "httpStatus": 200,
+      "datedItems": 0,
+      "responseSha256": "ef3cb4c6c4336e6d1b84bf2687c3d6bbfddcbe366ed68a22726942a9e6c59b43",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/s3bsk24s6z9jxpbv5p7ju67xz"
+    },
+    "corescope-web-list-reflection-ai-4852f5d4": {
+      "originalArticleUrl": "https://reflection.ai/blog/introducing-beam",
+      "checks": [
+        {
+          "url": "https://reflection.ai/blog",
+          "status": 200
+        },
+        {
+          "url": "https://reflection.ai/feed",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://reflection.ai/rss",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://reflection.ai/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://reflection.ai/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://reflection.ai/blog/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://reflection.ai/blog/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 2,
+      "samples": [
+        {
+          "title": "Building Frontier Open Intelligence",
+          "url": "https://reflection.ai/blog/building-frontier-open-intelligencence",
+          "publishedAt": "2025-08-09T00:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Introducing Beam: Reflection’s 501B open-weight model",
+          "url": "https://reflection.ai/blog/introducing-beam",
+          "publishedAt": null,
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:30.105Z",
+      "httpStatus": 200,
+      "datedItems": 1,
+      "responseSha256": "8368267241cd2cdf38ad6266ac45ea5c341316690190502a3c6a4792d5d1d593",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/qy7y0cfu1wbum1ej9urwylfxr"
+    },
+    "corescope-rss-canarymedia-com-bdcf7427": {
+      "originalArticleUrl": "https://www.canarymedia.com/articles/data-centers/virginia-new-energy-plan-ai-boom",
+      "checks": [
+        {
+          "url": "https://www.canarymedia.com/articles/data-centers",
+          "status": 200
+        },
+        {
+          "url": "https://www.canarymedia.com/rss.rss",
+          "status": 200,
+          "items": 100,
+          "datedItems": 100
+        }
+      ],
+      "items": 2,
+      "samples": [
+        {
+          "title": "Virginia’s new energy plan: Make the AI boom work for — not against — us",
+          "url": "https://www.canarymedia.com/articles/data-centers/virginia-new-energy-plan-ai-boom",
+          "publishedAt": "2026-10-05T18:00:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Questionable data center forecasts are driving up Ohio power bills",
+          "url": "https://www.canarymedia.com/articles/data-centers/questionable-data-center-forecasts-ohio-power-bills",
+          "publishedAt": "2026-09-09T07:30:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "duplicateEndpointSourceId": null,
+      "checkedAt": "2026-10-12T10:20:30.492Z",
+      "status": "verified",
+      "httpStatus": 200,
+      "datedItems": 2,
+      "responseSha256": "5d6abad57368c8a2466a1cad7c14eb6883c7593958052ca93c347e472440d101",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/amjznv2bcu22nzd0mojsnxu11"
+    },
+    "corescope-web-list-suno-com-e3885772": {
+      "originalArticleUrl": "https://suno.com/blog/albums-to-discover",
+      "checks": [
+        {
+          "url": "https://suno.com/blog",
+          "status": 200
+        },
+        {
+          "url": "https://suno.com/feed",
+          "status": 200,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://suno.com/rss",
+          "status": 200,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://suno.com/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://suno.com/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://suno.com/blog/rss.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        },
+        {
+          "url": "https://suno.com/blog/feed.xml",
+          "status": 404,
+          "items": 0,
+          "datedItems": 0
+        }
+      ],
+      "items": 49,
+      "samples": [
+        {
+          "title": "Introducing v6",
+          "url": "https://suno.com/blog/introducing-v6",
+          "publishedAt": "2026-09-09T15:40:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "5 Albums You Can't Miss",
+          "url": "https://suno.com/blog/albums-to-discover",
+          "publishedAt": "2026-10-05T18:53:00.000Z",
+          "identityKey": null
+        },
+        {
+          "title": "Introducing Speech (beta)",
+          "url": "https://suno.com/blog/introducing-speech-beta",
+          "publishedAt": "2026-10-01T20:35:00.000Z",
+          "identityKey": null
+        }
+      ],
+      "status": "verified",
+      "checkedAt": "2026-10-12T10:20:30.647Z",
+      "httpStatus": 200,
+      "datedItems": 0,
+      "responseSha256": "06f6f8be73dd14c85c0e9c95cab67fa0b3b0d61494d54e332bdc1c7f1e5f488a",
+      "reason": "Actual CoreScope collector parser; read-only public source probe without SQL writes or model calls",
+      "scope": "actual CoreScope read-only public collector parser and original-entry metadata",
+      "evidencePage": "https://aihot.news/item/wfk93lrvw1t9zjb1kzgbcud6s"
+    }
+  },
+  "coverage": [
+    {
+      "observedIdentity": "name:IT之家·人工智能",
+      "sourceId": "corescope-rss-ithome-com-5479b994",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Browser Use",
+      "sourceId": "corescope-rss-browser-use-com-b05a52d6",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:MarkTechPost",
+      "sourceId": "corescope-rss-marktechpost-com-7d33969b",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Cartesia 产品与研究",
+      "sourceId": "corescope-web-list-cartesia-ai-03bf92a2",
+      "status": "public_collector_verified",
+      "publicationDate": "unknown"
+    },
+    {
+      "observedIdentity": "name:Sakana AI：Blog",
+      "sourceId": "corescope-rss-sakana-ai-08bc6298",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Recode China AI",
+      "sourceId": "corescope-rss-recodechinaai-com-04fbdf26",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Every：最新文章",
+      "sourceId": "corescope-web-list-every-to-20907bfd",
+      "status": "public_collector_verified",
+      "publicationDate": "unknown"
+    },
+    {
+      "observedIdentity": "name:ChinaTalk",
+      "sourceId": "corescope-rss-chinatalk-media-2a38e59e",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Azeem Azhar：Exponential View",
+      "sourceId": "corescope-rss-exponentialview-co-b912a3c2",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:蚂蚁 inclusionAI：GitHub 新仓库",
+      "sourceId": "corescope-json-list-api-github-com-c7fe6a79",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:AGIBOT 智元",
+      "sourceId": "corescope-web-list-agibot-com-cn-614f4b07",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Amp Chronicle",
+      "sourceId": "corescope-web-list-ampcode-com-1319cadb",
+      "status": "public_collector_verified",
+      "publicationDate": "unknown"
+    },
+    {
+      "observedIdentity": "name:Gary Marcus：The Road to AI We Can Trust",
+      "sourceId": "corescope-rss-garymarcus-substack-com-94c28c84",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:OpenAI：失准报告与通报",
+      "sourceId": "corescope-web-list-alignment-openai-com-3ef47766",
+      "status": "public_collector_verified",
+      "publicationDate": "unknown"
+    },
+    {
+      "observedIdentity": "name:Figma AI / Agent / Make",
+      "sourceId": "corescope-rss-figma-com-0ebdc311",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Ai2 / Allen Institute for AI",
+      "sourceId": "corescope-rss-allenai-org-27c23a3b",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Anthropic：Research",
+      "sourceId": "corescope-web-list-anthropic-com-5ab5dc8b",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Redwood Research：Blog",
+      "sourceId": "corescope-rss-blog-redwoodresearch-org-ab832962",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Nathan Lambert：Interconnects",
+      "sourceId": "corescope-rss-interconnects-ai-36557ac4",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Prime Intellect",
+      "sourceId": "corescope-web-list-primeintellect-ai-b7b85f06",
+      "status": "public_collector_verified",
+      "publicationDate": "unknown"
+    },
+    {
+      "observedIdentity": "name:Databricks：Blog",
+      "sourceId": "corescope-rss-databricks-com-4b0d7518",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Sierra：Blog",
+      "sourceId": "corescope-rss-sierra-ai-70c04a28",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Claude：YouTube",
+      "sourceId": "corescope-rss-youtube-com-ab4c5c34",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Claude Code：GitHub Releases",
+      "sourceId": "corescope-json-list-api-github-com-5b88ee22",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Epoch AI：Gradient Updates",
+      "sourceId": "corescope-rss-epochai-substack-com-bfc16181",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Baseten 工程博客",
+      "sourceId": "corescope-web-list-baseten-co-7f6bc157",
+      "status": "public_collector_verified",
+      "publicationDate": "unknown"
+    },
+    {
+      "observedIdentity": "name:Codex：GitHub Releases",
+      "sourceId": "corescope-json-list-api-github-com-7f657830",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:a16z：News",
+      "sourceId": "corescope-rss-a16z-news-0e9c1ee9",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Newcomer 新闻长文",
+      "sourceId": "corescope-rss-newcomer-co-fbb7e5fc",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:GitHub Blog",
+      "sourceId": "corescope-rss-github-blog-72a225e6",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:404 Media",
+      "sourceId": "corescope-rss-404media-co-398bb41e",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Ed Zitron 长文 / Where’s Your Ed At",
+      "sourceId": "corescope-rss-wheresyoured-at-f7a7c607",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:O'Reilly Radar",
+      "sourceId": "corescope-rss-oreilly-com-4d46873e",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Hugging Face 社区博客",
+      "canonicalSourceId": "v2-source-45",
+      "status": "reuse_existing_feed"
+    },
+    {
+      "observedIdentity": "name:Factory 研究 / 产品",
+      "sourceId": "corescope-rss-factory-com-9c3220c0",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Tessl：产品与工程博客",
+      "sourceId": "corescope-rss-tessl-io-0c7db98b",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Gemini API：更新日志",
+      "sourceId": "corescope-web-list-ai-google-dev-e19abb36",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Platformer",
+      "sourceId": "corescope-rss-platformer-news-0b2f1c3c",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Claude：Blog",
+      "sourceId": "corescope-web-list-claude-com-417569d6",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Midjourney：Updates",
+      "sourceId": "corescope-rss-updates-midjourney-com-a0c219c9",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Runway：News",
+      "sourceId": "corescope-json-list-runway-com-9bf8b188",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Artificial Analysis 完整文章",
+      "sourceId": "corescope-web-list-artificialanalysis-ai-3da9409d",
+      "status": "public_collector_verified",
+      "publicationDate": "unknown"
+    },
+    {
+      "observedIdentity": "name:Comfy Blog",
+      "sourceId": "corescope-rss-blog-comfy-org-a9c12e1c",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Google Developers Blog",
+      "sourceId": "corescope-web-list-developers-googleblog-com-d6fea2bd",
+      "status": "public_collector_verified",
+      "publicationDate": "unknown"
+    },
+    {
+      "observedIdentity": "name:NVIDIA Technical Blog：Agentic AI / Generative AI",
+      "canonicalSourceId": "v2-source-33",
+      "status": "reuse_existing_feed"
+    },
+    {
+      "observedIdentity": "name:LiveKit 产品与工程博客",
+      "sourceId": "corescope-web-list-livekit-com-b9cda020",
+      "status": "public_collector_verified",
+      "publicationDate": "unknown"
+    },
+    {
+      "observedIdentity": "name:LlamaIndex：产品、工程与评测",
+      "sourceId": "corescope-web-list-llamaindex-ai-edc405fb",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Meta：Newsroom · AI",
+      "canonicalSourceId": "v2-source-133",
+      "status": "reuse_existing_feed"
+    },
+    {
+      "observedIdentity": "name:Goodfire Research",
+      "sourceId": "corescope-web-list-goodfire-com-eca9a77c",
+      "status": "public_collector_verified",
+      "publicationDate": "unknown"
+    },
+    {
+      "observedIdentity": "name:Anthropic：Claude.dev 开发者博客",
+      "sourceId": "corescope-rss-claude-dev-368e8af0",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Augment Code 博客",
+      "sourceId": "corescope-rss-augmentcode-com-078c0707",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Waymo：Blog",
+      "sourceId": "corescope-rss-waymo-com-7aa4ca25",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Zyphra Research",
+      "sourceId": "corescope-web-list-zyphra-com-881479c3",
+      "status": "public_collector_verified",
+      "publicationDate": "unknown"
+    },
+    {
+      "observedIdentity": "name:Timothy B. Lee：Understanding AI",
+      "sourceId": "corescope-rss-understandingai-org-e677c69b",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Air Street Press",
+      "sourceId": "corescope-rss-press-airstreet-com-597fc296",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Mastra Blog",
+      "sourceId": "corescope-web-list-mastra-ai-a993d77f",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:OpenRouter：Announcements",
+      "sourceId": "corescope-rss-openrouter-ai-0670d609",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Modem：Blog",
+      "sourceId": "corescope-rss-modem-ai-d843a7c9",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:OpenAI：部署安全与系统卡",
+      "sourceId": "corescope-rss-deploymentsafety-openai-com-3034d880",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Claude Platform：开发者版本说明",
+      "sourceId": "corescope-rss-platform-claude-com-3dcc1d09",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Google AI：DEV 作者专属",
+      "sourceId": "corescope-rss-dev-to-10f81b7a",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Claude 应用发布说明",
+      "sourceId": "corescope-web-list-support-claude-com-c0236bd6",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Stanford HAI News",
+      "sourceId": "corescope-web-list-hai-stanford-edu-3455f777",
+      "status": "public_collector_verified",
+      "publicationDate": "unknown"
+    },
+    {
+      "observedIdentity": "name:Liquid AI 模型与工程博客",
+      "sourceId": "corescope-web-list-liquid-ai-183a0df6",
+      "status": "public_collector_verified",
+      "publicationDate": "unknown"
+    },
+    {
+      "observedIdentity": "name:Tomasz Tunguz 博客",
+      "sourceId": "corescope-rss-tomtunguz-com-b8913f25",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:英国 AI Security Institute：Blog",
+      "sourceId": "corescope-web-list-aisi-gov-uk-30854c83",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:PromptArmor：Threat Intelligence",
+      "sourceId": "corescope-json-list-promptarmor-com-f2402342",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Preferred Networks：AI 研究与产品",
+      "sourceId": "corescope-web-list-preferred-jp-592b7d0a",
+      "status": "public_collector_verified",
+      "publicationDate": "unknown"
+    },
+    {
+      "observedIdentity": "name:OpenAI：Alignment 研究博客",
+      "sourceId": "corescope-rss-alignment-openai-com-6c85baf8",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Cursor：Changelog",
+      "sourceId": "corescope-rss-cursor-com-20cade3e",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Together AI 研究与产品博客",
+      "sourceId": "corescope-rss-together-ai-4f67f28e",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:METR：Blog",
+      "sourceId": "corescope-web-list-metr-org-f8f3e1e7",
+      "status": "public_collector_verified",
+      "publicationDate": "unknown"
+    },
+    {
+      "observedIdentity": "name:Reflection Blog",
+      "sourceId": "corescope-web-list-reflection-ai-4852f5d4",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Canary Media：Data Centers 原创报道",
+      "sourceId": "corescope-rss-canarymedia-com-bdcf7427",
+      "status": "public_collector_verified",
+      "publicationDate": "preserved_where_supplied"
+    },
+    {
+      "observedIdentity": "name:Suno：Blog",
+      "sourceId": "corescope-web-list-suno-com-e3885772",
+      "status": "public_collector_verified",
+      "publicationDate": "unknown"
+    }
+  ]
+}

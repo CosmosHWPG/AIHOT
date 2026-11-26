@@ -2,6 +2,7 @@
 // union_ids / emails; opaque sessions stored hashed, and an audit trail for every manual change.
 // Development may impersonate an admin with DEV_AUTH_ROLE=admin; production refuses to start with it.
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { safeReturn } from "@aihot/contracts/admin";
 import { config, credential } from "../config.ts";
 import { audit } from "../audit.ts";
 import { sql } from "../db.ts";
@@ -12,6 +13,7 @@ export const STATE_COOKIE = "aihot_oauth_state";
 export const SESSION_DAYS = 30;
 /** Register this callback in the Feishu open platform when Feishu sign-in is used. */
 export const CALLBACK_URL = `${config.siteUrl}/api/auth/callback`;
+export { safeReturn } from "@aihot/contracts/admin";
 
 /** Feishu sign-in is offered only when its app is configured. */
 export function feishuLoginConfigured(): boolean {
@@ -90,7 +92,12 @@ export function parseCookies(header: string | undefined): Record<string, string>
   const out: Record<string, string> = {};
   for (const part of (header ?? "").split(";")) {
     const i = part.indexOf("=");
-    if (i > 0) out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+    if (i <= 0) continue;
+    try {
+      out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+    } catch {
+      // A malformed unrelated cookie must not break admin sign-in.
+    }
   }
   return out;
 }
@@ -106,21 +113,6 @@ export function loginRedirect(returnTo: string): { url: string; stateCookie: str
   const state = `${randomBytes(16).toString("base64url")}|${safeReturn(returnTo)}`;
   const url = `https://passport.feishu.cn/suite/passport/oauth/authorize?${new URLSearchParams({ client_id: appId, redirect_uri: CALLBACK_URL, response_type: "code", state: sign(state) })}`;
   return { url, stateCookie: sign(state) };
-}
-
-/** Only admin paths on this site; anything else (other hosts, protocol-relative) falls back to /admin. */
-export function safeReturn(target: string): string {
-  let path = target;
-  // A proxy's login redirect may pass the whole original URL; keep only its path and query.
-  if (/^https?:\/\//i.test(path)) {
-    try {
-      const u = new URL(path);
-      path = `${u.pathname}${u.search}`;
-    } catch {
-      return "/admin";
-    }
-  }
-  return /^\/admin(\/|\?|$)/.test(path) && !path.startsWith("//") ? path : "/admin";
 }
 
 interface FeishuUser {
@@ -164,7 +156,7 @@ export async function completeLogin(code: string, state: string, stateCookie: st
   const expected = unsign(stateCookie);
   const given = unsign(state);
   if (!expected || !given || expected !== given) throw new LoginRejected("登录状态已失效，请重新登录");
-  const returnTo = given.split("|")[1] ?? "/admin";
+  const returnTo = safeReturn(given.split("|")[1] ?? "/admin");
   // 固定本次认证用过的密钥和应用，不能在异步认证或落库后换绑成新配置。
   const loginKey = secret();
   const { user: u, appId } = await feishuUser(code);
@@ -219,6 +211,11 @@ export async function sessionPrincipal(cookieHeader: string | undefined): Promis
       await sql`DELETE FROM admin_sessions WHERE id_hash = ${hash}`;
     }
   }
+  return devPrincipal();
+}
+
+/** Development's stand-in admin, never in production. */
+export function devPrincipal(): AdminPrincipal | null {
   if (config.devAdmin && config.environmentName !== "production") return { userId: null, name: config.devAdmin.displayName, csrf: "dev", dev: true };
   return null;
 }

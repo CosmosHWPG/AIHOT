@@ -1,73 +1,142 @@
-import { data as withHeaders, Link, useLoaderData } from "react-router";
-import { subjectAfter, withSubject } from "@aihot/industry/site";
-import catalog from "@aihot/industry/topics.json";
+import { PERSPECTIVES } from "@aihot/industry/perspectives";
+import { PillTabs } from "../components/ui/Tabs";
+import { useLoaderData } from "react-router";
+import { SITE, subjectAfter, withSubject } from "@aihot/site";
 import type { Route } from "./+types/topics";
-import { apiGet, releaseBoundCache } from "../lib/api.server";
-import { pageMeta } from "../lib/seo";
+import type { TopicSummary, TopicsResponse } from "@aihot/contracts/site";
+import { apiGet, cachedPage } from "../lib/api.server";
+import { pageReuse } from "../lib/page-reuse";
+import { breadcrumbLd, pageMeta, siteUrl } from "../lib/seo";
+import { relativeTime } from "../lib/format";
+import { IconChevronRight } from "../components/icons";
+import { IntentLink } from "../components/ui/IntentLink";
+import { BrandMark } from "../components/BrandMark";
+import { PhoneBar } from "../components/shell/PhoneBar";
+import { navUp } from "../components/shell/nav";
+import type { Screen } from "../components/shell/screens";
 
-interface TopicSummary {
-  slug: string;
-  name: string;
-  group: "company" | "field" | "genre";
-  definition: string;
-  total: number;
-  recent: number;
-  indexable: boolean;
-  latestAt: string | null;
-}
+export const handle: Screen = { home: navUp("/topics").tab, name: "主题" };
+export { pageHeaders as headers } from "../lib/api.server";
+export const { clientLoader, shouldRevalidate } = pageReuse<typeof loader>();
 
 export async function loader({ request }: { request: Request }) {
-  const upstream = new Headers();
-  const data = await apiGet<{ topics: TopicSummary[]; refreshAt: string | null }>("/api/site/topics", { signal: request.signal, responseHeaders: upstream });
-  return withHeaders({ ...data, groups: catalog.groups }, { headers: releaseBoundCache(data.refreshAt, 300, Date.now(), upstream) });
+  const focusParam = new URL(request.url).searchParams.get("focus");
+  const focus = PERSPECTIVES.find((p) => p.key === focusParam)?.key ?? "all";
+  const data = await apiGet<TopicsResponse>("/api/site/topics", { signal: request.signal });
+  return cachedPage(300, { ...data, focus });
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  const description = loaderData
-    ? `${subjectAfter(`按${loaderData.groups.map((g) => g.name).join("、")}聚合的`, "主题页")}，共 ${loaderData.topics.length} 个主题。`
-    : withSubject("主题页");
-  return pageMeta({ title: "主题", description, path: "/topics", image: "/og/pages/topics.png" });
+  if (!loaderData) return pageMeta({ title: SITE.topicsTitle, path: "/topics", image: "/og/pages/topics.png" });
+  const { groups, topics } = loaderData;
+  const by = groups.map((g) => g.name).join("、");
+  const indexed = topics.filter((t) => t.indexable);
+  const named = indexed.slice(0, 6).map((t) => t.name.split(" / ")[0]).join("、");
+  const base = siteUrl();
+  return pageMeta({
+    title: SITE.topicsTitle,
+    description: `按${by}整理 ${topics.length} 个${withSubject("主题")}${named ? `（含 ${named} 等）` : ""}，集中看各方向最新精选与进展。`,
+    path: "/topics",
+    image: "/og/pages/topics.png",
+    jsonLd: [
+      {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "@id": `${base}/topics#collection`,
+        url: `${base}/topics`,
+        name: withSubject("主题"),
+        inLanguage: SITE.locale,
+        isPartOf: { "@id": `${base}/#website` },
+        mainEntity: {
+          "@type": "ItemList",
+          numberOfItems: indexed.length,
+          itemListElement: indexed.map((t, i) => ({ "@type": "ListItem", position: i + 1, name: t.name, url: `${base}/topics/${t.slug}` })),
+        },
+      },
+      breadcrumbLd([{ name: SITE.name, path: "/" }, { name: "主题", path: "/topics" }]),
+    ],
+  });
 }
 
-export function headers({ loaderHeaders }: Route.HeadersArgs) {
-  return loaderHeaders;
+/** Phones: a row per topic in a grouped list; wider screens: a card per topic. */
+function TopicCard({ t }: { t: TopicSummary }) {
+  return (
+    <IntentLink
+      viewTransition
+      to={`/topics/${t.slug}`}
+      className="group flex items-center gap-3 py-3 pl-4 pr-3 transition-colors active:bg-bg-sunk lg:card lg:card-hover lg:h-full lg:flex-col lg:items-stretch lg:gap-0 lg:px-5 lg:py-4 lg:active:bg-surface"
+    >
+      {t.brand && (
+        <span className="flex shrink-0 lg:hidden">
+          <BrandMark brand={t.brand} size={30} />
+        </span>
+      )}
+      <span className="min-w-0 flex-1 lg:flex lg:flex-col">
+        <span className="flex items-center gap-2.5 text-ui-body-plus font-semibold text-ink transition-colors group-hover:text-accent lg:text-ui-body lg:font-bold">
+          {t.brand && (
+            <span className="hidden lg:flex">
+              <BrandMark brand={t.brand} size={22} />
+            </span>
+          )}
+          {t.name}
+        </span>
+        <span className="mt-0.5 line-clamp-1 text-ui-caption-lg leading-[1.6] text-ink-4 lg:mt-1.5 lg:line-clamp-2 lg:flex-1 lg:text-ui-label lg:leading-[1.65] lg:text-ink-2">
+          {t.latest?.title ?? t.definition}
+        </span>
+        <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-ui-caption-md text-ink-4 lg:mt-3 lg:justify-between">
+          {t.latest && <time dateTime={t.latest.at} suppressHydrationWarning>{relativeTime(t.latest.at)}</time>}
+          <span>
+            {t.recent > 0 ? (
+              <>
+                近 30 天 <span className="num font-semibold text-ink-3">{t.recent}</span> 条
+              </>
+            ) : (
+              "近 30 天暂无新精选"
+            )}
+          </span>
+        </span>
+      </span>
+      <IconChevronRight size={16} className="shrink-0 text-ink-4 lg:hidden" />
+    </IntentLink>
+  );
 }
 
 export default function TopicsPage() {
-  const { topics, groups } = useLoaderData<typeof loader>();
+  const { groups, topics, focus } = useLoaderData<typeof loader>();
+  const perspective = PERSPECTIVES.find((p) => p.key === focus);
+  const visible = perspective ? topics.filter((t) => t.group === "genre" || (perspective.topics as readonly string[]).includes(t.slug)) : topics;
   return (
     <div className="pb-10">
-      <header className="pb-2 pt-5 lg:pt-1">
-        <h1 className="text-[24px] font-semibold leading-[1.3] text-ink">{subjectAfter("按主题看")}</h1>
-        <p className="mt-1.5 text-[13px] leading-relaxed text-ink-3">
-          按{groups.map((g) => g.name).join("、")}浏览 <span className="num">{topics.length}</span> 个主题，持续汇集近期焦点与精选。
+      <PhoneBar back={{ to: "/more", label: "我的" }} title="主题" />
+      <header className="pb-2 pt-3 lg:pt-1">
+        <h1 data-page-title="" className="text-ui-heading-lg font-semibold leading-[1.3] text-ink">{subjectAfter("按主题看")}</h1>
+        <p className="mt-1.5 text-ui-label leading-relaxed text-ink-3">
+          {`按${groups.map((g) => g.name).join("、")}分了 `}
+          <span className="num">{topics.length}</span> 个主题，挑关心的方向看最新动态。
         </p>
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <PillTabs label="主题领域" size="sm" layoutId="topics-perspective" active={focus} items={[
+            { key: "all", label: "全部主题", to: "/topics" },
+            ...PERSPECTIVES.map((p) => ({ key: p.key, label: p.label, to: `/topics?focus=${p.key}` })),
+          ]} />
+          <span className="text-ui-caption text-ink-4">{perspective?.description ?? "核心网与 AI 的长期阅读索引"} · <span className="num">{visible.length}</span> 个主题</span>
+        </div>
+        {perspective && <p className="mt-2 text-ui-caption text-ink-4">按领域浏览主题目录，通用主题同时涵盖核心网与 AI。</p>}
       </header>
-      {groups.map((g) => (
+      {groups.filter((g) => visible.some((t) => t.group === g.key)).map((g) => (
         <section key={g.key} aria-labelledby={`topics-${g.key}`} className="pt-8">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-            <h2 id={`topics-${g.key}`} className="text-[15px] font-bold text-ink">
+            <h2 id={`topics-${g.key}`} className="text-ui-body font-bold text-ink">
               {g.name}
             </h2>
-            <p className="text-[12px] text-ink-4">{g.blurb}</p>
+            <p className="text-ui-caption text-ink-4">{g.blurb}</p>
           </div>
-          <ul className="mt-3.5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {topics
+          <ul className="mt-3 divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface lg:mt-3.5 lg:grid lg:grid-cols-3 lg:gap-3 lg:divide-y-0 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent xl:grid-cols-4">
+            {visible
               .filter((t) => t.group === g.key)
               .map((t) => (
                 <li key={t.slug}>
-                  <Link
-                    to={`/topics/${t.slug}`}
-                    prefetch="intent"
-                    aria-label={`查看${t.name}相关精选文章`}
-                    className="card card-hover group flex h-full flex-col px-5 py-[18px]"
-                  >
-                    <span className="text-[15px] font-bold text-ink transition-colors group-hover:text-accent">{t.name}</span>
-                    <span className="mt-1.5 line-clamp-2 flex-1 text-[12.5px] leading-[1.7] text-ink-3">{t.definition}</span>
-                    <span className="mono mt-3 text-[11.5px] text-accent">
-                      查看 {t.total} 条精选 <span className="inline-block transition-transform duration-200 group-hover:translate-x-0.5">→</span>
-                    </span>
-                  </Link>
+                  <TopicCard t={t} />
                 </li>
               ))}
           </ul>

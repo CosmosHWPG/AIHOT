@@ -1,13 +1,16 @@
 // Live news before history, and discussion posts that come before the first report: a discussion post
 // skips the analysis queue; history (a backfill that was already old when found) waits behind live
-// work and founds no event; a post that found no story is grouped again when a report founds a fact
-// close to it, or when the post it quotes arrives and joins a fact.
+// work and founds no event; a post that found no story is grouped again, while it still counts for
+// heat, when a fact close to it gains evidence (a report founds or joins it, a post attaches to it),
+// or when the post it quotes arrives and joins a fact.
 import { stub, tag } from "./setup.ts";
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { closeDb, sql } from "@aihot/backend/db";
 import { upsertMaterial } from "@aihot/backend/content/materials";
+import { mergeStories, moveToFact, requestRegroup } from "@aihot/backend/events/corrections";
 import { groupArticle } from "@aihot/backend/events/group";
+import { heatRows } from "@aihot/backend/events/hot";
 import { queueProcessing, settleNonEditorial } from "@aihot/backend/jobs/content";
 import { stopBoss } from "@aihot/backend/jobs/queue";
 import { publishArticle } from "@aihot/backend/publication/publish";
@@ -19,16 +22,37 @@ const TOPIC = `WL${T}`;
 /** Text of its own: close to nothing stored. */
 const ALONE = `ZZ${T}`;
 
-// Embeddings: texts about the topic point one way, everything else another. The judge calls the first
-// candidate the same occurrence.
+// Embeddings: a text carrying one of the markers in VECTORS points in that marker's direction; texts
+// about the topic point one way, everything else another. The judge calls the first candidate the same
+// occurrence, unless the post says NOPE or the candidate says OTHER.
+// The topic's axis and the markers' dimensions are this run's own, so stored vectors of earlier runs never match them.
+const axis = 2 + (parseInt(T.slice(-4), 36) % 1000);
+const VECTORS = new Map<string, Array<[number, number]>>();
+/** A direction in this run's dimensions base, base + 1, …, apart from the topic's. */
+const direction = (base: number, components: number[]): Array<[number, number]> => components.map((x, i) => [2 + ((axis - 2 + base + i) % 1000), x]);
+let postJudgements = 0;
+/** The candidates the judge was shown for the last post. */
+let shown: string[] = [];
 const provider = await stub((_hit, req) => {
-  const body = JSON.parse(req.body) as { input?: string[]; messages?: Array<{ content: string }> };
+  const body = JSON.parse(req.body) as { input?: string[]; messages?: Array<{ role: string; content: string }> };
   if (body.input) {
-    // The topic's axis is this run's own, so stored vectors of earlier runs never match it.
-    const axis = 2 + (parseInt(T.slice(-4), 36) % 1000);
-    return { data: body.input.map((text, index) => ({ index, embedding: Array.from({ length: 1024 }, (_v, i) => (i === (text.includes(TOPIC) ? axis : text.includes(ALONE) ? axis + 1 : 1) ? 1 : 0)) })) };
+    return { data: body.input.map((text, index) => {
+      const embedding = Array<number>(1024).fill(0);
+      const marked = [...VECTORS].find(([marker]) => text.includes(marker))?.[1];
+      if (marked) for (const [i, x] of marked) embedding[i] = x;
+      else embedding[text.includes(TOPIC) ? axis : text.includes(ALONE) ? axis + 1 : 1] = 1;
+      return { index, embedding };
+    }) };
   }
-  const answer = { query: "收购", decisions: [{ id: "C1", relation: "SAME_OCCURRENCE", confidence: 0.95, note: "" }] };
+  const user = body.messages?.find((m) => m.role === "user")?.content ?? "";
+  const post = user.startsWith("【帖子】");
+  const candidates = user.split("【候选 C").slice(1);
+  if (post) [postJudgements, shown] = [postJudgements + 1, candidates];
+  const no = post && user.split("\n\n")[0]!.includes("NOPE");
+  const decisions = candidates.map((candidate, i) => ({
+    id: `C${i + 1}`, relation: i === 0 && !no && !candidate.includes("OTHER") ? "SAME_OCCURRENCE" : "UNRELATED", confidence: 0.95, note: "",
+  }));
+  const answer = { query: "收购", decisions, selection: { addsValue: true, reason: "fixture news" } };
   return { id: "stub", choices: [{ message: { content: JSON.stringify(answer) } }], usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 } };
 });
 for (const name of ["DASHSCOPE_BASE_URL", "DEEPSEEK_BASE_URL"]) process.env[name] = `${provider.url}/v1`;
@@ -51,6 +75,15 @@ async function report(suffix: string, opts: { title: string; backfill?: string; 
   return articleId;
 }
 
+/** A discussion post found (and published) `hoursAgo`, recorded the way collection records it. */
+async function post(suffix: string, title: string, hoursAgo: number) {
+  const at = new Date(Date.now() - hoursAgo * 3_600_000);
+  const { articleId } = await upsertMaterial({ sourceId: SIGNAL, url: `https://example.com/sig-${T}-${suffix}`, title, via: "fetch", publishedAt: at });
+  await sql`UPDATE articles SET discovered_at = ${at} WHERE id = ${articleId}`;
+  assert.deepEqual(await settleNonEditorial(articleId), { group: true });
+  return articleId;
+}
+
 before(async () => {
   await sql`UPDATE budgets SET per_minute = 1000, per_hour = 10000, per_day = 100000 WHERE service IN ('dashscope', 'deepseek')`;
   await sql`INSERT INTO sources (id, name, kind, tier, participation_mode, next_fetch_at) VALUES
@@ -64,7 +97,7 @@ after(async () => {
 });
 
 test("a discussion post that came before any report is grouped again when a report founds its fact", async () => {
-  const { articleId: postId } = await upsertMaterial({ sourceId: SIGNAL, url: `https://example.com/sig-${T}-post`, title: `AMD to acquire ${TOPIC}`, via: "fetch", publishedAt: new Date() });
+  const { articleId: postId } = await upsertMaterial({ sourceId: SIGNAL, url: `https://example.com/sig-${T}-post`, title: `AMD to acquire ${TOPIC}`, via: "fetch", publishedAt: new Date(Date.now() - 60_000) });
   await queueProcessing(postId);
   const queued = await job(postId);
   assert.deepEqual([queued?.name, queued?.priority, queued?.data.signalOnly], ["events.group", -1, true], "straight to grouping, behind reports");
@@ -86,6 +119,91 @@ test("a discussion post that came before any report is grouped again when a repo
   assert.equal(again.storyId, founded.storyId);
 });
 
+test("a revised discussion post replaces its old story's heat and removes it when no story matches", async () => {
+  const markers = [`VA${T}`, `VB${T}`, `VC${T}`];
+  markers.forEach((m, i) => VECTORS.set(m, direction(80 + i, [1])));
+  const at = new Date(Date.now() - 60_000);
+  const first = await groupArticle(await report("revision-first", { title: `Launch ${markers[0]}`, publishedAt: at }));
+  const second = await groupArticle(await report("revision-second", { title: `Security issue ${markers[1]}`, publishedAt: at }));
+  const material = (marker: string) => ({ sourceId: SIGNAL, url: `https://example.com/sig-${T}-revision`, title: `Discussion ${marker}`, bodyText: `Discussion ${marker}`, bodyStatus: "ok" as const, via: "fetch" as const, publishedAt: at });
+  const { articleId } = await upsertMaterial(material(markers[0]!));
+  await settleNonEditorial(articleId);
+  assert.equal((await groupArticle(articleId, { signalOnly: true })).storyId, first.storyId);
+  const participants = async () => {
+    const rows = await heatRows(new Date(), [], [first.storyId!, second.storyId!]);
+    return [first, second].map((s) => Number(rows.find((r) => Number(r.story_id) === s.storyId)?.participants ?? 0));
+  };
+  assert.deepEqual(await participants(), [2, 1]);
+  assert.equal((await upsertMaterial(material(markers[1]!))).revised, true);
+  await settleNonEditorial(articleId);
+  assert.equal((await groupArticle(articleId, { signalOnly: true })).storyId, second.storyId);
+  assert.deepEqual((await sql`SELECT story_id FROM story_signals WHERE article_id = ${articleId}`).map((r) => Number(r.story_id)), [second.storyId]);
+  assert.deepEqual(await participants(), [1, 2]);
+  assert.equal((await upsertMaterial(material(markers[2]!))).revised, true);
+  await settleNonEditorial(articleId);
+  assert.equal((await groupArticle(articleId, { signalOnly: true })).verdict, "signal-unmatched");
+  assert.equal((await sql`SELECT 1 FROM story_signals WHERE article_id = ${articleId}`).length, 0);
+  assert.deepEqual(await participants(), [1, 1]);
+});
+
+test("a post revised away from its story is matched again when a report of its new subject arrives", async () => {
+  const markers = [`VR${T}`, `VS${T}`];
+  markers.forEach((m, i) => VECTORS.set(m, direction(95 + i, [1])));
+  const at = new Date(Date.now() - 60_000);
+  const first = await groupArticle(await report("rematch-first", { title: `Launch ${markers[0]}`, publishedAt: at }));
+  const material = (marker: string) => ({ sourceId: SIGNAL, url: `https://example.com/sig-${T}-rematch`, title: `Discussion ${marker}`, bodyText: `Discussion ${marker}`, bodyStatus: "ok" as const, via: "fetch" as const, publishedAt: at });
+  const { articleId } = await upsertMaterial(material(markers[0]!));
+  await settleNonEditorial(articleId);
+  assert.equal((await groupArticle(articleId, { signalOnly: true })).storyId, first.storyId);
+  assert.equal((await upsertMaterial(material(markers[1]!))).revised, true);
+  await settleNonEditorial(articleId);
+  assert.equal((await groupArticle(articleId, { signalOnly: true })).verdict, "signal-unmatched");
+  const founded = await groupArticle(await report("rematch-second", { title: `Security issue ${markers[1]}`, publishedAt: at }));
+  assert.equal(founded.rematched, 1, "an earlier attachment no longer holds the post back");
+  assert.equal((await groupArticle(articleId, { signalOnly: true })).storyId, founded.storyId);
+});
+
+test("an earlier no to a fact does not withdraw the attachment to it made since", async () => {
+  const [launch, post] = [`VN${T}`, `VP${T}`];
+  VECTORS.set(launch, direction(100, [1]));
+  VECTORS.set(post, direction(100, [0.8, 0.6]));
+  const at = new Date(Date.now() - 60_000);
+  const { storyId } = await groupArticle(await report("earlier-no", { title: `Launch ${launch}`, publishedAt: at }));
+  const material = (title: string) => ({ sourceId: SIGNAL, url: `https://example.com/sig-${T}-earlier-no-post`, title, bodyText: title, bodyStatus: "ok" as const, via: "fetch" as const, publishedAt: at });
+  const { articleId } = await upsertMaterial(material(`NOPE, first take on ${post}`));
+  await settleNonEditorial(articleId);
+  assert.equal((await groupArticle(articleId, { signalOnly: true })).verdict, "signal-unmatched");
+  const revise = async (title: string) => {
+    assert.equal((await upsertMaterial(material(title))).revised, true);
+    await settleNonEditorial(articleId);
+  };
+  await revise(`Second take on ${post}`);
+  assert.equal((await groupArticle(articleId, { signalOnly: true, regroup: true })).storyId, storyId);
+  await revise(`Third take on ${post}`);
+  assert.equal((await groupArticle(articleId, { signalOnly: true })).storyId, storyId);
+  assert.deepEqual((await sql`SELECT story_id FROM story_signals WHERE article_id = ${articleId}`).map((r) => Number(r.story_id)), [storyId]);
+});
+
+test("a late re-evaluation that finds nothing keeps a post's heat in a story recall can no longer reach", async () => {
+  const markers = [`VL${T}`, `VM${T}`];
+  markers.forEach((m, i) => VECTORS.set(m, direction(90 + i, [1])));
+  const reportId = await report("late-first", { title: `Launch ${markers[0]}` });
+  const { storyId } = await groupArticle(reportId);
+  const material = (marker: string) => ({ sourceId: SIGNAL, url: `https://example.com/sig-${T}-late`, title: `Discussion ${marker}`, bodyText: `Discussion ${marker}`, bodyStatus: "ok" as const, via: "fetch" as const, publishedAt: new Date(Date.now() - 60_000) });
+  const { articleId } = await upsertMaterial(material(markers[0]!));
+  await settleNonEditorial(articleId);
+  assert.equal((await groupArticle(articleId, { signalOnly: true })).storyId, storyId);
+  // A withdrawn report found later stays in the story but is no recall evidence.
+  const withdrawn = await report("late-withdrawn", { title: `Launch ${markers[0]} again` });
+  assert.equal((await groupArticle(withdrawn)).storyId, storyId);
+  await sql`UPDATE publications SET visibility = 'withdrawn' WHERE article_id = ${withdrawn}`;
+  await sql`UPDATE articles SET discovered_at = now() - interval '20 days' WHERE id = ${reportId}`;
+  assert.equal((await upsertMaterial(material(markers[1]!))).revised, true);
+  await settleNonEditorial(articleId);
+  assert.equal((await groupArticle(articleId, { signalOnly: true })).verdict, "signal-unmatched");
+  assert.deepEqual((await sql`SELECT story_id FROM story_signals WHERE article_id = ${articleId}`).map((r) => Number(r.story_id)), [storyId]);
+});
+
 test("history waits behind live work and founds no event; a new source's post from today is news", async () => {
   const old = await report("old", { title: `旧闻 ${T}`, backfill: "first-import", publishedAt: new Date(Date.now() - 30 * 86_400_000) });
   await queueProcessing(old, { step: "analyze" });
@@ -103,10 +221,11 @@ test("history waits behind live work and founds no event; a new source's post fr
 test("a discussion post that quotes a post not yet collected joins its story when the original arrives", async () => {
   // Dan Shipper's "SONNET 5.5 IS OUT!" quoted Anthropic's post a minute before it was collected; the
   // original then joined the fact a report had already founded (same-fact: no new fact, no rematch).
-  const tweetId = `9${Date.now()}`;
+  const tweetId = "99000000000007";
+  const postIdForFixture = "19000000000007";
   const { articleId: postId } = await upsertMaterial({
-    sourceId: SIGNAL, url: `https://x.com/danshipper/status/1${Date.now()}`, title: `SONNET IS OUT! ${ALONE}`, via: "fetch", publishedAt: new Date(),
-    xPost: { tweetId: `1${Date.now()}`, authorName: "Dan", handle: "danshipper", text: "SONNET IS OUT!", quoted: { authorName: "Anthropic", handle: "AnthropicAI", text: "Introducing", url: `https://x.com/AnthropicAI/status/${tweetId}` } },
+    sourceId: SIGNAL, url: `https://x.com/danshipper/status/${postIdForFixture}`, title: `SONNET IS OUT! ${ALONE}`, via: "fetch", publishedAt: new Date(Date.now() - 60_000),
+    xPost: { tweetId: postIdForFixture, authorName: "Dan", handle: "danshipper", text: "SONNET IS OUT!", quoted: { authorName: "Anthropic", handle: "AnthropicAI", text: "Introducing", url: `https://x.com/AnthropicAI/status/${tweetId}` } },
   });
   assert.deepEqual(await settleNonEditorial(postId), { group: true });
   assert.equal((await groupArticle(postId, { signalOnly: true })).verdict, "signal-unmatched");
@@ -114,7 +233,7 @@ test("a discussion post that quotes a post not yet collected joins its story whe
   const first = await groupArticle(await report("quoted-first", { title: `Anthropic 发布 ${TOPIC} Sonnet` }));
   const { articleId: originalId } = await upsertMaterial({
     sourceId: EDITORIAL, url: `https://x.com/AnthropicAI/status/${tweetId}`, title: `Introducing ${TOPIC} Sonnet`, bodyText: "Introducing.", bodyStatus: "ok",
-    via: "fetch", publishedAt: new Date(), xPost: { tweetId, authorName: "Anthropic", handle: "AnthropicAI", text: `Introducing ${TOPIC} Sonnet` },
+    via: "fetch", publishedAt: new Date(Date.now() - 60_000), xPost: { tweetId, authorName: "Anthropic", handle: "AnthropicAI", text: `Introducing ${TOPIC} Sonnet` },
   });
   await sql`INSERT INTO analyses (article_id, input_revision, origin, relevance, category, title_zh, summary_zh, score, selected, output)
             VALUES (${originalId}, 1, 'rule', 'pass', 'ai-models', ${`Anthropic 发布 ${TOPIC} Sonnet`}, '摘要', 80, false, ${sql.json({ fact: { title: "Sonnet" } })})`;
@@ -126,4 +245,132 @@ test("a discussion post that quotes a post not yet collected joins its story whe
 
   const again = await groupArticle(postId, { signalOnly: true });
   assert.deepEqual([again.verdict, again.storyId], ["signal-native", first.storyId]);
+});
+
+test("a post from earlier in the heat window is grouped again when a report founds its fact; one past the window is not", async () => {
+  // Techmeme had PHP2Shell nine hours before the first report; the six-hour look-back missed it.
+  const m = `HW${T}`;
+  VECTORS.set(m, direction(10, [1]));
+  const recent = await post("hw-recent", `Unconfirmed report of a flaw ${m}`, 20);
+  const old = await post("hw-old", `An older word on the flaw ${m}`, 50);
+  for (const id of [recent, old]) assert.equal((await groupArticle(id, { signalOnly: true })).verdict, "signal-unmatched");
+
+  const founded = await groupArticle(await report("hw", { title: `Flaw disclosed ${m}` }));
+  assert.deepEqual([founded.verdict, founded.rematched], ["new-story", 1]);
+  assert.equal((await job(recent))?.data.signalOnly, true);
+  assert.equal(await job(old), null, "it no longer counts for heat");
+});
+
+test("a report that joins a fact wakes the earlier posts close to it", async () => {
+  const [first, second, reaction] = [`JA${T}`, `JB${T}`, `JP${T}`];
+  VECTORS.set(first, direction(20, [1, 0]));
+  VECTORS.set(second, direction(20, [0.9, 0.436]));
+  VECTORS.set(reaction, direction(20, [0.6, 0.8]));
+  const postId = await post("join", `Reaction ${reaction}`, 1);
+  assert.equal((await groupArticle(postId, { signalOnly: true })).verdict, "signal-unmatched");
+
+  const founded = await groupArticle(await report("join-1", { title: `Launch ${first}` }));
+  assert.deepEqual([founded.verdict, founded.rematched], ["new-story", 0], "not close to the first report");
+  const joined = await groupArticle(await report("join-2", { title: `Launch in detail ${second}` }));
+  assert.deepEqual([joined.verdict, joined.storyId, joined.rematched], ["same-fact", founded.storyId, 1]);
+
+  const again = await groupArticle(postId, { signalOnly: true });
+  assert.deepEqual([again.verdict, again.storyId], ["signal", founded.storyId]);
+});
+
+test("a post that joins a fact recalls it for posts close to it, earlier ones too; the judge still decides", async () => {
+  // PHP2Shell: posts about the warning, the patches and sites going offline were far from the reports
+  // about AI finding the flaws, and close to each other.
+  const [found, patch, warning, again] = [`PR${T}`, `PP${T}`, `PW${T}`, `PA${T}`];
+  VECTORS.set(found, direction(30, [1, 0]));
+  VECTORS.set(patch, direction(30, [0.8, 0.6]));
+  VECTORS.set(warning, direction(30, [0.4, 0.9165]));
+  VECTORS.set(again, direction(30, [0.4, 0.9165]));
+  const warningId = await post("peer-warning", `Admins warned of two critical flaws ${warning}`, 3);
+  assert.equal((await groupArticle(warningId, { signalOnly: true })).verdict, "signal-unmatched");
+  const founded = await groupArticle(await report("peer", { title: `AI helped find the flaws ${found}` }));
+  assert.deepEqual([founded.verdict, founded.rematched], ["new-story", 0]);
+
+  const patchId = await post("peer-patch", `Emergency patches for the flaws ${patch}`, 1);
+  const attached = await groupArticle(patchId, { signalOnly: true });
+  assert.deepEqual([attached.verdict, attached.storyId, attached.rematched], ["signal", founded.storyId, 1], "the earlier warning is close to this post");
+  const woken = await groupArticle(warningId, { signalOnly: true });
+  assert.deepEqual([woken.verdict, woken.storyId], ["signal", founded.storyId]);
+
+  const judged = postJudgements;
+  const twinId = await post("peer-again", `Admins warned again ${again}`, 0);
+  const twin = await groupArticle(twinId, { signalOnly: true });
+  assert.deepEqual([twin.verdict, twin.storyId, postJudgements - judged], ["signal", founded.storyId, 1], "a post identical to another post still goes to the judge");
+});
+
+test("a post the judge already answered for a fact is not woken by more evidence of that fact", async () => {
+  const [first, second, take] = [`OA${T}`, `OB${T}`, `OP${T}`];
+  VECTORS.set(first, direction(40, [1, 0]));
+  VECTORS.set(second, direction(40, [0.9, 0.436]));
+  VECTORS.set(take, direction(40, [0.8, 0.6]));
+  const founded = await groupArticle(await report("once-1", { title: `Launch ${first}` }));
+  const postId = await post("once", `NOPE, a take on something else ${take}`, 1);
+  assert.equal((await groupArticle(postId, { signalOnly: true })).verdict, "signal-unmatched", "the judge saw the fact and said no");
+
+  const joined = await groupArticle(await report("once-2", { title: `Launch in detail ${second}` }));
+  assert.deepEqual([joined.verdict, joined.storyId, joined.rematched], ["same-fact", founded.storyId, 0]);
+});
+
+test("a fact the judge said a post is not about is not offered again when another fact wakes the post", async () => {
+  const [elsewhere, here, take] = [`NA${T}`, `NB${T}`, `NP${T}`];
+  VECTORS.set(elsewhere, direction(50, [1, 0]));
+  VECTORS.set(take, direction(50, [0.8, 0.6]));
+  VECTORS.set(here, direction(50, [0.342, 0.94]));
+  await groupArticle(await report("answered-1", { title: `OTHER launch ${elsewhere}` }));
+  const takeId = await post("answered", `A take ${take}`, 1);
+  assert.equal((await groupArticle(takeId, { signalOnly: true })).verdict, "signal-unmatched", "the judge said no to the first fact");
+
+  const founded = await groupArticle(await report("answered-2", { title: `Launch ${here}` }));
+  assert.deepEqual([founded.verdict, founded.rematched], ["new-story", 1]);
+  const again = await groupArticle(takeId, { signalOnly: true });
+  assert.deepEqual([again.verdict, again.storyId, shown.length], ["signal", founded.storyId, 1], "only the new fact went to the judge");
+});
+
+test("a post an editor moved recalls the fact they chose, not the one the model picked", async () => {
+  const [picked, chosen, moved, later] = [`MA${T}`, `MB${T}`, `MP${T}`, `ML${T}`];
+  VECTORS.set(picked, direction(60, [1, 0, 0]));
+  VECTORS.set(chosen, direction(60, [0, 0, 1]));
+  VECTORS.set(moved, direction(60, [0.8, 0.6, 0]));
+  VECTORS.set(later, direction(60, [0.45, 0.85, 0.27]));
+  const launch = await groupArticle(await report("moved-1", { title: `Launch ${picked}` }));
+  const pricing = await groupArticle(await report("moved-2", { title: `Pricing ${chosen}` }));
+  await mergeStories(pricing.storyId!, launch.storyId!, "test: one story", "test");
+  const movedId = await post("moved", `Reaction ${moved}`, 2);
+  assert.deepEqual([(await groupArticle(movedId, { signalOnly: true })).verdict], ["signal"], "the model put it with the launch");
+  const [fact] = await sql<{ public_id: string }[]>`SELECT public_id FROM facts WHERE id = ${pricing.factId!}`;
+  await moveToFact(movedId, fact!.public_id, "test: about the pricing", "test");
+
+  const laterId = await post("moved-later", `Another reaction ${later}`, 1);
+  await groupArticle(laterId, { signalOnly: true });
+  const [decision] = await sql<{ candidates: Array<{ id: number }> }[]>`SELECT candidates FROM grouping_decisions WHERE article_id = ${laterId} ORDER BY id DESC LIMIT 1`;
+  assert.deepEqual(decision!.candidates.map((c) => c.id), [pricing.factId], "the moved post stands for the editor's fact only");
+});
+
+test("an editor's regroup asks the judge again about a fact it said no to; grouping on its own does not", async () => {
+  const [fact, take] = [`RA${T}`, `RP${T}`];
+  VECTORS.set(fact, direction(70, [1, 0]));
+  VECTORS.set(take, direction(70, [0.8, 0.6]));
+  const launch = await groupArticle(await report("regroup-fact", { title: `OTHER launch ${fact}` }));
+  const takeId = await post("regroup-take", `A take ${take}`, 1);
+  const offered = async () => (await sql<{ candidates: Array<{ id: number }> }[]>`
+    SELECT candidates FROM grouping_decisions WHERE article_id = ${takeId} ORDER BY id DESC LIMIT 1`)[0]!.candidates.map((c) => c.id);
+  const decisionCount = async () => (await sql`SELECT id FROM grouping_decisions WHERE article_id=${takeId}`).length;
+  assert.equal((await groupArticle(takeId, { signalOnly: true })).verdict, "signal-unmatched");
+  assert.deepEqual(await offered(), [launch.factId], "the judge said no to the launch");
+  const calls = postJudgements;
+  assert.equal((await groupArticle(takeId, { signalOnly: true })).verdict, "signal-unmatched");
+  assert.equal(postJudgements, calls, "unchanged evidence does not buy another judgement");
+  assert.equal(await decisionCount(), 1, "unchanged evidence does not append an empty negative");
+
+  await requestRegroup(takeId, `regroup-${T}`);
+  const [queued] = await sql<{ data: { regroup?: boolean } }[]>`SELECT data FROM pgboss.job WHERE singleton_key = ${`manual:group:${takeId}:regroup-${T}`}`;
+  assert.equal(queued?.data.regroup, true);
+  assert.equal((await groupArticle(takeId, { regroup: queued!.data.regroup })).verdict, "signal-unmatched");
+  assert.equal(await decisionCount(), 2, "the explicit regroup records a decision");
+  assert.deepEqual(await offered(), [launch.factId], "the editor's regroup offers the launch again");
 });

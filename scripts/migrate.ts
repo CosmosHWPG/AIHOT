@@ -1,24 +1,143 @@
-// Applies database/migrations/*.sql in order, each in its own transaction. Safe to re-run.
-import { readdirSync, readFileSync } from "node:fs";
+// Applies engine and module SQL by file name. New online DDL is bounded; concurrent indexes and
+// constraint validation run separately so earlier DDL cannot hold a strong lock during a table scan.
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { REPO_ROOT } from "@aihot/backend/config";
-import { closeDb, sql } from "@aihot/backend/db";
+import { setTimeout as sleep } from "node:timers/promises";
+import type postgres from "postgres";
+import { FIRST_ONLINE_MIGRATION, migrationPlan, type MigrationPlan } from "./migration-safety.ts";
+import { coreScopeMigrationHold, CORESCOPE_MIGRATION_UPSTREAM, migrationSqlHash } from "./corescope-migration-holds.ts";
 
-const dir = path.join(REPO_ROOT, "database/migrations");
+// These two historical files rewrite existing rows. Both exceeded the ordinary DDL deadline in a
+// full CoreScope rehearsal. Match the published bytes before granting a longer transaction timeout.
+const HISTORICAL_REWRITES: Readonly<Record<string, string>> = {
+  "0046_grouping_reliability.sql": "5719ea696d7c7ab448623ed56720e3b1a59af2d0068ebf621af03e9d9dac9022",
+  "0047_selection_candidate.sql": "c762ac140b4beac6212211f7094f47f9cb7709f8c9383f1a41fa9b97a98e432c",
+};
 
-await sql`CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())`;
-const applied = new Set((await sql<{ name: string }[]>`SELECT name FROM schema_migrations`).map((r) => r.name));
-
-let count = 0;
-for (const file of readdirSync(dir).filter((f) => f.endsWith(".sql")).sort()) {
-  if (applied.has(file)) continue;
-  const text = readFileSync(path.join(dir, file), "utf8");
-  await sql.begin(async (tx) => {
-    await tx.unsafe(text);
-    await tx`INSERT INTO schema_migrations (name) VALUES (${file})`;
-  });
-  console.log(`applied ${file}`);
-  count += 1;
+/**
+ * The daily backup's pg_dump holds ACCESS SHARE on every table and one snapshot for minutes, so DDL hits
+ * its lock timeout and a concurrent index build is left invalid. Wait for that dump,
+ * up to `waitMs`; other lock holders still fail fast. pg_dump names its connection after itself.
+ */
+async function waitForBackupDump(session: postgres.ReservedSql, waitMs: number, before: string) {
+  const deadline = Date.now() + waitMs;
+  let reported = false;
+  for (;;) {
+    const [dump] = await session<{ pid: number }[]>`
+      SELECT pid FROM pg_stat_activity WHERE application_name = 'pg_dump' AND datname = current_database() LIMIT 1`;
+    if (!dump) return;
+    if (Date.now() >= deadline) throw new Error(`migration ${before} waited ${Math.round(waitMs / 1000)}s for the backup's pg_dump (pid ${dump.pid}); release again once it finishes`);
+    if (!reported) console.log(`waiting for the backup's pg_dump (pid ${dump.pid}) to finish before ${before}`);
+    reported = true;
+    await sleep(1000);
+  }
 }
-console.log(count === 0 ? "database is up to date" : `${count} migration(s) applied`);
-await closeDb();
+
+/** `backupWaitMs`: how long to wait for a running backup dump before each migration (none by default). */
+export async function runMigrations(sql: postgres.Sql, root: string, { backupWaitMs = 0 } = {}): Promise<number> {
+  const sqlFiles = (dir: string) => existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith(".sql")).map((name) => ({ name, file: path.join(dir, name) })) : [];
+  const modules = path.join(root, "modules");
+  const migrations = [
+    ...sqlFiles(path.join(root, "database/migrations")),
+    ...(existsSync(modules) ? readdirSync(modules).flatMap((name) => sqlFiles(path.join(modules, name, "migrations"))) : []),
+  ].sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+  for (const [i, migration] of migrations.entries()) {
+    if (migrations[i + 1]?.name === migration.name) throw new Error(`two migrations are named ${migration.name}: ${migration.file} and ${migrations[i + 1].file}`);
+  }
+  // Validate the complete set before making any change; old files remain installable as history.
+  const prepared = migrations.map((migration) => {
+    const text = readFileSync(migration.file, "utf8");
+    const hold = coreScopeMigrationHold(migration.name, text);
+    let plan: MigrationPlan = { kind: "transaction" };
+    try { if (Number(migration.name.slice(0, 4)) >= FIRST_ONLINE_MIGRATION) plan = migrationPlan(text); }
+    catch (error) { throw new Error(`${migration.name}: ${(error as Error).message}`, { cause: error }); }
+    return { ...migration, text, plan, hold };
+  });
+  const session = await sql.reserve();
+  try {
+    await session`SET lock_timeout = '1s'`;
+    await session`SET statement_timeout = '10s'`;
+    await session`CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())`;
+    const applied = new Set((await session<{ name: string }[]>`SELECT name FROM schema_migrations`).map((row) => row.name));
+    const holds = prepared.filter((migration) => migration.hold);
+    for (const held of holds) {
+      if (applied.has(held.name)) throw new Error(`${held.name}: a retained CoreScope migration was already applied; restore/reconcile its data before continuing`);
+    }
+    // Separate bookkeeping: held SQL was never run and must never masquerade as applied history.
+    if (holds.length) {
+      await session`CREATE TABLE IF NOT EXISTS schema_migration_holds (
+        name text PRIMARY KEY, sql_sha256 text NOT NULL, upstream_commit text NOT NULL,
+        reason text NOT NULL, held_at timestamptz NOT NULL DEFAULT clock_timestamp())`;
+      const recorded = new Map((await session<{ name: string; sql_sha256: string }[]>`
+        SELECT name,sql_sha256 FROM schema_migration_holds`).map((row) => [row.name, row.sql_sha256]));
+      for (const held of holds) {
+        if (recorded.has(held.name) && recorded.get(held.name) !== held.hold!.sha256) {
+          throw new Error(`${held.name}: migration hold audit SHA256 differs; explicit reconciliation required`);
+        }
+      }
+    }
+    let count = 0;
+    for (const { name, text, plan, hold } of prepared) {
+      if (applied.has(name)) continue;
+      if (hold) {
+        await session`INSERT INTO schema_migration_holds (name,sql_sha256,upstream_commit,reason)
+          VALUES (${name},${hold.sha256},${CORESCOPE_MIGRATION_UPSTREAM},${hold.reason}) ON CONFLICT (name) DO NOTHING`;
+        console.log(`held ${name} (not applied, SHA256 ${hold.sha256})`);
+        continue;
+      }
+      await waitForBackupDump(session, backupWaitMs, name);
+      const start = performance.now();
+      try {
+        await session`SELECT set_config('lock_timeout', ${plan.kind === "transaction" ? "1s" : "30s"}, false)`;
+        await session`SELECT set_config('statement_timeout', ${plan.kind === "transaction" ? "10s" : "30min"}, false)`;
+        if (plan.kind === "index") {
+          // A concurrent build's internal transactions cannot be wrapped in our transaction. Its
+          // retry must not trust IF NOT EXISTS: an interrupted build leaves an invalid index of that name.
+          const indexName = plan.index.startsWith('"') ? plan.index.slice(1, -1).replaceAll('""', '"') : plan.index.toLowerCase();
+          await session.unsafe(text);
+          const [index] = await session<{ indisvalid: boolean; same_table: boolean }[]>`
+            SELECT i.indisvalid, i.indrelid = to_regclass(${plan.table}) AS same_table
+            FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid
+            WHERE c.relname = ${indexName}
+              AND c.relnamespace = (SELECT relnamespace FROM pg_class WHERE oid = to_regclass(${plan.table}))`;
+          if (!index?.indisvalid) throw new Error(`index ${plan.index} is missing or invalid; inspect it and DROP INDEX CONCURRENTLY before retrying`);
+          if (!index.same_table) throw new Error(`index ${plan.index} belongs to a different table`);
+          await session`INSERT INTO schema_migrations (name) VALUES (${name})`;
+        } else {
+          await session`BEGIN`;
+          try {
+            const historicalRewrite = HISTORICAL_REWRITES[name];
+            if (historicalRewrite && migrationSqlHash(text) === historicalRewrite) {
+              await session`SET LOCAL statement_timeout = '5min'`;
+            }
+            await session.unsafe(text);
+            await session`INSERT INTO schema_migrations (name) VALUES (${name})`;
+            await session`COMMIT`;
+          } catch (error) {
+            await session`ROLLBACK`;
+            throw error;
+          }
+        }
+      } catch (error) {
+        throw new Error(`migration ${name} failed after ${Math.round(performance.now() - start)}ms: ${(error as Error).message}`, { cause: error });
+      }
+      console.log(`applied ${name} (${Math.round(performance.now() - start)}ms, ${plan.kind})`);
+      count++;
+    }
+    console.log(count === 0 ? "database is up to date" : `${count} migration(s) applied`);
+    if (holds.length) console.log(`${holds.length} audited CoreScope migration hold(s) remain unexecuted`);
+    return count;
+  } finally {
+    try { await session`RESET lock_timeout`; await session`RESET statement_timeout`; }
+    finally { session.release(); }
+  }
+}
+
+if (import.meta.main) {
+  const { REPO_ROOT } = await import("@aihot/backend/config");
+  const { closeDb, sql } = await import("@aihot/backend/db");
+  // As long as the worker waits for a whole backup on stop: the dump is the first part of it.
+  const { STOP_TIMEOUT_MS } = await import("@aihot/backend/jobs/queue");
+  try { await runMigrations(sql, REPO_ROOT, { backupWaitMs: STOP_TIMEOUT_MS }); }
+  finally { await closeDb(); }
+}

@@ -1,5 +1,6 @@
 import { gate, stub, tag } from "./setup.ts";
 import assert from "node:assert/strict";
+import { pollFor } from "./poll.ts";
 import { execFile } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { after, before, beforeEach, test } from "node:test";
@@ -10,6 +11,7 @@ import { closeDb, sql } from "@aihot/backend/db";
 import { sha256 } from "@aihot/backend/lib/ids";
 import { completeLogin, endSession, loginRedirect, passwordLogin, SESSION_COOKIE, sessionPrincipal } from "@aihot/backend/admin/auth";
 import { adminHandler, registerAdminAuth } from "../apps/api/src/routes/admin-auth.ts";
+import { registerAdmin } from "../apps/api/src/routes/admin.ts";
 
 const T = tag();
 const PASSWORD_A = `test-password-a-${T}`;
@@ -38,6 +40,7 @@ const oauth = await stub(async (_hit, req) => {
 });
 const app = Fastify({ logger: false });
 registerAdminAuth(app);
+registerAdmin(app);
 let writes = 0;
 app.post("/api/admin/session-test", adminHandler(async () => ({ writes: ++writes })));
 let base = "";
@@ -166,14 +169,9 @@ for (const change of ["password", "secret"]) test(`password login does not bind 
   await locked.promise;
   const loggingIn = password();
   try {
-    const until = Date.now() + 5000;
-    let waiting = false;
-    while (Date.now() < until) {
-      const rows = await sql`SELECT 1 FROM pg_stat_activity WHERE pid<>pg_backend_pid() AND wait_event_type='Lock' AND query LIKE '%INSERT INTO admin_users%'`;
-      if (rows.length) { waiting = true; break; }
-      await new Promise((resolve) => setTimeout(resolve, 10));
-    }
-    assert.ok(waiting, "the login has authenticated and is blocked on its user write");
+    await pollFor(async () => (await sql`
+      SELECT 1 FROM pg_stat_activity WHERE pid<>pg_backend_pid() AND wait_event_type='Lock' AND query LIKE '%INSERT INTO admin_users%'
+    `).length, "authenticated login blocked on its user write");
     if (change === "password") config.adminPassword = PASSWORD_B; else process.env.SESSION_SECRET = SECRET_B;
   } finally { release.open(); await blocker; }
   const token = await loggingIn;

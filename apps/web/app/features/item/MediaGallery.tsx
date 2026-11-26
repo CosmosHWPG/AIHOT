@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { MediaView } from "@aihot/contracts/site";
 import { Lightbox } from "../../components/ui/Lightbox";
+import { Picture } from "../../components/ui/Picture";
 
 /** A round play mark over a video's still. */
 function PlayMark() {
@@ -28,9 +29,9 @@ export function MediaGallery({ media, postUrl }: { media: MediaView[]; postUrl: 
   return (
     <>
       <div className={`mt-5 grid gap-2 ${single ? "grid-cols-1" : shown.length === 2 || shown.length === 4 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`}>
-        {shown.map((m) => {
+        {shown.map((m, i) => {
           const img = (
-            <img
+            <Picture
               src={m.poster ?? m.url}
               srcSet={m.srcSet}
               sizes={single ? "auto, (min-width: 460px) 420px, calc(100vw - 32px)" : "auto, (min-width: 800px) 248px, (min-width: 640px) calc(33.333vw - 19px), calc(50vw - 24px)"}
@@ -43,13 +44,14 @@ export function MediaGallery({ media, postUrl }: { media: MediaView[]; postUrl: 
               style={single && m.width && m.height ? { aspectRatio: `${m.width} / ${m.height}` } : undefined}
             />
           );
+          const imageIndex = m.kind === "video" ? -1 : images.indexOf(m);
           return m.kind === "video" ? (
-            <a key={m.url} href={postUrl} target="_blank" rel="noopener noreferrer" aria-label="打开原推播放视频" className={tile}>
+            <a key={`${m.url}#${i}`} href={postUrl} target="_blank" rel="noopener noreferrer" aria-label="打开原推播放视频" className={tile}>
               {img}
               <PlayMark />
             </a>
           ) : (
-            <button key={m.url} type="button" onClick={() => setOpen(images.indexOf(m))} aria-label={m.alt ? `查看大图：${m.alt}` : "查看大图"} className={`${tile} cursor-zoom-in`}>
+            <button key={`${m.url}#${i}`} type="button" onClick={() => setOpen(imageIndex)} aria-label={m.alt ? `查看大图：${m.alt}` : "查看大图"} className={`${tile} cursor-zoom-in`}>
               {img}
             </button>
           );

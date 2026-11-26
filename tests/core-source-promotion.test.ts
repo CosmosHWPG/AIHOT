@@ -2,16 +2,18 @@
 import { stub, tag } from "./setup.ts";
 import assert from "node:assert/strict";
 import http from "node:http";
-import { setTimeout as delay } from "node:timers/promises";
+import { pollFor } from "./poll.ts";
 import { after, before, test } from "node:test";
 import { config } from "@aihot/backend/config";
 import { closeDb, sql } from "@aihot/backend/db";
 import { sourceDetail, updateSource } from "@aihot/backend/admin/sources";
 import { extractArticleBody } from "@aihot/backend/content/extract";
 import { upsertMaterial } from "@aihot/backend/content/materials";
+import { groupArticle } from "@aihot/backend/events/group";
 import { ingestItems } from "@aihot/backend/ingest/items";
 import { processArticle, queueProcessing, settleNonEditorial, sweepUnprocessed } from "@aihot/backend/jobs/content";
 import { QUEUES, stopBoss } from "@aihot/backend/jobs/queue";
+import { getRecentContentPolicy, setRecentContentPolicy } from "@aihot/backend/jobs/recent-content";
 import { republishSource } from "@aihot/backend/publication/publish";
 
 const T = tag();
@@ -22,7 +24,7 @@ const provider = await stub((_hit, req) => {
   const system = body.messages[0]?.role === "system" ? body.messages[0].content : "";
   const input = JSON.stringify(body.messages);
   let answer: unknown;
-  if (system.includes("宽召回的AI相关性预筛")) answer = { label: input.includes("OFFTOPIC") ? "BLOCK" : "PASS", reason: "测试" };
+  if (system.includes("宽召回") && system.includes("预筛")) answer = { label: input.includes("OFFTOPIC") ? "BLOCK" : "PASS", reason: "测试" };
   else if (system.includes("事件注意力评分器")) answer = { attentionScore: 80 };
   else if (system.includes("内容理解编辑")) answer = { itemType: "model_release", authorRole: "principal", tags: ["模型发布"], editorialJudgment: "测试判断", titleZh: "某实验室发布新模型", summaryZh: "某实验室发布新模型，并公布评测结果和价格。" };
   else if (system.includes("资料结构化助手")) answer = { category: "ai-models", tags: ["模型发布"], subjects: [], fact: { title: "某实验室发布新模型" } };
@@ -77,7 +79,7 @@ async function source(suffix: string, mode = "isolated") {
 async function material(sourceId: string, suffix: string, extra: Record<string, unknown> = {}) {
   return (await upsertMaterial({
     sourceId, url: `${pageUrl}/${T}-${suffix}`, title: `Model release ${T} ${suffix}`, bodyText: BODY, bodyStatus: "ok",
-    via: "fetch", publishedAt: new Date(), ...extra,
+    via: "fetch", publishedAt: new Date(Date.now() - 1_000), ...extra,
   } as Parameters<typeof upsertMaterial>[0])).articleId;
 }
 
@@ -92,7 +94,7 @@ test("source details preserve the configured first-party identity at every tier"
 
 test("promoting a settled auto-created source resumes normal editorial extraction", async () => {
   const sourceId = `test-promote-${T}-ingest`;
-  assert.deepEqual(await ingestItems({ sourceId, items: [{ title: `Model release ${T}`, url: `${pageUrl}/${T}-ingest`, publishedAt: new Date().toISOString() }] }), { ok: true, created: 1 });
+  assert.deepEqual(await ingestItems({ sourceId, items: [{ title: `Model release ${T}`, url: `${pageUrl}/${T}-ingest`, publishedAt: new Date(Date.now() - 1_000).toISOString() }] }), { ok: true, created: 1 });
   const [article] = await sql<{ id: string }[]>`SELECT id FROM articles WHERE source_id = ${sourceId}`;
   const id = article!.id;
   await settleNonEditorial(id);
@@ -178,13 +180,13 @@ test("promotion preserves history, material identity and manual editorial/groupi
   assert.deepEqual([...(await timeline())], [...beforeTimeline]);
   assert.deepEqual([(await processingJobs(old))[0]?.priority, (await processingJobs(live))[0]?.priority], [-2, 0]);
   assert.deepEqual(await processArticle(old), { state: "pass" });
+  assert.equal((await groupArticle(old)).verdict, "manual", "archival grouping preserves the standalone override");
   await republishSource(sourceId);
   assert.deepEqual([...(await timeline())], [...beforeTimeline]);
   assert.deepEqual(await overrides(), beforeOverrides);
   const [publication] = await sql`SELECT title, summary, selected, visibility FROM publications WHERE article_id = ${old}`;
   assert.deepEqual([publication!.title, publication!.summary, publication!.selected, publication!.visibility], ["人工标题", "人工摘要", false, "withdrawn"]);
-  assert.equal((await sql`SELECT 1 FROM fact_articles WHERE article_id = ${old}`).length, 0);
-  assert.equal((await sql`SELECT 1 FROM pgboss.job WHERE name = ${QUEUES.group} AND data->>'articleId' = ${old}`).length, 0, "history adds no event or heat work");
+  assert.equal((await sql`SELECT 1 FROM fact_articles WHERE article_id = ${old}`).length, 0, "history founds no event and adds no heat");
 });
 
 test("only skipped articles without a current-revision analysis resume", async () => {
@@ -345,14 +347,10 @@ test("overlapping promotion and old settlement leave the unscheduled tail recove
   let settlement: ReturnType<typeof settleNonEditorial> | undefined;
   let triggerCreated = false;
   async function waitForBlocked(blocker: number) {
-    const deadline = Date.now() + 15_000;
-    while (Date.now() < deadline) {
-      const [waiting] = await sql<{ pid: number }[]>`
-        SELECT pid FROM pg_stat_activity WHERE ${blocker} = ANY(pg_blocking_pids(pid))`;
-      if (waiting) return waiting.pid;
-      await delay(10);
-    }
-    throw new Error(`No transaction blocked by backend ${blocker}`);
+    // The holder can observe both other transactions even with a three-connection app pool.
+    return pollFor(async () => (await hold<{ pid: number }[]>`
+      SELECT pid FROM pg_stat_activity WHERE ${blocker} = ANY(pg_blocking_pids(pid))`)[0]?.pid,
+    `transaction blocked by backend ${blocker}`, 15_000);
   }
   try {
     await hold`SELECT pg_advisory_lock(${lockKey})`;
@@ -387,5 +385,25 @@ test("overlapping promotion and old settlement leave the unscheduled tail recove
     if (settlement) await settlement.catch(() => {});
     if (triggerCreated) await sql.unsafe(`DROP TRIGGER test_promotion_gate ON settings`);
     await sql.unsafe(`DROP FUNCTION IF EXISTS test_promotion_gate()`);
+  }
+});
+
+test("promotion only queues articles admitted by the current processing window", async () => {
+  const sourceId = await source("recent-window", "hot_signal");
+  const live = await material(sourceId, "recent-window-live", { publishedAt: new Date(Date.now() - 60_000) });
+  const old = await material(sourceId, "recent-window-old", { publishedAt: new Date(Date.now() - 49 * 3600_000) });
+  await settleNonEditorial(live);
+  await settleNonEditorial(old);
+  const before = await getRecentContentPolicy();
+  await setRecentContentPolicy(true, "test", "exercise promotion under the normal processing window");
+  try {
+    const hits = provider.hits();
+    await edit(sourceId, { participation_mode: "editorial" });
+    assert.equal((await processingJobs(live))[0]?.name, QUEUES.analyze);
+    assert.equal((await processingJobs(old)).length, 0);
+    assert.equal((await sql`SELECT processing_state FROM articles WHERE id = ${old}`)[0]!.processing_state, "new");
+    assert.equal(provider.hits(), hits);
+  } finally {
+    await setRecentContentPolicy(before.enabled, "test", "restore test processing policy");
   }
 });

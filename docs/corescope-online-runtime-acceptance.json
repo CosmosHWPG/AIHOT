@@ -1,0 +1,171 @@
+{
+  "at": "2026-10-12T11:24:36.039Z",
+  "configuredSources": 616,
+  "newSources": 191,
+  "enabledSources": 600,
+  "stats": [
+    {
+      "kind": "external",
+      "configured": 136,
+      "enabled": 120
+    },
+    {
+      "kind": "json_list",
+      "configured": 20,
+      "enabled": 20
+    },
+    {
+      "kind": "mp_account",
+      "configured": 61,
+      "enabled": 61
+    },
+    {
+      "kind": "rss",
+      "configured": 245,
+      "enabled": 245
+    },
+    {
+      "kind": "web_list",
+      "configured": 40,
+      "enabled": 40
+    },
+    {
+      "kind": "x_search",
+      "configured": 114,
+      "enabled": 114
+    }
+  ],
+  "baseIdsPreserved": true,
+  "revivedPausedSources": [],
+  "publicPipeline": {
+    "tested": 72,
+    "ok": 72,
+    "created": 140,
+    "failures": []
+  },
+  "xAuthors": [
+    {
+      "source_id": "corescope-x-anthropicai",
+      "materials": 2
+    },
+    {
+      "source_id": "corescope-x-openaidevs",
+      "materials": 3
+    }
+  ],
+  "newMaterialCount": 168,
+  "receipts": [
+    {
+      "service": "dajiala",
+      "status": "failed",
+      "requests": 1,
+      "cost": null,
+      "currency": null
+    },
+    {
+      "service": "dajiala",
+      "status": "received",
+      "requests": 34,
+      "cost": 2.45,
+      "currency": "CNY"
+    },
+    {
+      "service": "xquik",
+      "status": "received",
+      "requests": 1,
+      "cost": 5,
+      "currency": "CREDITS"
+    }
+  ],
+  "mpRuntime": {
+    "at": "2026-10-12T11:23:18.418Z",
+    "results": [
+      {
+        "sourceId": "corescope-mp-stepfun",
+        "status": "ok",
+        "found": 2,
+        "created": 0,
+        "revised": 0,
+        "stale": false
+      },
+      {
+        "sourceId": "corescope-mp-aiwarts",
+        "status": "ok",
+        "found": 10,
+        "created": 2,
+        "reused": true
+      },
+      {
+        "sourceId": "corescope-mp-openbmb",
+        "status": "ok",
+        "found": 11,
+        "created": 2,
+        "reused": true
+      },
+      {
+        "sourceId": "corescope-mp-kling",
+        "status": "ok",
+        "found": 10,
+        "created": 2,
+        "reused": true
+      },
+      {
+        "sourceId": "corescope-mp-kunlun",
+        "status": "ok",
+        "found": 12,
+        "created": 1,
+        "reused": false
+      },
+      {
+        "sourceId": "corescope-mp-baidu",
+        "status": "ok",
+        "found": 22,
+        "created": 2,
+        "reused": false
+      },
+      {
+        "sourceId": "corescope-mp-xiaohongshu",
+        "status": "ok",
+        "found": 10,
+        "created": 1,
+        "reused": false
+      },
+      {
+        "sourceId": "corescope-mp-tencent",
+        "status": "ok",
+        "found": 10,
+        "created": 2,
+        "reused": false
+      },
+      {
+        "sourceId": "corescope-mp-shengshu",
+        "status": "ok",
+        "found": 11,
+        "created": 1,
+        "reused": false
+      },
+      {
+        "sourceId": "corescope-mp-volcengine",
+        "status": "ok",
+        "found": 10,
+        "created": 1,
+        "reused": false
+      }
+    ]
+  },
+  "limits": [
+    "X adapter validated on one three-account batch; not every configured account returned material.",
+    "Materials are intake records, including historical backfill, not a count of selected/public news.",
+    "The observed online source set is partial, not all 878 private website source configurations.",
+    "V2 database read with mode=ro/query_only; only independent CoreScope configuration/database were changed."
+  ],
+  "checks": {
+    "backend": 653,
+    "web": 32,
+    "python": 23,
+    "smoke": 35,
+    "typecheck": "passed",
+    "webBuild": "passed",
+    "runtimeReady": "API/web/worker/bridge"
+  }
+}

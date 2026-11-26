@@ -1,0 +1,749 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-11-01T15:25:10.770Z",
+  "scope": "13 reviewed identities; independent CoreScope production database and public site",
+  "configuration": {
+    "total": 730,
+    "enabled": 714,
+    "disabled": 16,
+    "originalCount": 717,
+    "originalConfigurationsUnchanged": true,
+    "newConfigMatches": true,
+    "budgetsUnchanged": true
+  },
+  "totalsByKind": {
+    "external": 136,
+    "json_list": 21,
+    "mp_account": 71,
+    "rss": 267,
+    "web_list": 65,
+    "x_search": 170
+  },
+  "summary": {
+    "sources": 13,
+    "latestSuccessfulChecks": 13,
+    "nonemptySources": 10,
+    "emptySources": 3,
+    "discoveries": 19,
+    "distinctArticles": 19,
+    "newArticleIds": 18,
+    "reusedArticleIds": 1
+  },
+  "deduplication": {
+    "candidates": 13,
+    "publicChannels": 9,
+    "x": 4,
+    "exactExistingDuplicates": 0,
+    "pausedExactExistingDuplicates": 0,
+    "candidateInternalDuplicates": 0,
+    "nameOnlyLabelsNotInPrimaryWindow": 206,
+    "nameOnlyCountAddedTo13": 0,
+    "nameOnlyDisplayLabelVariants": 206,
+    "nameOnlyWithExistingNameClue": 59,
+    "nameOnlyWithExistingExplicitHandle": 0,
+    "feedbackLoopsExcluded": [
+      9285,
+      9614,
+      9615,
+      9616,
+      9617
+    ],
+    "pragmaticPublisherSignalGroupShared": true
+  },
+  "sources": [
+    {
+      "id": "corescope-rss-pragmatic-newsletter",
+      "name": "The Pragmatic Engineer：Newsletter",
+      "kind": "rss",
+      "entry": "https://newsletter.pragmaticengineer.com/feed",
+      "intervalMinutes": 360,
+      "participation": "editorial",
+      "latestRun": {
+        "id": 215444,
+        "status": "ok",
+        "started_at": "2026-11-01T15:04:10.064Z",
+        "finished_at": "2026-11-01T15:04:14.775Z",
+        "found_count": 20,
+        "new_count": 2,
+        "provider": null,
+        "truncated": null,
+        "coverage": null,
+        "gap": null,
+        "backlog": null,
+        "error_class": null
+      },
+      "initialXRun": null,
+      "discoveryLinks": 2,
+      "articleDateBounds": {
+        "earliest": "2026-10-29T13:37:13.000Z",
+        "latest": "2026-10-30T16:37:51.000Z"
+      },
+      "xCoverage": null,
+      "xGap": null,
+      "nextFetchAt": "2026-11-01T21:04:14.775Z",
+      "acceptance": "collected_materials"
+    },
+    {
+      "id": "corescope-rss-pydantic-articles",
+      "name": "Pydantic AI：官方文章",
+      "kind": "rss",
+      "entry": "https://pydantic.dev/feed.xml",
+      "intervalMinutes": 240,
+      "participation": "editorial",
+      "latestRun": {
+        "id": 215446,
+        "status": "ok",
+        "started_at": "2026-11-01T15:04:14.873Z",
+        "finished_at": "2026-11-01T15:04:17.111Z",
+        "found_count": 20,
+        "new_count": 2,
+        "provider": null,
+        "truncated": null,
+        "coverage": null,
+        "gap": null,
+        "backlog": null,
+        "error_class": null
+      },
+      "initialXRun": null,
+      "discoveryLinks": 2,
+      "articleDateBounds": {
+        "earliest": "2026-10-28T09:00:00.000Z",
+        "latest": "2026-10-30T00:00:00.000Z"
+      },
+      "xCoverage": null,
+      "xGap": null,
+      "nextFetchAt": "2026-11-01T19:04:17.111Z",
+      "acceptance": "collected_materials"
+    },
+    {
+      "id": "corescope-rss-sarvam-ai",
+      "name": "Sarvam AI：Blog",
+      "kind": "rss",
+      "entry": "https://www.sarvam.ai/rss.xml",
+      "intervalMinutes": 240,
+      "participation": "editorial",
+      "latestRun": {
+        "id": 215448,
+        "status": "ok",
+        "started_at": "2026-11-01T15:04:17.223Z",
+        "finished_at": "2026-11-01T15:04:18.483Z",
+        "found_count": 30,
+        "new_count": 2,
+        "provider": null,
+        "truncated": null,
+        "coverage": null,
+        "gap": null,
+        "backlog": null,
+        "error_class": null
+      },
+      "initialXRun": null,
+      "discoveryLinks": 2,
+      "articleDateBounds": {
+        "earliest": "2026-10-26T00:00:00.000Z",
+        "latest": "2026-10-27T00:00:00.000Z"
+      },
+      "xCoverage": null,
+      "xGap": null,
+      "nextFetchAt": "2026-11-01T19:04:18.483Z",
+      "acceptance": "collected_materials"
+    },
+    {
+      "id": "corescope-rss-steve-yegge-medium",
+      "name": "Steve Yegge：Medium",
+      "kind": "rss",
+      "entry": "https://medium.com/feed/@steve-yegge",
+      "intervalMinutes": 360,
+      "participation": "editorial",
+      "latestRun": {
+        "id": 215449,
+        "status": "ok",
+        "started_at": "2026-11-01T15:04:18.634Z",
+        "finished_at": "2026-11-01T15:04:20.439Z",
+        "found_count": 10,
+        "new_count": 2,
+        "provider": null,
+        "truncated": null,
+        "coverage": null,
+        "gap": null,
+        "backlog": null,
+        "error_class": null
+      },
+      "initialXRun": null,
+      "discoveryLinks": 2,
+      "articleDateBounds": {
+        "earliest": "2026-08-24T16:57:19.000Z",
+        "latest": "2026-10-27T00:00:52.000Z"
+      },
+      "xCoverage": null,
+      "xGap": null,
+      "nextFetchAt": "2026-11-01T21:04:20.439Z",
+      "acceptance": "collected_materials"
+    },
+    {
+      "id": "corescope-rss-gamma-changelog",
+      "name": "Gamma：Changelog",
+      "kind": "rss",
+      "entry": "https://meetgamma.canny.io/api/changelog/feed.rss",
+      "intervalMinutes": 360,
+      "participation": "editorial",
+      "latestRun": {
+        "id": 215451,
+        "status": "ok",
+        "started_at": "2026-11-01T15:04:20.568Z",
+        "finished_at": "2026-11-01T15:04:21.969Z",
+        "found_count": 10,
+        "new_count": 2,
+        "provider": null,
+        "truncated": null,
+        "coverage": null,
+        "gap": null,
+        "backlog": null,
+        "error_class": null
+      },
+      "initialXRun": null,
+      "discoveryLinks": 2,
+      "articleDateBounds": {
+        "earliest": "2026-08-28T18:20:34.000Z",
+        "latest": "2026-10-26T19:14:26.000Z"
+      },
+      "xCoverage": null,
+      "xGap": null,
+      "nextFetchAt": "2026-11-01T21:04:21.969Z",
+      "acceptance": "collected_materials"
+    },
+    {
+      "id": "corescope-web-eleutherai-blog",
+      "name": "EleutherAI：Blog",
+      "kind": "web_list",
+      "entry": "https://blog.eleuther.ai/",
+      "intervalMinutes": 360,
+      "participation": "editorial",
+      "latestRun": {
+        "id": 215452,
+        "status": "ok",
+        "started_at": "2026-11-01T15:04:22.045Z",
+        "finished_at": "2026-11-01T15:04:23.611Z",
+        "found_count": 3,
+        "new_count": 2,
+        "provider": null,
+        "truncated": null,
+        "coverage": null,
+        "gap": null,
+        "backlog": null,
+        "error_class": null
+      },
+      "initialXRun": null,
+      "discoveryLinks": 2,
+      "articleDateBounds": {
+        "earliest": "2026-08-25T00:00:00.000Z",
+        "latest": "2026-10-25T00:00:00.000Z"
+      },
+      "xCoverage": null,
+      "xGap": null,
+      "nextFetchAt": "2026-11-01T21:04:23.611Z",
+      "acceptance": "collected_materials"
+    },
+    {
+      "id": "corescope-x-addyosmani",
+      "name": "Addy Osmani · X",
+      "kind": "x_search",
+      "entry": "https://x.com/addyosmani",
+      "intervalMinutes": 1440,
+      "participation": "editorial",
+      "latestRun": {
+        "id": 215766,
+        "status": "ok",
+        "started_at": "2026-11-01T15:22:29.642Z",
+        "finished_at": "2026-11-01T15:22:32.421Z",
+        "found_count": 0,
+        "new_count": 0,
+        "provider": "bird",
+        "truncated": "true",
+        "coverage": "partial",
+        "gap": null,
+        "backlog": "1",
+        "error_class": null
+      },
+      "initialXRun": {
+        "id": 215443,
+        "status": "ok",
+        "found_count": 1,
+        "new_count": 1,
+        "provider": "bird",
+        "deferred": null,
+        "receipt_id": null
+      },
+      "discoveryLinks": 1,
+      "articleDateBounds": {
+        "earliest": "2026-11-01T02:00:00.000Z",
+        "latest": "2026-11-01T02:00:00.000Z"
+      },
+      "xCoverage": "partial",
+      "xGap": null,
+      "nextFetchAt": "2026-11-01T15:27:32.421Z",
+      "acceptance": "collected_materials"
+    },
+    {
+      "id": "corescope-x-dmwlff",
+      "name": "Adam Wolff · X",
+      "kind": "x_search",
+      "entry": "https://x.com/dmwlff",
+      "intervalMinutes": 1440,
+      "participation": "editorial",
+      "latestRun": {
+        "id": 215445,
+        "status": "ok",
+        "started_at": "2026-11-01T15:04:13.710Z",
+        "finished_at": "2026-11-01T15:04:16.190Z",
+        "found_count": 0,
+        "new_count": 0,
+        "provider": "bird",
+        "truncated": "false",
+        "coverage": "complete",
+        "gap": null,
+        "backlog": "0",
+        "error_class": null
+      },
+      "initialXRun": {
+        "id": 215445,
+        "status": "ok",
+        "found_count": 0,
+        "new_count": 0,
+        "provider": "bird",
+        "deferred": null,
+        "receipt_id": null
+      },
+      "discoveryLinks": 0,
+      "articleDateBounds": {
+        "earliest": null,
+        "latest": null
+      },
+      "xCoverage": "complete",
+      "xGap": null,
+      "nextFetchAt": "2026-11-02T15:04:16.190Z",
+      "acceptance": "successful_window_no_materials"
+    },
+    {
+      "id": "corescope-x-promptarmor",
+      "name": "PromptArmor · X",
+      "kind": "x_search",
+      "entry": "https://x.com/promptarmor",
+      "intervalMinutes": 1440,
+      "participation": "editorial",
+      "latestRun": {
+        "id": 215768,
+        "status": "ok",
+        "started_at": "2026-11-01T15:22:35.523Z",
+        "finished_at": "2026-11-01T15:22:38.049Z",
+        "found_count": 0,
+        "new_count": 0,
+        "provider": "bird",
+        "truncated": "true",
+        "coverage": "partial",
+        "gap": null,
+        "backlog": "1",
+        "error_class": null
+      },
+      "initialXRun": {
+        "id": 215447,
+        "status": "ok",
+        "found_count": 0,
+        "new_count": 0,
+        "provider": "bird",
+        "deferred": null,
+        "receipt_id": null
+      },
+      "discoveryLinks": 0,
+      "articleDateBounds": {
+        "earliest": null,
+        "latest": null
+      },
+      "xCoverage": "partial",
+      "xGap": null,
+      "nextFetchAt": "2026-11-01T15:27:38.049Z",
+      "acceptance": "successful_page_window_pending"
+    },
+    {
+      "id": "corescope-x-jensenhuang",
+      "name": "Jensen Huang 同名账号 · X",
+      "kind": "x_search",
+      "entry": "https://x.com/jensenhuang",
+      "intervalMinutes": 1440,
+      "participation": "editorial",
+      "latestRun": {
+        "id": 215769,
+        "status": "ok",
+        "started_at": "2026-11-01T15:22:39.044Z",
+        "finished_at": "2026-11-01T15:22:40.875Z",
+        "found_count": 0,
+        "new_count": 0,
+        "provider": "bird",
+        "truncated": "true",
+        "coverage": "unknown",
+        "gap": {
+          "to": "2026-11-01T15:22:39.062Z",
+          "from": "2026-10-30T15:04:18.642Z",
+          "reason": "empty_page_without_cursor"
+        },
+        "backlog": "0",
+        "error_class": null
+      },
+      "initialXRun": {
+        "id": 215450,
+        "status": "ok",
+        "found_count": 0,
+        "new_count": 0,
+        "provider": "bird",
+        "deferred": null,
+        "receipt_id": null
+      },
+      "discoveryLinks": 0,
+      "articleDateBounds": {
+        "earliest": null,
+        "latest": null
+      },
+      "xCoverage": "unknown",
+      "xGap": {
+        "to": "2026-11-01T15:22:39.062Z",
+        "from": "2026-10-30T15:04:18.642Z",
+        "reason": "empty_page_without_cursor"
+      },
+      "nextFetchAt": "2026-11-02T15:22:40.875Z",
+      "acceptance": "successful_page_window_pending"
+    },
+    {
+      "id": "corescope-web-openmoss-blog",
+      "name": "OpenMOSS：研究博客",
+      "kind": "web_list",
+      "entry": "https://openmoss.ai/blog/cn/",
+      "intervalMinutes": 240,
+      "participation": "editorial",
+      "latestRun": {
+        "id": 215453,
+        "status": "ok",
+        "started_at": "2026-11-01T15:04:23.679Z",
+        "finished_at": "2026-11-01T15:04:24.673Z",
+        "found_count": 13,
+        "new_count": 2,
+        "provider": null,
+        "truncated": null,
+        "coverage": null,
+        "gap": null,
+        "backlog": null,
+        "error_class": null
+      },
+      "initialXRun": null,
+      "discoveryLinks": 2,
+      "articleDateBounds": {
+        "earliest": "2026-08-09T16:00:00.000Z",
+        "latest": "2026-10-28T16:00:00.000Z"
+      },
+      "xCoverage": null,
+      "xGap": null,
+      "nextFetchAt": "2026-11-01T19:04:24.673Z",
+      "acceptance": "collected_materials"
+    },
+    {
+      "id": "corescope-web-lg-ai-research-blog",
+      "name": "LG AI Research：官方研究博客",
+      "kind": "json_list",
+      "entry": "https://www.lgresearch.ai/api/board/blog/list?pg=1&pgSz=12&schExpsYn=Y&schLangTp=en&schCatgCd=BAAACC&sordFld=sort&sordMetd=ASC",
+      "intervalMinutes": 240,
+      "participation": "editorial",
+      "latestRun": {
+        "id": 215652,
+        "status": "ok",
+        "started_at": "2026-11-01T15:12:05.411Z",
+        "finished_at": "2026-11-01T15:12:06.541Z",
+        "found_count": 12,
+        "new_count": 2,
+        "provider": null,
+        "truncated": null,
+        "coverage": null,
+        "gap": null,
+        "backlog": null,
+        "error_class": null
+      },
+      "initialXRun": null,
+      "discoveryLinks": 2,
+      "articleDateBounds": {
+        "earliest": "2026-10-13T00:00:00.000Z",
+        "latest": "2026-10-26T00:00:00.000Z"
+      },
+      "xCoverage": null,
+      "xGap": null,
+      "nextFetchAt": "2026-11-01T19:12:06.541Z",
+      "acceptance": "collected_materials"
+    },
+    {
+      "id": "corescope-rss-trailofbits-blog",
+      "name": "Trail of Bits：AI安全研究",
+      "kind": "rss",
+      "entry": "https://blog.trailofbits.com/index.xml",
+      "intervalMinutes": 240,
+      "participation": "editorial",
+      "latestRun": {
+        "id": 215470,
+        "status": "ok",
+        "started_at": "2026-11-01T15:04:50.412Z",
+        "finished_at": "2026-11-01T15:04:53.092Z",
+        "found_count": 20,
+        "new_count": 1,
+        "provider": null,
+        "truncated": null,
+        "coverage": null,
+        "gap": null,
+        "backlog": null,
+        "error_class": null
+      },
+      "initialXRun": null,
+      "discoveryLinks": 2,
+      "articleDateBounds": {
+        "earliest": "2026-10-14T11:00:00.000Z",
+        "latest": "2026-10-21T16:03:32.000Z"
+      },
+      "xCoverage": null,
+      "xGap": null,
+      "nextFetchAt": "2026-11-01T19:04:53.092Z",
+      "acceptance": "collected_materials"
+    }
+  ],
+  "historicalEleuther": [
+    {
+      "id": "nc7fcjcy1mrnx9z7scqz3y5hf",
+      "source_id": "corescope-web-eleutherai-blog",
+      "url": "https://blog.eleuther.ai/subliminal-learning-pretraining/",
+      "published_at": "2026-10-25T00:00:00.000Z",
+      "published_at_claim": "2026-10-25T00:00:00.000Z",
+      "timeline_at": "2026-10-25T00:00:00.000Z",
+      "backfill": true,
+      "processing_state": "skipped",
+      "visibility": "withdrawn",
+      "eligible": false,
+      "selected": false,
+      "analyses": 0,
+      "fact_memberships": 0
+    },
+    {
+      "id": "q12jfv2hoysng658pt5ox2imz",
+      "source_id": "corescope-web-eleutherai-blog",
+      "url": "https://blog.eleuther.ai/aletheia-retrospective/",
+      "published_at": "2026-08-25T00:00:00.000Z",
+      "published_at_claim": "2026-08-25T00:00:00.000Z",
+      "timeline_at": "2026-08-25T00:00:00.000Z",
+      "backfill": true,
+      "processing_state": "skipped",
+      "visibility": "withdrawn",
+      "eligible": false,
+      "selected": false,
+      "analyses": 0,
+      "fact_memberships": 0
+    }
+  ],
+  "xRequestEvidence": {
+    "checkedAt": "2026-11-01T15:25:39.791Z",
+    "summary": [
+      {
+        "sourceId": "corescope-x-addyosmani",
+        "runCount": 2,
+        "followupRunCount": 1,
+        "runStatuses": [
+          "ok",
+          "ok"
+        ],
+        "receiptCount": 2,
+        "liveAttemptCount": 2,
+        "followupLiveAttemptCount": 1,
+        "pendingOrUnknownReceiptCount": 0,
+        "pendingOrUnknownAttemptCount": 0,
+        "followupReused": false,
+        "reuseEvidence": "Compared subject-matched live attempt start with the single follow-up fetch run; no raw request/response or pagination tokens read."
+      },
+      {
+        "sourceId": "corescope-x-dmwlff",
+        "runCount": 1,
+        "followupRunCount": 0,
+        "runStatuses": [
+          "ok"
+        ],
+        "receiptCount": 1,
+        "liveAttemptCount": 1,
+        "followupLiveAttemptCount": 0,
+        "pendingOrUnknownReceiptCount": 0,
+        "pendingOrUnknownAttemptCount": 0,
+        "followupReused": null,
+        "reuseEvidence": "No follow-up requested for complete source."
+      },
+      {
+        "sourceId": "corescope-x-promptarmor",
+        "runCount": 2,
+        "followupRunCount": 1,
+        "runStatuses": [
+          "ok",
+          "ok"
+        ],
+        "receiptCount": 2,
+        "liveAttemptCount": 2,
+        "followupLiveAttemptCount": 1,
+        "pendingOrUnknownReceiptCount": 0,
+        "pendingOrUnknownAttemptCount": 0,
+        "followupReused": false,
+        "reuseEvidence": "Compared subject-matched live attempt start with the single follow-up fetch run; no raw request/response or pagination tokens read."
+      },
+      {
+        "sourceId": "corescope-x-jensenhuang",
+        "runCount": 2,
+        "followupRunCount": 1,
+        "runStatuses": [
+          "ok",
+          "ok"
+        ],
+        "receiptCount": 2,
+        "liveAttemptCount": 2,
+        "followupLiveAttemptCount": 1,
+        "pendingOrUnknownReceiptCount": 0,
+        "pendingOrUnknownAttemptCount": 0,
+        "followupReused": false,
+        "reuseEvidence": "Compared subject-matched live attempt start with the single follow-up fetch run; no raw request/response or pagination tokens read."
+      }
+    ],
+    "runCount": 7,
+    "receiptCount": 7,
+    "liveAttemptCount": 7
+  },
+  "pending": {
+    "xWindowCoverage": [
+      "corescope-x-addyosmani",
+      "corescope-x-promptarmor",
+      "corescope-x-jensenhuang"
+    ],
+    "trailOfBitsTargetOriginal": "HTTP404; working RSS does not close the missing 2026-10-27 original-article evidence",
+    "historyScope": "Bounded first import and feed/list windows; no whole-history or whole-site completeness claim"
+  },
+  "validation": {
+    "backendTests": 993,
+    "webTests": 40,
+    "siteSmokeChecks": 35,
+    "typecheck": true,
+    "webBuild": true,
+    "publicAcceptance": {
+      "at": "2026-11-01T15:20:45.018Z",
+      "base": "http://127.0.0.1:8780",
+      "healthStatus": 200,
+      "resourceStatus": 200,
+      "reference": {
+        "id": "corescope-web-eleutherai-blog:reference:734b66f7bff3",
+        "name": "EleutherAI · Subliminal Learning 研究资料",
+        "category": "模型训练与安全研究",
+        "url": "https://blog.eleuther.ai/subliminal-learning-pretraining/",
+        "description": "原始发布日期2026-10-25；按研究资料浏览，不计作本周新发新闻。未来同源新文章继续正常新闻筛选。",
+        "status": "reference",
+        "checkedAt": "2026-11-01T15:04:23.611Z"
+      },
+      "referenceCount": 1,
+      "pageStatus": 200,
+      "pageContainsReferenceAndNewLabels": true,
+      "historical": [
+        {
+          "id": "nc7fcjcy1mrnx9z7scqz3y5hf",
+          "publicDetailStatus": 404
+        },
+        {
+          "id": "q12jfv2hoysng658pt5ox2imz",
+          "publicDetailStatus": 404
+        }
+      ]
+    },
+    "regeneration": {
+      "checkedAt": "2026-11-01T15:13:24.179022+00:00",
+      "mode": "SQLite mode=ro, PRAGMA query_only=ON; --sources-only equivalent arguments",
+      "expectedSources": 730,
+      "regeneratedSources": 730,
+      "missingIds": [],
+      "extraIds": [],
+      "changedSources": [],
+      "sourceArrayOrderMatches": false,
+      "mappingSourcesIdentical": false,
+      "summaryDifferingFields": [
+        "supplemental_source_ids"
+      ],
+      "identicalSourceConfigurations": true,
+      "trackedFilesWritten": 0,
+      "v2Writes": 0,
+      "paidCalls": 0
+    },
+    "backupBytes": 1835413747,
+    "sourceUpgrade": {
+      "scoped": 13,
+      "updated": 0,
+      "unchanged": 13,
+      "skipped": 0
+    }
+  },
+  "runtime": {
+    "schedules": [
+      {
+        "job": "content.priority",
+        "started_at": "2026-11-01T15:24:27.067Z",
+        "finished_at": "2026-11-01T15:24:27.832Z",
+        "status": "ok"
+      },
+      {
+        "job": "sources.schedule",
+        "started_at": "2026-11-01T15:24:17.598Z",
+        "finished_at": "2026-11-01T15:24:17.848Z",
+        "status": "ok"
+      },
+      {
+        "job": "content.priority",
+        "started_at": "2026-11-01T15:23:27.058Z",
+        "finished_at": "2026-11-01T15:23:28.858Z",
+        "status": "ok"
+      },
+      {
+        "job": "sources.schedule",
+        "started_at": "2026-11-01T15:23:17.577Z",
+        "finished_at": "2026-11-01T15:23:17.721Z",
+        "status": "ok"
+      },
+      {
+        "job": "sources.schedule",
+        "started_at": "2026-11-01T15:22:47.575Z",
+        "finished_at": "2026-11-01T15:22:47.768Z",
+        "status": "ok"
+      },
+      {
+        "job": "content.priority",
+        "started_at": "2026-11-01T15:22:42.038Z",
+        "finished_at": "2026-11-01T15:22:42.689Z",
+        "status": "ok"
+      }
+    ],
+    "bridge": {
+      "checkedAt": "2026-11-01T15:26:02.180Z",
+      "status": "held_on_existing_invalid_utf8",
+      "predatesThisSourceExpansion": true,
+      "firstIdenticalPostgresErrorCST": "2026-10-31 21:42:43",
+      "lastSuccessfulImportCST": "2026-10-31 21:40:38",
+      "cursorUpstreamId": 253449,
+      "blockedUpstreamId": 253450,
+      "canonicalSourceId": "v2-source-98",
+      "host": "www.broadcom.com",
+      "reason": "NUL in bodyText and v2Metadata.originalRawContent; additional controls and replacement characters indicate corrupted or non-text content",
+      "nulPerField": 838,
+      "native13Blocked": false,
+      "V2Writes": 0,
+      "cursorSkipped": false,
+      "fixApplied": false
+    }
+  },
+  "v2Access": {
+    "mode": "read_only",
+    "writes": 0,
+    "restarts": 0
+  },
+  "limits": [
+    "Collection is distinct from analysis, selection and publication.",
+    "JensenHuang is an exact same-name X account, not verified NVIDIA corporate identity."
+  ]
+}

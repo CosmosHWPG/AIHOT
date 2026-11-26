@@ -24,12 +24,15 @@ function runTranslation() {
     import { shutdownSignal } from '@aihot/backend/jobs/queue';
     import { closeDb } from '@aihot/backend/db';
     process.on('SIGTERM', () => { shutdownSignal.abort(); process.send({ stopped: true }); });
+    process.on('message', message => {
+      if (message && message.action === 'shutdown') process.emit('SIGTERM');
+    });
     try { process.send({ result: await translatePending({ limit: 1 }) }); }
     finally { await closeDb(); process.disconnect(); }
   `;
   const child = spawn(process.execPath, ['--input-type=module', '-e', script], {
     cwd: process.cwd(), env: { ...process.env, MODEL_CALLS_ENABLED: 'true', TRANSLATE_MODEL: 'deepseek-flash', DEEPSEEK_BASE_URL: `${provider.url}/v1`, DEEPSEEK_API_KEY: 'test-key', AIHOT_CREDENTIALS_DIR: '/nonexistent-test-credentials' },
-    stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
+    windowsHide: true, stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
   });
   let result: any;
   let stderr = '';
@@ -53,13 +56,14 @@ for (const misaligned of [false, true]) test(`SIGTERM finishes the sent ${misali
   active = { asked: gate(), hold: gate(), calls: 0, misaligned };
   const first = misaligned ? `First paragraph ${T}.` : `First paragraph ${T}. ${'English text '.repeat(170)}`;
   const second = misaligned ? `Second paragraph ${T}.` : `Second paragraph ${T}. ${'More English '.repeat(170)}`;
-  const { articleId } = await upsertMaterial({ sourceId: SOURCE, url: `https://example.org/translation-shutdown-${T}/${misaligned}`, title: `Shutdown ${T}`, bodyHtml: `<p>${first}</p><p>${second}</p>`, bodyText: first + second, bodyStatus: 'ok', language: 'en', via: 'fetch', publishedAt: new Date(), discoveredAt: new Date(Date.now() + 86_400_000) });
+  const { articleId } = await upsertMaterial({ sourceId: SOURCE, url: `https://example.org/translation-shutdown-${T}/${misaligned}`, title: `Shutdown ${T}`, bodyHtml: `<p>${first}</p><p>${second}</p>`, bodyText: first + second, bodyStatus: 'ok', language: 'en', via: 'fetch', publishedAt: new Date(Date.now() - 1_000), discoveredAt: new Date(Date.now() + 86_400_000) });
   await sql`INSERT INTO analyses (article_id,input_revision,origin,relevance,category,title_zh,summary_zh,reason_zh,score,selected)
     VALUES (${articleId},1,'rule','pass','ai-models',${`终止测试${T}`},'摘要','理由',90,true)`;
   await publishArticle(articleId, { releasedAt: new Date(Date.now() - 60_000) });
   const interrupted = runTranslation();
   await Promise.race([active.asked.promise, interrupted.done.then(() => assert.fail('translation ended before a request'))]);
-  interrupted.child.kill('SIGTERM');
+  if (process.platform === 'win32') interrupted.child.send({ action: 'shutdown' });
+  else interrupted.child.kill('SIGTERM');
   await interrupted.stopped;
   active.hold.open();
   assert.deepEqual(await interrupted.done, { done: [], quotes: 0 });

@@ -1,21 +1,26 @@
-import { SITE } from "@aihot/industry/site";
+import { SITE, SOURCE_DEFAULTS } from "@aihot/site";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import type { AdminSourceCreated, AdminSourcePreview } from "@aihot/contracts/admin";
 import type { Route } from "./+types/source-new";
+import type { AdminSourceCreated, AdminSourcePreview } from "@aihot/contracts/admin";
 import { useAdminAction } from "../../features/admin/action";
 import { bj } from "../../features/admin/format";
-import { KIND_LABEL, MODE_LABEL, TIER_LABEL } from "../../features/admin/labels";
+import { KIND_LABEL, MODE_LABEL, SELECTION_CLASS_LABEL, TIER_LABEL } from "../../features/admin/labels";
 import { AdminPage, Button, Card, Empty, Field, Input, Select, Textarea } from "../../features/admin/ui";
 
 export const meta: Route.MetaFunction = () => [{ title: `新建信源 · ${SITE.name} 后台` }];
+
+const MP_TEMPLATES: Record<string, Record<string, unknown>> = {
+  wx_cache: { transport: "wx_cache", account: "", cacheDirectoryEnv: "WX_CACHE_DIRECTORY", limit: 8, lookbackDays: 7, fetchPublicContent: true },
+  dajiala: { transport: "dajiala", ghid: "", nickname: "" },
+};
 
 const TEMPLATES: Record<string, Record<string, unknown>> = {
   rss: { feedUrl: "https://example.com/feed.xml" },
   web_list: { url: "https://example.com/blog", baseUrl: "https://example.com", itemSelector: "article", linkSelector: "a", titleSelector: "h2", allowUrlPrefixes: ["https://example.com/blog/"] },
   json_list: { url: "https://example.com/api/posts", mode: "json_api", method: "GET", itemsPath: "data.items", titlePaths: ["title"], urlTemplate: "{raw:url}", summaryPaths: ["summary"] },
-  x_search: { query: "from:handle -filter:replies", searchType: "Latest" },
-  mp_account: { biz: "", name: "" },
+  x_search: { query: "from:handle -filter:replies", searchType: "Latest", provider: "socialdata" },
+  mp_account: MP_TEMPLATES.wx_cache!,
   external: {},
 };
 
@@ -23,11 +28,32 @@ const TEMPLATES: Record<string, Record<string, unknown>> = {
 export default function NewSource() {
   const navigate = useNavigate();
   const { run, pending } = useAdminAction();
-  const [form, setForm] = useState({ id: "", name: "", kind: "rss", tier: "T2", participation_mode: "editorial", interval_minutes: 30, first_party: false, site_fulltext: true, syndicate_fulltext: false, tags: "" });
+  const [form, setForm] = useState({ id: "", name: "", kind: "rss", tier: "T2", selection_class: "", participation_mode: "editorial", interval_minutes: 30, first_party: false, site_fulltext: false, syndicate_fulltext: false, tags: "" });
   const [config, setConfig] = useState(JSON.stringify(TEMPLATES.rss, null, 2));
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<AdminSourcePreview | null>(null);
   const [duplicate, setDuplicate] = useState<{ id: string; name: string } | null>(null);
+  const mpTransport = (() => {
+    try { return JSON.parse(config)?.transport === "wx_cache" ? "wx_cache" : "dajiala"; }
+    catch { return "wx_cache"; }
+  })();
+  const xProvider = (() => {
+    try { return String(JSON.parse(config)?.provider ?? "socialdata"); }
+    catch { return "socialdata"; }
+  })();
+  const setXProvider = (provider: string) => {
+    try {
+      const next = { ...JSON.parse(config), provider };
+      if (provider === "bird") {
+        next.searchType = "Latest";
+        next.bird ??= { accountProfile: "birdclaw-primary", strategy: "user_tweets", maxPagesPerRound: 1 };
+        next._aihot = { ...next._aihot, initialBackfillLimit: Math.max(20, Number(next._aihot?.initialBackfillLimit ?? 20)) };
+      } else delete next.bird;
+      setConfig(JSON.stringify(next, null, 2));
+      setError(null);
+      setPreview(null);
+    } catch { setError("请先修正采集配置 JSON，再切换 X 供应商。"); }
+  };
 
   const parsed = () => {
     try {
@@ -62,6 +88,30 @@ export default function NewSource() {
                 {Object.entries(KIND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </Select>
             </Field>
+            {form.kind === "x_search" && (
+              <Field label="X 采集供应商" hint={xProvider === "bird"
+                ? "Bird 使用后端已授权会话，只读账号时间线；仅支持 from:账号 -filter:replies。凭据保存在本机私有配置，禁止填入 JSON。"
+                : "SocialData 与 Xquik 使用后端 API 凭据及各自预算；预览也会消耗供应商额度。凭据禁止填入 JSON。"}>
+                <Select value={xProvider} onChange={(e) => setXProvider(e.target.value)}>
+                  <option value="socialdata">SocialData（搜索 API）</option>
+                  <option value="xquik">Xquik（搜索 API）</option>
+                  <option value="bird">Bird（已授权账号会话）</option>
+                </Select>
+              </Field>
+            )}
+            {form.kind === "mp_account" && (
+              <Field label="公众号采集方式" hint={mpTransport === "wx_cache"
+                ? "读取已授权本机缓存；填写准确公众号名称或原始 ID，并保持缓存更新。"
+                : "后端需配置 DAJIALA_KEY 和服务余额；列表与正文按请求计费，创建后可试抓。"}>
+                <Select value={mpTransport} onChange={(e) => {
+                  setConfig(JSON.stringify(MP_TEMPLATES[e.target.value], null, 2));
+                  setPreview(null);
+                }}>
+                  <option value="wx_cache">本机公众号缓存</option>
+                  <option value="dajiala">极致了 API</option>
+                </Select>
+              </Field>
+            )}
             <Field label="采集间隔（分钟）">
               <Input type="number" min={1} max={1440} value={form.interval_minutes} onChange={(e) => setForm({ ...form, interval_minutes: Number(e.target.value) })} />
             </Field>
@@ -70,17 +120,23 @@ export default function NewSource() {
                 {Object.entries(MODE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </Select>
             </Field>
-            <Field label="等级">
+            <Field label="等级" hint="用于确定精选分数门槛">
               <Select value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value })}>
                 {Object.entries(TIER_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </Select>
+            </Field>
+            <Field label="类别" hint="抬高精选门槛，一手身份不变">
+              <Select value={form.selection_class} onChange={(e) => setForm({ ...form, selection_class: e.target.value })}>
+                <option value="">无（按等级）</option>
+                {Object.entries(SELECTION_CLASS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </Select>
             </Field>
             <Field label="标签（逗号分隔）">
               <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
             </Field>
-            <div className="flex flex-col justify-end gap-2 text-[13px] text-ink-2">
+            <div className="flex flex-col justify-end gap-2 text-ui-label text-ink-2">
               {([
-                ["first_party", "一手信源"],
+                ["first_party", "标记为一手信源"],
                 ["site_fulltext", "站内可展示全文"],
                 ["syndicate_fulltext", "对外接口可带全文"],
               ] as const).map(([k, label]) => (
@@ -93,18 +149,19 @@ export default function NewSource() {
           </div>
           <div className="mt-4">
             <Field label="采集配置（JSON）">
-              <Textarea className="font-mono !text-[12px]" rows={10} value={config} onChange={(e) => setConfig(e.target.value)} spellCheck={false} />
+              <Textarea className="font-mono !text-ui-caption" rows={10} value={config} onChange={(e) => setConfig(e.target.value)} spellCheck={false} />
             </Field>
-            {error && <div className="mt-1 text-[12.5px] text-hot">{error}</div>}
+            {error && <div className="mt-1 text-ui-caption-lg text-hot">{error}</div>}
           </div>
           {duplicate && (
-            <div className="mt-4 rounded-card bg-amber/10 px-4 py-3 text-[13px] text-ink-2 ring-1 ring-amber/25">
+            <div className="mt-4 rounded-card bg-amber/10 px-4 py-3 text-ui-label text-ink-2 ring-1 ring-amber/25">
               这个地址已经在监控：<Link className="font-medium text-accent" to={`/admin/sources/${encodeURIComponent(duplicate.id)}`}>{duplicate.name}</Link>（{duplicate.id}）。没有新建。
             </div>
           )}
           <div className="mt-5 flex justify-end gap-2">
             <Button
               busy={pending === "preview"}
+              disabled={form.kind === "mp_account" && mpTransport !== "wx_cache"}
               onClick={async () => {
                 const c = parsed();
                 if (!c) return;
@@ -124,7 +181,7 @@ export default function NewSource() {
                 const r = await run<AdminSourceCreated>(
                   "POST",
                   "/api/admin/sources",
-                  { ...form, tags: form.tags.split(/[,，]/).map((t) => t.trim()).filter(Boolean), config: c },
+                  { ...form, selection_class: form.selection_class || null, tags: form.tags.split(/[,，]/).map((t) => t.trim()).filter(Boolean), config: c },
                   { label: "create", revalidate: false },
                 );
                 if (!r) return;
@@ -136,16 +193,18 @@ export default function NewSource() {
             </Button>
           </div>
         </Card>
-        <Card title={preview ? `预览：${preview.count} 条（${preview.ms}ms）` : "预览"}>
+        <Card title={preview ? `预览：${preview.count} 条（${preview.ms}ms）` : form.kind === "mp_account" && mpTransport === "dajiala" ? "API 试抓" : "预览"}>
           {!preview ? (
-            <Empty>填好配置后点“预览抓取”，这里显示将会采集到的条目（不入库）。</Empty>
+            <Empty>{form.kind === "mp_account" && mpTransport === "dajiala"
+              ? "先配置后端密钥、服务余额与预算，创建信源后使用抓取按钮验证。列表及正文请求可能产生费用。"
+              : "填好配置后点“预览抓取”，这里显示将会采集到的条目（不入库）。"}</Empty>
           ) : preview.items.length ? (
             <ul className="space-y-3">
               {preview.items.map((i) => (
-                <li key={i.url} className="text-[13px]">
+                <li key={i.url} className="text-ui-label">
                   <a href={i.url} target="_blank" rel="noreferrer" className="font-medium text-ink hover:text-accent">{i.title}</a>
-                  <div className="text-[12px] text-ink-4">{i.publishedAt ? bj(i.publishedAt, true) : "无发布时间"}</div>
-                  {i.excerpt && <div className="mt-0.5 line-clamp-2 text-[12.5px] text-ink-3">{i.excerpt}</div>}
+                  <div className="text-ui-caption text-ink-4">{i.publishedAt ? bj(i.publishedAt, true) : "无发布时间"}</div>
+                  {i.excerpt && <div className="mt-0.5 line-clamp-2 text-ui-caption-lg text-ink-3">{i.excerpt}</div>}
                 </li>
               ))}
             </ul>

@@ -9,7 +9,7 @@ export async function registerSourceJobs(boss: PgBoss) {
   await work(boss, QUEUES.fetchSource, { localConcurrency: Number(process.env.FETCH_CONCURRENCY || 8), pollingIntervalSeconds: 2 }, async (data) => {
     return collectSource(data.sourceId, { force: data.force });
   });
-  // One search per shard of X accounts; the SocialData per-minute budget is shared with the reset monitor.
+  // Each provider has its own shard and budget; SocialData also shares its budget with the reset monitor.
   await work(boss, QUEUES.fetchXShard, { localConcurrency: 2, pollingIntervalSeconds: 2 }, async (data) => {
     return collectXShard(data.key, data.sourceIds);
   });

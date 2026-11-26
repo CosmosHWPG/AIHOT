@@ -1,48 +1,60 @@
 // Event grouping. A report attaches to a fact, the same real-world occurrence, and
-// facts hang on a story, an occurrence with its direct developments. Recall: the same title-and-
-// summary embedding on both sides over the reports of the last 14 days, plus the same URL and the X
-// post a post replies to or quotes. Identity: one three-way relation judgement over the candidate
+// facts hang on a story, an occurrence with its direct developments. Recall (recall.ts): the same
+// title-and-summary embedding on both sides over the reports of the last 14 days (shared bigrams
+// without an embedding key), plus the same URL and the X post a post replies to or quotes.
+// Identity: one four-way relation judgement over the candidate
 // facts with their representative reports fully described (relate.ts); a merge that is not obvious
 // from similarity is confirmed by a second vendor before it is written; a development attaches only
-// to the fact that started its story, so stories do not grow by chaining. Manual corrections are
-// never overwritten; a revision keeps its membership unless an editor asks for a regroup. When a
+// to the fact that started its story, so stories do not grow by chaining. Manual corrections
+// (corrections.ts) are never overwritten; a revision keeps its membership unless an editor asks for a regroup or its
+// structure identifies it as composite. Composite material only mentions facts, never starts or
+// joins a fact/story and never supplies a root or bridge. When a
 // report is firmly tied to two stories, their roots are compared directly and the stories merge
-// when both models see one story (consolidate); stories that stay apart though reports keep tying
+// when both models see one story (consolidate.ts); stories that stay apart though reports keep tying
 // them list each other as related (linkRelatedStories). A story a regrouped report leaves without
-// reports merges into where it went, so its address keeps working. A report waiting for a regroup
-// (regroup_pending) is not evidence for others until it is decided again, so a regroup in discovery
-// order sees what live grouping would have seen. Discussion posts that found no story get another
-// look when a report founds a fact close to them (rematchSignals); history (isHistorical) founds no
-// event. Runs serially (queue concurrency 1).
-import { beijingDate } from "@aihot/contracts/time";
-import { candidateViews, recallFacts, relatedPosts, vectorsFor } from "./recall.ts";
-import { consolidate, liveStory, type Consolidation } from "./consolidate.ts";
-import { modelFor } from "../editorial/models.ts";
+// reports merges into where it went, so its address keeps working. A discussion post is recalled by
+// reports and by the posts already attached to a fact; one that found no story gets another look,
+// while it still counts for heat, whenever a fact close to it gains evidence (rematchSignals). History
+// (isHistorical) founds no event. A report about to open a card is compared with the cards readers
+// already see (cards.ts). Runs serially (queue concurrency 1).
+import { modelFor, modelRoute } from "../editorial/models.ts";
+import { beijingDate, beijingMidnight } from "@aihot/contracts/time";
 import { sql, type Db, type Tx } from "../db.ts";
-import { newShortId, newUuid } from "../lib/ids.ts";
-import { chatJson } from "../providers/llm.ts";
-import { completeReceipt } from "../providers/receipts.ts";
-import { embeddingsAvailable, cosine } from "../providers/embeddings.ts";
-import { isHistorical, STALE_ON_DISCOVERY_MS } from "../content/materials.ts";
-import { enqueue, QUEUES } from "../jobs/queue.ts";
-import { invalidateStoryInputs, lockStoryMembership } from "./derived-content.ts";
-import { publishArticle } from "../publication/publish.ts";
-import { mergeStoryInto } from "./merge.ts";
+import { newShortId, newUuid, sha256, stableJson } from "../lib/ids.ts";
+import { chatJson, MODELS } from "../providers/llm.ts";
+import { completeReceipt, failedReceiptId, failureKind } from "../providers/receipts.ts";
+import { embeddingsAvailable } from "../providers/embeddings.ts";
+import { isHistorical, newsCondition } from "../content/materials.ts";
+import { enqueue, QUEUES, shutdownSignal } from "../jobs/queue.ts";
+import { groupingPriority } from "../jobs/content.ts";
+import { editorialPolicy } from "../modules.ts";
+import { publishArticle, publishArticleTx, republishTx } from "../publication/publish.ts";
+import { isIndependentSelectedSource } from "../publication/rules.ts";
+import { groupingEvidenceCondition, latestCompositeCondition } from "../publication/scope.ts";
+import { alreadyOnCard, echoesOnCard, factHasCard, foldsUnder, ownArticleOnCard, readerOf, retireCardTx, seenOnCard } from "./cards.ts";
+import { consolidate, liveStory, type Consolidation } from "./consolidate.ts";
+import { HEAT_WINDOW_HOURS } from "./hot.ts";
+import { mergeFactInto, mergeStoryInto } from "./merge.ts";
+import { bestPerFact, candidateViews, cosine32, RECALL_DAYS, recallFacts, recallFactsByPosts, recallSelectedBackground, relatedPosts, vectorsFor, type Recalled, type CardRow } from "./recall.ts";
 import {
-  BATCH_SYSTEM, BatchSchema, PAIR_SYSTEM, PairSchema, RELATE_PROMPT_VERSION, SIGNAL_SYSTEM, STORY_REVIEW_MIN_CONFIDENCE, SignalSchema, TIE_MIN_CONFIDENCE,
-  batchUser, firmlyTied, lexicalSimilarity, looksLikeRoundup, pairUser, reportText, sameOccurrence, signalTarget, storyForDevelopment, verdictsByFact,
-  type CandidateView, type Relation, type ReportView, type Verdict,
+  BATCH_SYSTEM, BATCH_PROMPT_VERSION, BatchSchema, PAIR_SYSTEM, PairSchema, RELATE_PROMPT_VERSION, SIGNAL_SYSTEM, SignalSchema, TIE_MIN_CONFIDENCE,
+  batchUser, completeDecisions, describeReport, firmlyTied, pairUser, reportText, sameOccurrence, signalTarget, signalText, storyForDevelopment, verdictsByFact,
+  type CandidateView, type ReadingContext, type Relation, type ReportView, type SelectionValue, type Verdict,
 } from "./relate.ts";
 
-export const GROUP_PROMPT_VERSION = RELATE_PROMPT_VERSION;
-/** Reports discovered this recently are candidates (keyed on discovery, so an old page found today still meets its peers). */
 const RECALL_MIN_COSINE = 0.6;
 const RECALL_TOP_FACTS = 10;
 /** A merge with a candidate less similar than this is confirmed by the review model before it is written. */
 const CONFIRM_BELOW_COSINE = 0.85;
-/** Discussion posts are judged only against clear candidates, and attach without a call when nearly identical. */
+/** Discussion posts are judged only against clear candidates, and attach without a call when nearly identical to a report. */
 const SIGNAL_MIN_COSINE = 0.72;
 const SIGNAL_AUTO_COSINE = 0.92;
+/**
+ * A post this close to a post already attached to a fact is judged against that fact (never attached
+ * without the judge). Posts about one happening paraphrase each other more closely than its reports;
+ * below this, the judge's yes was wrong or doubtful far more often.
+ */
+const SIGNAL_PEER_MIN_COSINE = 0.78;
 const SIGNAL_TOP_FACTS = 4;
 
 interface ArticleRow {
@@ -51,33 +63,37 @@ interface ArticleRow {
   title: string;
   url: string;
   published_at: Date | null;
+  publication_time: string | null;
   discovered_at: Date;
   grouped_at: Date | null;
   body_text: string | null;
-  x_post: { tweetId?: string; replyTo?: string | null; quoted?: { url?: string } | null } | null;
+  x_post: { tweetId?: string; replyTo?: string | null; quoted?: { tweetId?: string | null; url?: string } | null } | null;
   source_id: string;
   source_name: string;
   signal_group_id: string | null;
   first_party: boolean;
   participation_mode: string;
-  regroup_pending: boolean;
   backfill: boolean;
 }
 
-export function participantKey(source: { id: string; signal_group_id: string | null }): string {
+/**
+ * The participant as recorded when the signal was written. Heat reads the participant from the current
+ * source (events/hot.ts currentSignals), so a later change of group or owner reaches it at once.
+ */
+function participantKey(source: { id: string; signal_group_id: string | null }): string {
   return source.signal_group_id ? `group:${source.signal_group_id}` : `source:${source.id}`;
 }
 
-// ---------------------------------------------------------------------------
 // Judgement
-// ---------------------------------------------------------------------------
 
-async function judgeBatch(articleId: string, query: ReportView, cands: CandidateView[]): Promise<{ verdicts: Map<number, Verdict>; receiptId: number }> {
+const NO_SELECTED_COVERAGE: SelectionValue = { addsValue: true, reason: "没有已公开精选的相关报道" };
+
+async function judgeBatch(articleId: string, query: ReportView, cands: CandidateView[], reading: ReadingContext[]): Promise<{ verdicts: Map<number, Verdict>; selection: SelectionValue; receiptId: number }> {
   const res = await chatJson({
-    model: await modelFor("group"), purpose: "group_article", subject: `article:${articleId}`, promptVersion: RELATE_PROMPT_VERSION,
-    system: BATCH_SYSTEM, user: batchUser(query, cands), schema: BatchSchema, temperature: 0, maxTokens: 200 + 90 * cands.length,
+    ...await modelRoute("group"), purpose: "group_article", subject: `article:${articleId}`, promptVersion: BATCH_PROMPT_VERSION,
+    system: BATCH_SYSTEM, user: batchUser(query, cands, "新报道", reading), schema: BatchSchema.refine(value => completeDecisions(value.decisions, cands.length), "Every candidate requires exactly one decision"), temperature: 0, maxTokens: 400 + 120 * cands.length,
   });
-  return { verdicts: verdictsByFact(res.data.decisions, cands), receiptId: res.receiptId };
+  return { verdicts: verdictsByFact(res.data.decisions, cands), selection: cands.some(c => c.selected) || reading.length ? res.data.selection : NO_SELECTED_COVERAGE, receiptId: res.receiptId };
 }
 
 /** The review model reads both reports on their own; a merge stands only when it agrees. */
@@ -89,33 +105,179 @@ async function confirmMerge(articleId: string, query: ReportView, cand: Candidat
   return { relation: res.data.relation, receiptId: res.receiptId };
 }
 
-async function judgeSignal(articleId: string, query: ReportView, cands: CandidateView[]): Promise<{ verdicts: Map<number, Verdict>; receiptId: number }> {
+async function judgeSignal(article: { id: string; revision: number }, model: string, fingerprint: string, query: ReportView, cands: CandidateView[]): Promise<{ verdicts: Map<number, Verdict>; receiptId: number }> {
   const res = await chatJson({
-    model: await modelFor("group"), purpose: "group_signal", subject: `article:${articleId}`, promptVersion: RELATE_PROMPT_VERSION,
-    system: SIGNAL_SYSTEM, user: batchUser(query, cands, "帖子"), schema: SignalSchema, temperature: 0, maxTokens: 150 + 60 * cands.length,
+    model, purpose: "group_signal", subject: `article:${article.id}@${article.revision}:signal:${fingerprint}`, promptVersion: RELATE_PROMPT_VERSION,
+    system: SIGNAL_SYSTEM, user: batchUser(query, cands, "帖子"), schema: SignalSchema.refine(value => completeDecisions(value.decisions, cands.length), "Every candidate requires exactly one decision"), temperature: 0, maxTokens: 150 + 60 * cands.length,
   });
   return { verdicts: verdictsByFact(res.data.decisions, cands), receiptId: res.receiptId };
 }
 
-// ---------------------------------------------------------------------------
 // Writes
-// ---------------------------------------------------------------------------
 
 async function createStory(db: Db, title: string, at: Date): Promise<number> {
+  const cleanTitle = editorialPolicy().sanitizeEventCopy
+    ? editorialPolicy().sanitizeEventCopy!({ title }).title.slice(0, 120)
+    : title;
   const [row] = await db<{ id: number }[]>`
-    INSERT INTO stories (public_id, title, status, first_report_at, latest_at, origin)
-    VALUES (${newUuid()}, ${title}, 'active', ${at}, ${at}, 'model') RETURNING id`;
+    INSERT INTO stories (public_id, title, first_report_at, latest_at, origin)
+    VALUES (${newUuid()}, ${cleanTitle}, ${at}, ${at}, 'model') RETURNING id`;
   return row!.id;
 }
 
 async function createFact(db: Db, storyId: number, title: string, frame: Record<string, any> | null, at: Date): Promise<number> {
-  let occurred = typeof frame?.occurredAt === "string" && /^\d{4}-\d{2}-\d{2}$/.test(frame.occurredAt) ? new Date(`${frame.occurredAt}T00:00:00+08:00`) : null;
+  let occurred = typeof frame?.occurredAt === "string" && /^\d{4}-\d{2}-\d{2}$/.test(frame.occurredAt) ? beijingMidnight(frame.occurredAt) : null;
   if (occurred && (!Number.isFinite(+occurred) || beijingDate(occurred) !== frame!.occurredAt)) occurred = null;
+  const rawConditions = Array.isArray(frame?.conditions) ? frame.conditions.map((c: { text?: string }) => c.text).filter(Boolean).join("；") || null : null;
+  const cleaned = editorialPolicy().sanitizeEventCopy
+    ? editorialPolicy().sanitizeEventCopy!({
+        title,
+        conditions: rawConditions,
+        subject: frame?.subject ?? null,
+        action: frame?.action ?? null,
+        object: frame?.object ?? null,
+      })
+    : { title, conditions: rawConditions, subject: frame?.subject ?? null, action: frame?.action ?? null, object: frame?.object ?? null };
   const [row] = await db<{ id: number }[]>`
-    INSERT INTO facts (public_id, story_id, title, subject, action, object, occurred_at, created_at)
-    VALUES (${`f${newShortId(8)}`}, ${storyId}, ${title}, ${frame?.subject ?? null}, ${frame?.action ?? null}, ${frame?.object ?? null}, ${occurred}, ${at})
+    INSERT INTO facts (public_id, story_id, title, subject, action, object, conditions, occurred_at, created_at)
+    VALUES (${`f${newShortId(8)}`}, ${storyId}, ${cleaned.title.slice(0, 60)}, ${cleaned.subject}, ${cleaned.action}, ${cleaned.object}, ${cleaned.conditions}, ${occurred}, ${at})
     RETURNING id`;
   return row!.id;
+}
+
+/**
+ * Reconciles stored fact/story titles, conditions and raw evidence quotes after an article's
+ * analysis, suppression state, visibility or manual override changes.
+ */
+export async function syncArticleEventCopyTx(tx: Db, articleId: string): Promise<void> {
+  const sanitizer = editorialPolicy().sanitizeEventCopy;
+  if (!sanitizer) return;
+  const [article] = await tx<{ id: string; revision: number; title: string; participation_mode: string }[]>`
+    SELECT a.id, a.revision, a.title, s.participation_mode
+    FROM articles a JOIN sources s ON s.id = a.source_id WHERE a.id = ${articleId}`;
+  if (!article) return;
+  const [analysis] = await tx<{ input_revision: number; relevance: string | null; title_zh: string | null; output: Record<string, any> | null }[]>`
+    SELECT input_revision, relevance, title_zh, output FROM analyses WHERE article_id = ${articleId} ORDER BY input_revision DESC, id DESC LIMIT 1`;
+  const [pub] = await tx<{ visibility: string; suppress_original: boolean; title: string }[]>`
+    SELECT visibility, suppress_original, title FROM publications WHERE article_id = ${articleId}`;
+  const [override] = await tx<{ fields: Record<string, unknown>; visibility: string | null }[]>`
+    SELECT fields, visibility FROM editorial_overrides WHERE article_id = ${articleId}`;
+
+  const memberships = await tx<{
+    fact_id: number; role: string; evidence: string | null;
+    fact_title: string; subject: string | null; action: string | null; object: string | null; conditions: string | null;
+    story_id: number | null; story_title: string | null; story_origin: string | null;
+  }[]>`
+    SELECT fa.fact_id, fa.role, fa.evidence,
+           f.title AS fact_title, f.subject, f.action, f.object, f.conditions,
+           st.id AS story_id, st.title AS story_title, st.origin AS story_origin
+    FROM fact_articles fa JOIN facts f ON f.id = fa.fact_id
+    LEFT JOIN stories st ON st.id = f.story_id AND st.merged_into IS NULL
+    WHERE fa.article_id = ${articleId}`;
+  if (!memberships.length) return;
+
+  const f = override?.fields ?? {};
+  const awaitingReview = Boolean(editorialPolicy().reviewAnalysis)
+    && article.participation_mode === "editorial"
+    && (!analysis || analysis.input_revision < article.revision);
+  const suppressOriginal = awaitingReview
+    || (typeof f.suppressOriginal === "boolean" ? f.suppressOriginal : analysis ? analysis.output?.suppressOriginal === true : pub?.suppress_original === true)
+    || override?.visibility === "summary-only";
+  const withdrawn = override?.visibility === "withdrawn"
+    || (!override?.visibility && (analysis ? analysis.output?.withdrawn === true : pub?.visibility === "withdrawn"));
+
+  const dirtyStories = new Set<number>();
+  if (suppressOriginal || withdrawn) {
+    const cleared = await tx`UPDATE fact_articles SET evidence = NULL WHERE article_id = ${articleId} AND evidence IS NOT NULL RETURNING fact_id`;
+    if (cleared.length) {
+      for (const m of memberships) if (m.story_id !== null) dirtyStories.add(Number(m.story_id));
+    }
+  }
+
+  const overrideTitle = typeof f.title === "string" && f.title.trim() ? f.title.trim() : null;
+  const ownCleanTitle = overrideTitle ?? (!awaitingReview && analysis?.title_zh?.trim() ? analysis.title_zh.trim() : pub && !withdrawn && pub.title.trim() ? pub.title.trim() : null);
+  const frame = !awaitingReview ? ((analysis?.output?.fact ?? null) as Record<string, any> | null) : null;
+  const ownFactCandidate = !withdrawn ? String(overrideTitle || frame?.title || ownCleanTitle || "").trim().slice(0, 60) : "";
+
+  const seenFacts = new Set<number>();
+  for (const m of memberships) {
+    const factId = Number(m.fact_id);
+    if (m.role !== "primary" && m.role !== "report") continue;
+    if (seenFacts.has(factId)) continue;
+    seenFacts.add(factId);
+
+    const peers = await tx<{ title: string; suppress_original: boolean }[]>`
+      SELECT p.title, p.suppress_original
+      FROM fact_articles fa2 JOIN publications p ON p.article_id = fa2.article_id
+      WHERE fa2.fact_id = ${factId} AND fa2.role IN ('primary', 'report') AND fa2.article_id <> ${articleId}
+        AND p.visibility = 'public'
+      ORDER BY (fa2.role = 'primary') DESC, p.first_party DESC, coalesce(p.score, 0) DESC`;
+    const soleActive = !withdrawn && peers.length === 0;
+    const fallbackFactTitle = ownFactCandidate || peers[0]?.title?.slice(0, 60) || "";
+    const targetFactTitle = soleActive && ownFactCandidate ? ownFactCandidate : m.fact_title;
+    const rawConditions = soleActive && !suppressOriginal && Array.isArray(frame?.conditions)
+      ? frame.conditions.map((c: { text?: string }) => c.text).filter(Boolean).join("；") || null
+      : (suppressOriginal || withdrawn) && peers.every((p) => p.suppress_original)
+        ? null
+        : m.conditions;
+    const cleaned = sanitizer({
+      title: targetFactTitle,
+      fallbackTitle: fallbackFactTitle,
+      conditions: rawConditions,
+      subject: soleActive && frame ? (frame.subject ?? null) : m.subject,
+      action: soleActive && frame ? (frame.action ?? null) : m.action,
+      object: soleActive && frame ? (frame.object ?? null) : m.object,
+    });
+    if (
+      cleaned.title !== m.fact_title
+      || cleaned.conditions !== m.conditions
+      || cleaned.subject !== m.subject
+      || cleaned.action !== m.action
+      || cleaned.object !== m.object
+    ) {
+      await tx`
+        UPDATE facts
+        SET title = ${cleaned.title.slice(0, 60)},
+            conditions = ${cleaned.conditions},
+            subject = ${cleaned.subject},
+            action = ${cleaned.action},
+            object = ${cleaned.object}
+        WHERE id = ${factId}`;
+      if (m.story_id !== null) dirtyStories.add(Number(m.story_id));
+    }
+  }
+
+  const seenStories = new Set<number>();
+  for (const m of memberships) {
+    if (m.story_id === null || m.story_title === null) continue;
+    const storyId = Number(m.story_id);
+    if (seenStories.has(storyId)) continue;
+    seenStories.add(storyId);
+
+    const storyPeers = await tx<{ title: string }[]>`
+      SELECT p.title
+      FROM facts f JOIN fact_articles fa2 ON fa2.fact_id = f.id JOIN publications p ON p.article_id = fa2.article_id
+      WHERE f.story_id = ${storyId} AND fa2.role IN ('primary', 'report') AND fa2.article_id <> ${articleId}
+        AND p.visibility = 'public'
+      ORDER BY coalesce(p.published_at, p.discovered_at) DESC LIMIT 1`;
+    const soleStoryReport = !withdrawn && storyPeers.length === 0 && (m.role === "primary" || m.role === "report");
+    const fallbackStoryTitle = (!withdrawn && (ownFactCandidate || ownCleanTitle) ? (ownFactCandidate || ownCleanTitle!) : storyPeers[0]?.title) || "";
+    const desiredStoryTitle = m.story_origin !== "manual" && soleStoryReport && (ownFactCandidate || ownCleanTitle)
+      ? (ownFactCandidate || ownCleanTitle!).slice(0, 120)
+      : m.story_title;
+    const cleanedStory = sanitizer({
+      title: desiredStoryTitle,
+      fallbackTitle: fallbackStoryTitle.slice(0, 120),
+    });
+    if (cleanedStory.title !== m.story_title) {
+      await tx`UPDATE stories SET title = ${cleanedStory.title.slice(0, 120)}, updated_at = now() WHERE id = ${storyId}`;
+      dirtyStories.add(storyId);
+    }
+  }
+
+  for (const storyId of dirtyStories) {
+    await enqueue(QUEUES.digest, { storyId }, { singletonKey: `story:${storyId}` }, tx);
+  }
 }
 
 export async function recordSignal(db: Tx, storyId: number, articleId: string, source: { id: string; signal_group_id: string | null }, kind: "editorial" | "signal", observedAt: Date) {
@@ -131,7 +293,11 @@ export async function recordSignal(db: Tx, storyId: number, articleId: string, s
     ON CONFLICT (story_id, article_id) DO NOTHING`;
 }
 
-type DecisionCandidate = { id: number; score: number; relation?: Relation; confidence?: number };
+type DecisionCandidate = {
+  id: number; score: number; relation?: Relation; confidence?: number;
+  signalInputRevision?: number; signalInputFingerprint?: string;
+  signalFactFingerprint?: string; signalFactEvidence?: string;
+};
 
 async function recordDecision(db: Db, articleId: string, factId: number | null, storyId: number | null, verdict: string, candidates: DecisionCandidate[], receiptId: number | null) {
   await db`INSERT INTO grouping_decisions (article_id, fact_id, story_id, verdict, candidates, receipt_id)
@@ -156,33 +322,28 @@ async function currentMembership(articleId: string): Promise<{ factId: number; s
 }
 
 /**
- * An explicit regroup starts from a clean slate: automatic memberships and heat evidence go, manual
- * ones stay. Returns the stories the report was a report of.
+ * A clean slate (an editor's regroup, a composite, material too thin for an identity): automatic
+ * memberships and heat evidence go, manual ones stay. Returns the stories the report was a report
+ * of. The caller holds the article's row lock.
  */
-async function resetAutomatic(articleId: string): Promise<number[]> {
-  return sql.begin(async (tx) => {
-    await tx`SELECT 1 FROM articles WHERE id = ${articleId} FOR UPDATE`;
-    if (await manualDecision(tx, articleId)) return [];
-    await lockStoryMembership(tx);
-    const left = await tx<{ story_id: number }[]>`
-      SELECT DISTINCT f.story_id FROM fact_articles fa JOIN facts f ON f.id = fa.fact_id
-      WHERE fa.article_id = ${articleId} AND NOT fa.manual AND fa.role IN ('primary', 'report') AND f.story_id IS NOT NULL`;
-    const removed = await tx<{ fact_id: number }[]>`DELETE FROM fact_articles WHERE article_id = ${articleId} AND NOT manual RETURNING fact_id`;
-    await tx`DELETE FROM story_signals WHERE article_id = ${articleId}`;
-    // 仅失效实际移走的自动归属，保留人工归属及其合法文字。
-    await invalidateStoryInputs(tx, [], new Date(), removed.map(r => r.fact_id));
-    return left.map((r) => Number(r.story_id));
-  });
+export async function resetAutomatic(tx: Tx, articleId: string): Promise<number[]> {
+  if (await manualDecision(tx, articleId)) return [];
+  const left = await tx<{ story_id: number }[]>`
+    SELECT DISTINCT f.story_id FROM fact_articles fa JOIN facts f ON f.id = fa.fact_id
+    WHERE fa.article_id = ${articleId} AND NOT fa.manual AND fa.role IN ('primary', 'report') AND f.story_id IS NOT NULL`;
+  await tx`DELETE FROM fact_articles WHERE article_id = ${articleId} AND NOT manual`;
+  await tx`DELETE FROM story_signals WHERE article_id = ${articleId}`;
+  return left.map((r) => Number(r.story_id));
 }
 
 /**
- * Stories the report sat in before (its reset, or an earlier decision) that hold no report now keep
- * their address: each merges into the report's story, so its public id redirects there.
+ * Stories the report sat in before (its earlier decisions) that hold no report now keep their
+ * address: each merges into the report's story, so its public id redirects there.
  */
-async function redirectEmptiedStories(articleId: string, left: number[], storyId: number): Promise<number[]> {
+async function redirectEmptiedStories(articleId: string, storyId: number): Promise<number[]> {
   const emptied = await sql<{ id: number }[]>`
     SELECT st.id FROM stories st
-    WHERE (st.id = ANY(${left}::bigint[]) OR st.id IN (SELECT d.story_id FROM grouping_decisions d WHERE d.article_id = ${articleId}))
+    WHERE st.id IN (SELECT d.story_id FROM grouping_decisions d WHERE d.article_id = ${articleId})
       AND st.id <> ${storyId} AND st.merged_into IS NULL
       AND NOT EXISTS (SELECT 1 FROM facts f JOIN fact_articles fa ON fa.fact_id = f.id WHERE f.story_id = st.id AND fa.role IN ('primary', 'report'))`;
   const redirected: number[] = [];
@@ -192,26 +353,39 @@ async function redirectEmptiedStories(articleId: string, left: number[], storyId
   return redirected;
 }
 
-async function markGrouped(articleId: string) {
-  await sql`UPDATE articles SET grouped_at = coalesce(grouped_at, now()) WHERE id = ${articleId}`;
+class GroupingSupersededError extends Error {}
+
+async function lockCurrentRevision(db: Db, articleId: string, revision: number) {
+  const [current] = await db<{ revision: number }[]>`SELECT revision FROM articles WHERE id = ${articleId} FOR UPDATE`;
+  if (current?.revision !== revision) throw new GroupingSupersededError("Grouping input changed; the replacement revision has its own analysis");
 }
 
-// ---------------------------------------------------------------------------
+async function markGrouped(articleId: string, revision: number, selection?: SelectionValue, db: Db = sql) {
+  const done = await db`UPDATE articles SET grouped_at = coalesce(grouped_at, now()), grouping_status = 'complete', grouping_receipt_id = NULL, grouping_error = NULL,
+    selection_adds_value = CASE WHEN ${!!selection} THEN ${selection?.addsValue ?? null} ELSE selection_adds_value END,
+    selection_value_reason = CASE WHEN ${!!selection} THEN ${selection?.reason ?? null} ELSE selection_value_reason END
+    WHERE id = ${articleId} AND revision = ${revision}`;
+  if (!done.count) throw new GroupingSupersededError("Grouping input changed; the replacement revision has its own analysis");
+}
+
 // Entry
-// ---------------------------------------------------------------------------
 
 export interface GroupResult {
   verdict:
-    | "same-fact" | "same-url" | "new-fact-in-story" | "new-story" | "roundup" | "kept" | "standalone" | "manual" | "skipped"
+    | "same-fact" | "same-card" | "same-url" | "new-fact-in-story" | "new-story" | "roundup" | "kept" | "standalone" | "manual" | "skipped"
     | "signal" | "signal-native" | "signal-unmatched" | "historical";
   factId?: number;
   storyId?: number;
   /** Stories compared because this report tied them together (see consolidate). */
   consolidated?: Consolidation[];
   consolidationError?: string;
+  /** The fact this report had joined, merged into the fact of the card telling the same news (cards.ts). */
+  absorbed?: { from: number; moved: number } | null;
+  /** Cards of the author's other account that gave way to this article (cards.ts). */
+  retired?: string[];
   /** Stories left without reports when this report moved: merged into its story, their public ids redirect. */
   redirected?: number[];
-  /** Earlier discussion posts close to the fact this report founded, grouped again (rematchSignals). */
+  /** Unattached discussion posts close to this new evidence of a fact, grouped again (rematchSignals). */
   rematched?: number;
   /** Earlier discussion posts replying to or quoting this post, grouped again (reclaimWaiting). */
   reclaimed?: number;
@@ -222,24 +396,58 @@ export interface GroupResult {
 export interface GroupOptions {
   /** Discussion evidence only (hot_signal sources): attach to a story, never create one. */
   signalOnly?: boolean;
-  /** An explicit regroup: drop the automatic membership and decide again (manual decisions still win). A report waiting in regroup_pending is regrouped the same way. */
-  force?: boolean;
+  /** An editor asked for this decision again (requestRegroup): a discussion post's answered facts are offered again. */
+  regroup?: boolean;
 }
 
 export async function groupArticle(articleId: string, opts: GroupOptions = {}): Promise<GroupResult> {
-  const result = await decide(articleId, opts);
-  // Decided under the current rules: the report is evidence for others again. A failed decision
-  // throws before this, so the report keeps waiting and the retry decides it again.
-  await sql`DELETE FROM regroup_pending WHERE article_id = ${articleId}`;
-  return result;
+  const input = await sql.begin(async tx => {
+    const [current] = await tx<{ revision: number; grouping_status: string; selection_adds_value: boolean | null }[]>`
+      SELECT revision, grouping_status, selection_adds_value FROM articles WHERE id = ${articleId} FOR UPDATE`;
+    if (!current) return null;
+    await tx`UPDATE articles SET grouping_status = 'pending', grouped_at = NULL, grouping_error = NULL, grouping_receipt_id = NULL WHERE id = ${articleId}`;
+    // An unfinished decision (new material, a failure, an explicit regroup) must withdraw its old public
+    // seat in this transaction. Ordinary repeats of a completed identity reuse it immediately without
+    // a transient withdrawal.
+    if (current.grouping_status !== 'complete') await publishArticleTx(tx, articleId);
+    return current;
+  });
+  if (!input) return { verdict: "skipped" };
+  const revision = input.revision;
+  try {
+    const { replaces, ...result } = await decide(articleId, opts, revision, input.grouping_status !== 'complete' && input.selection_adds_value === null, input.selection_adds_value);
+    await markGrouped(articleId, revision);
+    // An article replaces its author's posts only once it is really shown, in the commit that shows it.
+    await sql.begin(async (tx) => {
+      const shown = await republishTx(tx, articleId);
+      if (!replaces || !shown?.selected || shown.visibility !== "public") return;
+      for (const id of replaces.ids) await retireCardTx(tx, id, replaces.title);
+      result.retired = replaces.ids;
+    });
+    return result;
+  } catch (error) {
+    // A late failed model call must not undo an editor's completed decision, or a fact already
+    // committed before an optional downstream operation failed. Shutdown, budget waits and an unbilled
+    // provider outage (every route rejected the request as retryable) leave work pending for the repair sweep.
+    const kind = failureKind(error);
+    const waiting = shutdownSignal.signal.aborted || kind === "budget" || kind === "outage";
+    await sql`UPDATE articles SET grouping_status = ${waiting ? 'pending' : 'failed'},
+      grouped_at = NULL, grouping_receipt_id = ${failedReceiptId(error)}, grouping_error = ${String(error).slice(0, 2000)}
+      WHERE id = ${articleId} AND revision = ${revision} AND grouping_status <> 'complete' AND ${!(error instanceof GroupingSupersededError)}`;
+    await publishArticle(articleId);
+    throw error;
+  }
 }
 
-async function decide(articleId: string, opts: GroupOptions): Promise<GroupResult> {
+/** An analysis that says the material cannot establish what the current news is: grouping confirms no fact for it. */
+export const unsupportedMaterial = (output: Record<string, any> | null | undefined): boolean => output?.scope === "unknown" && !output.fact;
+
+async function decide(articleId: string, opts: GroupOptions, revision: number, recheckSelection: boolean, addedValue: boolean | null): Promise<GroupResult & { replaces?: { ids: string[]; title: string } }> {
   const [a] = await sql<ArticleRow[]>`
-    SELECT a.id, a.revision, a.title, a.url, a.published_at, a.discovered_at, a.grouped_at, a.body_text, a.x_post, a.backfill,
-           s.id AS source_id, s.name AS source_name, s.signal_group_id, s.first_party, s.participation_mode,
-           EXISTS (SELECT 1 FROM regroup_pending rp WHERE rp.article_id = a.id) AS regroup_pending
+    SELECT a.id, a.revision, a.title, a.url, a.published_at, a.publication_time, a.discovered_at, a.grouped_at, a.body_text, a.x_post, a.backfill,
+           s.id AS source_id, s.name AS source_name, s.signal_group_id, s.first_party, s.participation_mode
     FROM articles a JOIN sources s ON s.id = a.source_id WHERE a.id = ${articleId}`;
+  if (a && a.revision !== revision) throw new GroupingSupersededError("Grouping input changed before it was read");
   if (!a) return { verdict: "skipped" };
   const observedAt = a.published_at ?? a.discovered_at;
   const source = { id: a.source_id, signal_group_id: a.signal_group_id };
@@ -247,103 +455,193 @@ async function decide(articleId: string, opts: GroupOptions): Promise<GroupResul
   // Manual decisions win over any model decision: a manual membership, or "keep standalone".
   const manual = await manualDecision(sql, articleId);
   if (manual) {
-    await markGrouped(articleId);
-    await publishArticle(articleId);
+    await markGrouped(articleId, a.revision, { addsValue: true, reason: "人工确认的归属" });
     return { verdict: "manual", factId: manual.factId };
   }
-  const left = opts.force || a.regroup_pending ? await resetAutomatic(articleId) : [];
+  const [an] = await sql<{ input_revision: number; relevance: string | null; title_zh: string | null; summary_zh: string | null; output: Record<string, any> | null; composite: boolean }[]>`
+    SELECT input_revision, relevance, title_zh, summary_zh, output, ${latestCompositeCondition(sql`${articleId}`)} AS composite
+    FROM analyses WHERE article_id = ${articleId} ORDER BY input_revision DESC, id DESC LIMIT 1`;
+  if (an && an.input_revision !== a.revision && a.participation_mode === "editorial") {
+    throw new GroupingSupersededError("Current material revision is still waiting for analysis");
+  }
+  const composite = an?.composite === true;
+  const unsupported = unsupportedMaterial(an?.output);
+  const historical = isHistorical(a);
+  const left = composite || unsupported || historical
+    ? await sql.begin(async (tx) => { await lockCurrentRevision(tx, articleId, a.revision); return resetAutomatic(tx, articleId); })
+    : [];
+
+  const reader = a.participation_mode === "editorial" ? await readerOf(articleId) : null;
+  const independent = isIndependentSelectedSource(a.source_id);
+  let replaces: { ids: string[]; title: string } | undefined;
+  /**
+   * A report about to be shown faces the cards readers already see, before anything is written: a
+   * failed call leaves it waiting, not a duplicate out. An article finds the posts it replaces; a post
+   * gives way to its author's article; any other report stays out, or folds when it can (`into`).
+   */
+  const faceCards = async (selection: SelectionValue, ownFact: number | null = null): Promise<{ selection: SelectionValue; into?: CardRow }> => {
+    if (!reader || !selection.addsValue) return { selection };
+    if (independent) {
+      const echoes = await echoesOnCard(reader, ownFact);
+      if (echoes.length) replaces = { ids: echoes.map((echo) => echo.article_id), title: reader.view.title };
+      return { selection };
+    }
+    const article = await ownArticleOnCard(reader, ownFact);
+    if (article) return { selection: { addsValue: false, reason: alreadyOnCard(article.title) } };
+    if (ownFact && await factHasCard(ownFact)) return { selection };
+    const card = await seenOnCard(reader, ownFact);
+    return card ? { selection: { addsValue: false, reason: alreadyOnCard(card.title) }, into: card } : { selection };
+  };
 
   // History founds no event and adds no heat (isHistorical); a regroup takes it out of any it joined.
-  if (isHistorical(a)) {
-    await markGrouped(articleId);
-    await publishArticle(articleId);
-    return { verdict: "historical" };
+  // It comes back at its own date, next to the card that told it when it was news.
+  if (historical) {
+    const faced = await faceCards({ addsValue: true, reason: "历史资料按原文时间归档" });
+    await markGrouped(articleId, a.revision, faced.selection);
+    return { verdict: "historical", replaces };
   }
 
-  if (a.participation_mode === "isolated") return { verdict: "skipped" };
-  if (opts.signalOnly || a.participation_mode !== "editorial") return groupSignal(a, source, observedAt);
-  const [publication] = await sql<{ title: string; summary: string | null; visibility: string }[]>`
-    SELECT title,summary,visibility FROM publications WHERE article_id=${articleId}`;
-  if (publication && publication.visibility !== "public") return { verdict: "standalone" };
+  if (opts.signalOnly || a.participation_mode !== "editorial") return groupSignal(a, source, observedAt, opts.regroup === true);
 
-  const kept = await currentMembership(articleId);
-  if (kept) {
-    await markGrouped(articleId);
-    await publishArticle(articleId);
-    return { verdict: "kept", factId: kept.factId, storyId: kept.storyId };
-  }
-
-  const [an] = await sql<{ id: number; relevance: string | null; title_zh: string | null; summary_zh: string | null; output: Record<string, any> | null }[]>`
-    SELECT id, relevance, title_zh, summary_zh, output FROM analyses WHERE article_id = ${articleId} ORDER BY input_revision DESC, id DESC LIMIT 1`;
-  // 人工更正优先；旧analysis的事件框架不能把被改掉的主张重新带回来。
-  const corrected = !!publication && (publication.title !== an?.title_zh || publication.summary !== an?.summary_zh);
-  const frame = (corrected ? null : an?.output?.fact ?? null) as Record<string, any> | null;
-  if (!an || an.relevance !== "pass") {
-    await markGrouped(articleId);
-    await publishArticle(articleId);
+  // Explicitly insufficient material supplies no event identity. A missing (older) scope is separate.
+  if (unsupported) {
+    await markGrouped(articleId, a.revision, { addsValue: false, reason: "材料不足以确认当前消息" });
     return { verdict: "standalone" };
   }
-  const title = publication?.title || an.title_zh || a.title;
-  const summary = publication ? publication.summary : an.summary_zh;
+
+  const kept = await currentMembership(articleId);
+  // A material revision clears its value decision, but keeps its established membership. Reuse
+  // that identity after judging the replacement material below; ordinary repeats and confirmed
+  // nulls from before the value check keep their existing value without buying another judgement.
+  if (kept && !recheckSelection) {
+    // A retry after the commit below failed still owes the article's replacement; the answers are saved.
+    if (independent) await faceCards({ addsValue: addedValue !== false, reason: "" }, kept.factId);
+    await sql.begin(async (tx) => {
+      await markGrouped(articleId, a.revision, undefined, tx);
+      await syncArticleEventCopyTx(tx, articleId);
+    });
+    const result = { verdict: "kept" as const, factId: kept.factId, storyId: kept.storyId, replaces };
+    if (an?.relevance === "pass") await rematch(result, articleId, reportText(an.title_zh || a.title, an.summary_zh), kept.factId, SIGNAL_MIN_COSINE);
+    return result;
+  }
+
+  const frame = (an?.output?.fact ?? null) as Record<string, any> | null;
+  if (!an || an.relevance !== "pass") {
+    await markGrouped(articleId, a.revision, { addsValue: false, reason: "未通过内容分析" });
+    return { verdict: "standalone" };
+  }
+  const title = an.title_zh || a.title;
   const query: ReportView = {
-    title, source: a.source_name, firstParty: a.first_party, at: observedAt, summary,
+    title, source: a.source_name, firstParty: a.first_party, at: a.published_at, publicationTime: a.publication_time, summary: an.summary_zh,
+    scope: composite ? "composite" : an.output?.scope === "single" ? "single" : "unknown",
     frame: frame ? { subject: frame.subject, action: frame.action, object: frame.object, occurredAt: frame.occurredAt } : null,
   };
   const newTitle = String(frame?.title || title).slice(0, 60);
 
   const { sameUrl, referenced } = await relatedPosts(a);
+  // The URL settles identity, but an unseen fact still needs its first reading-value decision.
+  const selectedSameUrl = sameUrl && !composite && !kept && (await candidateViews([{
+    factId: sameUrl.fact_id, storyId: sameUrl.story_id, factTitle: sameUrl.fact_title, score: 1,
+  }]))[0]?.selected === true;
+  const cands = selectedSameUrl ? [] : await candidateViews(await recallFacts(articleId,
+    reportText(title, an.summary_zh), RECALL_MIN_COSINE, RECALL_TOP_FACTS, [...referenced, ...(sameUrl ? [sameUrl] : [])]));
+  const reading = selectedSameUrl ? [] : await recallSelectedBackground(articleId, reportText(title, an.summary_zh), RECALL_MIN_COSINE, cands.map(c => c.factId));
+  let verdicts = new Map<number, Verdict>();
+  let selection = NO_SELECTED_COVERAGE;
+  const receipts: number[] = [];
+  if (cands.length || reading.length) {
+    const judged = await judgeBatch(articleId, { ...query, sourceText: a.body_text }, cands, reading);
+    verdicts = judged.verdicts;
+    selection = judged.selection;
+    receipts.push(judged.receiptId);
+  }
+  if (composite) {
+    selection = (await faceCards(selection)).selection;
+    // Use the existing batch judgement only to find mentions. Even a mistaken SAME_OCCURRENCE
+    // answer cannot give a composite a primary/report membership or trigger consolidation.
+    const receiptId = receipts[0] ?? null;
+    const late = await sql.begin(async (tx) => {
+      await lockCurrentRevision(tx, articleId, a.revision);
+      const manual = await manualDecision(tx, articleId);
+      if (manual) {
+        if (receiptId !== null) await completeReceipt(tx, receiptId);
+        return manual;
+      }
+      for (const c of cands) {
+        const v = verdicts.get(c.factId);
+        if (v && v.relation !== "UNRELATED" && v.confidence >= TIE_MIN_CONFIDENCE) {
+          await tx`INSERT INTO fact_articles (fact_id, article_id, role, created_at) VALUES (${c.factId}, ${articleId}, 'mention', ${observedAt})
+                   ON CONFLICT (fact_id, article_id) DO NOTHING`;
+        }
+      }
+      await recordDecision(tx, articleId, null, null, "roundup", cands.map((c) => ({ id: c.factId, score: c.score, ...verdicts.get(c.factId) })), receiptId);
+      await markGrouped(articleId, a.revision, selection, tx);
+      if (receiptId !== null) await completeReceipt(tx, receiptId);
+      return null;
+    });
+    // A newly identified composite may have supplied an older digest. Rebuild its former stories
+    // from their remaining reports, without redirecting an emptied story into an unrelated one.
+    for (const id of left) await enqueue(QUEUES.digest, { storyId: id }, { singletonKey: `story:${id}` });
+    return late ? { verdict: "manual", factId: late.factId } : { verdict: "roundup", replaces };
+  }
+  if (kept) {
+    // A sibling already selected for this same fact still permits representative replacement.
+    if (cands.some(c => c.factId === kept.factId && c.selected)) selection = { addsValue: true, reason: "同一新闻的代表报道候选" };
+    // A revision keeps its fact, so it does not fold: it faces the cards again and can only stay out.
+    selection = (await faceCards(selection, kept.factId)).selection;
+    const late = await sql.begin(async tx => {
+      await lockCurrentRevision(tx, articleId, a.revision);
+      const manual = await manualDecision(tx, articleId);
+      await markGrouped(articleId, a.revision, manual ? { addsValue: true, reason: "人工确认的归属" } : selection, tx);
+      if (!manual) await recordDecision(tx, articleId, kept.factId, kept.storyId, "kept",
+        cands.map(c => ({ id: c.factId, score: c.score, ...verdicts.get(c.factId) })), receipts[0] ?? null);
+      await syncArticleEventCopyTx(tx, articleId);
+      for (const receiptId of receipts) await completeReceipt(tx, receiptId);
+      return manual;
+    });
+    if (late) return { verdict: "manual", factId: late.factId };
+    const result = { verdict: "kept" as const, factId: kept.factId, storyId: kept.storyId, replaces };
+    await rematch(result, articleId, reportText(title, an.summary_zh), kept.factId, SIGNAL_MIN_COSINE);
+    return result;
+  }
   let verdict: GroupResult["verdict"] = "new-story";
   let factId: number | null = null;
   let storyId: number | null = null;
-  let cands: CandidateView[] = [];
-  let verdicts = new Map<number, Verdict>();
-  const receipts: number[] = [];
 
   if (sameUrl) {
     verdict = "same-url";
     factId = sameUrl.fact_id;
     storyId = sameUrl.story_id;
   } else {
-    try {
-      cands = await candidateViews(await recallFacts(articleId, reportText(title, summary), RECALL_MIN_COSINE, RECALL_TOP_FACTS, referenced));
-      if (cands.length) {
-        const judged = await judgeBatch(articleId, query, cands);
-        verdicts = judged.verdicts;
-        receipts.push(judged.receiptId);
-        for (const pick of sameOccurrence(cands, verdicts)) {
-          if (pick.score >= CONFIRM_BELOW_COSINE) {
-            factId = pick.factId;
-            break;
-          }
-          const review = await confirmMerge(articleId, query, pick);
-          receipts.push(review.receiptId);
-          if (review.relation === "SAME_OCCURRENCE") {
-            factId = pick.factId;
-            break;
-          }
-          if (review.relation === "SAME_STORY" && pick.storyRoot) {
-            storyId = pick.storyId;
-            break;
-          }
+    if (cands.length) {
+      for (const pick of sameOccurrence(cands, verdicts)) {
+        if (pick.score >= CONFIRM_BELOW_COSINE) {
+          factId = pick.factId;
+          break;
         }
-        if (factId) {
-          verdict = "same-fact";
-          storyId = cands.find((c) => c.factId === factId)!.storyId;
-        } else if (storyId) {
-          verdict = "new-fact-in-story";
-        } else {
-          const dev = storyForDevelopment(cands, verdicts);
-          if (dev) {
-            verdict = "new-fact-in-story";
-            storyId = dev.storyId;
-          } else if (looksLikeRoundup(cands, verdicts)) verdict = "roundup";
+        const review = await confirmMerge(articleId, query, pick);
+        receipts.push(review.receiptId);
+        if (review.relation === "SAME_OCCURRENCE") {
+          factId = pick.factId;
+          break;
+        }
+        if (review.relation === "SAME_STORY" && pick.storyRoot) {
+          storyId = pick.storyId;
+          break;
         }
       }
-    } catch (error) {
-      // A failed identity call must not block publication: the report stays standalone for now.
-      await markGrouped(articleId);
-      await publishArticle(articleId);
-      throw error;
+      if (factId) {
+        verdict = "same-fact";
+        storyId = cands.find((c) => c.factId === factId)!.storyId;
+      } else if (storyId) {
+        verdict = "new-fact-in-story";
+      } else {
+        const dev = storyForDevelopment(cands, verdicts);
+        if (dev) {
+          verdict = "new-fact-in-story";
+          storyId = dev.storyId;
+        }
+      }
     }
   }
 
@@ -351,46 +649,62 @@ async function decide(articleId: string, opts: GroupOptions): Promise<GroupResul
     id: c.factId, score: Math.round(c.score * 1000) / 1000, relation: verdicts.get(c.factId)?.relation, confidence: verdicts.get(c.factId)?.confidence,
   }));
   if (sameUrl) decisionCandidates.push({ id: sameUrl.fact_id, score: 1, relation: "SAME_OCCURRENCE", confidence: 1 });
+  // Only a fact already shown in selected has a representative slot to replace. A duplicate of
+  // an unselected fact must retain the value judgement, including a prior low-increment rejection.
+  if ((verdict === "same-fact" || verdict === "same-url") && (selectedSameUrl || cands.some(c => c.factId === factId && c.selected))) {
+    selection = { addsValue: true, reason: "同一新闻的代表报道候选" };
+  }
+
+  // About to open a card: the news may already be on one, whatever the candidates above were called.
+  // The fact it joined then holds that same news: one happening that grew two facts. Merged before
+  // this report's own decision, so a failed merge leaves the report waiting and its retry finds it.
+  let absorbed: GroupResult["absorbed"];
+  const faced = await faceCards(selection, factId);
+  if (faced.into && foldsUnder(faced.into)) {
+    const card = faced.into;
+    if (factId) {
+      const from: number = factId;
+      const merged = await mergeFactInto(from, card.fact_id, `同一条新闻，并入读者已看到的卡片（报道 ${articleId}）`, "grouping");
+      absorbed = merged && { from, moved: merged.moved };
+    }
+    factId = card.fact_id;
+    storyId = card.story_id;
+    verdict = "same-card";
+    selection = { addsValue: true, reason: "同一新闻的代表报道候选" };
+    decisionCandidates.push({ id: card.fact_id, score: Math.round(card.score * 1000) / 1000, relation: "SAME_OCCURRENCE", confidence: 1 });
+  } else selection = faced.selection;
 
   // Written under the article's row lock after reading the manual state again: a detach or other
   // manual decision made while the model was answering wins (detachFromFact takes the same lock).
   const written = await sql.begin(async (tx) => {
-    await tx`SELECT 1 FROM articles WHERE id = ${articleId} FOR UPDATE`;
+    await lockCurrentRevision(tx, articleId, a.revision);
     const late = await manualDecision(tx, articleId);
     if (late) {
-      await tx`UPDATE articles SET grouped_at = coalesce(grouped_at, now()) WHERE id = ${articleId}`;
+      await markGrouped(articleId, a.revision, { addsValue: true, reason: "人工确认的归属" }, tx);
+      for (const id of receipts) await completeReceipt(tx, id);
       return { manual: late, factId: null, storyId: null };
     }
-    await lockStoryMembership(tx);
-    const [current] = await tx<{ revision: number; mode: string; title: string | null; summary: string | null; visibility: string; analysis_id: number | null }[]>`
-      SELECT a.revision,s.participation_mode AS mode,p.title,p.summary,coalesce(o.visibility,p.visibility,'public') AS visibility,
-        (SELECT id FROM analyses WHERE article_id=a.id ORDER BY input_revision DESC,id DESC LIMIT 1) AS analysis_id
-      FROM articles a JOIN sources s ON s.id=a.source_id LEFT JOIN publications p ON p.article_id=a.id
-      LEFT JOIN editorial_overrides o ON o.article_id=a.id WHERE a.id=${articleId}`;
-    // 与撤回共用article锁，来源隔离/合并共用成员锁；晚到模型不得创建旧文字副本。
-    if (!current || current.mode !== "editorial" || current.visibility !== "public" || current.revision !== a.revision ||
-        current.analysis_id !== an.id || current.title !== (publication?.title ?? null) || current.summary !== (publication?.summary ?? null)) {
-      return { manual: null, factId: null, storyId: null };
-    }
     if (storyId !== null) {
-      const [currentStory] = await tx`SELECT id FROM stories WHERE id = ${storyId} AND merged_into IS NULL FOR UPDATE`;
-      if (!currentStory) throw new Error("Grouping target changed; retry against the current story");
+      const [current] = await tx`SELECT id FROM stories WHERE id = ${storyId} AND merged_into IS NULL FOR UPDATE`;
+      if (!current) throw new Error("Grouping target changed; retry against the current story");
     }
     const story = storyId ?? (await createStory(tx, newTitle, observedAt));
     const fact = factId ?? (await createFact(tx, story, newTitle, frame, observedAt));
     const [hasPrimary] = await tx<{ n: number }[]>`SELECT count(*) AS n FROM fact_articles WHERE fact_id = ${fact} AND role = 'primary'`;
     const role = a.first_party && Number(hasPrimary?.n ?? 0) === 0 ? "primary" : "report";
-    await tx`INSERT INTO fact_articles (fact_id, article_id, role, created_at) VALUES (${fact}, ${articleId}, ${role}, ${observedAt}) ON CONFLICT (fact_id, article_id) DO NOTHING`;
+    const suppressEvidence = Boolean(an?.output?.suppressOriginal);
+    const evidence = suppressEvidence
+      ? null
+      : [frame?.evidence, ...(Array.isArray(frame?.conditions) ? frame.conditions.map((c: { quote?: string }) => c.quote) : [])].filter((x): x is string => typeof x === "string" && !!x).join("\n") || null;
+    await tx`INSERT INTO fact_articles (fact_id, article_id, role, evidence, created_at) VALUES (${fact}, ${articleId}, ${role}, ${evidence}, ${observedAt}) ON CONFLICT (fact_id, article_id) DO NOTHING`;
     await recordSignal(tx, story, articleId, source, "editorial", observedAt);
     await recordDecision(tx, articleId, fact, story, verdict, decisionCandidates, receipts[0] ?? null);
-    await tx`UPDATE articles SET grouped_at = coalesce(grouped_at, now()) WHERE id = ${articleId}`;
+    await markGrouped(articleId, a.revision, selection, tx);
+    for (const id of receipts) await completeReceipt(tx, id);
     return { manual: null, factId: fact, storyId: story };
   });
-  for (const id of receipts) await completeReceipt(sql, id);
-  await publishArticle(articleId);
   if (written.manual) return { verdict: "manual", factId: written.manual.factId };
-  if (!written.storyId || !written.factId) return { verdict: "standalone" };
-  const result: GroupResult = { verdict, factId: written.factId!, storyId: written.storyId! };
+  const result: GroupResult & { replaces?: { ids: string[]; title: string } } = { verdict, factId: written.factId!, storyId: written.storyId!, replaces, ...(absorbed === undefined ? {} : { absorbed }) };
 
   // Other stories this report is firmly tied to: one story may have grown two roots. Best effort:
   // the report's own decision is written; a failed comparison is reported in the job's result.
@@ -404,7 +718,7 @@ async function decide(articleId: string, opts: GroupOptions): Promise<GroupResul
       result.consolidationError = String(error).slice(0, 300);
     }
   }
-  const redirected = await redirectEmptiedStories(articleId, left, result.storyId!);
+  const redirected = await redirectEmptiedStories(articleId, result.storyId!);
   if (redirected.length) result.redirected = redirected;
   // Discussion posts that reply to or quote this post and came first now have its story, whichever
   // fact it joined (the posts waiting on an original wake when the original arrives).
@@ -415,29 +729,24 @@ async function decide(articleId: string, opts: GroupOptions): Promise<GroupResul
       result.reclaimError = String(error).slice(0, 300);
     }
   }
-  // A new fact may be what discussion posts of the last hours were about before any report came.
-  if (verdict === "new-story" || verdict === "new-fact-in-story") {
-    try {
-      result.rematched = await rematchSignals(articleId, reportText(title, summary));
-    } catch (error) {
-      result.rematchError = String(error).slice(0, 300);
-    }
-  }
+  // The fact, new or not, may now be what earlier discussion posts were about in other words.
+  await rematch(result, articleId, reportText(title, an.summary_zh), written.factId!, SIGNAL_MIN_COSINE);
   return result;
 }
 
-/** How far back discussion posts that found no story get another look when a new fact appears. */
-const REMATCH_HOURS = 6;
-/** How long a discussion post waits for the post it replies to or quotes (48 hours). */
+/** How long a discussion post waits for the post it replies to or quotes. */
 const WAIT_HOURS = 48;
 
-/** Discussion posts not yet attached to any story (a post a person placed or detached is left alone). */
+/** Discussion posts attached to no story now: no heat evidence, latest decision found nothing (a post a person placed or detached is left alone). */
 const unattachedSignal = sql`
-  s.participation_mode = 'hot_signal' AND a.processing_state = 'skipped'
-  AND (NOT a.backfill OR a.discovered_at - a.published_at <= make_interval(secs => ${STALE_ON_DISCOVERY_MS / 1000}))
+  s.participation_mode = 'hot_signal' AND a.processing_state = 'skipped' AND ${newsCondition}
   AND NOT EXISTS (SELECT 1 FROM story_signals ss WHERE ss.article_id = a.id)
-  AND NOT EXISTS (SELECT 1 FROM grouping_decisions d WHERE d.article_id = a.id AND d.verdict <> 'signal-unmatched')
+  AND coalesce((SELECT d.verdict FROM grouping_decisions d WHERE d.article_id = a.id ORDER BY d.id DESC LIMIT 1), 'signal-unmatched') = 'signal-unmatched'
   AND NOT EXISTS (SELECT 1 FROM grouping_overrides o WHERE o.article_id = a.id)`;
+
+/** Additional corroboration alone does not change a representative's evidence. */
+const signalFactEvidence = (c: CandidateView) => sha256(stableJson({ factId: c.factId, storyId: c.storyId,
+  storyRoot: c.storyRoot, factTitle: c.factTitle, report: describeReport(c.report, "候选") }));
 
 /**
  * A reaction often comes before the post it quotes is collected (Dan Shipper's "SONNET 5.5 IS OUT!"
@@ -448,78 +757,178 @@ async function reclaimWaiting(tweetId: string): Promise<number> {
   const posts = await sql<{ id: string }[]>`
     SELECT a.id FROM articles a JOIN sources s ON s.id = a.source_id
     WHERE a.discovered_at > now() - make_interval(hours => ${WAIT_HOURS}) AND ${unattachedSignal}
-      AND (a.x_post->>'replyTo' = ${tweetId} OR substring(a.x_post->'quoted'->>'url' from '/status/([0-9]+)') = ${tweetId})`;
-  for (const p of posts) await enqueue(QUEUES.group, { articleId: p.id, signalOnly: true }, { singletonKey: p.id, priority: -1 });
+      AND (a.x_post->>'replyTo' = ${tweetId} OR coalesce(a.x_post->'quoted'->>'tweetId', substring(a.x_post->'quoted'->>'url' from '/status/([0-9]+)')) = ${tweetId})`;
+  for (const p of posts) await enqueue(QUEUES.group, { articleId: p.id, signalOnly: true }, { singletonKey: p.id, priority: groupingPriority({ signal: true, historical: false }) });
   return posts.length;
 }
 
-/** The text a discussion post is recalled by: its title and the start of its body. */
-const signalText = (a: { title: string; body_text: string | null }) => reportText(a.title, a.body_text?.slice(0, 300) ?? null);
-
 /**
- * Discussion posts often come before the first report (Techmeme, reactions): they found no story
- * then and were left. When a report founds a fact, the recent unattached posts close to it are
- * grouped again; each is judged the usual way, against all candidates.
+ * Discussion posts often come before what ties them to a fact: the first report (Techmeme, reactions),
+ * or a report or post that puts the news in their words. Whenever a fact gains evidence (a report
+ * founds or joins it, a post attaches to it), the unattached posts close to that evidence that still
+ * count for heat are grouped again, each judged the usual way against all candidates. A post the judge
+ * already answered for this fact is left as it is until its revision or the representative changes.
  */
-async function rematchSignals(articleId: string, queryText: string): Promise<number> {
+async function rematchSignals(articleId: string, queryText: string, factId: number, minScore: number): Promise<number> {
   if (!embeddingsAvailable()) return 0;
+  const [representative] = await candidateViews([{ factId, score: 0 }]);
+  if (!representative) return 0;
+  const evidence = signalFactEvidence(representative);
   const mine = (await vectorsFor([{ id: articleId, text: queryText }])).get(articleId);
   if (!mine) return 0;
   const posts = await sql<{ id: string; title: string; body_text: string | null }[]>`
-    SELECT a.id, a.title, a.body_text FROM articles a JOIN sources s ON s.id = a.source_id
-    WHERE a.discovered_at > now() - make_interval(hours => ${REMATCH_HOURS}) AND ${unattachedSignal}`;
+    SELECT a.id, a.title, left(a.body_text, 300) AS body_text FROM articles a JOIN sources s ON s.id = a.source_id
+    WHERE a.discovered_at > now() - make_interval(hours => ${HEAT_WINDOW_HOURS})
+      AND coalesce(a.published_at, a.discovered_at) > now() - make_interval(hours => ${HEAT_WINDOW_HOURS}) AND ${unattachedSignal}
+      AND NOT coalesce((
+        SELECT c->>'signalFactEvidence' IS NULL OR c->>'signalFactEvidence' = ${evidence}
+        FROM grouping_decisions j CROSS JOIN LATERAL jsonb_array_elements(j.candidates) c
+        WHERE j.article_id=a.id AND j.verdict='signal-unmatched' AND (c->>'id')::bigint=${factId}
+          AND j.candidates->0->>'signalInputRevision'=a.revision::text
+        ORDER BY j.id DESC LIMIT 1
+      ), false)
+    ORDER BY coalesce(a.published_at, a.discovered_at) DESC, a.id LIMIT 2000`;
   const vectors = await vectorsFor(posts.map((p) => ({ id: p.id, text: signalText(p) })));
   let close = 0;
   for (const p of posts) {
     const v = vectors.get(p.id);
-    if (!v || cosine(mine, v) < SIGNAL_MIN_COSINE) continue;
-    // A post still waiting in the queue keeps that job (same key): it will meet the new fact anyway.
-    await enqueue(QUEUES.group, { articleId: p.id, signalOnly: true }, { singletonKey: p.id, priority: -1 });
+    if (!v || cosine32(mine, v) < minScore) continue;
+    // A post still waiting in the queue keeps that job (same key): it will meet the new evidence anyway.
+    await enqueue(QUEUES.group, { articleId: p.id, signalOnly: true }, { singletonKey: p.id, priority: groupingPriority({ signal: true, historical: false }) });
     close += 1;
   }
   return close;
 }
 
+/** Best effort: the decision that brought the evidence is written; a failed look is reported in the job's result. */
+async function rematch(result: GroupResult, articleId: string, text: string, factId: number, minScore: number): Promise<void> {
+  try {
+    result.rematched = await rematchSignals(articleId, text, factId, minScore);
+  } catch (error) {
+    result.rematchError = String(error).slice(0, 300);
+  }
+}
+
+/** Only established, recent public reports can wake unmatched discussion evidence. */
+export async function rematchRecentSignals(limit = 50): Promise<{ reports: number; enqueued: number }> {
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 200) throw new Error("Signal rematch limit must be between 1 and 200");
+  if (!embeddingsAvailable()) return { reports: 0, enqueued: 0 };
+  const reports = await sql<{ article_id: string; fact_id: number; title: string; summary: string | null }[]>`
+    SELECT x.article_id, x.fact_id, x.title, x.summary FROM (
+      SELECT DISTINCT ON (f.id) a.id AS article_id, f.id AS fact_id, p.title, p.summary,
+        coalesce(p.published_at, p.discovered_at) AS at
+      FROM facts f JOIN stories st ON st.id=f.story_id AND st.merged_into IS NULL
+      JOIN fact_articles fa ON fa.fact_id=f.id AND fa.role IN ('primary','report')
+      JOIN articles a ON a.id=fa.article_id JOIN publications p ON p.article_id=a.id
+      JOIN sources s ON s.id=a.source_id
+      WHERE p.visibility='public' AND p.eligible AND s.participation_mode='editorial'
+        AND ${groupingEvidenceCondition(sql`a.id`)}
+        AND coalesce(p.published_at,p.discovered_at)>now()-make_interval(hours => ${HEAT_WINDOW_HOURS})
+        AND coalesce(p.published_at,p.discovered_at)<=now()
+      ORDER BY f.id,coalesce(p.published_at,p.discovered_at) DESC,a.id
+    ) x ORDER BY x.at DESC,x.article_id LIMIT ${limit}`;
+  let enqueued = 0;
+  for (const row of reports) enqueued += await rematchSignals(row.article_id, reportText(row.title, row.summary), row.fact_id, SIGNAL_MIN_COSINE);
+  return { reports: reports.length, enqueued };
+}
+
 /**
  * Discussion evidence (hot_signal sources): the post the item replies to or quotes decides first;
- * otherwise clear candidates are judged, and a nearly identical report attaches without a call.
+ * otherwise clear candidates, recalled by reports and by the posts already attached, are judged, and a
+ * nearly identical report attaches without a call.
  */
-async function groupSignal(a: ArticleRow, source: { id: string; signal_group_id: string | null }, observedAt: Date): Promise<GroupResult> {
+async function groupSignal(a: ArticleRow, source: { id: string; signal_group_id: string | null }, observedAt: Date, regroup: boolean): Promise<GroupResult> {
+  const text = signalText(a);
   // Discussion evidence obeys the same article lock and last-minute manual check as reports. The
-  // evidence and decision commit together; a retry cannot leave half of a signal attached.
+  // evidence and decision commit together, and the decision replaces the post's earlier evidence.
+  // Finding nothing only withdraws evidence from a story recall can still reach: once a story's
+  // reports have left the recall window, a late re-evaluation cannot meet it again.
   const write = async (target: { factId: number; storyId: number } | null, verdict: "signal" | "signal-native" | "signal-unmatched", candidates: DecisionCandidate[], receiptId: number | null = null): Promise<GroupResult> => {
-    return sql.begin(async (tx) => {
-      await tx`SELECT 1 FROM articles WHERE id = ${a.id} FOR UPDATE`;
+    const result: GroupResult = await sql.begin(async (tx) => {
+      // Participation updates lock the source before its articles.
+      await tx`SELECT s.id FROM sources s JOIN articles x ON x.source_id=s.id WHERE x.id=${a.id} FOR SHARE OF s`;
+      const [current] = await tx<{ revision: number; participation_mode: string }[]>`
+        SELECT x.revision,s.participation_mode FROM articles x JOIN sources s ON s.id=x.source_id
+        WHERE x.id=${a.id} FOR UPDATE OF x`;
+      if (!current || current.revision !== a.revision || current.participation_mode !== "hot_signal") {
+        if (receiptId !== null) await completeReceipt(tx, receiptId);
+        return { verdict: "skipped" };
+      }
       const manual = await manualDecision(tx, a.id);
       if (!manual) {
+        await tx`DELETE FROM story_signals ss WHERE ss.article_id = ${a.id} AND (${target !== null} OR EXISTS (
+                   SELECT 1 FROM facts f JOIN fact_articles fa ON fa.fact_id = f.id JOIN articles r ON r.id = fa.article_id
+                   WHERE f.story_id = ss.story_id AND fa.role IN ('primary', 'report') AND ${groupingEvidenceCondition(sql`r.id`)}
+                     AND r.discovered_at > now() - make_interval(days => ${RECALL_DAYS})))`;
         if (target) await recordSignal(tx, target.storyId, a.id, source, "signal", observedAt);
-        await recordDecision(tx, a.id, target?.factId ?? null, target?.storyId ?? null, verdict, candidates, receiptId);
+        const [sameDecision] = await tx`SELECT 1 FROM (
+          SELECT verdict, fact_id, story_id, candidates FROM grouping_decisions WHERE article_id=${a.id} ORDER BY id DESC LIMIT 1
+        ) previous WHERE verdict=${verdict} AND fact_id IS NOT DISTINCT FROM ${target?.factId ?? null}::bigint
+          AND story_id IS NOT DISTINCT FROM ${target?.storyId ?? null}::bigint AND candidates=${tx.json(candidates as never)}`;
+        if (regroup || !sameDecision) await recordDecision(tx, a.id, target?.factId ?? null, target?.storyId ?? null, verdict, candidates, receiptId);
       }
       if (receiptId !== null) await completeReceipt(tx, receiptId);
       return manual ? { verdict: "manual", factId: manual.factId } : { verdict, ...(target ? { storyId: target.storyId } : {}) };
     });
+    // The posts that came first and say what this one says may now be about its fact too.
+    if (target && result.verdict === "signal") await rematch(result, a.id, text, target.factId, SIGNAL_PEER_MIN_COSINE);
+    return result;
   };
   const { referenced } = await relatedPosts(a);
   if (referenced.length) {
     const target = referenced[0]!;
     return write({ factId: target.fact_id, storyId: target.story_id }, "signal-native", [{ id: target.fact_id, score: 1, relation: "SAME_STORY", confidence: 1 }]);
   }
+  // Without embeddings nothing was compared: the earlier evidence stands.
   if (!embeddingsAvailable()) return { verdict: "signal-unmatched" };
-  const recalled = await recallFacts(a.id, signalText(a), SIGNAL_MIN_COSINE, SIGNAL_TOP_FACTS);
+  const asCandidates = (recalled: Recalled[], verdicts?: Map<number, Verdict>): DecisionCandidate[] =>
+    recalled.map((r) => ({ id: r.factId, score: Math.round(r.score * 1000) / 1000, relation: verdicts?.get(r.factId)?.relation, confidence: verdicts?.get(r.factId)?.confidence }));
+  const byReports = await recallFacts(a.id, text, SIGNAL_MIN_COSINE, Infinity);
+  const byPosts = await recallFactsByPosts(a.id, text, SIGNAL_PEER_MIN_COSINE, HEAT_WINDOW_HOURS);
+  const recalled = bestPerFact([...byReports, ...byPosts]);
   if (recalled.length === 0) {
     // Recorded, so a post that found nothing is told apart from one never decided.
     return write(null, "signal-unmatched", []);
   }
-  const top = recalled[0]!;
-  const asCandidates = (verdicts?: Map<number, Verdict>): DecisionCandidate[] =>
-    recalled.map((r) => ({ id: r.factId, score: Math.round(r.score * 1000) / 1000, relation: verdicts?.get(r.factId)?.relation, confidence: verdicts?.get(r.factId)?.confidence }));
-  if (top.score >= SIGNAL_AUTO_COSINE) {
-    return write(top, "signal", asCandidates());
+  const query: ReportView = { title: a.title, source: a.source_name, firstParty: false, at: a.published_at, publicationTime: a.publication_time, summary: a.body_text?.slice(0, 300) ?? null };
+  const model = await modelFor("group");
+  const spec = MODELS[model]!;
+  const modelInput = { model: spec.model, service: spec.service, extra: spec.extra ?? null, prompt: RELATE_PROMPT_VERSION };
+  const queryEvidence = describeReport(query, "帖子");
+  const factFingerprint = (c: CandidateView) => sha256(stableJson({ ...modelInput, queryEvidence, fact: signalFactEvidence(c) }));
+  const earlier = regroup ? [] : await sql<{ fact_id: number; fingerprint: string }[]>`
+    SELECT (c->>'id')::bigint AS fact_id, c->>'signalFactFingerprint' AS fingerprint
+    FROM grouping_decisions j CROSS JOIN LATERAL jsonb_array_elements(j.candidates) c
+    WHERE j.article_id=${a.id} AND j.verdict='signal-unmatched' AND j.candidates->0->>'signalInputRevision'=${String(a.revision)}
+      AND c->>'signalFactFingerprint' IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM story_signals ss JOIN facts f ON f.story_id=ss.story_id
+        WHERE ss.article_id=${a.id} AND f.id=(c->>'id')::bigint)`;
+  const answered = new Set(earlier.map(c => c.fingerprint));
+  const priorFacts = new Set(earlier.map(c => Number(c.fact_id)));
+  const unchanged = new Set((await candidateViews(recalled.filter(c => priorFacts.has(c.factId))))
+    .filter(c => answered.has(factFingerprint(c))).map(c => c.factId));
+  const current = recalled.filter(c => !unchanged.has(c.factId));
+  if (!current.length) return { verdict: "signal-unmatched" };
+  const reportCandidates = byReports.filter(c => !unchanged.has(c.factId));
+  if (reportCandidates[0] && reportCandidates[0].score >= SIGNAL_AUTO_COSINE) {
+    return write(reportCandidates[0], "signal", asCandidates(reportCandidates.slice(0, SIGNAL_TOP_FACTS)));
   }
-  const cands = await candidateViews(recalled);
-  if (cands.length === 0) return { verdict: "signal-unmatched" };
-  const query: ReportView = { title: a.title, source: a.source_name, firstParty: false, at: observedAt, summary: a.body_text?.slice(0, 300) ?? null };
-  const { verdicts, receiptId } = await judgeSignal(a.id, query, cands);
+  const cands = await candidateViews(current.slice(0, SIGNAL_TOP_FACTS));
+  if (!cands.length) return write(null, "signal-unmatched", []);
+  const fingerprint = sha256(stableJson({
+    revision: a.revision, ...modelInput, user: batchUser(query, cands, "帖子"),
+    candidates: cands.map(c => ({ factId: c.factId, storyId: c.storyId, storyRoot: c.storyRoot, score: Math.round(c.score * 1_000_000) })),
+  }));
+  const [settled] = await sql`SELECT 1 FROM (
+    SELECT verdict, candidates FROM grouping_decisions WHERE article_id=${a.id} ORDER BY id DESC LIMIT 1
+  ) previous WHERE verdict='signal-unmatched' AND candidates->0->>'signalInputRevision'=${String(a.revision)}
+    AND candidates->0->>'signalInputFingerprint'=${fingerprint}`;
+  if (settled && !regroup) return { verdict: "signal-unmatched" };
+  const { verdicts, receiptId } = await judgeSignal(a, model, fingerprint, query, cands);
   const target = signalTarget(cands, verdicts);
-  return write(target, target ? "signal" : "signal-unmatched", asCandidates(verdicts), receiptId);
+  const decisions = asCandidates(cands, verdicts).map((decision, i) => ({ ...decision,
+    signalFactFingerprint: factFingerprint(cands[i]!), signalFactEvidence: signalFactEvidence(cands[i]!),
+  }));
+  decisions[0] = { ...decisions[0]!, signalInputRevision: a.revision, signalInputFingerprint: fingerprint };
+  return write(target, target ? "signal" : "signal-unmatched", decisions, receiptId);
 }

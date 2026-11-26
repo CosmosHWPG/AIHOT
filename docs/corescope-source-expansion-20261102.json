@@ -1,0 +1,2557 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-02T14:08:24.131Z",
+  "title": "CoreScope · AIHot 最近 48 小时信息源差异审视（2026-11-02）",
+  "status": "source_applied_collection_pending_provider_balance",
+  "scope": "AIHot public rolling48h metadata review and one deduplicated independent CoreScope source addition; V2 read-only",
+  "window": {
+    "start": "2026-10-31T13:44:21.274Z",
+    "end": "2026-11-02T13:44:21.274Z",
+    "timezone": "Asia/Shanghai",
+    "durationHours": 48,
+    "interpretation": "Rolling48h; includes original publication OR discovery time in the bounded interval"
+  },
+  "comparisonBaseline": {
+    "mainItems": 1086,
+    "hotExtraRows": 2,
+    "uniqueItemIds": 1088,
+    "fileSet": [
+      "../aihot-source-refresh-20261101/online-window-items.jsonl",
+      "../aihot-source-refresh-20261101/online-window-hot-delta.json"
+    ],
+    "note": "Use all previously collected IDs, not only the earlier seven-calendar-day display subset"
+  },
+  "counts": {
+    "currentApiSnapshotItems": 1081,
+    "mainWindowItems": 121,
+    "mainWindowSourceNames": 45,
+    "hotStories": 10,
+    "hotReports": 37,
+    "uniqueHotReports": 37,
+    "hotReportsInWindow": 25,
+    "hotExtraItems": 3,
+    "windowUnionItems": 124,
+    "windowUnionSourceNames": 45,
+    "deltaItems": 63,
+    "deltaSourceNames": 32,
+    "xWindowItems": 49,
+    "xWindowHandles": 22,
+    "xDeltaItems": 26,
+    "xDeltaHandles": 16,
+    "missingXHandles": 0,
+    "mpWindowItems": 6,
+    "mpWindowBiz": 5,
+    "missingMpBiz": 1,
+    "sourceLabelsByFamily": {
+      "X": 22,
+      "MP": 5,
+      "PUBLIC": 18
+    },
+    "exactXMissing": 0,
+    "exactMpMissing": 1,
+    "existingPublicChannelScope": 17,
+    "publicOnlyConfiguredScope": 13,
+    "publicNativeFeedPreviews": 4,
+    "exactOriginalUrlsConfirmedInNativePreview": 5,
+    "aggregateQueryEquivalencePending": 1,
+    "proposedNewSources": 1
+  },
+  "baselineConfiguration": {
+    "capturedAt": "2026-11-02T13:46:42.153Z",
+    "total": 730,
+    "enabled": 714,
+    "disabled": 16,
+    "mpSources": 71,
+    "xSources": 170,
+    "evidence": "current-source-baseline.json (runtime read-only MVCC snapshot)"
+  },
+  "actualConfiguration": {
+    "total": 731,
+    "enabled": 715,
+    "disabled": 16,
+    "old730Unchanged": true,
+    "newSourceMatches": true,
+    "budgetsUnchanged": true,
+    "fieldsCompared": [
+      "id",
+      "name",
+      "kind",
+      "config",
+      "tier",
+      "enabled",
+      "first_party",
+      "owner_entity_id",
+      "signal_group_id",
+      "participation_mode",
+      "interval_minutes",
+      "tags",
+      "site_fulltext",
+      "syndicate_fulltext"
+    ],
+    "mpSources": 72,
+    "xSources": 170
+  },
+  "addedSource": {
+    "id": "corescope-mp-longcat-meituan",
+    "name": "公众号：龙猫LongCat（美团）",
+    "kind": "mp_account",
+    "entry": "https://mp.weixin.qq.com/s?__biz=MzYyMTA0NTc5NQ%3D%3D&mid=2247486081&idx=1&sn=0609ae26ada1d4d96126b95044dd4519",
+    "biz": "MzYyMTA0NTc5NQ==",
+    "transport": "dajiala",
+    "intervalMinutes": 180,
+    "first_party": false,
+    "site_fulltext": false,
+    "syndicate_fulltext": false
+  },
+  "rows": [
+    {
+      "sourceLabel": "Tripo（官方 X）",
+      "windowItems": 1,
+      "deltaItems": 0,
+      "articleEvidence": [
+        {
+          "itemId": "p99k9rlpdt9qa2uoj7wmuozw3",
+          "originalUrl": "https://x.com/tripoai/status/2116536921598079174",
+          "evidenceUrl": "https://aihot.news/items/p99k9rlpdt9qa2uoj7wmuozw3",
+          "publishedAt": "2026-10-31T14:25:00.000Z",
+          "discoveredAt": "2026-10-31T14:45:26.646Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "tripoai"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-tripoai",
+          "name": "Tripo · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/tripoai"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：百度 Baidu (@Baidu_Inc)",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "yqqnlut6hqbql56fhohotzlsq",
+          "originalUrl": "https://x.com/Baidu_Inc/status/2117161663426080990",
+          "evidenceUrl": "https://aihot.news/items/yqqnlut6hqbql56fhohotzlsq",
+          "publishedAt": "2026-11-02T07:47:30.000Z",
+          "discoveredAt": "2026-11-02T08:03:24.283Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "baidu_inc"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-baidu-inc",
+          "name": "百度 Baidu · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/baidu_inc"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：卡兹克 (@Khazix0918)",
+      "windowItems": 1,
+      "deltaItems": 0,
+      "articleEvidence": [
+        {
+          "itemId": "ja6tok2yoxsgypojyswpzss5t",
+          "originalUrl": "https://x.com/Khazix0918/status/2116801460579234047",
+          "evidenceUrl": "https://aihot.news/items/ja6tok2yoxsgypojyswpzss5t",
+          "publishedAt": "2026-11-01T07:56:11.000Z",
+          "discoveredAt": "2026-11-01T09:02:31.358Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "khazix0918"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-khazix0918",
+          "name": "卡兹克 · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/khazix0918"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：蚂蚁百灵 (@AntLingAGI)",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "bb1oga1zliirfd31hnmlnx176",
+          "originalUrl": "https://x.com/AntLingAGI/status/2117095432526700766",
+          "evidenceUrl": "https://aihot.news/items/bb1oga1zliirfd31hnmlnx176",
+          "publishedAt": "2026-11-02T03:24:19.000Z",
+          "discoveredAt": "2026-11-02T03:55:21.802Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "antlingagi"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-antlingagi",
+          "name": "蚂蚁百灵 · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/antlingagi"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：Addy Osmani (@addyosmani)",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "mhw3rtr5o13p5777y7el9tczk",
+          "originalUrl": "https://x.com/addyosmani/status/2116986087390486816",
+          "evidenceUrl": "https://aihot.news/items/mhw3rtr5o13p5777y7el9tczk",
+          "publishedAt": "2026-11-01T20:09:49.000Z",
+          "discoveredAt": "2026-11-01T20:13:35.527Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "addyosmani"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-addyosmani",
+          "name": "Addy Osmani · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/addyosmani"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：Andrej Karpathy (@karpathy)",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "epg27jolnkk7xfw3dy6xtb5xs",
+          "originalUrl": "https://x.com/karpathy/status/2116957135661945283",
+          "evidenceUrl": "https://aihot.news/items/epg27jolnkk7xfw3dy6xtb5xs",
+          "publishedAt": "2026-11-01T18:14:46.000Z",
+          "discoveredAt": "2026-11-01T18:40:43.407Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "karpathy"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "v2-source-3725",
+          "name": "X - karpathy",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/karpathy"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：Aravind Srinivas（Perplexity CEO） (@AravSrinivas)",
+      "windowItems": 3,
+      "deltaItems": 2,
+      "articleEvidence": [
+        {
+          "itemId": "gyjd2u76zqyham1mzwzrxq5at",
+          "originalUrl": "https://x.com/AravSrinivas/status/2117030646107545812",
+          "evidenceUrl": "https://aihot.news/items/gyjd2u76zqyham1mzwzrxq5at",
+          "publishedAt": "2026-11-01T23:06:53.000Z",
+          "discoveredAt": "2026-11-01T23:18:47.818Z"
+        },
+        {
+          "itemId": "r6z2rg6px15gh8ak1c259g2xo",
+          "originalUrl": "https://x.com/AravSrinivas/status/2116956758480732377",
+          "evidenceUrl": "https://aihot.news/items/r6z2rg6px15gh8ak1c259g2xo",
+          "publishedAt": "2026-11-01T18:13:17.000Z",
+          "discoveredAt": "2026-11-01T18:40:38.125Z"
+        },
+        {
+          "itemId": "bdr4wzfygol4lz52ptme168wh",
+          "originalUrl": "https://x.com/AravSrinivas/status/2116638385121185862",
+          "evidenceUrl": "https://aihot.news/items/bdr4wzfygol4lz52ptme168wh",
+          "publishedAt": "2026-10-31T21:08:10.000Z",
+          "discoveredAt": "2026-10-31T21:23:44.972Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "aravsrinivas"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-aravsrinivas",
+          "name": "Aravind Srinivas · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/aravsrinivas"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：Elon Musk (@elonmusk, xAI)",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "jbtcvbae5diocbs0z3smi9lhc",
+          "originalUrl": "https://x.com/elonmusk/status/2116989604104392969",
+          "evidenceUrl": "https://aihot.news/items/jbtcvbae5diocbs0z3smi9lhc",
+          "publishedAt": "2026-11-01T20:23:48.000Z",
+          "discoveredAt": "2026-11-01T21:37:47.750Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "elonmusk"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-elonmusk",
+          "name": "Elon Musk · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/elonmusk"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：Google DeepMind (@GoogleDeepMind)",
+      "windowItems": 1,
+      "deltaItems": 0,
+      "articleEvidence": [
+        {
+          "itemId": "xy1ys9jm1she7eonrhw8htb0w",
+          "originalUrl": "https://x.com/GoogleDeepMind/status/2116524000977285321",
+          "evidenceUrl": "https://aihot.news/items/xy1ys9jm1she7eonrhw8htb0w",
+          "publishedAt": "2026-10-31T13:33:39.000Z",
+          "discoveredAt": "2026-10-31T13:52:31.503Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "googledeepmind"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-googledeepmind",
+          "name": "Google DeepMind · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/googledeepmind"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：indigo (@indigox)",
+      "windowItems": 3,
+      "deltaItems": 2,
+      "articleEvidence": [
+        {
+          "itemId": "udtau8s8dnyvrgv3qppb2n2e5",
+          "originalUrl": "https://x.com/indigox/status/2117116891470930000",
+          "evidenceUrl": "https://aihot.news/items/udtau8s8dnyvrgv3qppb2n2e5",
+          "publishedAt": "2026-11-02T04:49:35.000Z",
+          "discoveredAt": "2026-11-02T04:57:23.524Z"
+        },
+        {
+          "itemId": "gjlarekzvw4g4kakw25tjpr7h",
+          "originalUrl": "https://x.com/indigox/status/2117081722366144728",
+          "evidenceUrl": "https://aihot.news/items/gjlarekzvw4g4kakw25tjpr7h",
+          "publishedAt": "2026-11-02T02:29:50.000Z",
+          "discoveredAt": "2026-11-02T02:53:24.035Z"
+        },
+        {
+          "itemId": "efr4anlv35y8gta0vs22bwsle",
+          "originalUrl": "https://x.com/indigox/status/2116690187006971959",
+          "evidenceUrl": "https://aihot.news/items/efr4anlv35y8gta0vs22bwsle",
+          "publishedAt": "2026-11-01T00:34:01.000Z",
+          "discoveredAt": "2026-11-01T00:41:26.250Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "indigox"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-indigox",
+          "name": "indigo · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/indigox"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：Lauren Tan（SpaceXSI，Grok Bot 工程负责人） (@poteto)",
+      "windowItems": 3,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "tmyjp5spg93pmnbqe1vak7roc",
+          "originalUrl": "https://x.com/poteto/status/2117043478140276847",
+          "evidenceUrl": "https://aihot.news/items/tmyjp5spg93pmnbqe1vak7roc",
+          "publishedAt": "2026-11-01T23:57:52.000Z",
+          "discoveredAt": "2026-11-02T00:21:17.708Z"
+        },
+        {
+          "itemId": "f8vru8kj3jru110uiaezs7dum",
+          "originalUrl": "https://x.com/poteto/status/2116576229319233596",
+          "evidenceUrl": "https://aihot.news/items/f8vru8kj3jru110uiaezs7dum",
+          "publishedAt": "2026-10-31T17:01:11.000Z",
+          "discoveredAt": "2026-10-31T17:18:44.394Z"
+        },
+        {
+          "itemId": "ffk5ddhn0t92hj759hitxsxom",
+          "originalUrl": "https://x.com/poteto/status/2116580481236115933",
+          "evidenceUrl": "https://aihot.news/items/ffk5ddhn0t92hj759hitxsxom",
+          "publishedAt": "2026-10-31T17:18:05.000Z",
+          "discoveredAt": "2026-10-31T17:18:44.386Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "poteto"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-poteto",
+          "name": "Lauren Tan · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/poteto"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：Lingxi Li（SpaceXSI，Grok Bot 工程） (@lingxi)",
+      "windowItems": 1,
+      "deltaItems": 0,
+      "articleEvidence": [
+        {
+          "itemId": "hou4m47fbprpiuljibj97see4",
+          "originalUrl": "https://x.com/lingxi/status/2116601140502811022",
+          "evidenceUrl": "https://aihot.news/items/hou4m47fbprpiuljibj97see4",
+          "publishedAt": "2026-10-31T18:40:11.000Z",
+          "discoveredAt": "2026-10-31T18:40:15.530Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "lingxi"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-lingxi",
+          "name": "Lingxi Li · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/lingxi"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：MiniMax (@MiniMax_AI)",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "mbtgzfvlwulq881hah9yk20pl",
+          "originalUrl": "https://x.com/MiniMax_AI/status/2116996123164569606",
+          "evidenceUrl": "https://aihot.news/items/mbtgzfvlwulq881hah9yk20pl",
+          "publishedAt": "2026-11-01T20:49:42.000Z",
+          "discoveredAt": "2026-11-01T21:14:51.630Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "minimax_ai"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-minimax-ai",
+          "name": "MiniMax · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/minimax_ai"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：MiniMax Design (H3) (@Hailuo_AI)",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "s4sbwsbetmbqi30hz2j0g6ra7",
+          "originalUrl": "https://x.com/Hailuo_AI/status/2117108833055277108",
+          "evidenceUrl": "https://aihot.news/items/s4sbwsbetmbqi30hz2j0g6ra7",
+          "publishedAt": "2026-11-02T04:17:34.000Z",
+          "discoveredAt": "2026-11-02T04:26:23.996Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "hailuo_ai"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-hailuo-ai",
+          "name": "MiniMax Design (H3) · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/hailuo_ai"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：Mustafa Suleyman（Microsoft AI CEO） (@mustafasuleyman)",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "ivv9w3bhrzbnnakdcrhhzc34h",
+          "originalUrl": "https://x.com/mustafasuleyman/status/2116913722878820528",
+          "evidenceUrl": "https://aihot.news/items/ivv9w3bhrzbnnakdcrhhzc34h",
+          "publishedAt": "2026-11-01T15:22:16.000Z",
+          "discoveredAt": "2026-11-01T15:35:18.305Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "mustafasuleyman"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-mustafasuleyman",
+          "name": "Mustafa Suleyman · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/mustafasuleyman"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：opencode (@opencode)",
+      "windowItems": 1,
+      "deltaItems": 0,
+      "articleEvidence": [
+        {
+          "itemId": "mqg10sl2z36xh1lhji9mqzvhl",
+          "originalUrl": "https://x.com/opencode/status/2116555630236577819",
+          "evidenceUrl": "https://aihot.news/items/mqg10sl2z36xh1lhji9mqzvhl",
+          "publishedAt": "2026-10-31T15:39:20.000Z",
+          "discoveredAt": "2026-10-31T15:45:43.603Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "opencode"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-opencode",
+          "name": "opencode · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/opencode"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：PixVerse (@PixVerse)",
+      "windowItems": 5,
+      "deltaItems": 0,
+      "articleEvidence": [
+        {
+          "itemId": "ng17cejayq8rxyze8cidxso6f",
+          "originalUrl": "https://x.com/PixVerse/status/2116877978995241239",
+          "evidenceUrl": "https://aihot.news/items/ng17cejayq8rxyze8cidxso6f",
+          "publishedAt": "2026-11-01T13:00:14.000Z",
+          "discoveredAt": "2026-11-01T13:18:36.433Z"
+        },
+        {
+          "itemId": "ws8siftj5uulty5x9yuz9892n",
+          "originalUrl": "https://x.com/PixVerse/status/2116878005326979293",
+          "evidenceUrl": "https://aihot.news/items/ws8siftj5uulty5x9yuz9892n",
+          "publishedAt": "2026-11-01T13:00:20.000Z",
+          "discoveredAt": "2026-11-01T13:18:36.416Z"
+        },
+        {
+          "itemId": "zeku4bfgwns1x28enk3x1hfzj",
+          "originalUrl": "https://x.com/PixVerse/status/2116538247186899335",
+          "evidenceUrl": "https://aihot.news/items/zeku4bfgwns1x28enk3x1hfzj",
+          "publishedAt": "2026-10-31T14:30:16.000Z",
+          "discoveredAt": "2026-10-31T14:44:28.317Z"
+        },
+        {
+          "itemId": "mn0fiw24eezm4noaoy2epw2wg",
+          "originalUrl": "https://x.com/PixVerse/status/2116538260239589630",
+          "evidenceUrl": "https://aihot.news/items/mn0fiw24eezm4noaoy2epw2wg",
+          "publishedAt": "2026-10-31T14:30:19.000Z",
+          "discoveredAt": "2026-10-31T14:44:28.310Z"
+        },
+        {
+          "itemId": "ke4uuv54ef6qc3vak4ch0kq22",
+          "originalUrl": "https://x.com/PixVerse/status/2116538273321685349",
+          "evidenceUrl": "https://aihot.news/items/ke4uuv54ef6qc3vak4ch0kq22",
+          "publishedAt": "2026-10-31T14:30:22.000Z",
+          "discoveredAt": "2026-10-31T14:44:28.303Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "pixverse"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-pixverse",
+          "name": "PixVerse · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/pixverse"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：Rohan Paul (@rohanpaul_ai)",
+      "windowItems": 15,
+      "deltaItems": 8,
+      "articleEvidence": [
+        {
+          "itemId": "e9pj6vhcr5mjxlq3lzdlpgteh",
+          "originalUrl": "https://x.com/rohanpaul_ai/status/2117235020440215850",
+          "evidenceUrl": "https://aihot.news/items/e9pj6vhcr5mjxlq3lzdlpgteh",
+          "publishedAt": "2026-11-02T12:38:59.000Z",
+          "discoveredAt": "2026-11-02T12:53:33.210Z"
+        },
+        {
+          "itemId": "rlrbaplq6k09qoovy0ksafrcg",
+          "originalUrl": "https://x.com/rohanpaul_ai/status/2117236578712186935",
+          "evidenceUrl": "https://aihot.news/items/rlrbaplq6k09qoovy0ksafrcg",
+          "publishedAt": "2026-11-02T12:45:11.000Z",
+          "discoveredAt": "2026-11-02T12:53:33.202Z"
+        },
+        {
+          "itemId": "csy5titzbeanhd3iru1rn2nee",
+          "originalUrl": "https://x.com/rohanpaul_ai/status/2117203349103874552",
+          "evidenceUrl": "https://aihot.news/items/csy5titzbeanhd3iru1rn2nee",
+          "publishedAt": "2026-11-02T10:33:08.000Z",
+          "discoveredAt": "2026-11-02T10:50:37.757Z"
+        },
+        {
+          "itemId": "ad9wl96ynhvt0b9pus7var4ue",
+          "originalUrl": "https://x.com/rohanpaul_ai/status/2117206586859151576",
+          "evidenceUrl": "https://aihot.news/items/ad9wl96ynhvt0b9pus7var4ue",
+          "publishedAt": "2026-11-02T10:46:00.000Z",
+          "discoveredAt": "2026-11-02T10:50:37.749Z"
+        },
+        {
+          "itemId": "shooxzwxpvnfkjjsa2fotolbd",
+          "originalUrl": "https://x.com/rohanpaul_ai/status/2117177813652709633",
+          "evidenceUrl": "https://aihot.news/items/shooxzwxpvnfkjjsa2fotolbd",
+          "publishedAt": "2026-11-02T08:51:40.000Z",
+          "discoveredAt": "2026-11-02T09:17:48.145Z"
+        },
+        {
+          "itemId": "k02hyr58q45b0ip29mm5bfxkf",
+          "originalUrl": "https://x.com/rohanpaul_ai/status/2116983513425883148",
+          "evidenceUrl": "https://aihot.news/items/k02hyr58q45b0ip29mm5bfxkf",
+          "publishedAt": "2026-11-01T19:59:35.000Z",
+          "discoveredAt": "2026-11-01T20:13:44.741Z"
+        },
+        {
+          "itemId": "cr20os47n7rt4z16vt9w80w01",
+          "originalUrl": "https://x.com/rohanpaul_ai/status/2116986944605606059",
+          "evidenceUrl": "https://aihot.news/items/cr20os47n7rt4z16vt9w80w01",
+          "publishedAt": "2026-11-01T20:13:13.000Z",
+          "discoveredAt": "2026-11-01T20:13:44.727Z"
+        },
+        {
+          "itemId": "vbepqvcdyhqlbtq97lw9dnoi2",
+          "originalUrl": "https://x.com/rohanpaul_ai/status/2116974925655519727",
+          "evidenceUrl": "https://aihot.news/items/vbepqvcdyhqlbtq97lw9dnoi2",
+          "publishedAt": "2026-11-01T19:25:28.000Z",
+          "discoveredAt": "2026-11-01T19:42:45.087Z"
+        },
+        {
+          "itemId": "ch9bvo6i6g7ha8tca6z544ryx",
+          "originalUrl": "https://x.com/rohanpaul_ai/status/2116882110363697344",
+          "evidenceUrl": "https://aihot.news/items/ch9bvo6i6g7ha8tca6z544ryx",
+          "publishedAt": "2026-11-01T13:16:39.000Z",
+          "discoveredAt": "2026-11-01T13:20:34.206Z"
+        },
+        {
+          "itemId": "ckvh9zdsrk8q476n4twvs1m4p",
+          "originalUrl": "https://x.com/rohanpaul_ai/status/2116855559034912990",
+          "evidenceUrl": "https://aihot.news/items/ckvh9zdsrk8q476n4twvs1m4p",
+          "publishedAt": "2026-11-01T11:31:09.000Z",
+          "discoveredAt": "2026-11-01T11:47:37.668Z"
+        },
+        {
+          "itemId": "szhv5e9lo6h79dimgyu1qjeif",
+          "originalUrl": "https://x.com/rohanpaul_ai/status/2116821796297298122",
+          "evidenceUrl": "https://aihot.news/items/szhv5e9lo6h79dimgyu1qjeif",
+          "publishedAt": "2026-11-01T09:16:59.000Z",
+          "discoveredAt": "2026-11-01T09:44:22.090Z"
+        },
+        {
+          "itemId": "hvpncb367m05u2z49ltb6mm8u",
+          "originalUrl": "https://x.com/rohanpaul_ai/status/2116628912860282918",
+          "evidenceUrl": "https://aihot.news/items/hvpncb367m05u2z49ltb6mm8u",
+          "publishedAt": "2026-10-31T20:30:32.000Z",
+          "discoveredAt": "2026-10-31T20:53:43.553Z"
+        },
+        {
+          "itemId": "fbj22bujlnrzl6wn1geuth4jj",
+          "originalUrl": "https://x.com/rohanpaul_ai/status/2116621467219816915",
+          "evidenceUrl": "https://aihot.news/items/fbj22bujlnrzl6wn1geuth4jj",
+          "publishedAt": "2026-10-31T20:00:57.000Z",
+          "discoveredAt": "2026-10-31T20:22:45.463Z"
+        },
+        {
+          "itemId": "gmvvqbcdwhcicmkdejt5s0gjt",
+          "originalUrl": "https://x.com/rohanpaul_ai/status/2116551519034048861",
+          "evidenceUrl": "https://aihot.news/items/gmvvqbcdwhcicmkdejt5s0gjt",
+          "publishedAt": "2026-10-31T15:23:00.000Z",
+          "discoveredAt": "2026-10-31T15:46:42.750Z"
+        },
+        {
+          "itemId": "nuzetqlxyk0t2dyqxnihfiqrh",
+          "originalUrl": "https://x.com/rohanpaul_ai/status/2116536160273170572",
+          "evidenceUrl": "https://aihot.news/items/nuzetqlxyk0t2dyqxnihfiqrh",
+          "publishedAt": "2026-10-31T14:21:58.000Z",
+          "discoveredAt": "2026-10-31T14:45:26.171Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "rohanpaul_ai"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-rohanpaul-ai",
+          "name": "Rohan Paul · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/rohanpaul_ai"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：Saito 硬地骇客 (@SaitoWu)",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "i8n8pyikki3cpqtvejt91i7nq",
+          "originalUrl": "https://x.com/SaitoWu/status/2117200591307084167",
+          "evidenceUrl": "https://aihot.news/items/i8n8pyikki3cpqtvejt91i7nq",
+          "publishedAt": "2026-11-02T10:22:11.000Z",
+          "discoveredAt": "2026-11-02T10:50:37.765Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "saitowu"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-saitowu",
+          "name": "Saito 硬地骇客 · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/saitowu"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：Sundar Pichai (@sundarpichai)",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "mboa9dw6fz9mswxncr3e8llkj",
+          "originalUrl": "https://x.com/sundarpichai/status/2117113121102045347",
+          "evidenceUrl": "https://aihot.news/items/mboa9dw6fz9mswxncr3e8llkj",
+          "publishedAt": "2026-11-02T04:34:36.000Z",
+          "discoveredAt": "2026-11-02T04:58:27.187Z"
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "sundarpichai"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-sundarpichai",
+          "name": "Sundar Pichai · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/sundarpichai"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：Tianyi Cui（@tianyi）",
+      "windowItems": 3,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "v2n7fjmcw2mqr3u0jl19ykths",
+          "originalUrl": "https://x.com/tianyi/status/2117064134961631414",
+          "evidenceUrl": "https://aihot.news/items/v2n7fjmcw2mqr3u0jl19ykths",
+          "publishedAt": "2026-11-02T01:19:57.000Z",
+          "discoveredAt": "2026-11-02T01:22:23.317Z"
+        },
+        {
+          "itemId": "xwuom8k0bngxktjl6qgy9lul5",
+          "originalUrl": "https://x.com/tianyi/status/2116859582639403080",
+          "evidenceUrl": "https://aihot.news/items/xwuom8k0bngxktjl6qgy9lul5",
+          "publishedAt": "2026-11-01T11:47:08.000Z",
+          "discoveredAt": null
+        },
+        {
+          "itemId": "n6caspmdigjsbdbi2vq0d2n28",
+          "originalUrl": "https://x.com/tianyi/status/2116858974867993047",
+          "evidenceUrl": "https://aihot.news/items/n6caspmdigjsbdbi2vq0d2n28",
+          "publishedAt": "2026-11-01T11:44:43.000Z",
+          "discoveredAt": null
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "tianyi"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-tianyi",
+          "name": "Tianyi Cui · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/tianyi"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "X：X.PIN (@thexpin)",
+      "windowItems": 2,
+      "deltaItems": 2,
+      "articleEvidence": [
+        {
+          "itemId": "ax4bff26xn76y7qth0y3k0270",
+          "originalUrl": "https://x.com/thexpin/status/2116909593662239134",
+          "evidenceUrl": "https://aihot.news/items/ax4bff26xn76y7qth0y3k0270",
+          "publishedAt": "2026-11-01T15:05:52.000Z",
+          "discoveredAt": "2026-11-01T15:35:22.959Z"
+        },
+        {
+          "itemId": "v48vw4rcbdrgrl8ryp7sqpnul",
+          "originalUrl": "https://x.com/thexpin/status/2116924694033211538",
+          "evidenceUrl": "https://aihot.news/items/v48vw4rcbdrgrl8ryp7sqpnul",
+          "publishedAt": "2026-11-01T16:05:52.000Z",
+          "discoveredAt": null
+        }
+      ],
+      "family": "X",
+      "identity": {
+        "type": "exact_x_handle",
+        "value": "thexpin"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-x-thexpin",
+          "name": "X.PIN · X",
+          "kind": "x_search",
+          "enabled": true,
+          "entry": "https://x.com/thexpin"
+        }
+      ],
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "原始 status URL 的作者 handle 与公开标签一致，并命中本地精确 handle；本轮差异审视未调用 X 提供商。",
+      "gap": "未在本轮验收该账号本轮实际采集、游标覆盖或文章入库；身份去重不等于账号官方归属认证。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "公众号：卡尔的AI沃茨",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "jodeimbqwd09o05ss60ylfz1w",
+          "originalUrl": "https://mp.weixin.qq.com/s?__biz=Mzg3MTk3NzYzNw%3D%3D&mid=2247512714&idx=1&sn=c2a781fbf4f976bd47b34caea1e2ffe9",
+          "evidenceUrl": "https://aihot.news/items/jodeimbqwd09o05ss60ylfz1w",
+          "publishedAt": "2026-11-02T09:15:25.000Z",
+          "discoveredAt": "2026-11-02T09:31:45.950Z"
+        }
+      ],
+      "family": "MP",
+      "identity": {
+        "type": "exact_mp_biz",
+        "value": "Mzg3MTk3NzYzNw=="
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-mp-aiwarts",
+          "name": "公众号：卡尔的AI沃茨",
+          "kind": "mp_account",
+          "enabled": true,
+          "entry": "https://mp.weixin.qq.com/s?__biz=Mzg3MTk3NzYzNw%3D%3D&mid=2247512714&idx=1&sn=c2a781fbf4f976bd47b34caea1e2ffe9"
+        }
+      ],
+      "plannedLocalSource": null,
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "公开原文长链接的精确 biz 命中本地账号；本轮差异审视未调用公众号提供商。",
+      "gap": "本轮没有对复用账号执行实际采集验收；复用不代表窗口内各篇已入库。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "公众号：龙猫LongCat（美团）",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "uglz0t6iq1oob9jcs9cwis9t7",
+          "originalUrl": "https://mp.weixin.qq.com/s?__biz=MzYyMTA0NTc5NQ%3D%3D&mid=2247486081&idx=1&sn=0609ae26ada1d4d96126b95044dd4519",
+          "evidenceUrl": "https://aihot.news/items/uglz0t6iq1oob9jcs9cwis9t7",
+          "publishedAt": "2026-11-02T01:00:00.000Z",
+          "discoveredAt": "2026-11-02T01:11:13.645Z"
+        }
+      ],
+      "family": "MP",
+      "identity": {
+        "type": "exact_mp_biz",
+        "value": "MzYyMTA0NTc5NQ=="
+      },
+      "decision": "added_collection_pending_balance",
+      "localSources": [
+        {
+          "id": "corescope-mp-longcat-meituan",
+          "name": "公众号：龙猫LongCat（美团）",
+          "kind": "mp_account",
+          "enabled": true,
+          "entry": "https://mp.weixin.qq.com/s?__biz=MzYyMTA0NTc5NQ%3D%3D&mid=2247486081&idx=1&sn=0609ae26ada1d4d96126b95044dd4519",
+          "transport": "dajiala",
+          "first_party": false
+        }
+      ],
+      "evidenceLevel": "exact_biz_missing_supported_native_selector",
+      "evidenceExplanation": "公开原文长链接的精确 biz 在 730 源基线不存在；本地适配器支持该 selector。公开 GET 落到验证码页，缓存无身份命中，尚未独立认证账号官方归属；first_party=false。",
+      "gap": "Dajiala余额不足20001；首次列表失败，尚无正文请求或入库；待充值后复验。未认证法人/官方账号归属。",
+      "actualCollectionAcceptanceThisRun": "one_live_history_attempt_failed_20001_no_body_or_ingestion"
+    },
+    {
+      "sourceLabel": "公众号：数字生命卡兹克",
+      "windowItems": 2,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "dzwfvd9xp6v4qaj6olxezpier",
+          "originalUrl": "https://mp.weixin.qq.com/s?__biz=MzIyMzA5NjEyMA%3D%3D&mid=2647688060&idx=1&sn=e00d7e57b6f0e3670f0e267e677047df",
+          "evidenceUrl": "https://aihot.news/items/dzwfvd9xp6v4qaj6olxezpier",
+          "publishedAt": "2026-11-02T00:19:00.000Z",
+          "discoveredAt": "2026-11-02T00:21:28.806Z"
+        },
+        {
+          "itemId": "f6dxzur6d4pwjdhvm1x6m5rfp",
+          "originalUrl": "https://mp.weixin.qq.com/s?__biz=MzIyMzA5NjEyMA%3D%3D&mid=2647688028&idx=1&sn=e509269da2e0e0b4d4dfbb121b42204b",
+          "evidenceUrl": "https://aihot.news/items/f6dxzur6d4pwjdhvm1x6m5rfp",
+          "publishedAt": "2026-11-01T00:22:41.000Z",
+          "discoveredAt": "2026-11-01T00:31:11.801Z"
+        }
+      ],
+      "family": "MP",
+      "identity": {
+        "type": "exact_mp_biz",
+        "value": "MzIyMzA5NjEyMA=="
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "v2-source-7176",
+          "name": "数字生命卡兹克",
+          "kind": "mp_account",
+          "enabled": true,
+          "entry": "https://mp.weixin.qq.com/s?__biz=MzIyMzA5NjEyMA%3D%3D&mid=2647688060&idx=1&sn=e00d7e57b6f0e3670f0e267e677047df"
+        }
+      ],
+      "plannedLocalSource": null,
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "公开原文长链接的精确 biz 命中本地账号；本轮差异审视未调用公众号提供商。",
+      "gap": "本轮没有对复用账号执行实际采集验收；复用不代表窗口内各篇已入库。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "公众号：腾讯混元",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "l37ydaic43icz85huclc2io6c",
+          "originalUrl": "https://mp.weixin.qq.com/s?__biz=MzkwODU2OTQyNQ%3D%3D&mid=2247498763&idx=1&sn=279f8fb4e43a987fdc0aa2af0b0f7958",
+          "evidenceUrl": "https://aihot.news/items/l37ydaic43icz85huclc2io6c",
+          "publishedAt": "2026-11-02T10:06:28.000Z",
+          "discoveredAt": "2026-11-02T10:36:05.324Z"
+        }
+      ],
+      "family": "MP",
+      "identity": {
+        "type": "exact_mp_biz",
+        "value": "MzkwODU2OTQyNQ=="
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-mp-tencent-hunyuan",
+          "name": "公众号：腾讯混元",
+          "kind": "mp_account",
+          "enabled": true,
+          "entry": "https://mp.weixin.qq.com/s?__biz=MzkwODU2OTQyNQ%3D%3D&mid=2247498763&idx=1&sn=279f8fb4e43a987fdc0aa2af0b0f7958"
+        }
+      ],
+      "plannedLocalSource": null,
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "公开原文长链接的精确 biz 命中本地账号；本轮差异审视未调用公众号提供商。",
+      "gap": "本轮没有对复用账号执行实际采集验收；复用不代表窗口内各篇已入库。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "公众号：月之暗面（Kimi）",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "opwbx9tveo4mzvxyzuow2bws8",
+          "originalUrl": "https://mp.weixin.qq.com/s?__biz=MzkzMTY4NTIyNA%3D%3D&mid=2247484369&idx=1&sn=f54fea77e9f62b4c4a3e3fa54f6d5009",
+          "evidenceUrl": "https://aihot.news/items/opwbx9tveo4mzvxyzuow2bws8",
+          "publishedAt": "2026-11-02T09:33:01.000Z",
+          "discoveredAt": "2026-11-02T09:42:57.411Z"
+        }
+      ],
+      "family": "MP",
+      "identity": {
+        "type": "exact_mp_biz",
+        "value": "MzkzMTY4NTIyNA=="
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-mp-kimi-moonshot",
+          "name": "公众号：月之暗面",
+          "kind": "mp_account",
+          "enabled": true,
+          "entry": "https://mp.weixin.qq.com/s?__biz=MzkzMTY4NTIyNA%3D%3D&mid=2247484369&idx=1&sn=f54fea77e9f62b4c4a3e3fa54f6d5009"
+        }
+      ],
+      "plannedLocalSource": null,
+      "evidenceLevel": "exact_identity_config_join",
+      "evidenceExplanation": "公开原文长链接的精确 biz 命中本地账号；本轮差异审视未调用公众号提供商。",
+      "gap": "本轮没有对复用账号执行实际采集验收；复用不代表窗口内各篇已入库。",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "Browser Use",
+      "windowItems": 2,
+      "deltaItems": 0,
+      "articleEvidence": [
+        {
+          "itemId": "r9uzs7vdhucfbqqy334mubx0t",
+          "originalUrl": "https://browser-use.com/posts/price-scraping-python",
+          "evidenceUrl": "https://aihot.news/items/r9uzs7vdhucfbqqy334mubx0t",
+          "publishedAt": "2026-10-31T00:00:00.000Z",
+          "discoveredAt": "2026-10-31T17:40:41.938Z"
+        },
+        {
+          "itemId": "i38t8urkchg8lj611wn38xuzt",
+          "originalUrl": "https://browser-use.com/posts/bu-ultrafast-is-live",
+          "evidenceUrl": "https://aihot.news/items/i38t8urkchg8lj611wn38xuzt",
+          "publishedAt": "2026-10-31T00:00:00.000Z",
+          "discoveredAt": "2026-10-31T17:40:41.924Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "public_channel_scope",
+        "value": "Browser Use"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-rss-browser-use-com-b05a52d6",
+          "name": "Browser Use",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://browser-use.com/rss.xml"
+        }
+      ],
+      "evidenceLevel": "native_public_feed_preview_exact_original_member",
+      "evidenceExplanation": "Existing /rss.xml includes both observed /posts/ originals; positively verified with native preview.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [
+        {
+          "id": "corescope-rss-browser-use-com-b05a52d6",
+          "at": "2026-11-02T13:51:55.673Z",
+          "elapsedMs": 868,
+          "scope": "One public GET via production fetchRss parser with deployed EGRESS unchanged, no collection/SQL write/paid provider/model",
+          "status": "public_native_preview_ok",
+          "feedUrl": "https://browser-use.com/rss.xml",
+          "candidates": 60,
+          "dated": 60,
+          "observedMatches": [
+            {
+              "id": "r9uzs7vdhucfbqqy334mubx0t",
+              "url": "https://browser-use.com/posts/price-scraping-python",
+              "publishedAt": "2026-10-31T00:00:00.000Z",
+              "foundInCurrentFeed": true
+            },
+            {
+              "id": "i38t8urkchg8lj611wn38xuzt",
+              "url": "https://browser-use.com/posts/bu-ultrafast-is-live",
+              "publishedAt": "2026-10-31T00:00:00.000Z",
+              "foundInCurrentFeed": true
+            }
+          ],
+          "limitation": "Finite current feed membership only. Absence does not prove a separate channel or missing collector; no ingestion/admission/publication claimed."
+        }
+      ],
+      "gap": "本轮原生 RSS 公开 GET 与有限 feed 中原文成员关系成立；尚不等于 SQL 入库、48 小时门槛、正文或发布验收。",
+      "acceptanceLimit": "Collector configuration/channel coverage, not proof that every original was ingested, passed article gates, or published. Only attached native previews are new public GET acceptance evidence.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "ChinaTalk（RSS）",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "m4gml3jmoiygozpv65aaykwy4",
+          "originalUrl": "https://www.chinatalk.media/p/koreas-stock-market-crashed-1-trillion",
+          "evidenceUrl": "https://aihot.news/items/m4gml3jmoiygozpv65aaykwy4",
+          "publishedAt": "2026-11-01T13:33:33.000Z",
+          "discoveredAt": "2026-11-01T14:32:42.488Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "public_channel_scope",
+        "value": "ChinaTalk（RSS）"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-rss-chinatalk-media-2a38e59e",
+          "name": "ChinaTalk",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://www.chinatalk.media/feed"
+        }
+      ],
+      "evidenceLevel": "configured_channel_scope_only",
+      "evidenceExplanation": "Existing same publication /feed matches the observed /p/ newsletter channel.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [],
+      "gap": "仅有现有入口、频道范围及配置筛选条件证据；本轮未对该入口执行实际采集或预览，不声称各原文均已被覆盖采集。",
+      "acceptanceLimit": "Collector configuration/channel coverage, not proof that every original was ingested, passed article gates, or published. Only attached native previews are new public GET acceptance evidence.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "Databricks：Blog（RSS）",
+      "windowItems": 1,
+      "deltaItems": 0,
+      "articleEvidence": [
+        {
+          "itemId": "linlo0a4vt15kn999zaaqwdxe",
+          "originalUrl": "https://www.databricks.com/blog/lakebase-branching-cicd-lessons-100-pr-databases",
+          "evidenceUrl": "https://aihot.news/items/linlo0a4vt15kn999zaaqwdxe",
+          "publishedAt": "2026-10-31T21:25:00.000Z",
+          "discoveredAt": "2026-10-31T22:34:46.046Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "public_channel_scope",
+        "value": "Databricks：Blog（RSS）"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-rss-databricks-com-4b0d7518",
+          "name": "Databricks：Blog",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://www.databricks.com/feed"
+        }
+      ],
+      "evidenceLevel": "configured_channel_scope_only",
+      "evidenceExplanation": "Existing global /feed matches /blog/ publication channel without narrowing URL/category filters.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [],
+      "gap": "仅有现有入口、频道范围及配置筛选条件证据；本轮未对该入口执行实际采集或预览，不声称各原文均已被覆盖采集。",
+      "acceptanceLimit": "Collector configuration/channel coverage, not proof that every original was ingested, passed article gates, or published. Only attached native previews are new public GET acceptance evidence.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "Gary Marcus：The Road to AI We Can Trust（RSS）",
+      "windowItems": 1,
+      "deltaItems": 0,
+      "articleEvidence": [
+        {
+          "itemId": "fkb2wt2o66529a76n7udn81hb",
+          "originalUrl": "https://garymarcus.substack.com/p/report-from-the-vatican",
+          "evidenceUrl": "https://aihot.news/items/fkb2wt2o66529a76n7udn81hb",
+          "publishedAt": "2026-10-31T15:17:33.000Z",
+          "discoveredAt": "2026-10-31T16:16:37.642Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "public_channel_scope",
+        "value": "Gary Marcus：The Road to AI We Can Trust（RSS）"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-rss-garymarcus-substack-com-94c28c84",
+          "name": "Gary Marcus：The Road to AI We Can Trust",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://garymarcus.substack.com/feed"
+        }
+      ],
+      "evidenceLevel": "configured_channel_scope_only",
+      "evidenceExplanation": "Existing exact garymarcus.substack.com/feed matches /p/ publication channel.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [],
+      "gap": "仅有现有入口、频道范围及配置筛选条件证据；本轮未对该入口执行实际采集或预览，不声称各原文均已被覆盖采集。",
+      "acceptanceLimit": "Collector configuration/channel coverage, not proof that every original was ingested, passed article gates, or published. Only attached native previews are new public GET acceptance evidence.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "Google DeepMind：Blog（RSS）",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "ww9qwwtw36frtufea6p8rxwvh",
+          "originalUrl": "https://deepmind.google/blog/speeding-up-planning-decisions-with-ai/",
+          "evidenceUrl": "https://aihot.news/items/ww9qwwtw36frtufea6p8rxwvh",
+          "publishedAt": "2026-10-30T14:18:30.000Z",
+          "discoveredAt": "2026-11-02T10:50:26.814Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "public_channel_scope",
+        "value": "Google DeepMind：Blog（RSS）"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "v2-source-30",
+          "name": "Google DeepMind Blog",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://deepmind.google/blog/rss.xml"
+        }
+      ],
+      "evidenceLevel": "configured_channel_scope_only",
+      "evidenceExplanation": "Existing exact /blog/rss.xml matches the observed /blog/ publication channel; aliased V2 Research source already maps to this canonical source.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [],
+      "gap": "仅有现有入口、频道范围及配置筛选条件证据；本轮未对该入口执行实际采集或预览，不声称各原文均已被覆盖采集。",
+      "acceptanceLimit": "Collector configuration/channel coverage, not proof that every original was ingested, passed article gates, or published. Only attached native previews are new public GET acceptance evidence.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "Hacker News：AI 热帖",
+      "windowItems": 5,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "ocifxhs56cr8lxsbv1g5gctfl",
+          "originalUrl": "https://mashable.com/tech/anthropic-takes-steps-to-block-video-game-cloning-and-reverse-engineering",
+          "evidenceUrl": "https://aihot.news/items/ocifxhs56cr8lxsbv1g5gctfl",
+          "publishedAt": "2026-10-31T14:28:41.000Z",
+          "discoveredAt": "2026-10-31T22:29:32.306Z"
+        },
+        {
+          "itemId": "c7cla6h0vrpagw23ejx1jbvcw",
+          "originalUrl": "https://ryanmadden.net/gpt-56-beats-factorio/",
+          "evidenceUrl": "https://aihot.news/items/c7cla6h0vrpagw23ejx1jbvcw",
+          "publishedAt": "2026-10-31T00:00:00.000Z",
+          "discoveredAt": "2026-10-31T20:27:42.332Z"
+        },
+        {
+          "itemId": "msu6arh486n3bevvxkyh5gvfa",
+          "originalUrl": "https://blog.talosintelligence.com/appraisal-by-ai-model-driven-victim-prioritization-in-the-volta-infostealer/",
+          "evidenceUrl": "https://aihot.news/items/msu6arh486n3bevvxkyh5gvfa",
+          "publishedAt": "2026-10-31T12:00:00.000Z",
+          "discoveredAt": "2026-10-31T17:25:38.876Z"
+        },
+        {
+          "itemId": "qk9efltb911xqwcel9evyct8i",
+          "originalUrl": "https://nolanlawson.com/2026/10/28/the-ai-cost-of-javascript-frameworks/",
+          "evidenceUrl": "https://aihot.news/items/qk9efltb911xqwcel9evyct8i",
+          "publishedAt": "2026-10-28T14:31:03.000Z",
+          "discoveredAt": "2026-11-01T09:36:22.722Z"
+        },
+        {
+          "itemId": "gf26jinyj2o2jtvw4n3v8bawk",
+          "originalUrl": "https://www.eurogamer.net/ai-fan-wikis-errors-complicating-games-culture",
+          "evidenceUrl": "https://aihot.news/items/gf26jinyj2o2jtvw4n3v8bawk",
+          "publishedAt": "2026-10-27T10:00:41.785Z",
+          "discoveredAt": "2026-11-02T05:48:19.599Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "aggregate_channel",
+        "value": "Hacker News：AI 热帖"
+      },
+      "decision": "reuse_aggregate_with_query_equivalence_gap",
+      "localSources": [
+        {
+          "id": "v2-source-152077",
+          "name": "Hacker News AI RSS",
+          "kind": "external",
+          "enabled": true,
+          "entry": null,
+          "supplementaryPublicQuery": [
+            "https://hnrss.org/newest?q=AI+OR+llm+OR+RAG+OR+Openai+OR+Artificial+OR+Intelligence+OR+llms+OR+chatgpt+OR+transformers+OR+transformer+OR+autonomous+OR+agent+OR+thebloke+OR+llama+OR+ollama+OR+vllm+OR+nvidia+OR+metaai+OR+Altman+OR+Yohei+OR+untappedvc+OR+agi+OR+babyagi+OR+gpt-engineer+OR+metagpt+OR+haystack+OR+fine-tune+OR+fine-tuning+OR+langstream+OR+mistral+OR+anthropic+OR+autogpt+OR+lmsys+OR+poe+OR+bard+OR+bing+OR+litellm+OR+llamaindex+OR+langchain+OR+chroma+OR+singularity+OR+stabilityai+OR+gradio+OR+huggingface+OR+LeCun"
+          ]
+        },
+        {
+          "id": "v2-source-60",
+          "name": "Hacker News",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://news.ycombinator.com/rss"
+        }
+      ],
+      "evidenceLevel": "aggregate_query_equivalence_unconfirmed",
+      "evidenceExplanation": "Hacker News is an aggregate channel. Existing native frontpage RSS and a broad AI-keyword newest bridge exist; AIHOT exact hot ranking/query equivalence is not public here. Five linked publisher domains are article destinations, not evidence that five new upstream source accounts were configured.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [],
+      "gap": "本地 HN 首页 RSS 与 AI 关键词 newest 聚合入口已经存在，但 AIHot 的 AI 热帖筛选/排序/查询参数等价尚未确认。5 个文章目的站不是 5 个可直接新增的上游来源。",
+      "acceptanceLimit": "Coverage caveat retained, do not invent AIHOT private query parameters or claim precise equivalent ranking.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "IT之家·人工智能",
+      "windowItems": 30,
+      "deltaItems": 17,
+      "articleEvidence": [
+        {
+          "itemId": "zgjxvuyaxaky0dsjf4zbkq4v8",
+          "originalUrl": "https://www.ithome.com/1/021/249.htm",
+          "evidenceUrl": "https://aihot.news/items/zgjxvuyaxaky0dsjf4zbkq4v8",
+          "publishedAt": "2026-11-02T11:53:07.550Z",
+          "discoveredAt": "2026-11-02T12:33:36.739Z"
+        },
+        {
+          "itemId": "emvxizucrocgiiu0u6kxxx2pv",
+          "originalUrl": "https://www.ithome.com/1/021/246.htm",
+          "evidenceUrl": "https://aihot.news/items/emvxizucrocgiiu0u6kxxx2pv",
+          "publishedAt": "2026-11-02T11:33:27.360Z",
+          "discoveredAt": "2026-11-02T12:10:36.038Z"
+        },
+        {
+          "itemId": "h6vtal7tumpl8wjbl2z24v5ed",
+          "originalUrl": "https://www.ithome.com/1/021/116.htm",
+          "evidenceUrl": "https://aihot.news/items/h6vtal7tumpl8wjbl2z24v5ed",
+          "publishedAt": "2026-11-02T09:01:44.397Z",
+          "discoveredAt": "2026-11-02T09:31:21.665Z"
+        },
+        {
+          "itemId": "qd9r4nijyfo5pi6yauikbqc9c",
+          "originalUrl": "https://www.ithome.com/1/021/095.htm",
+          "evidenceUrl": "https://aihot.news/items/qd9r4nijyfo5pi6yauikbqc9c",
+          "publishedAt": "2026-11-02T08:24:29.940Z",
+          "discoveredAt": "2026-11-02T09:08:21.592Z"
+        },
+        {
+          "itemId": "vg6lqbm2muc8ji7qihsu4hvng",
+          "originalUrl": "https://www.ithome.com/1/021/122.htm",
+          "evidenceUrl": "https://aihot.news/items/vg6lqbm2muc8ji7qihsu4hvng",
+          "publishedAt": "2026-11-02T08:42:14.087Z",
+          "discoveredAt": "2026-11-02T09:08:21.585Z"
+        },
+        {
+          "itemId": "sekra233bj3t474w387robya0",
+          "originalUrl": "https://www.ithome.com/1/021/073.htm",
+          "evidenceUrl": "https://aihot.news/items/sekra233bj3t474w387robya0",
+          "publishedAt": "2026-11-02T07:48:50.803Z",
+          "discoveredAt": "2026-11-02T08:22:20.499Z"
+        },
+        {
+          "itemId": "oardoq5l4rcuqrhmda2anb0mm",
+          "originalUrl": "https://www.ithome.com/1/021/079.htm",
+          "evidenceUrl": "https://aihot.news/items/oardoq5l4rcuqrhmda2anb0mm",
+          "publishedAt": "2026-11-02T07:57:16.163Z",
+          "discoveredAt": "2026-11-02T08:22:20.489Z"
+        },
+        {
+          "itemId": "uoxaqtgfuwmui1bewj2m86wzp",
+          "originalUrl": "https://www.ithome.com/1/021/066.htm",
+          "evidenceUrl": "https://aihot.news/items/uoxaqtgfuwmui1bewj2m86wzp",
+          "publishedAt": "2026-11-02T07:38:19.310Z",
+          "discoveredAt": "2026-11-02T07:59:20.605Z"
+        },
+        {
+          "itemId": "zdkwczdzn9gg7h3mpsf9wb47c",
+          "originalUrl": "https://www.ithome.com/1/021/071.htm",
+          "evidenceUrl": "https://aihot.news/items/zdkwczdzn9gg7h3mpsf9wb47c",
+          "publishedAt": "2026-11-02T07:48:11.320Z",
+          "discoveredAt": "2026-11-02T07:59:20.598Z"
+        },
+        {
+          "itemId": "acf7r1s4jnc5uean49urp6sj5",
+          "originalUrl": "https://www.ithome.com/1/020/873.htm",
+          "evidenceUrl": "https://aihot.news/items/acf7r1s4jnc5uean49urp6sj5",
+          "publishedAt": "2026-11-02T01:18:38.433Z",
+          "discoveredAt": "2026-11-02T01:52:14.153Z"
+        },
+        {
+          "itemId": "jbz7wbpu44ycwcsmbpe1h1uf0",
+          "originalUrl": "https://www.ithome.com/1/020/864.htm",
+          "evidenceUrl": "https://aihot.news/items/jbz7wbpu44ycwcsmbpe1h1uf0",
+          "publishedAt": "2026-11-02T00:57:15.230Z",
+          "discoveredAt": "2026-11-02T01:29:13.252Z"
+        },
+        {
+          "itemId": "jdv2xqfo6amyiy5uk97u6s30j",
+          "originalUrl": "https://www.ithome.com/1/020/858.htm",
+          "evidenceUrl": "https://aihot.news/items/jdv2xqfo6amyiy5uk97u6s30j",
+          "publishedAt": "2026-11-02T00:18:05.933Z",
+          "discoveredAt": "2026-11-02T01:06:21.218Z"
+        },
+        {
+          "itemId": "gzam825oqyqcvee2zumevhptm",
+          "originalUrl": "https://www.ithome.com/1/020/863.htm",
+          "evidenceUrl": "https://aihot.news/items/gzam825oqyqcvee2zumevhptm",
+          "publishedAt": "2026-11-02T00:44:35.203Z",
+          "discoveredAt": "2026-11-02T01:06:21.211Z"
+        },
+        {
+          "itemId": "bdowth47ise7iaanu6zw7wplb",
+          "originalUrl": "https://www.ithome.com/1/020/857.htm",
+          "evidenceUrl": "https://aihot.news/items/bdowth47ise7iaanu6zw7wplb",
+          "publishedAt": "2026-11-02T00:17:13.387Z",
+          "discoveredAt": "2026-11-02T00:21:14.891Z"
+        },
+        {
+          "itemId": "qgcqkeumcnb8s1eb86kvs79k2",
+          "originalUrl": "https://www.ithome.com/1/020/848.htm",
+          "evidenceUrl": "https://aihot.news/items/qgcqkeumcnb8s1eb86kvs79k2",
+          "publishedAt": "2026-11-01T23:36:08.600Z",
+          "discoveredAt": "2026-11-01T23:58:38.741Z"
+        },
+        {
+          "itemId": "uvby5zm2ui9xmyn68hxjn1h2e",
+          "originalUrl": "https://www.ithome.com/1/020/844.htm",
+          "evidenceUrl": "https://aihot.news/items/uvby5zm2ui9xmyn68hxjn1h2e",
+          "publishedAt": "2026-11-01T22:58:19.947Z",
+          "discoveredAt": "2026-11-01T23:35:43.336Z"
+        },
+        {
+          "itemId": "u0icl9u1j0rleehslmzq89pe5",
+          "originalUrl": "https://www.ithome.com/1/020/837.htm",
+          "evidenceUrl": "https://aihot.news/items/u0icl9u1j0rleehslmzq89pe5",
+          "publishedAt": "2026-11-01T14:19:52.347Z",
+          "discoveredAt": "2026-11-01T15:35:20.362Z"
+        },
+        {
+          "itemId": "dkfqbk7zznsodbiot85oegg52",
+          "originalUrl": "https://www.ithome.com/1/020/809.htm",
+          "evidenceUrl": "https://aihot.news/items/dkfqbk7zznsodbiot85oegg52",
+          "publishedAt": "2026-11-01T10:46:02.077Z",
+          "discoveredAt": "2026-11-01T11:24:34.462Z"
+        },
+        {
+          "itemId": "t6d6yx97qhp9odyyx9zu2xsft",
+          "originalUrl": "https://www.ithome.com/1/020/747.htm",
+          "evidenceUrl": "https://aihot.news/items/t6d6yx97qhp9odyyx9zu2xsft",
+          "publishedAt": "2026-11-01T07:46:59.040Z",
+          "discoveredAt": "2026-11-01T08:22:14.231Z"
+        },
+        {
+          "itemId": "mkx3i21mvcsmoc1n4p3ow83te",
+          "originalUrl": "https://www.ithome.com/1/020/737.htm",
+          "evidenceUrl": "https://aihot.news/items/mkx3i21mvcsmoc1n4p3ow83te",
+          "publishedAt": "2026-11-01T07:15:13.557Z",
+          "discoveredAt": "2026-11-01T07:59:20.346Z"
+        },
+        {
+          "itemId": "lwa87gofh1a81othd2f2gamnb",
+          "originalUrl": "https://www.ithome.com/1/020/721.htm",
+          "evidenceUrl": "https://aihot.news/items/lwa87gofh1a81othd2f2gamnb",
+          "publishedAt": "2026-11-01T06:11:02.957Z",
+          "discoveredAt": "2026-11-01T06:28:18.953Z"
+        },
+        {
+          "itemId": "k77sqe5nuzsb9wongfwib9fhr",
+          "originalUrl": "https://www.ithome.com/1/020/654.htm",
+          "evidenceUrl": "https://aihot.news/items/k77sqe5nuzsb9wongfwib9fhr",
+          "publishedAt": "2026-11-01T01:02:52.080Z",
+          "discoveredAt": "2026-11-01T01:30:16.341Z"
+        },
+        {
+          "itemId": "drm58cinmgkgj4msdl515dcqv",
+          "originalUrl": "https://www.ithome.com/1/020/649.htm",
+          "evidenceUrl": "https://aihot.news/items/drm58cinmgkgj4msdl515dcqv",
+          "publishedAt": "2026-11-01T00:31:48.833Z",
+          "discoveredAt": "2026-11-01T01:07:21.560Z"
+        },
+        {
+          "itemId": "qtcc3vsyn6hrk392tsv5lsfws",
+          "originalUrl": "https://www.ithome.com/1/020/651.htm",
+          "evidenceUrl": "https://aihot.news/items/qtcc3vsyn6hrk392tsv5lsfws",
+          "publishedAt": "2026-11-01T00:40:35.370Z",
+          "discoveredAt": "2026-11-01T01:07:21.541Z"
+        },
+        {
+          "itemId": "tvof0lfc2lmic7efkj9y3uq7w",
+          "originalUrl": "https://www.ithome.com/1/020/645.htm",
+          "evidenceUrl": "https://aihot.news/items/tvof0lfc2lmic7efkj9y3uq7w",
+          "publishedAt": "2026-10-31T23:58:31.037Z",
+          "discoveredAt": "2026-11-01T00:22:06.285Z"
+        },
+        {
+          "itemId": "y2ndi51kvth96zq62v8oupiwe",
+          "originalUrl": "https://www.ithome.com/1/020/647.htm",
+          "evidenceUrl": "https://aihot.news/items/y2ndi51kvth96zq62v8oupiwe",
+          "publishedAt": "2026-11-01T00:12:26.150Z",
+          "discoveredAt": "2026-11-01T00:22:06.263Z"
+        },
+        {
+          "itemId": "dpm21l66z2iizblehsdg09c8t",
+          "originalUrl": "https://www.ithome.com/1/020/633.htm",
+          "evidenceUrl": "https://aihot.news/items/dpm21l66z2iizblehsdg09c8t",
+          "publishedAt": "2026-10-31T22:56:28.467Z",
+          "discoveredAt": "2026-10-31T23:36:45.752Z"
+        },
+        {
+          "itemId": "htfc0ler37j2h4hoqll6jewz3",
+          "originalUrl": "https://www.ithome.com/1/020/632.htm",
+          "evidenceUrl": "https://aihot.news/items/htfc0ler37j2h4hoqll6jewz3",
+          "publishedAt": "2026-10-31T15:56:00.987Z",
+          "discoveredAt": "2026-10-31T16:24:39.611Z"
+        },
+        {
+          "itemId": "nhbx8dlr72taskf21px6whcu9",
+          "originalUrl": "https://www.ithome.com/1/020/613.htm",
+          "evidenceUrl": "https://aihot.news/items/nhbx8dlr72taskf21px6whcu9",
+          "publishedAt": "2026-10-31T13:30:27.350Z",
+          "discoveredAt": "2026-10-31T13:45:22.224Z"
+        },
+        {
+          "itemId": "oig5qkyz9fzkdpchgk7l2cmm3",
+          "originalUrl": "https://www.ithome.com/1/020/615.htm",
+          "evidenceUrl": "https://aihot.news/items/oig5qkyz9fzkdpchgk7l2cmm3",
+          "publishedAt": "2026-10-31T13:36:35.640Z",
+          "discoveredAt": "2026-10-31T13:45:22.218Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "public_channel_scope",
+        "value": "IT之家·人工智能"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-rss-ithome-com-5479b994",
+          "name": "IT之家 · 全站RSS（AI按分析筛选）",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://www.ithome.com/rss/"
+        }
+      ],
+      "evidenceLevel": "configured_channel_scope_only",
+      "evidenceExplanation": "Existing whole-site /rss/ is broader than the AI label, with no AI-only filter at collection; topic analysis handles the narrower label. A separate duplicate AI-labeled source is not needed for this evidence.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [],
+      "gap": "仅有现有入口、频道范围及配置筛选条件证据；本轮未对该入口执行实际采集或预览，不声称各原文均已被覆盖采集。",
+      "acceptanceLimit": "Collector configuration/channel coverage, not proof that every original was ingested, passed article gates, or published. Only attached native previews are new public GET acceptance evidence.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "Latent Space（RSS）",
+      "windowItems": 1,
+      "deltaItems": 0,
+      "articleEvidence": [
+        {
+          "itemId": "l858wvr3i1vmwbrdetpusxzfx",
+          "originalUrl": "https://latent.space/p/arca/",
+          "evidenceUrl": "https://aihot.news/items/l858wvr3i1vmwbrdetpusxzfx",
+          "publishedAt": "2026-10-31T16:05:00.000Z",
+          "discoveredAt": "2026-10-31T16:28:39.321Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "public_channel_scope",
+        "value": "Latent Space（RSS）"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "v2-source-8316",
+          "name": "Latent Space AI News",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://www.latent.space/feed"
+        }
+      ],
+      "evidenceLevel": "native_public_feed_preview_exact_original_member",
+      "evidenceExplanation": "Existing source is named AI News but configured global www.latent.space/feed; exact latent.space/p/arca was positively found after www/trailing-slash URL normalization. Do not add a duplicate general channel due to old display name.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [
+        {
+          "id": "v2-source-8316",
+          "at": "2026-11-02T13:51:58.102Z",
+          "elapsedMs": 2428,
+          "scope": "One public GET via production fetchRss parser with deployed EGRESS unchanged, no collection/SQL write/paid provider/model",
+          "status": "public_native_preview_ok",
+          "feedUrl": "https://www.latent.space/feed",
+          "candidates": 20,
+          "dated": 20,
+          "observedMatches": [
+            {
+              "id": "l858wvr3i1vmwbrdetpusxzfx",
+              "url": "https://latent.space/p/arca/",
+              "publishedAt": "2026-10-31T16:05:00.000Z",
+              "foundInCurrentFeed": true
+            }
+          ],
+          "limitation": "Finite current feed membership only. Absence does not prove a separate channel or missing collector; no ingestion/admission/publication claimed."
+        }
+      ],
+      "gap": "本轮原生 RSS 公开 GET 与有限 feed 中原文成员关系成立；尚不等于 SQL 入库、48 小时门槛、正文或发布验收。",
+      "acceptanceLimit": "Collector configuration/channel coverage, not proof that every original was ingested, passed article gates, or published. Only attached native previews are new public GET acceptance evidence.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "MarkTechPost（RSS）",
+      "windowItems": 4,
+      "deltaItems": 2,
+      "articleEvidence": [
+        {
+          "itemId": "hup544h5j8s5vwaywfz5pn4fo",
+          "originalUrl": "https://www.marktechpost.com/2026/11/01/qwengpu-simt-gpu-compiled-into-qwen3-5-2b-weights-runs-cuda/",
+          "evidenceUrl": "https://aihot.news/items/hup544h5j8s5vwaywfz5pn4fo",
+          "publishedAt": "2026-11-02T07:28:29.000Z",
+          "discoveredAt": "2026-11-02T09:37:21.212Z"
+        },
+        {
+          "itemId": "vhnseyptvxu6ipag6w5wnmw05",
+          "originalUrl": "https://www.marktechpost.com/2026/11/01/nvidia-auto-ontology-open-source-semantic-layer-ai-agents/",
+          "evidenceUrl": "https://aihot.news/items/vhnseyptvxu6ipag6w5wnmw05",
+          "publishedAt": "2026-11-02T07:47:12.000Z",
+          "discoveredAt": "2026-11-02T09:37:21.191Z"
+        },
+        {
+          "itemId": "j8xxhoehp8lpglfuqqj6xu63m",
+          "originalUrl": "https://www.marktechpost.com/2026/11/01/deepseek-dsh-superagent-router-worker-coding-agent/",
+          "evidenceUrl": "https://aihot.news/items/j8xxhoehp8lpglfuqqj6xu63m",
+          "publishedAt": "2026-11-01T07:47:17.000Z",
+          "discoveredAt": "2026-11-01T08:20:12.557Z"
+        },
+        {
+          "itemId": "d3y4oo7iorcxq4jr94obcjvvs",
+          "originalUrl": "https://www.marktechpost.com/2026/11/01/nace-ai-open-sources-drex-max-v1-local-inference/",
+          "evidenceUrl": "https://aihot.news/items/d3y4oo7iorcxq4jr94obcjvvs",
+          "publishedAt": "2026-11-01T08:10:07.000Z",
+          "discoveredAt": "2026-11-01T08:20:12.502Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "public_channel_scope",
+        "value": "MarkTechPost（RSS）"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-rss-marktechpost-com-7d33969b",
+          "name": "MarkTechPost",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://www.marktechpost.com/feed/"
+        }
+      ],
+      "evidenceLevel": "configured_channel_scope_only",
+      "evidenceExplanation": "Existing native global /feed/ covers dated publisher articles; V2 bridge category sources also exist but are not duplicated or modified.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [],
+      "gap": "仅有现有入口、频道范围及配置筛选条件证据；本轮未对该入口执行实际采集或预览，不声称各原文均已被覆盖采集。",
+      "acceptanceLimit": "Collector configuration/channel coverage, not proof that every original was ingested, passed article gates, or published. Only attached native previews are new public GET acceptance evidence.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "O'Reilly Radar（热点 RSS）",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "zeogxjkaeg341nq9qupw0jd6x",
+          "originalUrl": "https://www.oreilly.com/radar/practical-loop-engineering/",
+          "evidenceUrl": "https://aihot.news/items/zeogxjkaeg341nq9qupw0jd6x",
+          "publishedAt": "2026-11-02T11:54:29.000Z",
+          "discoveredAt": "2026-11-02T12:48:22.108Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "public_channel_scope",
+        "value": "O'Reilly Radar（热点 RSS）"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-rss-oreilly-com-4d46873e",
+          "name": "O'Reilly Radar",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://www.oreilly.com/radar/feed/"
+        }
+      ],
+      "evidenceLevel": "configured_channel_scope_only",
+      "evidenceExplanation": "Existing Radar /radar/feed/ covers the same Radar article namespace; no URL/category inclusion filter.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [],
+      "gap": "仅有现有入口、频道范围及配置筛选条件证据；本轮未对该入口执行实际采集或预览，不声称各原文均已被覆盖采集。",
+      "acceptanceLimit": "Collector configuration/channel coverage, not proof that every original was ingested, passed article gates, or published. Only attached native previews are new public GET acceptance evidence.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "OpenRouter：Announcements（RSS）",
+      "windowItems": 1,
+      "deltaItems": 0,
+      "articleEvidence": [
+        {
+          "itemId": "yww15c701iat30p8ttjf029ij",
+          "originalUrl": "https://openrouter.ai/blog/tutorials/ai-code-review/",
+          "evidenceUrl": "https://aihot.news/items/yww15c701iat30p8ttjf029ij",
+          "publishedAt": "2026-11-01T00:00:00.000Z",
+          "discoveredAt": "2026-11-01T00:27:06.100Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "public_channel_scope",
+        "value": "OpenRouter：Announcements（RSS）"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-rss-openrouter-ai-0670d609",
+          "name": "OpenRouter：Announcements",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://openrouter.ai/blog/feed.xml"
+        }
+      ],
+      "evidenceLevel": "native_public_feed_preview_exact_original_member",
+      "evidenceExplanation": "Existing /blog/feed.xml is the blog feed despite Announcements display label; exact /blog/tutorials/ai-code-review/ was found by native preview, so do not add duplicate tutorials feed based on a label.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [
+        {
+          "id": "corescope-rss-openrouter-ai-0670d609",
+          "at": "2026-11-02T13:51:54.804Z",
+          "elapsedMs": 610,
+          "scope": "One public GET via production fetchRss parser with deployed EGRESS unchanged, no collection/SQL write/paid provider/model",
+          "status": "public_native_preview_ok",
+          "feedUrl": "https://openrouter.ai/blog/feed.xml",
+          "candidates": 165,
+          "dated": 165,
+          "observedMatches": [
+            {
+              "id": "yww15c701iat30p8ttjf029ij",
+              "url": "https://openrouter.ai/blog/tutorials/ai-code-review/",
+              "publishedAt": "2026-11-01T00:00:00.000Z",
+              "foundInCurrentFeed": true
+            }
+          ],
+          "limitation": "Finite current feed membership only. Absence does not prove a separate channel or missing collector; no ingestion/admission/publication claimed."
+        }
+      ],
+      "gap": "本轮原生 RSS 公开 GET 与有限 feed 中原文成员关系成立；尚不等于 SQL 入库、48 小时门槛、正文或发布验收。",
+      "acceptanceLimit": "Collector configuration/channel coverage, not proof that every original was ingested, passed article gates, or published. Only attached native previews are new public GET acceptance evidence.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "Recode China AI（RSS）",
+      "windowItems": 1,
+      "deltaItems": 0,
+      "articleEvidence": [
+        {
+          "itemId": "aib4fgvpbjsaa887vdavbe2bq",
+          "originalUrl": "https://www.recodechinaai.com/p/cxmts-push-into-hbm3e-unitrees-quarterly",
+          "evidenceUrl": "https://aihot.news/items/aib4fgvpbjsaa887vdavbe2bq",
+          "publishedAt": "2026-11-01T11:03:45.000Z",
+          "discoveredAt": "2026-11-01T11:32:40.610Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "public_channel_scope",
+        "value": "Recode China AI（RSS）"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-rss-recodechinaai-com-04fbdf26",
+          "name": "Recode China AI",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://www.recodechinaai.com/feed"
+        }
+      ],
+      "evidenceLevel": "configured_channel_scope_only",
+      "evidenceExplanation": "Existing same publication /feed matches observed /p/ newsletter channel.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [],
+      "gap": "仅有现有入口、频道范围及配置筛选条件证据；本轮未对该入口执行实际采集或预览，不声称各原文均已被覆盖采集。",
+      "acceptanceLimit": "Collector configuration/channel coverage, not proof that every original was ingested, passed article gates, or published. Only attached native previews are new public GET acceptance evidence.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "Sakana AI：Blog（网页）",
+      "windowItems": 1,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "nnn4empocx2iin2aijplnrux6",
+          "originalUrl": "https://sakana.ai/symposium-2026/",
+          "evidenceUrl": "https://aihot.news/items/nnn4empocx2iin2aijplnrux6",
+          "publishedAt": "2026-11-01T15:00:00.000Z",
+          "discoveredAt": "2026-11-02T01:46:18.769Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "public_channel_scope",
+        "value": "Sakana AI：Blog（网页）"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "corescope-rss-sakana-ai-08bc6298",
+          "name": "Sakana AI：Blog",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://sakana.ai/feed.xml"
+        }
+      ],
+      "evidenceLevel": "native_public_feed_preview_exact_original_member",
+      "evidenceExplanation": "Existing official feed.xml covers the same blog article namespace; exact symposium-2026 original positively found in native preview.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [
+        {
+          "id": "corescope-rss-sakana-ai-08bc6298",
+          "at": "2026-11-02T13:51:54.191Z",
+          "elapsedMs": 852,
+          "scope": "One public GET via production fetchRss parser with deployed EGRESS unchanged, no collection/SQL write/paid provider/model",
+          "status": "public_native_preview_ok",
+          "feedUrl": "https://sakana.ai/feed.xml",
+          "candidates": 10,
+          "dated": 10,
+          "observedMatches": [
+            {
+              "id": "nnn4empocx2iin2aijplnrux6",
+              "url": "https://sakana.ai/symposium-2026/",
+              "publishedAt": "2026-11-01T15:00:00.000Z",
+              "foundInCurrentFeed": true
+            }
+          ],
+          "limitation": "Finite current feed membership only. Absence does not prove a separate channel or missing collector; no ingestion/admission/publication claimed."
+        }
+      ],
+      "gap": "本轮原生 RSS 公开 GET 与有限 feed 中原文成员关系成立；尚不等于 SQL 入库、48 小时门槛、正文或发布验收。",
+      "acceptanceLimit": "Collector configuration/channel coverage, not proof that every original was ingested, passed article gates, or published. Only attached native previews are new public GET acceptance evidence.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "SemiAnalysis 长文 RSS（RSS）",
+      "windowItems": 2,
+      "deltaItems": 2,
+      "articleEvidence": [
+        {
+          "itemId": "lh7v29sdrprupeo4ntzf344wq",
+          "originalUrl": "https://newsletter.semianalysis.com/p/gdpx-measuring-frontier-model-capabilities",
+          "evidenceUrl": "https://aihot.news/items/lh7v29sdrprupeo4ntzf344wq",
+          "publishedAt": "2026-11-02T01:51:42.000Z",
+          "discoveredAt": "2026-11-02T02:47:17.484Z"
+        },
+        {
+          "itemId": "xihqog7kvzr9jlltr3u4pevd2",
+          "originalUrl": "https://newsletter.semianalysis.com/p/the-datacenter-backlash-goes-bipartisan",
+          "evidenceUrl": "https://aihot.news/items/xihqog7kvzr9jlltr3u4pevd2",
+          "publishedAt": "2026-11-01T18:40:45.000Z",
+          "discoveredAt": "2026-11-01T19:41:34.993Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "public_channel_scope",
+        "value": "SemiAnalysis 长文 RSS（RSS）"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "v2-source-76",
+          "name": "SemiAnalysis",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://newsletter.semianalysis.com/feed"
+        }
+      ],
+      "evidenceLevel": "configured_channel_scope_only",
+      "evidenceExplanation": "Existing exact newsletter.semianalysis.com/feed matches the observed /p/ newsletter channel, distinct from a hypothetical independent corporate-site feed.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [],
+      "gap": "仅有现有入口、频道范围及配置筛选条件证据；本轮未对该入口执行实际采集或预览，不声称各原文均已被覆盖采集。",
+      "acceptanceLimit": "Collector configuration/channel coverage, not proof that every original was ingested, passed article gates, or published. Only attached native previews are new public GET acceptance evidence.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "Simon Willison 博客",
+      "windowItems": 2,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "cb8ix0h80v2juu32t0orou8px",
+          "originalUrl": "https://simonwillison.net/2026/Nov/1/kyle-kingsbury/",
+          "evidenceUrl": "https://aihot.news/items/cb8ix0h80v2juu32t0orou8px",
+          "publishedAt": "2026-11-01T16:49:04.000Z",
+          "discoveredAt": "2026-11-01T17:25:30.876Z"
+        },
+        {
+          "itemId": "mgl3b48alrf6rtm8dauh0hh44",
+          "originalUrl": "https://simonwillison.net/2026/Oct/31/how-we-took-over-chatgpt-accounts/",
+          "evidenceUrl": "https://aihot.news/items/mgl3b48alrf6rtm8dauh0hh44",
+          "publishedAt": "2026-10-31T23:15:22.000Z",
+          "discoveredAt": "2026-11-01T00:13:07.433Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "public_channel_scope",
+        "value": "Simon Willison 博客"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "rss-simon-willison",
+          "name": "Simon Willison",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://simonwillison.net/atom/everything/"
+        }
+      ],
+      "evidenceLevel": "configured_channel_scope_only",
+      "evidenceExplanation": "Existing /atom/everything/ includes weblog and shorter entries; this is the broad channel, without collection URL/category exclusions.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [],
+      "gap": "仅有现有入口、频道范围及配置筛选条件证据；本轮未对该入口执行实际采集或预览，不声称各原文均已被覆盖采集。",
+      "acceptanceLimit": "Collector configuration/channel coverage, not proof that every original was ingested, passed article gates, or published. Only attached native previews are new public GET acceptance evidence.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "TechCrunch：AI（RSS）",
+      "windowItems": 3,
+      "deltaItems": 1,
+      "articleEvidence": [
+        {
+          "itemId": "apioobuo772gw6rynva9a573j",
+          "originalUrl": "https://techcrunch.com/2026/11/01/openai-might-rebrand-its-data-centers-as-ai-compute-campuses/",
+          "evidenceUrl": "https://aihot.news/items/apioobuo772gw6rynva9a573j",
+          "publishedAt": "2026-11-01T21:55:23.000Z",
+          "discoveredAt": "2026-11-01T22:44:43.725Z"
+        },
+        {
+          "itemId": "bx42a6w7s2fw1rsvd2k54nesg",
+          "originalUrl": "https://techcrunch.com/2026/10/31/judge-allows-naacp-lawsuit-over-xai-data-center-pollution-to-move-forward/",
+          "evidenceUrl": "https://aihot.news/items/bx42a6w7s2fw1rsvd2k54nesg",
+          "publishedAt": "2026-10-31T21:17:03.000Z",
+          "discoveredAt": "2026-10-31T21:23:41.015Z"
+        },
+        {
+          "itemId": "gofbippi72082w3df1poa8hvg",
+          "originalUrl": "https://techcrunch.com/2026/10/31/openai-reportedly-lowers-funding-target-for-new-round/",
+          "evidenceUrl": "https://aihot.news/items/gofbippi72082w3df1poa8hvg",
+          "publishedAt": "2026-10-31T16:12:55.000Z",
+          "discoveredAt": "2026-10-31T16:52:37.562Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "public_channel_scope",
+        "value": "TechCrunch：AI（RSS）"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "v2-source-610",
+          "name": "TechCrunch News",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://techcrunch.com/feed/"
+        },
+        {
+          "id": "v2-source-81",
+          "name": "TechCrunch AI",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://techcrunch.com/category/artificial-intelligence/feed/"
+        }
+      ],
+      "evidenceLevel": "configured_channel_scope_only",
+      "evidenceExplanation": "Existing AI category feed plus whole-site feed cover this AI category; no new AI channel needed.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [],
+      "gap": "仅有现有入口、频道范围及配置筛选条件证据；本轮未对该入口执行实际采集或预览，不声称各原文均已被覆盖采集。",
+      "acceptanceLimit": "Collector configuration/channel coverage, not proof that every original was ingested, passed article gates, or published. Only attached native previews are new public GET acceptance evidence.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "The Decoder：AI News（RSS）",
+      "windowItems": 11,
+      "deltaItems": 4,
+      "articleEvidence": [
+        {
+          "itemId": "h2cnqvg8c012d3gfjpvitsld4",
+          "originalUrl": "https://the-decoder.com/saudi-aramco-takes-49-percent-stake-in-ai-firm-humain-with-2-6-billion-deal/",
+          "evidenceUrl": "https://aihot.news/items/h2cnqvg8c012d3gfjpvitsld4",
+          "publishedAt": "2026-11-02T11:47:14.000Z",
+          "discoveredAt": "2026-11-02T11:56:38.120Z"
+        },
+        {
+          "itemId": "hrxdnlymj2phbpvvohwdeezk1",
+          "originalUrl": "https://the-decoder.com/openai-prepares-lobbying-blitz-for-a-post-midterm-washington/",
+          "evidenceUrl": "https://aihot.news/items/hrxdnlymj2phbpvvohwdeezk1",
+          "publishedAt": "2026-11-02T10:47:59.000Z",
+          "discoveredAt": "2026-11-02T10:56:28.345Z"
+        },
+        {
+          "itemId": "bw4z11yubk58ew6i086k107nq",
+          "originalUrl": "https://the-decoder.com/empathetic-prompts-can-turn-ai-chatbots-into-seemingly-traumatized-conversational-partners/",
+          "evidenceUrl": "https://aihot.news/items/bw4z11yubk58ew6i086k107nq",
+          "publishedAt": "2026-11-01T14:36:49.000Z",
+          "discoveredAt": "2026-11-01T15:36:11.341Z"
+        },
+        {
+          "itemId": "zntqp5gv8vpplqxiba51hrv4j",
+          "originalUrl": "https://the-decoder.com/adobe-is-testing-how-well-ai-agents-can-use-editing-tools-like-a-photoshop-professional-would/",
+          "evidenceUrl": "https://aihot.news/items/zntqp5gv8vpplqxiba51hrv4j",
+          "publishedAt": "2026-11-01T14:56:44.000Z",
+          "discoveredAt": "2026-11-01T15:36:11.334Z"
+        },
+        {
+          "itemId": "xegqw6h2wye28k01yhv179qfb",
+          "originalUrl": "https://the-decoder.com/chinese-ai-models-are-politically-complex-not-just-government-mouthpieces-study-finds/",
+          "evidenceUrl": "https://aihot.news/items/xegqw6h2wye28k01yhv179qfb",
+          "publishedAt": "2026-11-01T12:33:01.000Z",
+          "discoveredAt": "2026-11-01T13:34:28.944Z"
+        },
+        {
+          "itemId": "o7gkeevit9zrx3kzfeardgesb",
+          "originalUrl": "https://the-decoder.com/openai-is-steering-chatgpt-users-toward-more-paid-usage/",
+          "evidenceUrl": "https://aihot.news/items/o7gkeevit9zrx3kzfeardgesb",
+          "publishedAt": "2026-11-01T12:05:04.000Z",
+          "discoveredAt": "2026-11-01T12:33:38.347Z"
+        },
+        {
+          "itemId": "r7etdol8mhosovgmsvejg3p0t",
+          "originalUrl": "https://the-decoder.com/google-wants-video-ai-to-understand-what-people-need-as-they-workgoogle-researchers-are-teaching-a-video-assistant-when-to-offer-help/",
+          "evidenceUrl": "https://aihot.news/items/r7etdol8mhosovgmsvejg3p0t",
+          "publishedAt": "2026-11-01T11:25:21.000Z",
+          "discoveredAt": "2026-11-01T11:32:37.620Z"
+        },
+        {
+          "itemId": "g8piw1jpsnvc68jk58fx2p92y",
+          "originalUrl": "https://the-decoder.com/openais-upcoming-chat-and-work-merger-in-chatgpt-signals-the-end-of-all-you-can-prompt-pricing/",
+          "evidenceUrl": "https://aihot.news/items/g8piw1jpsnvc68jk58fx2p92y",
+          "publishedAt": "2026-11-01T09:51:06.000Z",
+          "discoveredAt": "2026-11-01T10:31:24.957Z"
+        },
+        {
+          "itemId": "qb62rmlob1dhgxxgycxshlg02",
+          "originalUrl": "https://the-decoder.com/anthropics-watermark-rollout-leaves-a-loophole-on-two-older-claude-models/",
+          "evidenceUrl": "https://aihot.news/items/qb62rmlob1dhgxxgycxshlg02",
+          "publishedAt": "2026-10-31T19:20:55.000Z",
+          "discoveredAt": "2026-10-31T20:21:20.338Z"
+        },
+        {
+          "itemId": "p3wajj9sy0u7k166d5vyuj0tj",
+          "originalUrl": "https://the-decoder.com/openai-plans-to-train-models-on-daybreak-blue-cybersecurity-session-data-that-was-previously-off-limits/",
+          "evidenceUrl": "https://aihot.news/items/p3wajj9sy0u7k166d5vyuj0tj",
+          "publishedAt": "2026-10-31T16:38:37.000Z",
+          "discoveredAt": "2026-10-31T17:17:42.646Z"
+        },
+        {
+          "itemId": "mz4lokaivkb2og2hho3bajx6q",
+          "originalUrl": "https://the-decoder.com/beekeeping-tips-and-wrestling-advice-can-train-ai-models-to-sabotage-oversight/",
+          "evidenceUrl": "https://aihot.news/items/mz4lokaivkb2og2hho3bajx6q",
+          "publishedAt": "2026-10-31T15:06:14.000Z",
+          "discoveredAt": "2026-10-31T15:15:44.095Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "public_channel_scope",
+        "value": "The Decoder：AI News（RSS）"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "rss-the-decoder",
+          "name": "The Decoder",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://the-decoder.com/feed/"
+        }
+      ],
+      "evidenceLevel": "configured_channel_scope_only",
+      "evidenceExplanation": "Existing publisher /feed/ covers this same AI-news publisher; no narrowing URL/category filter.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [],
+      "gap": "仅有现有入口、频道范围及配置筛选条件证据；本轮未对该入口执行实际采集或预览，不声称各原文均已被覆盖采集。",
+      "acceptanceLimit": "Collector configuration/channel coverage, not proof that every original was ingested, passed article gates, or published. Only attached native previews are new public GET acceptance evidence.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    },
+    {
+      "sourceLabel": "The Verge：AI（RSS）",
+      "windowItems": 1,
+      "deltaItems": 0,
+      "articleEvidence": [
+        {
+          "itemId": "illj7ig08web2632is7efwmjt",
+          "originalUrl": "https://www.theverge.com/gadgets/1013375/muse-charm-gadgets-preview-waveshare-esp32-claude-vibe-code",
+          "evidenceUrl": "https://aihot.news/items/illj7ig08web2632is7efwmjt",
+          "publishedAt": "2026-10-31T16:05:00.000Z",
+          "discoveredAt": "2026-10-31T16:09:38.414Z"
+        }
+      ],
+      "family": "PUBLIC",
+      "identity": {
+        "type": "public_channel_scope",
+        "value": "The Verge：AI（RSS）"
+      },
+      "decision": "reuse_existing",
+      "localSources": [
+        {
+          "id": "rss-the-verge-ai",
+          "name": "The Verge · AI",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml"
+        },
+        {
+          "id": "v2-source-172",
+          "name": "The Verge AI",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "https://www.theverge.com/rss/index.xml"
+        },
+        {
+          "id": "v2-source-618",
+          "name": "The Verge",
+          "kind": "rss",
+          "enabled": true,
+          "entry": "http://www.theverge.com/rss/full.xml"
+        }
+      ],
+      "evidenceLevel": "configured_channel_scope_only",
+      "evidenceExplanation": "Existing AI-specific /rss/ai-artificial-intelligence/index.xml plus whole-site feeds cover this label; article /gadgets/ URL alone does not define a new source.",
+      "collectionNarrowingFilters": [],
+      "nativePublicPreviews": [],
+      "gap": "仅有现有入口、频道范围及配置筛选条件证据；本轮未对该入口执行实际采集或预览，不声称各原文均已被覆盖采集。",
+      "acceptanceLimit": "Collector configuration/channel coverage, not proof that every original was ingested, passed article gates, or published. Only attached native previews are new public GET acceptance evidence.",
+      "actualCollectionAcceptanceThisRun": "not_recollected_identity_or_channel_review_only"
+    }
+  ],
+  "runtimeAcceptance": {
+    "schemaVersion": 1,
+    "at": "2026-11-02T14:05:33.688Z",
+    "readOnly": true,
+    "configuration": {
+      "total": 731,
+      "enabled": 715,
+      "disabled": 16,
+      "old730Unchanged": true,
+      "newSourceMatches": true,
+      "budgetsUnchanged": true,
+      "fieldsCompared": [
+        "id",
+        "name",
+        "kind",
+        "config",
+        "tier",
+        "enabled",
+        "first_party",
+        "owner_entity_id",
+        "signal_group_id",
+        "participation_mode",
+        "interval_minutes",
+        "tags",
+        "site_fulltext",
+        "syndicate_fulltext"
+      ]
+    },
+    "source": {
+      "id": "corescope-mp-longcat-meituan",
+      "name": "公众号：龙猫LongCat（美团）",
+      "kind": "mp_account",
+      "enabled": true,
+      "first_party": false,
+      "participation_mode": "editorial",
+      "health": "degraded",
+      "fail_count": 1,
+      "last_fetch_at": "2026-11-02T13:55:52.182Z",
+      "last_ok_at": null,
+      "next_fetch_at": "2026-11-02T19:55:52.182Z",
+      "returned_biz": null,
+      "returned_ghid": null
+    },
+    "runs": [
+      {
+        "id": "225700",
+        "status": "failed",
+        "started_at": "2026-11-02T13:55:51.577Z",
+        "finished_at": "2026-11-02T13:55:52.184Z",
+        "found_count": 0,
+        "new_count": 0,
+        "receipt_id": null,
+        "reused": null,
+        "error_class": "insufficient_balance_20001"
+      }
+    ],
+    "receipts": [
+      {
+        "id": "235384",
+        "service": "dajiala",
+        "purpose": "mp_history",
+        "status": "failed",
+        "origin": "live",
+        "attempts": 1,
+        "created_at": "2026-11-02T13:55:51.598Z",
+        "received_at": null,
+        "completed_at": null,
+        "error_class": "insufficient_balance_20001"
+      }
+    ],
+    "attempts": [
+      {
+        "id": "237697",
+        "receipt_id": "235384",
+        "origin": "live",
+        "status": "failed",
+        "started_at": "2026-11-02T13:55:51.598Z",
+        "finished_at": "2026-11-02T13:55:52.177Z",
+        "latency_ms": 210,
+        "error_class": "insufficient_balance_20001"
+      }
+    ],
+    "articles": [],
+    "discoveries": 0,
+    "targetRows": [],
+    "audits": [
+      {
+        "action": "source.create",
+        "count": 1
+      }
+    ],
+    "schedules": [
+      {
+        "job": "sources.schedule",
+        "status": "ok",
+        "started_at": "2026-11-02T14:03:47.183Z",
+        "finished_at": "2026-11-02T14:04:04.354Z"
+      },
+      {
+        "job": "sources.schedule",
+        "status": "ok",
+        "started_at": "2026-11-02T14:03:29.467Z",
+        "finished_at": "2026-11-02T14:03:47.176Z"
+      },
+      {
+        "job": "content.priority",
+        "status": "ok",
+        "started_at": "2026-11-02T14:03:20.332Z",
+        "finished_at": "2026-11-02T14:04:13.017Z"
+      },
+      {
+        "job": "sources.schedule",
+        "status": "ok",
+        "started_at": "2026-11-02T14:03:09.439Z",
+        "finished_at": "2026-11-02T14:03:29.435Z"
+      }
+    ],
+    "bridge": {
+      "client": "corescope-v2",
+      "updated_at": "2026-11-02T14:02:31.887Z",
+      "last_ok_at": "2026-10-31T13:40:38.293Z",
+      "last_error_at": "2026-11-02T14:02:31.887Z",
+      "error_class": "existing_invalid_utf8"
+    },
+    "summary": {
+      "latestFetchStatus": "failed",
+      "materials": 0,
+      "bodySucceeded": 0,
+      "liveAttempts": 1,
+      "historyAttempts": 1,
+      "bodyAttempts": 0
+    }
+  },
+  "tests": {
+    "typecheck": true,
+    "webBuild": true,
+    "backend": {
+      "tests": 993,
+      "pass": 993,
+      "fail": 0,
+      "skipped": 0
+    },
+    "web": {
+      "tests": 40,
+      "pass": 40,
+      "fail": 0,
+      "skipped": 0
+    },
+    "siteSmoke": {
+      "checks": 35,
+      "allPassed": true
+    }
+  },
+  "regeneration": {
+    "checkedAt": "2026-11-02T14:00:18.083385+00:00",
+    "mode": "SQLite mode=ro, PRAGMA query_only=ON; --sources-only equivalent arguments",
+    "expectedSources": 731,
+    "regeneratedSources": 741,
+    "missingIds": [],
+    "extraIds": [
+      "v2-source-552506",
+      "v2-source-552507",
+      "v2-source-552508",
+      "v2-source-552509",
+      "v2-source-552510",
+      "v2-source-552511",
+      "v2-source-552512",
+      "v2-source-552513",
+      "v2-source-552514",
+      "v2-source-552515"
+    ],
+    "changedSources": [],
+    "sourceArrayOrderMatches": false,
+    "mappingSourcesIdentical": false,
+    "summaryDifferingFields": [
+      "canonical_sources",
+      "enabled_bridge_sources",
+      "enabled_sources",
+      "supplemental_source_ids",
+      "v2_sources"
+    ],
+    "identicalSourceConfigurations": false,
+    "trackedFilesWritten": 0,
+    "v2Writes": 0,
+    "paidCalls": 0
+  },
+  "sourceUpgrade": {
+    "total": 1,
+    "updated": 0,
+    "wouldUpdate": 0,
+    "unchanged": 1,
+    "skipped": 0
+  },
+  "v2DirectoryDrift": {
+    "extraIds": [
+      "v2-source-552506",
+      "v2-source-552507",
+      "v2-source-552508",
+      "v2-source-552509",
+      "v2-source-552510",
+      "v2-source-552511",
+      "v2-source-552512",
+      "v2-source-552513",
+      "v2-source-552514",
+      "v2-source-552515"
+    ],
+    "scope": "10 newly observed wx-only upstream entries were regenerated only in ignored QA, not imported by this AIHot refresh.",
+    "confirmedExistingAlias": {
+      "newUpstreamId": "v2-source-552511",
+      "existingCoreScopeId": "corescope-mp-aiwarts",
+      "reason": "Exact ghid matches existing successful provider cursor, together with the same verified biz"
+    },
+    "remainingUnreviewed": 9,
+    "existing731Missing": [],
+    "existing731ConfigurationChanges": []
+  },
+  "limitations": [
+    "The45 observed labels are a bounded public48h sample, not the private941-source catalogue.",
+    "Same publisher/site is not exact collector identity; public scope evidence and live RSS membership proofs are separate.",
+    "HN exact AI-hot query/ranking equivalence remains unresolved; article destination sites were not added as independent collectors.",
+    "First Dajiala check uses existing7-day age gate and limit2; later new checks keep normal upstream date and downstream freshness/selection/publication policies.",
+    "Collection, body verification, ingestion, analysis and publication have separate acceptance.",
+    "Existing V2 bridge invalid-UTF8 failure remains; new native MP collector does not use that bridge."
+  ],
+  "safety": {
+    "V2Writes": 0,
+    "V2Restarts": 0,
+    "old730SourceFieldsPreserved": true,
+    "budgetsPreserved": true,
+    "globalQueueEdits": 0,
+    "forcedXRequests": 0,
+    "serviceRestarts": 0,
+    "secretFilesCommitted": false
+  }
+}
