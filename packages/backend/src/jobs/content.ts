@@ -367,7 +367,7 @@ export async function sweepRecoveryBatches(): Promise<{ enqueued: number }> {
   const digestHandoffs = new Set<number>();
   for (const status of await activeRecoveryBatchStatuses()) {
     for (const member of status.members) {
-      if (status.batch.kind === 'web-body-recovery' && member.bodyStatus === 'pending') {
+      if (['web-body-recovery','source-acceptance'].includes(status.batch.kind) && member.bodyStatus === 'pending') {
         if (member.admission === 'admitted' && member.state === 'analyzed' && !member.activeJobs && !member.deferrals && !member.unknownReceipts) {
           const resumed = await sql.begin(tx => queueBodyHandoff(member.articleId,tx,
             { kind: 'web-recovery',batchId: status.batch.id,storyIds: member.stories.map(s => s.storyId) }));

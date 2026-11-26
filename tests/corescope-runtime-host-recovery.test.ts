@@ -117,13 +117,20 @@ test("the scheduler upgrades only the exact owned legacy task to bounded restart
   try {
     const result = await sandbox.run("Task");
     assert.equal(result.legacy.triggerCount, 0, "ordinary fake specs must retain demand-only behavior");
+    assert.equal(result.legacy.priority, 7);
+    assert.equal(result.priorityUpgraded, true, "an exact owned default-priority task is upgraded without changing its action");
+    assert.equal(result.normalPreserved, true, "the already-correct Normal task is reused");
+    assert.equal(result.priorityTamperingRejected, true, "other edited priorities are rejected and never overwritten");
+    assert.equal(result.legacyIdentityRejected, true, "legacy priority does not relax user or checkout identity");
     assert.equal(result.recovery.triggerCount, 1);
     assert.equal(result.recovery.restartCount, 3);
     assert.equal(result.recovery.restartInterval, "PT1M");
     assert.equal(result.recovery.executionTimeLimit, "PT0S");
+    assert.equal(result.recovery.priority, 6);
     assert.equal(result.recovery.logonSid, result.userSid);
     assert.equal(result.database.triggerCount, 0, "a database-only host must not become an extra login-started instance");
     assert.equal(result.database.restartCount, 3);
+    assert.equal(result.database.priority, 6);
     assert.equal(result.changedActionRejected, true);
     assert.equal(result.changedActionPreserved, true, "a mismatched task definition must never be overwritten");
     assert.equal(result.taskDeleted, true);

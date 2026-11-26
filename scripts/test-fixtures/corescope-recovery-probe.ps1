@@ -329,20 +329,46 @@ try {
         if ($exception.HResult -ne -2147024894) { throw }
     }
     if ($existing) { throw 'Unique fixture task already exists; it was not changed.' }
-    $task = Register-CoreScopeTask $service $spec
+    $definition = New-CoreScopeTaskDefinition $service $spec
+    $definition.Settings.Priority = 7 # An exact owned task created before explicit Normal priority.
+    $task = $folder.RegisterTaskDefinition($taskName,$definition,2,$CurrentUserSid,$null,3,$null)
     $createdTask = $true
-    $legacy = @{triggerCount=[int]$task.Definition.Triggers.Count}
+    $legacy = @{triggerCount=[int]$task.Definition.Triggers.Count;priority=[int]$task.Definition.Settings.Priority}
+    $wrongUser = $spec.PSObject.Copy()
+    $wrongUser.UserSid = 'S-1-5-18'
+    $wrongRoot = $spec.PSObject.Copy()
+    $wrongRoot.WorkingDirectory = Join-Path $FixtureRoot 'different-root'
+    $legacyIdentityRejected = (Assert-FixtureFailure { Assert-CoreScopeTaskDefinition $task.Definition $wrongUser -AllowLegacyRecovery }) -and
+        (Assert-FixtureFailure { Assert-CoreScopeTaskDefinition $task.Definition $wrongRoot -AllowLegacyRecovery })
+    $task = Register-CoreScopeTask $service $spec
+    $priorityUpgraded = $task.Definition.Settings.Priority -eq 6 -and $task.Definition.Actions.Item(1).Arguments -eq $spec.Arguments
     $spec.RecoveryPolicy = $true
     $task = Register-CoreScopeTask $service $spec
     $definition = $task.Definition
     $logonUser = [string]$definition.Triggers.Item(1).UserId
     $logonSid = if ($logonUser -match '^S-1-') {$logonUser} else {(New-Object Security.Principal.NTAccount($logonUser)).Translate([Security.Principal.SecurityIdentifier]).Value}
-    $recovery = @{triggerCount=[int]$definition.Triggers.Count;restartCount=[int]$definition.Settings.RestartCount;restartInterval=[string]$definition.Settings.RestartInterval;executionTimeLimit=[string]$definition.Settings.ExecutionTimeLimit;logonSid=$logonSid}
+    $recovery = @{triggerCount=[int]$definition.Triggers.Count;restartCount=[int]$definition.Settings.RestartCount;restartInterval=[string]$definition.Settings.RestartInterval;executionTimeLimit=[string]$definition.Settings.ExecutionTimeLimit;logonSid=$logonSid;priority=[int]$definition.Settings.Priority}
+    $beforeNormal = [string]$task.Xml
+    $task = Register-CoreScopeTask $service $spec
+    $normalPreserved = [string]$task.Xml -eq $beforeNormal
+    $priorityTamperingRejected = $true
+    foreach ($priority in @(5,8)) {
+        $definition = $task.Definition
+        $definition.Settings.Priority = $priority
+        $task = $folder.RegisterTaskDefinition($taskName,$definition,4,$CurrentUserSid,$null,3,$null)
+        $beforeTampered = [string]$task.Xml
+        $rejected = Assert-FixtureFailure { Register-CoreScopeTask $service $spec }
+        $priorityTamperingRejected = $priorityTamperingRejected -and $rejected -and ([string]$folder.GetTask($taskName).Xml -eq $beforeTampered)
+        $definition.Settings.Priority = 6
+        $task = $folder.RegisterTaskDefinition($taskName,$definition,4,$CurrentUserSid,$null,3,$null)
+    }
+    $definition = $task.Definition
     $databaseSpec = $spec.PSObject.Copy()
     $databaseSpec.Mode = 'Database'
     $databaseDefinition = New-CoreScopeTaskDefinition $service $databaseSpec
     Assert-CoreScopeTaskDefinition $databaseDefinition $databaseSpec
-    $database = @{triggerCount=[int]$databaseDefinition.Triggers.Count;restartCount=[int]$databaseDefinition.Settings.RestartCount}
+    $database = @{triggerCount=[int]$databaseDefinition.Triggers.Count;restartCount=[int]$databaseDefinition.Settings.RestartCount;priority=[int]$databaseDefinition.Settings.Priority}
+    $definition.Settings.Priority = 7
     $definition.Actions.Item(1).Arguments += ' --fixture-action-tampered'
     $task = $folder.RegisterTaskDefinition($taskName,$definition,4,$CurrentUserSid,$null,3,$null)
     $before = [string]$task.Xml
@@ -358,4 +384,4 @@ try {
 }
 $taskDeleted = $false
 try { $folder.GetTask($taskName) | Out-Null } catch { $taskDeleted = $true }
-Write-FixtureResult @{legacy=$legacy;recovery=$recovery;database=$database;userSid=$CurrentUserSid;changedActionRejected=$changedActionRejected;changedActionPreserved=$changedActionPreserved;taskDeleted=$taskDeleted}
+Write-FixtureResult @{legacy=$legacy;recovery=$recovery;database=$database;userSid=$CurrentUserSid;priorityUpgraded=$priorityUpgraded;normalPreserved=$normalPreserved;priorityTamperingRejected=$priorityTamperingRejected;legacyIdentityRejected=$legacyIdentityRejected;changedActionRejected=$changedActionRejected;changedActionPreserved=$changedActionPreserved;taskDeleted=$taskDeleted}

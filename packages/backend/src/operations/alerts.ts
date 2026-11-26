@@ -405,10 +405,14 @@ async function providerFindings(now: number, open: AlertState): Promise<Finding[
   const out: Finding[] = [];
   const ongoing = Object.keys(open).filter(key => key.startsWith(REFUSED_PREFIX)).map(key => key.slice(REFUSED_PREFIX.length).split(":")[0]!);
   const failures = await sql<{ service: string; model: string | null; error: string; n: number; latest: Date }[]>`
-    SELECT service, model, error, count(*)::int AS n, max(started_at) AS latest FROM receipt_attempts a
-    WHERE status = 'failed' AND (started_at > ${new Date(now - 3600_000)} OR service = ANY(${ongoing})) AND error IS NOT NULL
-      AND NOT EXISTS (SELECT 1 FROM receipt_attempts good WHERE good.service = a.service AND good.model IS NOT DISTINCT FROM a.model AND good.status = 'received' AND good.started_at > a.started_at)
-    GROUP BY service, model, error ORDER BY latest DESC`;
+    WITH latest_received AS MATERIALIZED (
+      SELECT service, model, max(started_at) AS latest FROM receipt_attempts WHERE status = 'received' GROUP BY service, model
+    )
+    SELECT a.service, a.model, a.error, count(*)::int AS n, max(a.started_at) AS latest FROM receipt_attempts a
+    LEFT JOIN latest_received good ON good.service = a.service AND good.model IS NOT DISTINCT FROM a.model
+    WHERE a.status = 'failed' AND (a.started_at > ${new Date(now - 3600_000)} OR a.service = ANY(${ongoing})) AND a.error IS NOT NULL
+      AND (good.latest IS NULL OR a.started_at >= good.latest)
+    GROUP BY a.service, a.model, a.error ORDER BY latest DESC`;
   const models = new Map<string, { service: string; model: string | null; n: number; last: string; latest: number }>();
   for (const p of failures) {
     if (!providerAccessRefused(p.service, p.error)) continue;

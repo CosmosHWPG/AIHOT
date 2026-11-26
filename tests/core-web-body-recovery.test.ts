@@ -1,9 +1,15 @@
-import { tag } from "./setup.ts";
+import { pointModels, stub, tag } from "./setup.ts";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { after, afterEach, before, test } from "node:test";
+import { MockAgent, getGlobalDispatcher, setGlobalDispatcher } from "undici";
+import { config } from "@aihot/backend/config";
 import { sql, closeDb } from "@aihot/backend/db";
-import { queueProcessing } from "@aihot/backend/jobs/content";
+import { processArticle, queueProcessing } from "@aihot/backend/jobs/content";
+import { extractArticleBody } from "@aihot/backend/content/extract";
+import { selectionThreshold } from "@aihot/backend/editorial/analyze";
+import { groupArticle } from "@aihot/backend/events/group";
+import { analysisStep } from "./analysis-steps.ts";
 import { getBoss, stopBoss } from "@aihot/backend/jobs/queue";
 import { getRecentContentPolicy, getRecentContentPriority, invalidateRecentContentCache,
   RECENT_CONTENT_POLICY_KEY, setRecentContentPolicy } from "@aihot/backend/jobs/recent-content";
@@ -316,4 +322,124 @@ test("old Bird/model manifests retain their digest and schema without new frozen
   const result = await plan("max-plan", [id]);
   const tooMany = { ...result, members: Array.from({ length: 119 }, (_, index) => ({ ...result.members[0], articleId: `${id}-${index}` })) };
   assert.throws(() => parseRecoveryPlan({ ...tooMany, digest: recoveryPlanDigest(tooMany) }));
+});
+
+test("source acceptance freezes only three explicitly named old public materials and does not widen legacy body recovery", async () => {
+  const old = new Date(Date.now() - 5 * 86400_000);
+  const approved = await Promise.all(["ok", "pending", "unconfirmed"].map((body, index) => article(`acceptance-${index}`, { kind: ["rss", "web_list", "json_list"][index], body, at: old })));
+  const outside = await article("acceptance-not-approved", { body: "ok", at: old });
+  await setRecentContentPolicy(true, "test", "Only three old identities may be accepted");
+  const budgets = await sql`SELECT * FROM budgets ORDER BY service`;
+  await assert.rejects(plan("acceptance-four", [...approved, outside], "source-acceptance"), /at most three/);
+  for (const id of approved) await assert.rejects(plan(`legacy-stays-recent-${id.slice(-1)}`, [id]), /initial recent unconfirmed/);
+  const result = await plan("acceptance-fixed", approved, "source-acceptance");
+  assert.equal(result.windowAt, undefined);
+  assert.deepEqual(result.members.map(member => member.initialBodyStatus), ["ok", "pending", "unconfirmed"]);
+  assert.ok(result.members.every(member => member.url && member.sourceConfigMd5 && member.publishedAt && member.initialProcessingState === "new"));
+  await applyRecoveryBatch(result, "test", "User explicitly named these three old articles");
+  assert.equal(await getRecoveryAdmission(outside), null);
+  assert.equal(await queueProcessing(outside), null);
+  assert.deepEqual(await processArticle(outside), { state: "outside-priority-window" });
+  for (const member of result.members) {
+    assert.equal((await getRecentContentPriority(member.articleId)).priority, RECOVERY_PRIORITY);
+    const job = await queueProcessing(member.articleId, { step: member.initialBodyStatus === "ok" ? "analyze" : "extract" });
+    assert.ok(job);
+    assert.deepEqual((await sql`SELECT data FROM pgboss.job WHERE id=${job}`)[0].data, { articleId: member.articleId });
+  }
+  assert.equal((await getRecentContentPolicy()).enabled, true);
+  assert.deepEqual(await sql`SELECT * FROM budgets ORDER BY service`, budgets);
+  assert.deepEqual((await sql`SELECT processing_attempt_tag FROM articles WHERE id=ANY(${approved}::text[])`).map(row => row.processing_attempt_tag), [null, null, null]);
+});
+
+test("source acceptance rejects fresh-plan, identity, date, state and unresolved-receipt drift", async () => {
+  const id = await article("acceptance-guards", { body: "ok", at: new Date(Date.now() - 5 * 86400_000) });
+  await setRecentContentPolicy(true, "test", "Preserve bounded global processing");
+  const result = await plan("acceptance-guards-plan", [id], "source-acceptance");
+  for (const age of [-60_000, 31 * 60_000]) {
+    const stale = { ...result, createdAt: new Date(Date.now() - age).toISOString() };
+    await assert.rejects(applyRecoveryBatch({ ...stale, digest: recoveryPlanDigest(stale) }, "test", "Invalid activation time"), /activation expired/);
+  }
+  await setRecentContentPolicy(false, "test", "A permit cannot disable the global window");
+  await assert.rejects(applyRecoveryBatch(result, "test", "Unbounded global policy"), /must remain enabled/);
+  await setRecentContentPolicy(true, "test", "Restore the ordinary gate");
+  await sql`UPDATE articles SET published_at=NULL WHERE id=${id}`;
+  await assert.rejects(plan("acceptance-unknown-date", [id], "source-acceptance"), /fixed new public/);
+  await sql`UPDATE articles SET published_at=now()+interval '1 minute' WHERE id=${id}`;
+  await assert.rejects(plan("acceptance-future-date", [id], "source-acceptance"), /fixed new public/);
+  await sql`UPDATE articles SET published_at=${result.members[0].publishedAt!}::timestamptz,processing_attempt_tag='manual-other' WHERE id=${id}`;
+  await assert.rejects(applyRecoveryBatch(result, "test", "Changed paid identity"), /initial state/);
+  await sql`UPDATE articles SET processing_attempt_tag=NULL,revision=2 WHERE id=${id}`;
+  await assert.rejects(applyRecoveryBatch(result, "test", "Revision drift"), /revision-changed/);
+  await sql`UPDATE articles SET revision=1 WHERE id=${id}`;
+  await sql`UPDATE sources SET config='{"parseMode":"html"}'::jsonb WHERE id=${sources.rss}`;
+  await assert.rejects(applyRecoveryBatch(result, "test", "Source config drift"), /source-config-changed/);
+  await sql`UPDATE sources SET config='{}'::jsonb WHERE id=${sources.rss}`;
+  const [receipt] = await sql`INSERT INTO receipts(logical_key,service,purpose,subject,status)
+    VALUES(${id + '-unknown'},'llm','structure_article',${'article:' + id + '@1'},'unknown') RETURNING id`;
+  try {
+    await assert.rejects(plan("acceptance-unresolved", [id], "source-acceptance"), /unresolved paid/);
+    await assert.rejects(applyRecoveryBatch(result, "test", "Existing unknown paid answer"), /unresolved paid/);
+  } finally { await sql`DELETE FROM receipts WHERE id=${receipt.id}`; }
+  await applyRecoveryBatch(result, "test", "Exact original approval");
+  await sql`UPDATE articles SET revision=2 WHERE id=${id}`;
+  assert.equal(await getRecoveryAdmission(id), null);
+  await sql`UPDATE articles SET revision=1 WHERE id=${id}`;
+  await sql`UPDATE sources SET config='{"parseMode":"html"}'::jsonb WHERE id=${sources.rss}`;
+  assert.equal(await getRecoveryAdmission(id), null);
+});
+
+test("three old source acceptance members follow normal body revisions, analysis and historical public settlement", async () => {
+  const old = new Date(Date.now() - 5 * 86400_000);
+  const approved = await Promise.all(["ok", "pending", "unconfirmed"].map((body, index) => article(`acceptance-chain-${index}`, { kind: ["rss", "web_list", "json_list"][index], body, at: old })));
+  const prose = "The original research describes a network model architecture, measured evaluation results and deployment limitations. ".repeat(16);
+  await sql`UPDATE articles SET body_text=CASE WHEN body_status='ok' THEN ${prose} ELSE NULL END,backfill=true,timeline_at=published_at WHERE id=ANY(${approved}::text[])`;
+  const result = await activate("acceptance-chain-plan", approved, "source-acceptance");
+  const dispatcher = getGlobalDispatcher(), mock = new MockAgent();
+  mock.disableNetConnect(); mock.enableNetConnect(/127\.0\.0\.1/);
+  const previousPrivate = config.allowPrivateNetworkFetch, previousProxy = config.egressProxyUrl;
+  config.allowPrivateNetworkFetch = true; config.egressProxyUrl = null; setGlobalDispatcher(mock);
+  const calls: string[] = [];
+  let index = 0;
+  const provider = await stub((_hit, request) => {
+    const step = analysisStep(request.body); calls.push(step);
+    const data = step === "prefilter" ? { label: "PASS", reason: "Verified original research" }
+      : step === "score" ? { attentionScore: selectionThreshold({ tier: "T1" })! - 1 }
+      : step === "structure" ? { category: "paper", tags: ["论文/研究"], subjects: [], scope: "single", fact: { title: `Original research ${index}`, evidence: "The original research describes a network model architecture, measured evaluation results and deployment limitations.", conditions: [] } }
+      : { itemType: "research_paper", authorRole: "principal", tags: ["论文/研究"], editorialJudgment: "Original technical evidence", titleZh: "原站研究的架构与评测", summaryZh: "原文说明网络模型的架构、评测方法和部署限制，结论按原始实验范围理解。" };
+    return { choices: [{ message: { content: JSON.stringify(data) } }] };
+  });
+  pointModels(provider.url);
+  try {
+    for (const [number, id] of approved.entries()) {
+      index = number;
+      if (number) {
+        mock.get("https://www.example.com").intercept({ path: "/" + id }).reply(200, `<html><head><title>Offline web body fixture</title></head><body><article><h1>Offline web body fixture</h1><p>${prose}</p></article></body></html>`, { headers: { "content-type": "text/html" } });
+        assert.equal(await extractArticleBody(id, false), "ok");
+        assert.equal((await getRecoveryBatch(result.id))!.currentRevisions[id], 2);
+      }
+      assert.ok(await getRecoveryAdmission(id));
+      assert.equal((await processArticle(id)).state, "pass");
+      await sql`DELETE FROM pgboss.job WHERE data->>'articleId'=${id}`;
+      assert.equal((await groupArticle(id)).verdict, "historical", "original dates remain archive dates, never invented current events");
+      const [stored] = await sql`SELECT a.revision,a.body_status,a.processing_attempt_tag,a.published_at,p.analysis_id,p.eligible,p.visibility,p.url,p.body_mode,p.selected,p.published_at AS public_date,n.input_revision
+        FROM articles a JOIN publications p ON p.article_id=a.id JOIN analyses n ON n.id=p.analysis_id WHERE a.id=${id}`;
+      assert.equal(stored.body_status, "ok"); assert.equal(stored.processing_attempt_tag, null);
+      assert.equal(stored.revision, number ? 2 : 1); assert.equal(stored.input_revision, stored.revision);
+      assert.equal(stored.eligible, true); assert.equal(stored.visibility, "public");
+      assert.equal(stored.selected, false, "the recovery permission cannot turn a below-threshold result into a selected report");
+      assert.equal(stored.body_mode, "summary", "the source's original full-text licence remains closed");
+      assert.equal(stored.published_at.toISOString(), old.toISOString()); assert.equal(stored.public_date.toISOString(), old.toISOString());
+      assert.equal(stored.url, result.members[number].url);
+    }
+    const status = (await recoveryBatchStatus(result.id))!;
+    assert.equal(status.completeable, true); assert.equal(status.counts.settled, 3);
+    assert.equal((await stopRecoveryBatch(result.id, "complete", "test", "Three normal old source chains settled")).status, "complete");
+    assert.equal(calls.filter(step => step === "prefilter").length, 3);
+    assert.equal(calls.filter(step => step === "score").length, 2, "the three identical original score inputs reuse the same two independent receipts");
+    assert.equal(calls.filter(step => step === "structure").length, 3);
+    mock.assertNoPendingInterceptors();
+  } finally {
+    await provider.close(); setGlobalDispatcher(dispatcher); await mock.close();
+    config.allowPrivateNetworkFetch = previousPrivate; config.egressProxyUrl = previousProxy;
+  }
 });

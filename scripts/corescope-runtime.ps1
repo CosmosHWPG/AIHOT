@@ -382,6 +382,7 @@ function New-CoreScopeTaskDefinition($Service, $Spec) {
     $definition.Settings.Enabled = $true
     $definition.Settings.AllowDemandStart = $true
     $definition.Settings.ExecutionTimeLimit = 'PT0S'
+    $definition.Settings.Priority = 6 # Normal CPU and I/O; Scheduler's default 7 is BelowNormal with low I/O.
     $definition.Settings.MultipleInstances = 2 # IgnoreNew.
     $definition.Settings.DisallowStartIfOnBatteries = $false
     $definition.Settings.StopIfGoingOnBatteries = $false
@@ -429,10 +430,11 @@ function Assert-CoreScopeTaskDefinition($Definition, $Spec, [switch]$AllowLegacy
         } else { $policyValid = $policyValid -and $Definition.Triggers.Count -eq 0 }
         if ($AllowLegacyRecovery -and $legacyPolicy) { $policyValid = $true }
     }
+    $priorityValid = $Definition.Settings.Priority -eq 6 -or ($AllowLegacyRecovery -and $Definition.Settings.Priority -eq 7)
     $valid = $Definition.RegistrationInfo.Description -eq $Spec.Description -and
         $principalSid -eq $Spec.UserSid -and
         $Definition.Principal.LogonType -eq 3 -and $Definition.Principal.RunLevel -eq 0 -and
-        $policyValid -and $Definition.Actions.Count -eq 1 -and
+        $policyValid -and $priorityValid -and $Definition.Actions.Count -eq 1 -and
         $Definition.Settings.Enabled -and $Definition.Settings.AllowDemandStart -and
         $Definition.Settings.ExecutionTimeLimit -eq 'PT0S' -and $Definition.Settings.MultipleInstances -eq 2 -and
         -not $Definition.Settings.DisallowStartIfOnBatteries -and -not $Definition.Settings.StopIfGoingOnBatteries -and
@@ -477,7 +479,7 @@ function Register-CoreScopeTask($Service, $Spec) {
             foreach ($port in @($PgPort, $WebPort, $ApiPort)) { Assert-PortFree $port }
             $repin = $true
         }
-        if ($repin -or ($Spec.RecoveryPolicy -and $task.Definition.Settings.RestartCount -eq 0)) {
+        if ($repin -or ($Spec.RecoveryPolicy -and $task.Definition.Settings.RestartCount -eq 0) -or $task.Definition.Settings.Priority -eq 7) {
             if ($repin) { Write-Stage 'windows-host-node' "Updating the stopped CoreScope $($Spec.Mode) task to the selected Node runtime." }
             $definition = New-CoreScopeTaskDefinition $Service $Spec
             $task = $folder.RegisterTaskDefinition($Spec.TaskName, $definition, 6, $Spec.UserSid, $null, 3, $null)

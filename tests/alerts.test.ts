@@ -431,6 +431,48 @@ test("a refused provider stays open without a newer successful call", async () =
   assert.ok((await checkAlerts(now+2*3600_000+60_000)).sent.includes("provider.refused.deepseek:recovered"));
 });
 
+test("provider recovery keeps timestamp ties, null models, origins and historical open incidents distinct", async () => {
+  const service = `refusal-history-${tag()}`;
+  const now = Date.now();
+  const at = now - 120_000;
+  const key = (model: string | null) => `provider.refused.${service}${model === null ? "" : `:${encodeURIComponent(model)}`}`;
+  const [receipt] = await sql<{ id: number }[]>`INSERT INTO receipts(logical_key,service,purpose,status)
+    VALUES(${service},${service},'refusal-history','failed') RETURNING id`;
+  let attempt = 0;
+  const record = (model: string | null, status: string, started: number, origin = "live", error: string | null = null) => sql`
+    INSERT INTO receipt_attempts(receipt_id,attempt,service,model,status,started_at,origin,error)
+    VALUES(${receipt!.id},${++attempt},${service},${model},${status},${new Date(started)},${origin},${error})`;
+  const refused = `${service} HTTP 402 insufficient balance`;
+  const read = async (open = {}) => new Map((await collectFindings(now, open)).filter(f => f.key.startsWith(`provider.refused.${service}`)).map(f => [f.key, f]));
+  try {
+    await record(null, "failed", at, "live", refused);
+    await record("another-route", "received", at + 1);
+    assert.ok((await read()).has(key(null)), "another model cannot recover the service's null-model evidence");
+    await record(null, "received", at, "imported");
+    assert.ok((await read()).has(key(null)), "a received attempt at the same timestamp is not later success");
+    await record(null, "received", at + 1, "replay");
+    assert.ok(!(await read()).has(key(null)), "a later received attempt counts regardless of origin");
+
+    await record("tied-model", "failed", at, "live", refused);
+    await record("tied-model", "failed", at, "imported", `${service} HTTP 403 account verification needed`);
+    await record("tied-model", "failed", at, "live", "unrelated input error");
+    await record("tied-model", "received", at);
+    await record("tied-model", "unknown", at + 1);
+    const tied = (await read()).get(key("tied-model"));
+    assert.match(tied!.detail!, /被拒 2 次/, "different refusal errors aggregate without counting unrelated failures");
+    await record("tied-model", "received", at + 1);
+    assert.ok(!(await read()).has(key("tied-model")));
+
+    const old = now - 25 * 3600_000;
+    await record("historical", "failed", old, "replay", refused);
+    assert.ok(!(await read()).has(key("historical")), "old evidence alone does not announce a new incident");
+    const open = { [key("historical")]: { title: "still refused", since: new Date(old).toISOString() } };
+    assert.ok((await read(open)).has(key("historical")), "an existing unresolved incident reads historical evidence");
+    await record("historical", "received", old + 1, "imported");
+    assert.ok(!(await read(open)).has(key("historical")));
+  } finally { await sql`DELETE FROM receipts WHERE id = ${receipt!.id}`; }
+});
+
 test("a deliberately dropped delivery closes without claiming successful delivery", async () => {
   const now = Date.now();
   const [d] = await sql<{ id: number }[]>`INSERT INTO deliveries(target_key,subject_kind,subject_id,dedupe_key,status)

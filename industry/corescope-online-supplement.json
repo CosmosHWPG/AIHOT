@@ -1351,9 +1351,9 @@
           "maxFetches": 2,
           "titleSelector": "h1",
           "summarySelector": "meta[name=\"description\"]",
-          "publishedAtRegex": "<div[^>]*class=\"post-date\"[^>]*>([^<]*20\\d{2})</div>",
           "publishedAtAuthoritative": true,
-          "publishedAtUtcOffset": "+00:00"
+          "publishedAtUtcOffset": "+00:00",
+          "publishedAtSelector": ".byline-meta time[datetime]"
         },
         "itemSelector": "a.index-item[href^=\"/research/\"]",
         "linkSelector": "a.index-item",

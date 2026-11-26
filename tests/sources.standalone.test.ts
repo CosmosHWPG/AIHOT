@@ -409,3 +409,16 @@ test("a moved product blog keeps its explicit publication byline instead of an u
   const missing = await fetchDetail(site + "/moved-product-blog", configured, { date: true, title: false, summary: false });
   assert.equal(missing.publishedAt, null, "the modified time cannot replace a missing authoritative publication date");
 });
+
+test("a research publisher's authoritative detail byline survives a listing change without using related-post dates", async () => {
+  const pack = JSON.parse(readFileSync(new URL("../industry/sources.json", import.meta.url), "utf8"));
+  const configured = pack.sources.find((item: { id: string }) => item.id === "corescope-web-list-goodfire-com-eca9a77c");
+  const html = '<h1>A new biological reasoning model</h1><div class="article-kicker"><time datetime="2026-11-24">Nov 24, 2026</time></div><div class="byline-meta">Published <time datetime="2026-11-24">November 24, 2026</time></div><aside><div class="research-date">November 20, 2026</div></aside>';
+  pages["/research-byline"] = () => html;
+  const detail = await fetchDetail(site + "/research-byline", configured, { date: true, title: true, summary: false });
+  assert.equal(detail.title, "A new biological reasoning model");
+  assert.equal(detail.publishedAt?.toISOString(), "2026-11-24T00:00:00.000Z");
+  pages["/research-byline"] = () => html.replace('<div class="byline-meta">Published <time datetime="2026-11-24">November 24, 2026</time></div>', "");
+  const missing = await fetchDetail(site + "/research-byline", configured, { date: true, title: false, summary: false });
+  assert.equal(missing.publishedAt, null, "a missing authoritative byline cannot use an unrelated date or a generic fallback");
+});

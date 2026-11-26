@@ -75,6 +75,8 @@ V2 的已有摘要与分数不是新站原始正文或新站精选结果。桥�
 
 ## 验证与文档
 
+2026-11-26 系统修复补齐结构化证据合同，纠正空日报与通知送达状态，恢复八个原站列表入口，并支持唯一 worker 的本机日常备份。部署验收、逐源结果和保留的上游限制见[本次修复记录](docs/CORESCOPE_SYSTEM_REPAIR_20261126.md)。
+
 ```powershell
 npm run typecheck
 python tests/corescope-v2-export.test.py
