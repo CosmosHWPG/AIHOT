@@ -24,7 +24,7 @@ import { closeDb, sql } from "@aihot/backend/db";
 import { upsertMaterial } from "@aihot/backend/content/materials";
 import { groupArticle } from "@aihot/backend/events/group";
 import { candidateViews } from "@aihot/backend/events/recall";
-import { BatchSchema } from "@aihot/backend/events/relate";
+import { BATCH_SYSTEM, BatchSchema } from "@aihot/backend/events/relate";
 import { publishArticle } from "@aihot/backend/publication/publish";
 import { loadTimeline } from "@aihot/backend/publication/timeline";
 import { setVisibility } from "@aihot/backend/admin/content";
@@ -97,7 +97,9 @@ async function state(id: string) {
     FROM articles a JOIN publications p ON p.article_id=a.id WHERE a.id=${id}`)[0]!;
 }
 
-test("value output is required and boolean, never a silent approval", () => {
+test("the shipped batch prompt requests the strict reading-value output, never a silent approval", () => {
+  assert.match(BATCH_SYSTEM, /"selection"\s*:\s*\{[^}]*"addsValue"\s*:[^}]*"reason"\s*:/,
+    "the model must be asked for the reading-value fields its answer is required to contain");
   const base = { query: "fact", decisions: [] };
   assert.equal(BatchSchema.safeParse(base).success, false);
   assert.equal(BatchSchema.safeParse({ ...base, selection: { addsValue: "true", reason: "" } }).success, false);
